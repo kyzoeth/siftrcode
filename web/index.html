@@ -520,53 +520,96 @@
       pointer-events: auto;
     }
 
-    /* Precision AST Analysis Ambient Wave (Soft & Diffuse, Replaces Neon Laser Wire) */
-    .ast-scope-wave {
+    /* AST Precision Laser Beam Scanner (Razor-thin, luminous core, focused laser flare) */
+    .ast-laser-beam, .ast-scope-wave {
       position: absolute;
       left: 0;
       right: 0;
-      height: 120px;
-      background: linear-gradient(180deg, 
+      height: 2px;
+      background: linear-gradient(90deg, 
         transparent 0%, 
-        rgba(217, 119, 87, 0.04) 20%, 
-        rgba(239, 107, 74, 0.08) 50%, 
-        rgba(217, 119, 87, 0.04) 80%, 
+        rgba(217, 119, 87, 0.3) 10%, 
+        #D97757 25%, 
+        #F39C82 45%, 
+        #FFFFFF 50%, 
+        #F39C82 55%, 
+        #D97757 75%, 
+        rgba(217, 119, 87, 0.3) 90%, 
         transparent 100%
       );
-      box-shadow: none;
+      box-shadow: 
+        0 0 6px 1.5px rgba(255, 255, 255, 0.9),
+        0 0 14px 3px rgba(243, 156, 130, 0.85),
+        0 0 24px 5px rgba(217, 119, 87, 0.45);
       opacity: 0;
-      top: -40px;
+      top: 0;
       pointer-events: none;
       z-index: 25;
-      transition: opacity 0.35s ease;
+      transform: translateZ(0);
     }
-    html.dark .ast-scope-wave {
+    .ast-laser-beam::before, .ast-scope-wave::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: -9px;
+      height: 20px;
       background: linear-gradient(180deg, 
         transparent 0%, 
-        rgba(217, 119, 87, 0.06) 20%, 
-        rgba(239, 107, 74, 0.14) 50%, 
-        rgba(217, 119, 87, 0.06) 80%, 
+        rgba(217, 119, 87, 0.2) 50%, 
         transparent 100%
       );
-      box-shadow: none;
+      pointer-events: none;
+    }
+    html.dark .ast-laser-beam, html.dark .ast-scope-wave {
+      box-shadow: 
+        0 0 8px 2px rgba(255, 255, 255, 0.95),
+        0 0 16px 4px rgba(243, 156, 130, 0.9),
+        0 0 28px 6px rgba(217, 119, 87, 0.6);
+    }
+    html.dark .ast-laser-beam::before, html.dark .ast-scope-wave::before {
+      background: linear-gradient(180deg, 
+        transparent 0%, 
+        rgba(217, 119, 87, 0.28) 50%, 
+        transparent 100%
+      );
     }
 
-    /* Ambient AST Contract Reorganization Wave */
-    .ast-scope-wave.ast-reorg-wave {
+    /* Emerald AST Reorganization Laser */
+    .ast-laser-beam.ast-reorg-wave, .ast-scope-wave.ast-reorg-wave {
+      background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(16, 185, 129, 0.3) 10%, 
+        #10B981 25%, 
+        #34D399 45%, 
+        #FFFFFF 50%, 
+        #34D399 55%, 
+        #10B981 75%, 
+        rgba(16, 185, 129, 0.3) 90%, 
+        transparent 100%
+      );
+      box-shadow: 
+        0 0 6px 1.5px rgba(255, 255, 255, 0.9),
+        0 0 14px 3px rgba(52, 211, 153, 0.85),
+        0 0 24px 5px rgba(16, 185, 129, 0.45);
+    }
+    .ast-laser-beam.ast-reorg-wave::before, .ast-scope-wave.ast-reorg-wave::before {
       background: linear-gradient(180deg, 
         transparent 0%, 
-        rgba(16, 185, 129, 0.05) 20%, 
-        rgba(217, 119, 87, 0.16) 50%, 
-        rgba(16, 185, 129, 0.06) 80%, 
+        rgba(16, 185, 129, 0.2) 50%, 
         transparent 100%
       );
     }
-    html.dark .ast-scope-wave.ast-reorg-wave {
+    html.dark .ast-laser-beam.ast-reorg-wave, html.dark .ast-scope-wave.ast-reorg-wave {
+      box-shadow: 
+        0 0 8px 2px rgba(255, 255, 255, 0.95),
+        0 0 16px 4px rgba(52, 211, 153, 0.9),
+        0 0 28px 6px rgba(16, 185, 129, 0.6);
+    }
+    html.dark .ast-laser-beam.ast-reorg-wave::before, html.dark .ast-scope-wave.ast-reorg-wave::before {
       background: linear-gradient(180deg, 
         transparent 0%, 
-        rgba(16, 185, 129, 0.08) 20%, 
-        rgba(217, 119, 87, 0.24) 50%, 
-        rgba(16, 185, 129, 0.10) 80%, 
+        rgba(16, 185, 129, 0.28) 50%, 
         transparent 100%
       );
     }
@@ -833,8 +876,8 @@
 
           <!-- Code Viewport Body with Sparkle Particle Overlay (Fixed Height to Prevent Layout Shift) -->
           <div class="relative overflow-hidden flex flex-col h-[380px] sm:h-[480px] bg-white dark:bg-zinc-950 shrink-0">
-            <!-- Diffuse Ambient AST Scope Wave Scanner -->
-            <div id="scanBeam" class="ast-scope-wave"></div>
+            <!-- Focused AST Precision Laser Beam Scanner -->
+            <div id="scanBeam" class="ast-laser-beam"></div>
             <div id="sparkleOverlay" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
             <div id="skelOutput" class="w-full h-full p-3.5 sm:p-5 font-mono text-[11px] sm:text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-auto selection:bg-[#ECCBBE]/60 selection:text-[#411A0E] signal-glow"></div>
           </div>
@@ -2737,6 +2780,12 @@ impl PaymentGateway for StripeGateway {
       clearTimeout(highlightTimeout);
       morphTimeouts.forEach(t => clearTimeout(t));
       morphTimeouts = [];
+      const scanBeam = document.getElementById('scanBeam');
+      if (scanBeam) {
+        scanBeam.style.opacity = '0';
+        scanBeam.style.transition = 'none';
+        scanBeam.style.top = '0px';
+      }
       stopAutoScroll();
     }
 
@@ -2758,7 +2807,11 @@ impl PaymentGateway for StripeGateway {
       container.scrollTop = 0;
 
       const scanBeam = document.getElementById('scanBeam');
-      if (scanBeam) scanBeam.style.opacity = '0';
+      if (scanBeam) {
+        scanBeam.style.opacity = '0';
+        scanBeam.style.transition = 'none';
+        scanBeam.style.top = '0px';
+      }
 
       const allBlocks = container.querySelectorAll('.dissolve-block');
       const allCards = container.querySelectorAll('.targeted-prune-card');
@@ -2816,24 +2869,38 @@ impl PaymentGateway for StripeGateway {
 
       // ==========================================
       // PHASE 2: Token Telemetry & Compiler Profiling (Step 2)
-      // Progress runner advances 0% -> 100% while ambient wave passes through scopes
-      // Context token count starts counting during profiling step
+      // Laser beam sweeps down slowly, then quickly zips up when done
+      // Context token count tallies during the downward scan
       // ==========================================
       const scanDuration = 3000;
       scanTimeout = setTimeout(() => {
         setMorphStatus('scan', 2, 'Profiling');
 
+        const downDuration = 2250;
+        const upDuration = 450;
+
         if (scanBeam) {
           scanBeam.style.transition = 'none';
-          scanBeam.style.top = '-40px';
+          scanBeam.style.top = '0px';
           scanBeam.style.opacity = '1';
           void scanBeam.offsetHeight;
-          scanBeam.style.transition = `top ${scanDuration}ms cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s ease`;
-          scanBeam.style.top = 'calc(100% - 60px)';
+
+          // 1. Goes down slowly: steady, deliberate laser scan across AST scopes
+          scanBeam.style.transition = `top ${downDuration}ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.2s ease`;
+          scanBeam.style.top = 'calc(100% - 3px)';
+
+          // 2. Quickly up when done: zips rapidly back to top home position
+          const upTimer = setTimeout(() => {
+            if (currentMorphState !== 'scan') return;
+            scanBeam.style.transition = `top ${upDuration}ms cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease ${upDuration - 150}ms`;
+            scanBeam.style.top = '0px';
+            scanBeam.style.opacity = '0';
+          }, downDuration + 50);
+          morphTimeouts.push(upTimer);
         }
 
-        // Context token count starts counting during profiling step
-        const profileCountDuration = scanDuration - 300;
+        // Context token count tallies during the downward pass
+        const profileCountDuration = downDuration;
         animateNumber('bridgeRaw', 0, conf.rawTokens, profileCountDuration, v => `${Math.round(v).toLocaleString()} tokens`);
         animateNumber('costRaw', 0, conf.rawCost, profileCountDuration, v => `$${v.toFixed(2)}`);
         animateNumber('bridgeSkel', 0, conf.rawTokens, profileCountDuration, v => `${Math.round(v).toLocaleString()} tokens`);
@@ -2857,7 +2924,11 @@ impl PaymentGateway for StripeGateway {
       // ==========================================
       const bloatHoldDuration = 2400;
       highlightTimeout = setTimeout(() => {
-        if (scanBeam) scanBeam.style.opacity = '0';
+        if (scanBeam) {
+          scanBeam.style.opacity = '0';
+          scanBeam.style.transition = 'none';
+          scanBeam.style.top = '0px';
+        }
 
         const dissolveItems = demoBlocks[curLang].filter(b => b.type === 'dissolve');
         if (dissolveItems.length > 0) {
@@ -2928,29 +2999,29 @@ impl PaymentGateway for StripeGateway {
 
           // 3. Deliberate hold for 850ms so user clearly registers the dead imports and internal fields being eliminated
           const waveLaunchTimer = setTimeout(() => {
-            // Trigger the Ambient Reorganization Wave across the editor
+            // Trigger the Precision Reorganization Laser across the editor
             const scanBeam = document.getElementById('scanBeam');
             if (scanBeam) {
               scanBeam.style.transition = 'none';
-              scanBeam.style.top = '-40px';
+              scanBeam.style.top = '0px';
               scanBeam.style.opacity = '1';
-              scanBeam.className = 'ast-scope-wave ast-reorg-wave';
+              scanBeam.className = 'ast-laser-beam ast-reorg-wave';
               void scanBeam.offsetHeight;
-              scanBeam.style.transition = 'top 1600ms cubic-bezier(0.25, 1, 0.5, 1), opacity 0.45s ease';
-              scanBeam.style.top = 'calc(100% - 40px)';
+              scanBeam.style.transition = 'top 1500ms cubic-bezier(0.25, 1, 0.5, 1), opacity 0.45s ease';
+              scanBeam.style.top = 'calc(100% - 3px)';
             }
 
             const shimmer = document.getElementById('footerBarShimmer');
             if (shimmer) {
               shimmer.style.opacity = '1';
-              setTimeout(() => { if (shimmer) shimmer.style.opacity = '0'; }, 1600);
+              setTimeout(() => { if (shimmer) shimmer.style.opacity = '0'; }, 1500);
             }
 
-            // 4. At 1000ms as the reorganization wave travels down, smoothly manifest the clean synthesized contract
+            // 4. At 1000ms as the reorganization laser travels down, smoothly manifest the clean synthesized contract
             const manifestTimer = setTimeout(() => {
               if (scanBeam) {
                 scanBeam.style.opacity = '0';
-                setTimeout(() => { if (scanBeam) scanBeam.className = 'ast-scope-wave'; }, 450);
+                setTimeout(() => { if (scanBeam) scanBeam.className = 'ast-laser-beam'; }, 450);
               }
 
               const cleanCode = cleanSynthesizedCode[lang] || '';
