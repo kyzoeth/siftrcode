@@ -412,7 +412,7 @@
       border-bottom-color: transparent !important;
     }
     .dissolve-block.expanded {
-      max-height: 520px !important;
+      max-height: 2500px !important;
       opacity: 1 !important;
       pointer-events: auto !important;
     }
@@ -796,15 +796,15 @@
                 <span class="text-zinc-400 dark:text-zinc-500 font-sans text-[11px] font-medium uppercase tracking-wider select-none">Context:</span>
                 
                 <div class="flex items-baseline gap-1 text-zinc-600 dark:text-zinc-400 shrink-0">
-                  <span id="bridgeRaw" class="font-medium">1,460 tokens</span>
-                  <span class="text-[11px] text-zinc-400 dark:text-zinc-500">(<span id="costRaw">$43.80</span>)</span>
+                  <span id="bridgeRaw" class="font-medium">2,420 tokens</span>
+                  <span class="text-[11px] text-zinc-400 dark:text-zinc-500">(<span id="costRaw">$72.60</span>)</span>
                 </div>
 
                 <span class="text-zinc-400 dark:text-zinc-600 font-sans select-none px-0.5">➔</span>
 
                 <div class="flex items-baseline gap-1 text-zinc-800 dark:text-zinc-200 font-semibold shrink-0">
-                  <span id="bridgeSkel">1,460 tokens</span>
-                  <span class="text-[11px] text-zinc-500 dark:text-zinc-400 font-normal">(<span id="costSkel">$43.80</span>)</span>
+                  <span id="bridgeSkel">2,420 tokens</span>
+                  <span class="text-[11px] text-zinc-500 dark:text-zinc-400 font-normal">(<span id="costSkel">$72.60</span>)</span>
                 </div>
               </div>
 
@@ -1109,114 +1109,324 @@
   <!-- Workbench Script -->
   <script>
     const samples = {
-      ts: `import { Database } from './database';
-import { User, UserCreateInput } from '../types';
+      ts: `import { Database, User, UserRole, SessionToken } from './db';
+import { hash, compare } from 'bcrypt';
+import { signJwt, verifyJwt } from './jwt';
+import { sendWelcomeEmail } from './mailer';
+import { Logger } from './logger';
+
+export interface User {
+  id: string;
+  email: string;
+  role: UserRole;
+  createdAt: Date;
+  lastLoginAt?: Date;
+  isVerified: boolean;
+}
+
+export interface AuthSession {
+  user: User;
+  token: string;
+  expiresAt: number;
+}
 
 export class UserService {
   private db: Database;
   private logger: Logger;
+  private readonly jwtSecret: string;
 
-  constructor(db: Database) {
+  constructor(db: Database, logger: Logger, jwtSecret: string) {
     this.db = db;
-    this.logger = new Logger('UserService');
-    console.log("Database connection initialized on pool port 5432");
+    this.logger = logger;
+    this.jwtSecret = jwtSecret;
   }
 
-  /** Finds a user by their unique primary ID */
-  public async getUserById(id: string): Promise<User | null> {
-    this.logger.debug(\`Fetching user \${id}\`);
-    const sql = "SELECT id, email, created_at FROM users WHERE id = $1 LIMIT 1";
-    const result = await this.db.query(sql, [id]);
-    if (!result.rows || result.rows.length === 0) {
-      return null;
+  /** Retrieves active user by unique primary key with cache lookup */
+  public async getUser(id: string): Promise<User | null> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid user ID parameter provided');
     }
-    return result.rows[0];
+    this.logger.debug(\`Fetching user record: \${id}\`);
+    const cached = await this.db.cache.get(\`user:\${id}\`);
+    if (cached) {
+      return JSON.parse(cached) as User;
+    }
+    const sql = \`
+      SELECT id, email, role, created_at, last_login_at, is_verified
+      FROM users
+      WHERE id = $1 AND deleted_at IS NULL
+      LIMIT 1
+    \`;
+    const res = await this.db.query<User>(sql, [id]);
+    if (!res.rows[0]) return null;
+    await this.db.cache.set(\`user:\${id}\`, JSON.stringify(res.rows[0]), 3600);
+    return res.rows[0];
   }
 
-  /** Creates a user with retries and hashing */
-  public async createUser(data: UserCreateInput): Promise<User> {
-    // 50 lines of field validation, password hashing, and audit log writes...
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        return await this.db.transaction(async (tx) => {
-          return await tx.insert(data);
-        });
-      } catch (err) {
-        this.logger.error("Transaction failed, retrying...");
+  /** Creates new user with bcrypt credential hashing & transaction atomicity */
+  public async createUser(email: string, password: string, role?: UserRole): Promise<User> {
+    const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new Error('Invalid email address format');
+    }
+    if (password.length < 10) {
+      throw new Error('Password must satisfy minimum 10 characters');
+    }
+    return await this.db.transaction(async (tx) => {
+      const existing = await tx.query('SELECT 1 FROM users WHERE email = $1', [email]);
+      if (existing.rows.length > 0) {
+        throw new Error('User with this email already registered');
       }
+      const saltRounds = 12;
+      const passwordHash = await hash(password, saltRounds);
+      const insertSql = \`
+        INSERT INTO users (id, email, password_hash, role, is_verified, created_at)
+        VALUES (gen_random_uuid(), $1, $2, $3, false, NOW())
+        RETURNING id, email, role, created_at, is_verified
+      \`;
+      const { rows } = await tx.query<User>(insertSql, [email, passwordHash, role ?? 'member']);
+      const newUser = rows[0];
+      await sendWelcomeEmail(newUser.email, newUser.id);
+      this.logger.info(\`Successfully provisioned account: \${newUser.id}\`);
+      return newUser;
+    });
+  }
+
+  /** Verifies credentials, updates audit telemetry and issues signed JWT session */
+  public async authenticate(email: string, password: string): Promise<AuthSession> {
+    const userRes = await this.db.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = userRes.rows[0];
+    if (!user) throw new Error('Invalid credentials');
+    const valid = await compare(password, user.password_hash);
+    if (!valid) {
+      await this.db.query('UPDATE users SET failed_attempts = failed_attempts + 1 WHERE id = $1', [user.id]);
+      throw new Error('Invalid credentials');
     }
-    throw new Error("Unable to create user after retries");
+    await this.db.query('UPDATE users SET last_login_at = NOW(), failed_attempts = 0 WHERE id = $1', [user.id]);
+    const token = signJwt({ sub: user.id, email: user.email, role: user.role }, this.jwtSecret, { expiresIn: '7d' });
+    return { user, token, expiresAt: Date.now() + 7 * 86400 * 1000 };
   }
 }`,
-      py: `from typing import Optional, List, Dict
+      py: `from typing import Optional, Dict, List, Any
+import time
+import logging
+import hmac
+import hashlib
 import stripe
+from dataclasses import dataclass
+
+@dataclass
+class PaymentIntent:
+    id: str
+    amount: int
+    currency: str
+    status: str
+    customer_id: str
 
 class StripeGateway:
-    """Manages credit card and subscription payments."""
-    def __init__(self, api_key: str, webhook_secret: str):
-        self.client = stripe.Client(api_key)
-        self.secret = webhook_secret
-        self._verify_credentials()
+    """Enterprise payment processor gateway with circuit breaker & idempotent retries."""
 
-    def charge_customer(self, customer_id: str, amount_cents: int) -> Dict[str, any]:
-        """Executes one-time payment charge."""
-        # 40 lines of error handling, telemetry, and card token verification...
-        for retry in range(3):
+    def __init__(self, api_key: str, webhook_secret: str, max_retries: int = 3):
+        if not api_key.startswith("sk_"):
+            raise ValueError("Invalid Stripe API key format supplied")
+        self.api_key = api_key
+        self.webhook_secret = webhook_secret
+        self.max_retries = max_retries
+        self.client = stripe.StripeClient(api_key)
+        self.logger = logging.getLogger("payments.stripe")
+        self._circuit_failures = 0
+        self._circuit_open_until = 0.0
+
+    def create_charge(self, customer_id: str, amount_cents: int, currency: str = "usd") -> PaymentIntent:
+        """Charges customer with circuit breaker protection and exponential backoff retry loops."""
+        if time.time() < self._circuit_open_until:
+            raise ConnectionError("Payment circuit breaker OPEN - downstream gateway unavailable")
+        for attempt in range(1, self.max_retries + 1):
             try:
-                charge = self.client.charges.create(customer=customer_id, amount=amount_cents)
-                return {"status": "success", "charge_id": charge.id}
-            except stripe.error.CardError as e:
-                return {"status": "declined", "error": str(e)}
-        return {"status": "timeout"}
+                self.logger.info("Dispatching charge customer=%s amount=%s attempt=%s", customer_id, amount_cents, attempt)
+                resp = self.client.payment_intents.create(
+                    params={
+                        "amount": amount_cents,
+                        "currency": currency,
+                        "customer": customer_id,
+                        "automatic_payment_methods": {"enabled": True},
+                    },
+                    options={"idempotency_key": f"pi_{customer_id}_{int(time.time())}"}
+                )
+                self._circuit_failures = 0
+                return PaymentIntent(id=resp.id, amount=resp.amount, currency=resp.currency, status=resp.status, customer_id=customer_id)
+            except stripe.RateLimitError:
+                backoff = (2 ** attempt) * 0.5
+                self.logger.warning("Rate limit hit; backing off %.2fs", backoff)
+                time.sleep(backoff)
+            except stripe.StripeError:
+                self._circuit_failures += 1
+                if self._circuit_failures >= 5:
+                    self._circuit_open_until = time.time() + 60.0
+                raise
+        raise TimeoutError("Exhausted all retry attempts connecting to payment processor")
 
-    def cancel_subscription(self, sub_id: str) -> bool:
-        """Cancels active recurring subscription."""
-        # 30 lines of state machine transition...
-        return True`,
+    def verify_webhook_signature(self, payload: bytes, signature_header: str) -> Dict[str, Any]:
+        """Validates HMAC-SHA256 signature against webhook secret to prevent replay attacks."""
+        timestamp, _, expected_sig = signature_header.partition(",v1=")
+        t_val = timestamp.replace("t=", "")
+        if abs(time.time() - int(t_val)) > 300:
+            raise ValueError("Webhook timestamp expired outside 5-minute replay tolerance")
+        signed_payload = f"{t_val}.".encode("utf-8") + payload
+        computed_sig = hmac.new(self.webhook_secret.encode("utf-8"), signed_payload, hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(computed_sig, expected_sig):
+            raise PermissionError("HMAC verification mismatch for incoming payment webhook")
+        return stripe.Webhook.construct_event(payload, signature_header, self.webhook_secret)`,
       go: `package server
 
 import (
     "context"
+    "crypto/tls"
+    "fmt"
+    "log/slog"
     "net/http"
+    "sync"
+    "time"
 )
 
-type Config struct {
-    Port int
-    DBUrl string
+type ServerConfig struct {
+    Port         int
+    ReadTimeout  time.Duration
+    WriteTimeout time.Duration
+    TLSConfig    *tls.Config
 }
 
 type Server struct {
-    cfg Config
-    mux *http.ServeMux
+    config ServerConfig
+    mux    *http.ServeMux
+    server *http.Server
+    logger *slog.Logger
+    mu     sync.RWMutex
 }
 
-func NewServer(cfg Config) *Server {
-    // 40 lines of pool initialization and route setup...
+func NewServer(cfg ServerConfig, logger *slog.Logger) *Server {
+    if cfg.Port <= 0 || cfg.Port > 65535 {
+        cfg.Port = 8080
+    }
+    if cfg.ReadTimeout == 0 {
+        cfg.ReadTimeout = 15 * time.Second
+    }
+    if cfg.WriteTimeout == 0 {
+        cfg.WriteTimeout = 30 * time.Second
+    }
     mux := http.NewServeMux()
-    return &Server{cfg: cfg, mux: mux}
+    s := &Server{
+        config: cfg,
+        mux:    mux,
+        logger: logger,
+    }
+    return s
 }
 
 func (s *Server) Start(ctx context.Context) error {
-    // 30 lines of graceful shutdown handling...
-    return http.ListenAndServe(":8080", s.mux)
-}`,
-      rs: `pub struct Config {
-    pub api_key: String,
-    pub timeout_ms: u64,
+    s.mu.Lock()
+    addr := fmt.Sprintf(":%d", s.config.Port)
+    s.server = &http.Server{
+        Addr:         addr,
+        Handler:      s.mux,
+        ReadTimeout:  s.config.ReadTimeout,
+        WriteTimeout: s.config.WriteTimeout,
+        TLSConfig:    s.config.TLSConfig,
+    }
+    s.mu.Unlock()
+
+    errChan := make(chan error, 1)
+    go func() {
+        s.logger.Info("Starting HTTP listener", "addr", addr)
+        if s.config.TLSConfig != nil {
+            errChan <- s.server.ListenAndServeTLS("", "")
+        } else {
+            errChan <- s.server.ListenAndServe()
+        }
+    }()
+
+    select {
+    case <-ctx.Done():
+        s.logger.Info("Shutdown signal received, draining active connections...")
+        shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+        defer cancel()
+        return s.server.Shutdown(shutdownCtx)
+    case err := <-errChan:
+        if err != nil && err != http.ErrServerClosed {
+            return fmt.Errorf("server crashed: %w", err)
+        }
+        return nil
+    }
 }
 
-pub trait Gateway {
-    fn charge(&self, customer_id: &str, amount: u64) -> Result<String, String>;
+func (s *Server) Handle(pattern string, handler http.HandlerFunc) {
+    wrapped := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        start := time.Now()
+        s.logger.Debug("Handling HTTP request", "method", r.Method, "path", r.URL.Path)
+        handler(w, r)
+        s.logger.Info("Request completed", "path", r.URL.Path, "duration_ms", time.Since(start).Milliseconds())
+    })
+    s.mux.HandleFunc(pattern, wrapped)
+}`,
+      rs: `use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::RwLock;
+
+pub struct ClientConfig {
+    pub api_key: String,
+    pub timeout: Duration,
+    pub max_retries: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct TransactionReceipt {
+    pub transaction_id: String,
+    pub amount_cents: u64,
+    pub settled: bool,
+}
+
+pub trait PaymentGateway: Send + Sync {
+    fn process_payment(&self, customer_id: &str, amount: u64) -> Result<TransactionReceipt, String>;
+    fn refund(&self, transaction_id: &str) -> Result<bool, String>;
 }
 
 pub struct StripeGateway {
-    config: Config,
+    config: ClientConfig,
+    ledger: Arc<RwLock<HashMap<String, TransactionReceipt>>>,
 }
 
-impl Gateway for StripeGateway {
-    pub fn charge(&self, customer_id: &str, amount: u64) -> Result<String, String> {
-        // 50 lines of TLS handshakes and error mappings...
-        Ok(format!("ch_{}", customer_id))
+impl PaymentGateway for StripeGateway {
+    fn process_payment(&self, customer_id: &str, amount: u64) -> Result<TransactionReceipt, String> {
+        if customer_id.is_empty() {
+            return Err("Validation failure: customer_id cannot be blank".to_string());
+        }
+        if amount == 0 {
+            return Err("Validation failure: amount must exceed zero cents".to_string());
+        }
+        for attempt in 1..=self.config.max_retries {
+            let req_id = format!("req_{}_{}", customer_id, attempt);
+            let receipt = TransactionReceipt {
+                transaction_id: format!("tx_stripe_{}", req_id),
+                amount_cents: amount,
+                settled: true,
+            };
+            let mut ledger = self.ledger.blocking_write();
+            ledger.insert(receipt.transaction_id.clone(), receipt.clone());
+            return Ok(receipt);
+        }
+        Err("Exceeded retry threshold attempting gateway handshake".to_string())
+    }
+
+    fn refund(&self, transaction_id: &str) -> Result<bool, String> {
+        let mut ledger = self.ledger.blocking_write();
+        match ledger.get_mut(transaction_id) {
+            Some(receipt) => {
+                receipt.settled = false;
+                Ok(true)
+            }
+            None => Err(format!("Transaction '{}' not located in local ledger", transaction_id)),
+        }
     }
 }`
     };
@@ -1233,13 +1443,13 @@ impl Gateway for StripeGateway {
         skelBadge: 'user_service.ts',
         badgeStyle: 'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-300 dark:bg-blue-950/70 dark:border-blue-800/80',
         pingColor: 'bg-blue-500',
-        rawTokens: 1840,
-        skelTokens: 138,
-        reduction: 92.5,
-        savedTokens: 1702,
-        rawCost: 55.20,
-        skelCost: 4.14,
-        savedCost: 51.06
+        rawTokens: 2420,
+        skelTokens: 176,
+        reduction: 92.7,
+        savedTokens: 2244,
+        rawCost: 72.60,
+        skelCost: 5.28,
+        savedCost: 67.32
       },
       py: {
         name: 'Python',
@@ -1252,13 +1462,13 @@ impl Gateway for StripeGateway {
         skelBadge: 'stripe_gateway.py',
         badgeStyle: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-950/70 dark:border-emerald-800/80',
         pingColor: 'bg-emerald-500',
-        rawTokens: 2120,
-        skelTokens: 164,
-        reduction: 92.3,
-        savedTokens: 1956,
-        rawCost: 63.60,
-        skelCost: 4.92,
-        savedCost: 58.68
+        rawTokens: 2280,
+        skelTokens: 168,
+        reduction: 92.6,
+        savedTokens: 2112,
+        rawCost: 68.40,
+        skelCost: 5.04,
+        savedCost: 63.36
       },
       go: {
         name: 'Go',
@@ -1267,17 +1477,17 @@ impl Gateway for StripeGateway {
         icon: `<svg class="w-3.5 h-3.5 shrink-0 inline" viewBox="0 0 24 24" fill="#00ADD8"><path d="M1.811 10.231c-.047 0-.058-.023-.035-.059l.246-.315c.023-.035.081-.058.128-.058h4.172c.046 0 .058.035.035.07l-.199.303c-.023.036-.082.07-.117.07zM.047 11.306c-.047 0-.059-.023-.035-.058l.245-.316c.023-.035.082-.058.129-.058h5.328c.047 0 .07.035.058.07l-.093.28c-.012.047-.058.07-.105.07zm2.828 1.075c-.047 0-.059-.035-.035-.07l.163-.292c.023-.035.07-.07.117-.07h2.337c.047 0 .07.035.07.082l-.023.28c0 .047-.047.082-.082.082zm12.129-2.36c-.736.187-1.239.327-1.963.514-.176.046-.187.058-.34-.117-.174-.199-.303-.327-.548-.444-.737-.362-1.45-.257-2.115.175-.795.514-1.204 1.274-1.192 2.22.011.935.654 1.706 1.577 1.835.795.105 1.46-.175 1.987-.77.105-.13.198-.27.315-.434H10.47c-.245 0-.304-.152-.222-.35.152-.362.432-.97.596-1.274a.315.315 0 01.292-.187h4.253c-.023.316-.023.631-.07.947a4.983 4.983 0 01-.958 2.29c-.841 1.11-1.94 1.8-3.33 1.986-1.145.152-2.209-.07-3.143-.77-.865-.655-1.356-1.52-1.484-2.595-.152-1.274.222-2.419.993-3.424.83-1.086 1.928-1.776 3.272-2.02 1.098-.2 2.15-.07 3.096.571.62.41 1.063.97 1.356 1.648.07.105.023.164-.117.2m3.868 6.461c-1.064-.024-2.034-.328-2.852-1.029a3.665 3.665 0 01-1.262-2.255c-.21-1.32.152-2.489.947-3.529.853-1.122 1.881-1.706 3.272-1.95 1.192-.21 2.314-.095 3.33.595.923.63 1.496 1.484 1.648 2.605.198 1.578-.257 2.863-1.344 3.962-.771.783-1.718 1.273-2.805 1.495-.315.06-.63.07-.934.106zm2.78-4.72c-.011-.153-.011-.27-.034-.387-.21-1.157-1.274-1.81-2.384-1.554-1.087.245-1.788.935-2.045 2.033-.21.912.234 1.835 1.075 2.21.643.28 1.285.244 1.905-.07.923-.48 1.425-1.228 1.484-2.233z"/></svg>`,
         tabActiveClass: 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-700/80',
         tabInactiveClass: 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-800/40 border border-transparent',
-        rawBadge: 'router.go',
-        skelBadge: 'router.go',
+        rawBadge: 'server.go',
+        skelBadge: 'server.go',
         badgeStyle: 'text-cyan-700 bg-cyan-50 border-cyan-200 dark:text-cyan-300 dark:bg-cyan-950/70 dark:border-cyan-800/80',
         pingColor: 'bg-cyan-500',
-        rawTokens: 1460,
-        skelTokens: 118,
-        reduction: 91.9,
-        savedTokens: 1342,
-        rawCost: 43.80,
-        skelCost: 3.54,
-        savedCost: 40.26
+        rawTokens: 1940,
+        skelTokens: 152,
+        reduction: 92.2,
+        savedTokens: 1788,
+        rawCost: 58.20,
+        skelCost: 4.56,
+        savedCost: 53.64
       },
       rs: {
         name: 'Rust',
@@ -1290,13 +1500,13 @@ impl Gateway for StripeGateway {
         skelBadge: 'gateway.rs',
         badgeStyle: 'text-orange-700 bg-orange-50 border-orange-200 dark:text-orange-300 dark:bg-orange-950/70 dark:border-orange-800/80',
         pingColor: 'bg-orange-500',
-        rawTokens: 1980,
-        skelTokens: 142,
-        reduction: 92.8,
-        savedTokens: 1838,
-        rawCost: 59.40,
-        skelCost: 4.26,
-        savedCost: 55.14
+        rawTokens: 2160,
+        skelTokens: 160,
+        reduction: 92.6,
+        savedTokens: 2000,
+        rawCost: 64.80,
+        skelCost: 4.80,
+        savedCost: 60.00
       }
     };
 
@@ -1304,33 +1514,115 @@ impl Gateway for StripeGateway {
       ts: [
         {
           type: 'code',
-          content: `import { Database, User } from './db';
+          content: `import { Database, User, UserRole, SessionToken } from './db';
+import { hash, compare } from 'bcrypt';
+import { signJwt, verifyJwt } from './jwt';
+import { sendWelcomeEmail } from './mailer';
+import { Logger } from './logger';
+
+export interface User {
+  id: string;
+  email: string;
+  role: UserRole;
+  createdAt: Date;
+  lastLoginAt?: Date;
+  isVerified: boolean;
+}
+
+export interface AuthSession {
+  user: User;
+  token: string;
+  expiresAt: number;
+}
 
 export class UserService {
-  constructor(private db: Database) {}`
+  private db: Database;
+  private logger: Logger;
+  private readonly jwtSecret: string;
+
+  constructor(db: Database, logger: Logger, jwtSecret: string) {
+    this.db = db;
+    this.logger = logger;
+    this.jwtSecret = jwtSecret;
+  }`
         },
         {
           type: 'dissolve',
           id: 'ts-1',
-          lineCount: 28,
-          costSaved: 'Save ~$0.84/1k calls',
-          rawCode: `    const sql = "SELECT * FROM users WHERE id = $1 LIMIT 1";
-    const res = await this.db.query(sql, [id]);
-    return res.rows[0] ?? null;`,
-          interfaceCode: `
-  /** Finds user by unique primary key */
+          lineCount: 19,
+          costSaved: 'Save ~$0.57/1k calls',
+          rawCode: `    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid user ID parameter provided');
+    }
+    this.logger.debug(\`Fetching user record: \${id}\`);
+    const cached = await this.db.cache.get(\`user:\${id}\`);
+    if (cached) {
+      return JSON.parse(cached) as User;
+    }
+    const sql = \`
+      SELECT id, email, role, created_at, last_login_at, is_verified
+      FROM users
+      WHERE id = $1 AND deleted_at IS NULL
+      LIMIT 1
+    \`;
+    const res = await this.db.query<User>(sql, [id]);
+    if (!res.rows[0]) return null;
+    await this.db.cache.set(\`user:\${id}\`, JSON.stringify(res.rows[0]), 3600);
+    return res.rows[0];`,
+          interfaceCode: `  /** Retrieves active user by unique primary key with cache lookup */
   public async getUser(id: string): Promise<User | null>;`
         },
         {
           type: 'dissolve',
           id: 'ts-2',
-          lineCount: 42,
-          costSaved: 'Save ~$1.26/1k calls',
-          rawCode: `    // 40 lines of bcrypt hashing, payload validation & transactions...
-    return await this.db.insert("users", { email });`,
-          interfaceCode: `
-  /** Creates user record with hashing & transaction guarantees */
-  public async createUser(email: string): Promise<User>;`
+          lineCount: 26,
+          costSaved: 'Save ~$0.78/1k calls',
+          rawCode: `    const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new Error('Invalid email address format');
+    }
+    if (password.length < 10) {
+      throw new Error('Password must satisfy minimum 10 characters');
+    }
+    return await this.db.transaction(async (tx) => {
+      const existing = await tx.query('SELECT 1 FROM users WHERE email = $1', [email]);
+      if (existing.rows.length > 0) {
+        throw new Error('User with this email already registered');
+      }
+      const saltRounds = 12;
+      const passwordHash = await hash(password, saltRounds);
+      const insertSql = \`
+        INSERT INTO users (id, email, password_hash, role, is_verified, created_at)
+        VALUES (gen_random_uuid(), $1, $2, $3, false, NOW())
+        RETURNING id, email, role, created_at, is_verified
+      \`;
+      const { rows } = await tx.query<User>(insertSql, [email, passwordHash, role ?? 'member']);
+      const newUser = rows[0];
+      await sendWelcomeEmail(newUser.email, newUser.id);
+      this.logger.info(\`Successfully provisioned account: \${newUser.id}\`);
+      return newUser;
+    });`,
+          interfaceCode: `  /** Creates new user with bcrypt credential hashing & transaction atomicity */
+  public async createUser(email: string, password: string, role?: UserRole): Promise<User>;`
+        },
+        {
+          type: 'dissolve',
+          id: 'ts-3',
+          lineCount: 17,
+          costSaved: 'Save ~$0.51/1k calls',
+          rawCode: `    const userRes = await this.db.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = userRes.rows[0];
+    if (!user) throw new Error('Invalid credentials');
+    const valid = await compare(password, user.password_hash);
+    if (!valid) {
+      await this.db.query('UPDATE users SET failed_attempts = failed_attempts + 1 WHERE id = $1', [user.id]);
+      throw new Error('Invalid credentials');
+    }
+    await this.db.query('UPDATE users SET last_login_at = NOW(), failed_attempts = 0 WHERE id = $1', [user.id]);
+    const token = signJwt({ sub: user.id, email: user.email, role: user.role }, this.jwtSecret, { expiresIn: '7d' });
+    return { user, token, expiresAt: Date.now() + 7 * 86400 * 1000 };`,
+          interfaceCode: `  /** Verifies credentials, updates audit telemetry and issues signed JWT session */
+  public async authenticate(email: string, password: string): Promise<AuthSession>;`
         },
         {
           type: 'code',
@@ -1340,34 +1632,91 @@ export class UserService {
       py: [
         {
           type: 'code',
-          content: `from typing import Optional, Dict
+          content: `from typing import Optional, Dict, List, Any
+import time
+import logging
+import hmac
+import hashlib
 import stripe
+from dataclasses import dataclass
+
+@dataclass
+class PaymentIntent:
+    id: str
+    amount: int
+    currency: str
+    status: str
+    customer_id: str
 
 class StripeGateway:
-    """Manages payment gateway processing."""`
+    """Enterprise payment processor gateway with circuit breaker & idempotent retries."""`
         },
         {
           type: 'dissolve',
           id: 'py-1',
-          lineCount: 24,
-          costSaved: 'Save ~$0.72/1k calls',
-          rawCode: `        self.client = stripe.Client(api_key)
-        self._verify_credentials()`,
-          interfaceCode: `
-    def __init__(self, api_key: str):
-        ...`
+          lineCount: 13,
+          costSaved: 'Save ~$0.39/1k calls',
+          rawCode: `        if not api_key.startswith("sk_"):
+            raise ValueError("Invalid Stripe API key format supplied")
+        self.api_key = api_key
+        self.webhook_secret = webhook_secret
+        self.max_retries = max_retries
+        self.client = stripe.StripeClient(api_key)
+        self.logger = logging.getLogger("payments.stripe")
+        self._circuit_failures = 0
+        self._circuit_open_until = 0.0`,
+          interfaceCode: `    def __init__(self, api_key: str, webhook_secret: str, max_retries: int = 3):`
         },
         {
           type: 'dissolve',
           id: 'py-2',
-          lineCount: 52,
-          costSaved: 'Save ~$1.56/1k calls',
-          rawCode: `        # 50 lines of retry loops, exponential backoff & fraud telemetry...
-        return self.client.charges.create(customer=customer_id, amount=amount)`,
-          interfaceCode: `
-    def charge(self, customer_id: str, amount: int) -> Dict[str, any]:
-        """Executes payment charge with automatic retries."""
-        ...`
+          lineCount: 26,
+          costSaved: 'Save ~$0.78/1k calls',
+          rawCode: `        if time.time() < self._circuit_open_until:
+            raise ConnectionError("Payment circuit breaker OPEN - downstream gateway unavailable")
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                self.logger.info("Dispatching charge customer=%s amount=%s attempt=%s", customer_id, amount_cents, attempt)
+                resp = self.client.payment_intents.create(
+                    params={
+                        "amount": amount_cents,
+                        "currency": currency,
+                        "customer": customer_id,
+                        "automatic_payment_methods": {"enabled": True},
+                    },
+                    options={"idempotency_key": f"pi_{customer_id}_{int(time.time())}"}
+                )
+                self._circuit_failures = 0
+                return PaymentIntent(id=resp.id, amount=resp.amount, currency=resp.currency, status=resp.status, customer_id=customer_id)
+            except stripe.RateLimitError:
+                backoff = (2 ** attempt) * 0.5
+                self.logger.warning("Rate limit hit; backing off %.2fs", backoff)
+                time.sleep(backoff)
+            except stripe.StripeError:
+                self._circuit_failures += 1
+                if self._circuit_failures >= 5:
+                    self._circuit_open_until = time.time() + 60.0
+                raise
+        raise TimeoutError("Exhausted all retry attempts connecting to payment processor")`,
+          interfaceCode: `    def create_charge(self, customer_id: str, amount_cents: int, currency: str = "usd") -> PaymentIntent:
+        """Charges customer with circuit breaker protection and exponential backoff retry loops."""`
+        },
+        {
+          type: 'dissolve',
+          id: 'py-3',
+          lineCount: 16,
+          costSaved: 'Save ~$0.48/1k calls',
+          rawCode: `        timestamp, _, expected_sig = signature_header.partition(",v1=")
+        t_val = timestamp.replace("t=", "")
+        if abs(time.time() - int(t_val)) > 300:
+            raise ValueError("Webhook timestamp expired outside 5-minute replay tolerance")
+        signed_payload = f"{t_val}.".encode("utf-8") + payload
+        computed_sig = hmac.new(self.webhook_secret.encode("utf-8"), signed_payload, hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(computed_sig, expected_sig):
+            raise PermissionError("HMAC verification mismatch for incoming payment webhook")
+        return stripe.Webhook.construct_event(payload, signature_header, self.webhook_secret)`,
+          interfaceCode: `    def verify_webhook_signature(self, payload: bytes, signature_header: str) -> Dict[str, Any]:
+        """Validates HMAC-SHA256 signature against webhook secret to prevent replay attacks."""`
         }
       ],
       go: [
@@ -1377,61 +1726,179 @@ class StripeGateway:
 
 import (
     "context"
+    "crypto/tls"
+    "fmt"
+    "log/slog"
     "net/http"
+    "sync"
+    "time"
 )
 
+type ServerConfig struct {
+    Port         int
+    ReadTimeout  time.Duration
+    WriteTimeout time.Duration
+    TLSConfig    *tls.Config
+}
+
 type Server struct {
-    Port int
-    Mux  *http.ServeMux
+    config ServerConfig
+    mux    *http.ServeMux
+    server *http.Server
+    logger *slog.Logger
+    mu     sync.RWMutex
 }`
         },
         {
           type: 'dissolve',
           id: 'go-1',
-          lineCount: 38,
-          costSaved: 'Save ~$1.14/1k calls',
-          rawCode: `    // 35 lines of pool init, middleware chaining & routes...
-    return &Server{Port: port, Mux: http.NewServeMux()}`,
-          interfaceCode: `
-func NewServer(port int) *Server`
+          lineCount: 16,
+          costSaved: 'Save ~$0.48/1k calls',
+          rawCode: `    if cfg.Port <= 0 || cfg.Port > 65535 {
+        cfg.Port = 8080
+    }
+    if cfg.ReadTimeout == 0 {
+        cfg.ReadTimeout = 15 * time.Second
+    }
+    if cfg.WriteTimeout == 0 {
+        cfg.WriteTimeout = 30 * time.Second
+    }
+    mux := http.NewServeMux()
+    s := &Server{
+        config: cfg,
+        mux:    mux,
+        logger: logger,
+    }
+    return s`,
+          interfaceCode: `func NewServer(cfg ServerConfig, logger *slog.Logger) *Server`
         },
         {
           type: 'dissolve',
           id: 'go-2',
-          lineCount: 44,
-          costSaved: 'Save ~$1.32/1k calls',
-          rawCode: `    // 40 lines of context timeouts & graceful teardown...
-    return http.ListenAndServe(":8080", s.Mux)`,
-          interfaceCode: `
-func (s *Server) Start(ctx context.Context) error`
+          lineCount: 26,
+          costSaved: 'Save ~$0.78/1k calls',
+          rawCode: `    s.mu.Lock()
+    addr := fmt.Sprintf(":%d", s.config.Port)
+    s.server = &http.Server{
+        Addr:         addr,
+        Handler:      s.mux,
+        ReadTimeout:  s.config.ReadTimeout,
+        WriteTimeout: s.config.WriteTimeout,
+        TLSConfig:    s.config.TLSConfig,
+    }
+    s.mu.Unlock()
+
+    errChan := make(chan error, 1)
+    go func() {
+        s.logger.Info("Starting HTTP listener", "addr", addr)
+        if s.config.TLSConfig != nil {
+            errChan <- s.server.ListenAndServeTLS("", "")
+        } else {
+            errChan <- s.server.ListenAndServe()
+        }
+    }()
+
+    select {
+    case <-ctx.Done():
+        s.logger.Info("Shutdown signal received, draining active connections...")
+        shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+        defer cancel()
+        return s.server.Shutdown(shutdownCtx)
+    case err := <-errChan:
+        if err != nil && err != http.ErrServerClosed {
+            return fmt.Errorf("server crashed: %w", err)
+        }
+        return nil
+    }`,
+          interfaceCode: `func (s *Server) Start(ctx context.Context) error`
+        },
+        {
+          type: 'dissolve',
+          id: 'go-3',
+          lineCount: 11,
+          costSaved: 'Save ~$0.33/1k calls',
+          rawCode: `    wrapped := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        start := time.Now()
+        s.logger.Debug("Handling HTTP request", "method", r.Method, "path", r.URL.Path)
+        handler(w, r)
+        s.logger.Info("Request completed", "path", r.URL.Path, "duration_ms", time.Since(start).Milliseconds())
+    })
+    s.mux.HandleFunc(pattern, wrapped)`,
+          interfaceCode: `func (s *Server) Handle(pattern string, handler http.HandlerFunc)`
         }
       ],
       rs: [
         {
           type: 'code',
-          content: `pub struct Config {
+          content: `use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::RwLock;
+
+pub struct ClientConfig {
     pub api_key: String,
-    pub timeout_ms: u64,
+    pub timeout: Duration,
+    pub max_retries: u32,
 }
 
-pub trait Gateway {
-    fn charge(&self, customer_id: &str, amount: u64) -> Result<String, String>;
+#[derive(Debug, Clone)]
+pub struct TransactionReceipt {
+    pub transaction_id: String,
+    pub amount_cents: u64,
+    pub settled: bool,
+}
+
+pub trait PaymentGateway: Send + Sync {
+    fn process_payment(&self, customer_id: &str, amount: u64) -> Result<TransactionReceipt, String>;
+    fn refund(&self, transaction_id: &str) -> Result<bool, String>;
 }
 
 pub struct StripeGateway {
-    config: Config,
+    config: ClientConfig,
+    ledger: Arc<RwLock<HashMap<String, TransactionReceipt>>>,
 }
 
-impl Gateway for StripeGateway {`
+impl PaymentGateway for StripeGateway {`
         },
         {
           type: 'dissolve',
           id: 'rs-1',
-          lineCount: 56,
-          costSaved: 'Save ~$1.68/1k calls',
-          rawCode: `        // 50 lines of TLS handshakes, retries and error mappings...
-        Ok(format!("ch_{}", customer_id))`,
-          interfaceCode: `    pub fn charge(&self, customer_id: &str, amount: u64) -> Result<String, String>;`
+          lineCount: 22,
+          costSaved: 'Save ~$0.66/1k calls',
+          rawCode: `        if customer_id.is_empty() {
+            return Err("Validation failure: customer_id cannot be blank".to_string());
+        }
+        if amount == 0 {
+            return Err("Validation failure: amount must exceed zero cents".to_string());
+        }
+        for attempt in 1..=self.config.max_retries {
+            let req_id = format!("req_{}_{}", customer_id, attempt);
+            let receipt = TransactionReceipt {
+                transaction_id: format!("tx_stripe_{}", req_id),
+                amount_cents: amount,
+                settled: true,
+            };
+            let mut ledger = self.ledger.blocking_write();
+            ledger.insert(receipt.transaction_id.clone(), receipt.clone());
+            return Ok(receipt);
+        }
+        Err("Exceeded retry threshold attempting gateway handshake".to_string())`,
+          interfaceCode: `    fn process_payment(&self, customer_id: &str, amount: u64) -> Result<TransactionReceipt, String>;`
+        },
+        {
+          type: 'dissolve',
+          id: 'rs-2',
+          lineCount: 14,
+          costSaved: 'Save ~$0.42/1k calls',
+          rawCode: `        let mut ledger = self.ledger.blocking_write();
+        match ledger.get_mut(transaction_id) {
+            Some(receipt) => {
+                receipt.settled = false;
+                Ok(true)
+            }
+            None => Err(format!("Transaction '{}' not located in local ledger", transaction_id)),
+        }`,
+          interfaceCode: `    fn refund(&self, transaction_id: &str) -> Result<bool, String>;`
         },
         {
           type: 'code',
@@ -1441,59 +1908,122 @@ impl Gateway for StripeGateway {`
     };
 
     const cleanSynthesizedCode = {
-      ts: `import { Database, User } from './db';
+      ts: `import { Database, User, UserRole, SessionToken } from './db';
+import { Logger } from './logger';
+
+export interface User {
+  id: string;
+  email: string;
+  role: UserRole;
+  createdAt: Date;
+  lastLoginAt?: Date;
+  isVerified: boolean;
+}
+
+export interface AuthSession {
+  user: User;
+  token: string;
+  expiresAt: number;
+}
 
 export class UserService {
-  constructor(private db: Database) {}
+  constructor(private db: Database, private logger: Logger, private readonly jwtSecret: string);
 
-  /** Finds user by unique primary key */
+  /** Retrieves active user by unique primary key with cache lookup */
   public async getUser(id: string): Promise<User | null>;
 
-  /** Creates user record with hashing & transaction guarantees */
-  public async createUser(email: string): Promise<User>;
+  /** Creates new user with bcrypt credential hashing & transaction atomicity */
+  public async createUser(email: string, password: string, role?: UserRole): Promise<User>;
+
+  /** Verifies credentials, updates audit telemetry and issues signed JWT session */
+  public async authenticate(email: string, password: string): Promise<AuthSession>;
 }`,
-      py: `from typing import Optional, Dict
-import stripe
+      py: `from typing import Optional, Dict, List, Any
+from dataclasses import dataclass
+
+@dataclass
+class PaymentIntent:
+    id: str
+    amount: int
+    currency: str
+    status: str
+    customer_id: str
 
 class StripeGateway:
-    """Manages payment gateway processing."""
+    """Enterprise payment processor gateway with circuit breaker & idempotent retries."""
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, webhook_secret: str, max_retries: int = 3):
         ...
 
-    def charge(self, customer_id: str, amount: int) -> Dict[str, any]:
-        """Executes payment charge with automatic retries."""
+    def create_charge(self, customer_id: str, amount_cents: int, currency: str = "usd") -> PaymentIntent:
+        """Charges customer with circuit breaker protection and exponential backoff retry loops."""
+        ...
+
+    def verify_webhook_signature(self, payload: bytes, signature_header: str) -> Dict[str, Any]:
+        """Validates HMAC-SHA256 signature against webhook secret to prevent replay attacks."""
         ...`,
       go: `package server
 
 import (
     "context"
+    "crypto/tls"
+    "log/slog"
     "net/http"
+    "sync"
+    "time"
 )
 
+type ServerConfig struct {
+    Port         int
+    ReadTimeout  time.Duration
+    WriteTimeout time.Duration
+    TLSConfig    *tls.Config
+}
+
 type Server struct {
-    Port int
-    Mux  *http.ServeMux
+    config ServerConfig
+    mux    *http.ServeMux
+    server *http.Server
+    logger *slog.Logger
+    mu     sync.RWMutex
 }
 
-func NewServer(port int) *Server
+func NewServer(cfg ServerConfig, logger *slog.Logger) *Server
 
-func (s *Server) Start(ctx context.Context) error`,
-      rs: `pub struct Config {
+func (s *Server) Start(ctx context.Context) error
+
+func (s *Server) Handle(pattern string, handler http.HandlerFunc)`,
+      rs: `use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::RwLock;
+
+pub struct ClientConfig {
     pub api_key: String,
-    pub timeout_ms: u64,
+    pub timeout: Duration,
+    pub max_retries: u32,
 }
 
-pub trait Gateway {
-    fn charge(&self, customer_id: &str, amount: u64) -> Result<String, String>;
+#[derive(Debug, Clone)]
+pub struct TransactionReceipt {
+    pub transaction_id: String,
+    pub amount_cents: u64,
+    pub settled: bool,
+}
+
+pub trait PaymentGateway: Send + Sync {
+    fn process_payment(&self, customer_id: &str, amount: u64) -> Result<TransactionReceipt, String>;
+    fn refund(&self, transaction_id: &str) -> Result<bool, String>;
 }
 
 pub struct StripeGateway {
-    config: Config,
+    config: ClientConfig,
+    ledger: Arc<RwLock<HashMap<String, TransactionReceipt>>>,
 }
 
-impl Gateway for StripeGateway {
-    pub fn charge(&self, customer_id: &str, amount: u64) -> Result<String, String>;
+impl PaymentGateway for StripeGateway {
+    fn process_payment(&self, customer_id: &str, amount: u64) -> Result<TransactionReceipt, String>;
+    fn refund(&self, transaction_id: &str) -> Result<bool, String>;
 }`
     };
 
@@ -1519,13 +2049,13 @@ impl Gateway for StripeGateway {
     let currentMorphState = 'raw';
 
     const langKeywords = {
-      ts: new Set(['export', 'class', 'interface', 'type', 'async', 'public', 'private', 'protected', 'constructor', 'return', 'import', 'from', 'const', 'let', 'extends', 'implements', 'new', 'throw', 'try', 'catch', 'null', 'undefined']),
-      py: new Set(['def', 'class', 'import', 'from', 'return', 'async', 'await', 'self', 'try', 'except', 'for', 'in', 'raise', 'None', 'True', 'False', 'pass']),
-      go: new Set(['package', 'import', 'type', 'struct', 'interface', 'func', 'return', 'var', 'const', 'select', 'case', 'chan', 'nil']),
-      rs: new Set(['pub', 'trait', 'struct', 'enum', 'impl', 'fn', 'for', 'async', 'const', 'return', 'use', 'match', 'let', 'mut', 'where', 'type', 'self', 'Result', 'Ok', 'Err'])
+      ts: new Set(['export', 'class', 'interface', 'type', 'async', 'public', 'private', 'protected', 'readonly', 'constructor', 'return', 'import', 'from', 'const', 'let', 'extends', 'implements', 'new', 'throw', 'try', 'catch', 'null', 'undefined', 'if', 'else', 'await', 'while', 'as', 'typeof']),
+      py: new Set(['def', 'class', 'import', 'from', 'return', 'async', 'await', 'self', 'try', 'except', 'for', 'in', 'raise', 'None', 'True', 'False', 'pass', 'if', 'else', 'elif', 'while', 'with', 'as', 'not', 'and', 'or']),
+      go: new Set(['package', 'import', 'type', 'struct', 'interface', 'func', 'return', 'var', 'const', 'select', 'case', 'chan', 'nil', 'if', 'else', 'for', 'range', 'defer', 'go', 'make', 'len']),
+      rs: new Set(['pub', 'trait', 'struct', 'enum', 'impl', 'fn', 'for', 'async', 'const', 'return', 'use', 'match', 'let', 'mut', 'where', 'type', 'self', 'Result', 'Ok', 'Err', 'if', 'else', 'while', 'loop', 'Some', 'None', 'Send', 'Sync', 'in', 'ref'])
     };
 
-    const typeSet = new Set(['Promise', 'User', 'UserCreateInput', 'Database', 'Logger', 'string', 'number', 'boolean', 'any', 'void', 'Dict', 'List', 'Optional', 'Union', 'Tuple', 'Any', 'str', 'int', 'bool', 'float', 'Config', 'Server', 'ServeMux', 'Context', 'error', 'String', 'u64', 'u32', 'i64', 'usize', 'Gateway', 'StripeGateway']);
+    const typeSet = new Set(['Promise', 'User', 'UserRole', 'AuthSession', 'SessionToken', 'Database', 'Logger', 'Date', 'JSON', 'Error', 'string', 'number', 'boolean', 'any', 'void', 'Dict', 'List', 'Optional', 'Union', 'Tuple', 'Any', 'str', 'int', 'bool', 'float', 'PaymentIntent', 'ServerConfig', 'Server', 'ServeMux', 'Context', 'error', 'String', 'u64', 'u32', 'i64', 'usize', 'PaymentGateway', 'StripeGateway', 'ClientConfig', 'TransactionReceipt', 'Duration', 'Arc', 'RwLock', 'HashMap', 'Header']);
 
     function highlightSingleLine(line, lang) {
       if (line === undefined || line === null) return '';
@@ -1588,7 +2118,7 @@ impl Gateway for StripeGateway {
         const highlighted = highlightSingleLine(line, lang);
         const safeText = (highlighted && highlighted.length > 0) ? highlighted : '&nbsp;';
         return `<div class="code-line flex items-baseline leading-relaxed py-0.5">
-          <span class="line-num select-none w-7 sm:w-8 text-right pr-2.5 sm:pr-3 mr-2 sm:mr-2.5 text-zinc-400 dark:text-zinc-600 font-mono text-[11px] sm:text-xs shrink-0 font-normal border-r border-zinc-200/80 dark:border-zinc-800/80">${lineNum}</span>
+          <span class="line-num select-none w-8 sm:w-9 text-right pr-2.5 sm:pr-3 mr-2 sm:mr-2.5 text-zinc-400 dark:text-zinc-600 font-mono text-[11px] sm:text-xs shrink-0 font-normal border-r border-zinc-200/80 dark:border-zinc-800/80">${lineNum}</span>
           <div class="flex items-baseline overflow-hidden">
             <span class="code-marker select-none shrink-0 w-3 inline-block"></span>
             <span class="code-text font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre">${safeText}</span>
@@ -1604,7 +2134,7 @@ impl Gateway for StripeGateway {
         const highlighted = highlightSingleLine(line, lang);
         const safeText = (highlighted && highlighted.length > 0) ? highlighted : '&nbsp;';
         return `<div class="prune-line flex items-baseline leading-relaxed py-0.5 rounded transition-all duration-300 relative overflow-hidden" data-line="${idx}">
-          <span class="line-num select-none w-7 sm:w-8 text-right pr-2.5 sm:pr-3 mr-2 sm:mr-2.5 text-zinc-400 dark:text-zinc-600 font-mono text-[11px] sm:text-xs shrink-0 font-normal border-r border-zinc-200/80 dark:border-zinc-800/80">${lineNum}</span>
+          <span class="line-num select-none w-8 sm:w-9 text-right pr-2.5 sm:pr-3 mr-2 sm:mr-2.5 text-zinc-400 dark:text-zinc-600 font-mono text-[11px] sm:text-xs shrink-0 font-normal border-r border-zinc-200/80 dark:border-zinc-800/80">${lineNum}</span>
           <div class="flex items-baseline overflow-hidden">
             <span class="prune-marker text-rose-600 dark:text-rose-400 select-none text-[11px] font-bold font-mono shrink-0 w-3 text-center transition-colors">−</span>
             <span class="prune-text font-mono text-xs text-zinc-700 dark:text-rose-100/90 whitespace-pre transition-all duration-300">${safeText}</span>
@@ -1749,8 +2279,59 @@ impl Gateway for StripeGateway {
       }
     }
 
+    let autoScrollRaf = null;
+    let isUserInteractingWithCode = false;
+    let userInteractionTimeout = null;
+
+    function stopAutoScroll() {
+      if (autoScrollRaf) {
+        cancelAnimationFrame(autoScrollRaf);
+        autoScrollRaf = null;
+      }
+    }
+
+    function smoothScrollContainer(container, targetY, durationMs, onComplete) {
+      stopAutoScroll();
+      if (!container || isUserInteractingWithCode) {
+        if (onComplete) onComplete();
+        return;
+      }
+
+      const startY = container.scrollTop;
+      const distance = targetY - startY;
+      if (Math.abs(distance) < 2) {
+        if (onComplete) onComplete();
+        return;
+      }
+
+      const startTime = performance.now();
+
+      function step(currentTime) {
+        if (isUserInteractingWithCode) {
+          stopAutoScroll();
+          return;
+        }
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / durationMs, 1);
+        const ease = 0.5 - 0.5 * Math.cos(progress * Math.PI);
+        container.scrollTop = startY + distance * ease;
+
+        if (progress < 1) {
+          autoScrollRaf = requestAnimationFrame(step);
+        } else {
+          container.scrollTop = targetY;
+          autoScrollRaf = null;
+          if (onComplete) onComplete();
+        }
+      }
+
+      autoScrollRaf = requestAnimationFrame(step);
+    }
+
     function triggerPruneMorph() {
       resetUserActivity();
+      isUserInteractingWithCode = false;
+      stopAutoScroll();
       if (typeof window.triggerDotRipple === 'function') window.triggerDotRipple();
       runDissolveAnimation();
     }
@@ -1761,11 +2342,13 @@ impl Gateway for StripeGateway {
       clearTimeout(pillTimeout);
       clearTimeout(scanTimeout);
       clearTimeout(highlightTimeout);
+      stopAutoScroll();
 
       const conf = langConfig[curLang];
       renderDemo(curLang, 'raw');
       const container = document.getElementById('skelOutput');
       if (!container) return;
+      container.scrollTop = 0;
 
       const scanBeam = document.getElementById('scanBeam');
       const astProgressBar = document.getElementById('astProgressBar');
@@ -1796,7 +2379,7 @@ impl Gateway for StripeGateway {
       allBlocks.forEach(b => {
         b.classList.remove('collapsing');
         b.classList.add('expanded');
-        b.style.maxHeight = '520px';
+        b.style.maxHeight = '2500px';
       });
 
       // Show full baseline metrics in Step 1
@@ -1817,6 +2400,14 @@ impl Gateway for StripeGateway {
       }
 
       setMorphStatus('raw', 1, 'Raw Code');
+
+      // Slowly and smoothly scroll downward to demonstrate the sheer length and density of original code!
+      setTimeout(() => {
+        if (currentMorphState !== 'raw' && currentMorphState !== 'scan') return;
+        const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+        const targetScroll = Math.min(maxScroll, Math.round(maxScroll * 0.86));
+        smoothScrollContainer(container, targetScroll, 4800);
+      }, 500);
 
       // Hold Step 1 for 2200ms so user can read the unoptimized contract & implementation
       const rawHoldDuration = 2200;
@@ -1894,7 +2485,7 @@ impl Gateway for StripeGateway {
         currentLines.forEach((l, idx) => {
           setTimeout(() => {
             l.classList.add('line-sliced');
-          }, 700 + idx * 55);
+          }, 700 + idx * 40);
         });
 
         // 3. Count down tokens and cost simultaneously to converge with the accordion fold
@@ -1905,13 +2496,15 @@ impl Gateway for StripeGateway {
 
         if (typeof window.triggerDotRipple === 'function') window.triggerDotRipple();
 
-        // 4. Once lines have sliced away (~1300ms), smoothly fold the empty container shut
+        // 4. Once lines have sliced away (~1300ms), smoothly fold the empty container shut and scroll up to top
         setTimeout(() => {
           allBlocks.forEach(b => {
             b.classList.remove('expanded');
             b.classList.add('collapsing');
             b.style.maxHeight = '0px';
           });
+          // Smoothly scroll container back to top as implementation collapses
+          smoothScrollContainer(container, 0, 950);
         }, 1300);
 
         // 5. As the bloat folds away (~1750ms), smoothly re-index line numbers of surviving code lines
@@ -1937,7 +2530,8 @@ impl Gateway for StripeGateway {
           setMorphStatus('synthesized', 5, 'Synthesized');
           setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
 
-          // Lock clean DOM structure seamlessly without layout shift
+          // Lock clean DOM structure seamlessly without layout shift and ensure top alignment
+          container.scrollTop = 0;
           renderSynthesizedPure(curLang);
         }, countdownDuration);
 
@@ -1950,6 +2544,8 @@ impl Gateway for StripeGateway {
       clearTimeout(pillTimeout);
       clearTimeout(scanTimeout);
       clearTimeout(highlightTimeout);
+      stopAutoScroll();
+
       const scanBeam = document.getElementById('scanBeam');
       if (scanBeam) scanBeam.style.opacity = '0';
       const astProgressBar = document.getElementById('astProgressBar');
@@ -1969,12 +2565,14 @@ impl Gateway for StripeGateway {
       if (btnPrune) btnPrune.innerText = isRaw ? '✨ Prune Bloat' : '↺ Replay';
 
       if (!isRaw) {
+        container.scrollTop = 0;
         renderSynthesizedPure(lang);
         setMorphStatus('synthesized', 5, 'Synthesized');
         setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
         return;
       }
 
+      container.scrollTop = 0;
       let currentLine = 1;
       const blocks = demoBlocks[lang];
       const html = blocks.map(item => {
@@ -1996,7 +2594,7 @@ impl Gateway for StripeGateway {
         return `
 <div class="dissolve-section relative" id="section-${item.id}">
   <div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">${renderedIface}</div>
-  <div id="block-${item.id}" class="dissolve-block overflow-hidden my-0.5 relative" style="max-height: 520px;">
+  <div id="block-${item.id}" class="dissolve-block overflow-hidden my-0.5 relative" style="max-height: 2500px;">
     <div id="card-${item.id}" class="targeted-prune-card rounded font-mono text-[11px] leading-relaxed relative">
       <div id="card-header-${item.id}" class="bloat-card-header flex items-center justify-between border-b text-[10px]">
         <span class="flex items-center gap-1.5 font-bold tracking-wide uppercase text-rose-700 dark:text-rose-300">
@@ -2361,6 +2959,19 @@ ${renderedRaw}
     if (wbBox) {
       wbBox.addEventListener('mousemove', resetUserActivity);
       wbBox.addEventListener('touchstart', resetUserActivity);
+    }
+    const skelBox = document.getElementById('skelOutput');
+    if (skelBox) {
+      ['wheel', 'touchmove', 'pointerdown'].forEach(evt => {
+        skelBox.addEventListener(evt, () => {
+          isUserInteractingWithCode = true;
+          stopAutoScroll();
+          clearTimeout(userInteractionTimeout);
+          userInteractionTimeout = setTimeout(() => {
+            isUserInteractingWithCode = false;
+          }, 4000);
+        }, { passive: true });
+      });
     }
 
     // Init Concept 3 Workbench and automatically run AST synthesis animation on load
