@@ -31,15 +31,33 @@ export async function runMcpServer() {
             properties: {
               filePath: {
                 type: 'string',
-                description: 'Relative or absolute path to the TypeScript, JavaScript, Python, Go, or Rust file'
+                description: 'Relative or absolute path to the source file on disk'
+              },
+              content: {
+                type: 'string',
+                description: 'Optional: Direct in-memory source code content to skeletonize (bypasses reading from disk)'
+              }
+            }
+          }
+        },
+        {
+          name: 'siftr_batch_skeleton',
+          description: 'Batch extracts interface skeletons for multiple source files in a single turn. Ideal for Claude Code and Cursor when inspecting multiple related files simultaneously.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              filePaths: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Array of relative or absolute file paths to skeletonize'
               }
             },
-            required: ['filePath']
+            required: ['filePaths']
           }
         },
         {
           name: 'siftr_pack',
-          description: 'Scans the codebase, analyzes AST dependencies, applies Jev relevance scoring, and compiles a clean, token-slammed context pack (context.md) for the active task.',
+          description: 'Scans the codebase, analyzes AST dependencies, applies Jev relevance scoring, and compiles a clean, token-pruned context pack (context.md) for the active task.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -49,11 +67,15 @@ export async function runMcpServer() {
               },
               directory: {
                 type: 'string',
-                description: 'Directory path to scan (defaults to current directory)'
+                description: 'Directory path to scan (defaults to current working directory)'
               },
               output: {
                 type: 'string',
                 description: 'Output filename for the compiled context pack (defaults to siftr_context.md)'
+              },
+              includeContent: {
+                type: 'boolean',
+                description: 'Whether to return the compiled context pack directly in the response text (defaults to true)'
               }
             }
           }
@@ -80,17 +102,23 @@ export async function runMcpServer() {
 
     try {
       if (name === 'siftr_skeleton') {
-        const filePath = String(args?.filePath);
-        const resolvedPath = path.resolve(filePath);
+        const directContent = args?.content as string | undefined;
+        const filePath = args?.filePath ? String(args.filePath) : 'source.ts';
 
-        if (!fs.existsSync(resolvedPath)) {
-          return {
-            content: [{ type: 'text', text: `Error: File not found at ${filePath}` }],
-            isError: true
-          };
+        let rawContent = '';
+        if (directContent !== undefined) {
+          rawContent = directContent;
+        } else {
+          const resolvedPath = path.resolve(filePath);
+          if (!fs.existsSync(resolvedPath)) {
+            return {
+              content: [{ type: 'text', text: `Error: File not found at ${filePath}` }],
+              isError: true
+            };
+          }
+          rawContent = fs.readFileSync(resolvedPath, 'utf-8');
         }
 
-        const rawContent = fs.readFileSync(resolvedPath, 'utf-8');
         const skeleton = skeletonizeFile(rawContent, filePath);
 
         return {
@@ -113,12 +141,61 @@ export async function runMcpServer() {
         };
       }
 
-      if (name === 'siftr_pack') {
-        const result = await packRepository({
-          focus: args?.focus as string | undefined,
-          directory: args?.directory as string | undefined,
-          output: args?.output as string | undefined
-        });
+      if (name === 'siftr_batch_skeleton') {
+        const filePaths = (args?.filePaths as string[]) || [];
+        const results: Array<{
+          filePath: string;
+          originalTokens: number;
+          skeletonTokens: number;
+          reduction: string;
+          skeletonContent: string;
+          error?: string;
+        }> = [];
+
+        let totalOriginal = 0;
+        let totalSkeleton = 0;
+
+        for (const fp of filePaths) {
+          try {
+            const resolvedPath = path.resolve(fp);
+            if (!fs.existsSync(resolvedPath)) {
+              results.push({
+                filePath: fp,
+                originalTokens: 0,
+                skeletonTokens: 0,
+                reduction: '0%',
+                skeletonContent: '',
+                error: `File not found at ${fp}`
+              });
+              continue;
+            }
+            const rawContent = fs.readFileSync(resolvedPath, 'utf-8');
+            const skel = skeletonizeFile(rawContent, fp);
+            totalOriginal += skel.originalTokensEstimate;
+            totalSkeleton += skel.skeletonTokensEstimate;
+
+            results.push({
+              filePath: fp,
+              originalTokens: skel.originalTokensEstimate,
+              skeletonTokens: skel.skeletonTokensEstimate,
+              reduction: `${(skel.reductionRatio * 100).toFixed(1)}%`,
+              skeletonContent: skel.skeletonContent
+            });
+          } catch (err: any) {
+            results.push({
+              filePath: fp,
+              originalTokens: 0,
+              skeletonTokens: 0,
+              reduction: '0%',
+              skeletonContent: '',
+              error: err.message
+            });
+          }
+        }
+
+        const overallSavings = totalOriginal > 0
+          ? `${(((totalOriginal - totalSkeleton) / totalOriginal) * 100).toFixed(1)}%`
+          : '0%';
 
         return {
           content: [
@@ -126,20 +203,50 @@ export async function runMcpServer() {
               type: 'text',
               text: JSON.stringify(
                 {
-                  message: 'Repository packed successfully',
-                  outputFile: result.outputFile,
-                  scannedFiles: result.totalFilesScanned,
-                  fullFiles: result.rootCandidateFiles,
-                  skeletonizedFiles: result.skeletonizedFiles,
-                  prunedFiles: result.prunedFiles,
-                  rawTokens: result.rawTokensEstimate,
-                  packedTokens: result.packedTokensEstimate,
-                  reduction: `${result.reductionPercentage}%`,
-                  savedUSD: `$${result.estimatedCostSavedUSD.toFixed(2)}`
+                  totalFiles: results.length,
+                  totalOriginalTokens: totalOriginal,
+                  totalSkeletonTokens: totalSkeleton,
+                  overallTokenReduction: overallSavings,
+                  files: results
                 },
                 null,
                 2
               )
+            }
+          ]
+        };
+      }
+
+      if (name === 'siftr_pack') {
+        const includeContent = args?.includeContent !== false;
+        const result = await packRepository({
+          focus: args?.focus as string | undefined,
+          directory: args?.directory as string | undefined,
+          output: args?.output as string | undefined
+        });
+
+        const responsePayload: any = {
+          message: 'Repository packed successfully',
+          outputFile: result.outputFile,
+          scannedFiles: result.totalFilesScanned,
+          fullFiles: result.rootCandidateFiles,
+          skeletonizedFiles: result.skeletonizedFiles,
+          prunedFiles: result.prunedFiles,
+          rawTokens: result.rawTokensEstimate,
+          packedTokens: result.packedTokensEstimate,
+          reduction: `${result.reductionPercentage}%`,
+          savedUSD: `$${result.estimatedCostSavedUSD.toFixed(2)}`
+        };
+
+        if (includeContent && result.packedContent) {
+          responsePayload.content = result.packedContent;
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(responsePayload, null, 2)
             }
           ]
         };

@@ -20,9 +20,15 @@ program
 program
   .command('init')
   .description('Automatically detects and configures SiftrCode MCP in Claude Code and Cursor')
-  .action(() => {
-    console.log(chalk.bold.green('🚀 [SiftrCode Init]'), 'Auto-configuring AI agent MCP settings...\n');
-    const result = runInstaller();
+  .option('--cursor', 'Configure SiftrCode specifically for Cursor IDE (.cursor/mcp.json, .cursorrules, .cursor/rules/siftrcode.mdc)')
+  .option('--claude', 'Configure SiftrCode specifically for Claude Code (.mcp.json, CLAUDE.md, .claude/commands/siftr.md)')
+  .action((options) => {
+    const isCursorOnly = options.cursor && !options.claude;
+    const isClaudeOnly = options.claude && !options.cursor;
+    const targetLabel = isCursorOnly ? 'Cursor IDE' : isClaudeOnly ? 'Claude Code' : 'Claude Code & Cursor';
+
+    console.log(chalk.bold.green('🚀 [SiftrCode Init]'), `Configuring plugin support for ${chalk.bold.cyan(targetLabel)}...\n`);
+    const result = runInstaller({ cursor: options.cursor, claude: options.claude });
 
     if (result.configsUpdated.length > 0) {
       console.log(chalk.bold.white('✔ Successfully configured SiftrCode MCP in:'));
@@ -30,17 +36,67 @@ program
         console.log(chalk.green(`   • ${conf}`));
       }
     } else {
-      console.log(chalk.yellow('ℹ No default agent config directories found, created workspace .cursor/mcp.json'));
+      console.log(chalk.yellow('ℹ Created local workspace configurations'));
     }
 
     if (result.rulesCreated.length > 0) {
-      console.log('\n' + chalk.bold.white('✔ Created agent optimization rule:'));
+      console.log('\n' + chalk.bold.white('✔ Created agent optimization rules:'));
       for (const rule of result.rulesCreated) {
         console.log(chalk.cyan(`   • ${rule}`));
       }
     }
 
-    console.log(chalk.gray('\nRestart your editor (Claude Desktop, Cursor) to activate SiftrCode tools.'));
+    console.log(chalk.gray(`\nRestart your editor/agent (${targetLabel}) to activate SiftrCode.`));
+  });
+
+// COMMAND: CURSOR (Alias for init --cursor)
+program
+  .command('cursor')
+  .description('Quickstart: Configures SiftrCode MCP and rules specifically for Cursor IDE')
+  .action(() => {
+    console.log(chalk.bold.green('🚀 [SiftrCode Cursor]'), 'Configuring Cursor IDE plugin support...\n');
+    const result = runInstaller({ cursor: true });
+
+    if (result.configsUpdated.length > 0) {
+      console.log(chalk.bold.white('✔ Configured Cursor MCP settings in:'));
+      for (const conf of result.configsUpdated) {
+        console.log(chalk.green(`   • ${conf}`));
+      }
+    }
+
+    if (result.rulesCreated.length > 0) {
+      console.log('\n' + chalk.bold.white('✔ Created Cursor agent rules:'));
+      for (const rule of result.rulesCreated) {
+        console.log(chalk.cyan(`   • ${rule}`));
+      }
+    }
+
+    console.log(chalk.gray('\nRestart Cursor to activate SiftrCode in Composer & Chat.'));
+  });
+
+// COMMAND: CLAUDE (Alias for init --claude)
+program
+  .command('claude')
+  .description('Quickstart: Configures SiftrCode MCP, slash command, and guidelines for Claude Code')
+  .action(() => {
+    console.log(chalk.bold.green('🚀 [SiftrCode Claude]'), 'Configuring Claude Code plugin support...\n');
+    const result = runInstaller({ claude: true });
+
+    if (result.configsUpdated.length > 0) {
+      console.log(chalk.bold.white('✔ Configured Claude Code settings in:'));
+      for (const conf of result.configsUpdated) {
+        console.log(chalk.green(`   • ${conf}`));
+      }
+    }
+
+    if (result.rulesCreated.length > 0) {
+      console.log('\n' + chalk.bold.white('✔ Created Claude Code commands and rules:'));
+      for (const rule of result.rulesCreated) {
+        console.log(chalk.cyan(`   • ${rule}`));
+      }
+    }
+
+    console.log(chalk.gray('\nRestart Claude Code or Claude Desktop to activate SiftrCode tools.'));
   });
 
 // COMMAND: PACK

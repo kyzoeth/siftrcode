@@ -31,6 +31,20 @@ async function testMcp() {
   const content = (callResult.content as any)[0].text;
   console.log('Tool response preview:', content.slice(0, 200) + '...');
 
+  // Test calling siftr_batch_skeleton
+  const batchResult = await client.callTool({
+    name: 'siftr_batch_skeleton',
+    arguments: {
+      filePaths: [
+        path.resolve(__dirname, '../../src/skeleton/types.ts'),
+        path.resolve(__dirname, '../../src/skeleton/dispatcher.ts')
+      ]
+    }
+  });
+  console.log('✔ Batch tool call output received');
+  const batchContent = JSON.parse((batchResult.content as any)[0].text);
+  if (batchContent.totalFiles !== 2) throw new Error('Expected 2 batch files');
+
   await transport.close();
   console.log('✔ MCP Server test passed!');
 }

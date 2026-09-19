@@ -14,6 +14,7 @@ export interface PackOptions {
 
 export interface PackResult {
   outputFile: string;
+  packedContent?: string;
   totalFilesScanned: number;
   rootCandidateFiles: number;
   skeletonizedFiles: number;
@@ -147,6 +148,7 @@ export async function packRepository(options: PackOptions = {}): Promise<PackRes
 
   return {
     outputFile: finalOutputPath,
+    packedContent: finalOutput,
     totalFilesScanned: files.length,
     rootCandidateFiles: rootCount,
     skeletonizedFiles: skeletonCount,
