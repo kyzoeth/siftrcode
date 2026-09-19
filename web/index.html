@@ -870,34 +870,35 @@
 
             <!-- Bottom Line: Dynamic Token Gauge Bar (Green/Low to Red/High) -->
             <div class="w-full pt-1.5 border-t border-zinc-200/60 dark:border-zinc-800/60 flex flex-col gap-1">
-              <!-- Scale Markers -->
-              <div class="flex items-center justify-between text-[10px] font-mono text-zinc-400 dark:text-zinc-500 select-none px-0.5">
-                <span class="flex items-center gap-1">
+              <!-- Scale Markers: $ Values on Top of Bar -->
+              <div class="flex items-center justify-between text-[10px] sm:text-[11px] font-mono select-none px-1 py-0.5">
+                <span class="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400" title="Minimum Cost">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  <span>Low Context</span>
+                  <span id="barMinCostLabel">$0.00</span>
                 </span>
-                <span id="barTargetMaxLabel" class="flex items-center gap-1">
-                  <span>High Bloat</span>
+                <span class="flex items-center gap-1 font-bold text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800/90 px-2 py-0.5 rounded border border-zinc-200/80 dark:border-zinc-700/80 shadow-2xs">
+                  <span class="text-zinc-400 font-normal text-[10px]">Cost:</span>
+                  <span id="barActiveCostValue" class="font-mono text-zinc-900 dark:text-white">$0.00</span>
+                </span>
+                <span id="barTargetMaxLabel" class="flex items-center gap-1 font-semibold text-rose-600 dark:text-rose-400" title="Unpruned Raw Bloat Cost">
+                  <span id="barMaxCostLabel">$72.60</span>
                   <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                 </span>
               </div>
 
-              <!-- Main Horizontal Track -->
-              <div class="relative w-full h-7 sm:h-8 rounded-lg bg-zinc-200/80 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700/80 overflow-hidden shadow-inner flex items-center">
-                
-                <!-- Background Gradient Track: Green (left) to Red (right) -->
-                <div class="absolute inset-0 opacity-15 dark:opacity-20 pointer-events-none bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500"></div>
+              <!-- Main Horizontal Track (Clean neutral channel, not pre-filled) -->
+              <div class="relative w-full h-7 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-inner flex items-center">
 
-                <!-- Active Payload Bar (green when low, red when high; gets smaller & greener as we prune) -->
+                <!-- Active Payload Bar (green when low, red when high; fills up in Step 2, gets smaller & greener as we prune) -->
                 <div id="footerPayloadBar" class="h-full rounded-l-lg shadow-sm relative overflow-hidden transition-[width,background-color] duration-500 ease-out" style="width: 0%; background-color: #10b981;">
                   <!-- Shimmer sweep -->
                   <div id="footerBarShimmer" class="absolute inset-0 bg-white/30 opacity-0 transition-opacity duration-300 pointer-events-none"></div>
                 </div>
 
-                <!-- Floating Head Tally Tracker (strictly follows the moving head of the bar) -->
+                <!-- Floating Head Tally Tracker (strictly follows the moving head of the bar, token values inside) -->
                 <div id="payloadHeadTracker" class="absolute top-0 bottom-0 pointer-events-none flex items-center transition-[left] duration-500 ease-out z-10" style="left: 0%;">
                   <div id="payloadHeadTally" class="flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-2xs whitespace-nowrap transition-all duration-300 transform translate-x-1 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700">
-                    <span id="payloadTallyValue">0 tokens ($0.00)</span>
+                    <span id="payloadTallyValue">0 tokens</span>
                   </div>
                 </div>
 
@@ -2429,7 +2430,17 @@ impl PaymentGateway for StripeGateway {
       }
 
       if (tallyVal) {
-        tallyVal.innerText = `${Math.round(currentTokens).toLocaleString()} tokens ($${cost.toFixed(2)})`;
+        tallyVal.innerText = `${Math.round(currentTokens).toLocaleString()} tokens`;
+      }
+
+      const activeCostEl = document.getElementById('barActiveCostValue');
+      if (activeCostEl) {
+        activeCostEl.innerText = `$${cost.toFixed(2)}`;
+      }
+
+      const maxCostEl = document.getElementById('barMaxCostLabel');
+      if (maxCostEl && conf) {
+        maxCostEl.innerText = `$${conf.rawCost.toFixed(2)}`;
       }
     }
 
@@ -2454,7 +2465,7 @@ impl PaymentGateway for StripeGateway {
         if (costSavedTag) {
           costSavedTag.classList.add('hidden');
         }
-        updatePayloadBar(conf.rawTokens, conf.rawTokens, 0);
+        updatePayloadBar(0, conf.rawTokens, 0);
         if (savingsZone) savingsZone.style.opacity = '0';
       } else {
         if (bridgeSkel) bridgeSkel.innerText = `${conf.skelTokens.toLocaleString()} tokens`;
@@ -2742,10 +2753,7 @@ impl PaymentGateway for StripeGateway {
           0,
           conf.rawTokens,
           profileCountDuration,
-          v => {
-            const cost = conf.rawTokens > 0 ? (v / conf.rawTokens) * conf.rawCost : 0;
-            return `${Math.round(v).toLocaleString()} tokens ($${cost.toFixed(2)})`;
-          },
+          v => `${Math.round(v).toLocaleString()} tokens`,
           curr => updatePayloadBar(curr, conf.rawTokens, 0)
         );
       }, rawHoldDuration);
@@ -2961,10 +2969,7 @@ impl PaymentGateway for StripeGateway {
                   prevTokens,
                   targetTokens,
                   tokenCountdownDuration,
-                  v => {
-                    const cost = conf.rawTokens > 0 ? (v / conf.rawTokens) * conf.rawCost : 0;
-                    return `${Math.round(v).toLocaleString()} tokens ($${cost.toFixed(2)})`;
-                  },
+                  v => `${Math.round(v).toLocaleString()} tokens`,
                   curr => updatePayloadBar(curr, conf.rawTokens, 0)
                 );
 
@@ -3490,6 +3495,12 @@ ${renderedRaw}
       if (skelBadge) {
         skelBadge.innerText = conf.skelBadge;
         skelBadge.className = 'text-xs font-mono text-zinc-400 dark:text-zinc-500 font-normal';
+      }
+
+      // 3. Update Max Cost on Top of Bar
+      const barMaxCost = document.getElementById('barMaxCostLabel');
+      if (barMaxCost) {
+        barMaxCost.innerText = `$${conf.rawCost.toFixed(2)}`;
       }
 
       // 4. Update Source Code
