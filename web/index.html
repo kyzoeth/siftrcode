@@ -512,7 +512,7 @@
                   border-color 0.6s ease;
     }
     .targeted-prune-card.bloat-highlighted .bloat-card-header {
-      max-height: 38px;
+      max-height: 48px;
       opacity: 1;
       margin-bottom: 8px;
       padding-bottom: 6px;
@@ -2930,6 +2930,25 @@ impl PaymentGateway for StripeGateway {
       container.scrollTop = 0;
       let currentLine = 1;
       const blocks = demoBlocks[lang];
+
+      const dissolveItems = blocks.filter(b => b.type === 'dissolve');
+      const totalSections = dissolveItems.length;
+      const totalBloatTokens = conf.rawTokens - conf.skelTokens;
+      const totalLines = dissolveItems.reduce((acc, item) => acc + item.lineCount, 0);
+
+      let accumulatedLines = 0;
+      let prevTargetTokens = conf.rawTokens;
+      const sectionTokenMap = {};
+      for (let k = 0; k < totalSections; k++) {
+        accumulatedLines += dissolveItems[k].lineCount;
+        const isLast = (k === totalSections - 1);
+        const fraction = Math.min(1, accumulatedLines / totalLines);
+        const targetTokens = isLast ? conf.skelTokens : Math.round(conf.rawTokens - totalBloatTokens * fraction);
+        const sectionTokens = prevTargetTokens - targetTokens;
+        sectionTokenMap[dissolveItems[k].id] = sectionTokens;
+        prevTargetTokens = targetTokens;
+      }
+
       const html = blocks.map(item => {
         if (item.type === 'code') {
           const lines = item.content.split('\n');
@@ -2946,18 +2965,20 @@ impl PaymentGateway for StripeGateway {
         const renderedRaw = renderPrunedLinesWithNumbers(rawLines, lang, currentLine);
         currentLine += rawLines.length;
 
+        const sectionTokens = sectionTokenMap[item.id] || Math.round(totalBloatTokens * (item.lineCount / Math.max(1, totalLines)));
+
         return `
 <div class="dissolve-section relative" id="section-${item.id}">
   <div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">${renderedIface}</div>
   <div id="block-${item.id}" class="dissolve-block overflow-hidden my-0.5 relative" style="max-height: 2500px;">
     <div id="card-${item.id}" class="targeted-prune-card rounded font-mono text-[11px] leading-relaxed relative">
-      <div id="card-header-${item.id}" class="bloat-card-header flex items-center justify-between border-b text-[10px]">
-        <span class="flex items-center gap-1.5 font-bold tracking-wide uppercase text-rose-700 dark:text-rose-300">
+      <div id="card-header-${item.id}" class="bloat-card-header flex items-center justify-between border-b text-[10px] gap-2">
+        <span class="flex items-center gap-1.5 font-bold tracking-wide uppercase text-rose-700 dark:text-rose-300 truncate">
           <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>
-          <span id="label-${item.id}">Implementation details (${item.lineCount} lines)</span>
+          <span id="label-${item.id}" class="truncate">Implementation details (${item.lineCount} lines)</span>
         </span>
-        <span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-200 font-semibold border border-rose-200 dark:border-rose-500/30">
-          Stripped before LLM &bull; 0% types lost
+        <span class="text-[9px] sm:text-[9.5px] font-mono px-2 py-0.5 rounded bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 font-semibold border border-rose-300/80 dark:border-rose-800/80 whitespace-nowrap shrink-0 shadow-2xs">
+          &minus;${sectionTokens.toLocaleString()} tokens to be pruned
         </span>
       </div>
       <div class="space-y-0.5 overflow-x-auto no-scrollbar">
