@@ -42,7 +42,7 @@
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -0.015em; }
     .font-serif, h1.font-serif, h2.font-serif, h3.font-serif, .font-display { font-family: 'Instrument Serif', Georgia, serif; letter-spacing: -0.02em; }
     code, pre, .font-mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; }
-    ::selection { background: #dec278; color: #18181b; }
+    ::selection { background: #bfdbfe; color: #0f172a; }
     body, header, section, footer { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
 
     html.dark { color-scheme: dark; }
@@ -67,22 +67,22 @@
     .ci-live-dot { animation: ci-live-blink 2.2s ease-in-out infinite; }
   </style>
 </head>
-<body class="bg-surface-50 text-ink font-sans antialiased selection:bg-amber-400 selection:text-zinc-950">
+<body class="bg-surface-50 text-ink font-sans antialiased selection:bg-blue-200 selection:text-blue-950">
 
   <!-- Header Navigation -->
   <header class="border-b border-zinc-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
       <div class="flex items-center gap-6">
         <a href="/" class="flex items-center gap-2.5 font-bold tracking-tight text-ink text-sm group">
-          <div class="w-6 h-6 rounded-md bg-amber-500 flex items-center justify-center text-zinc-950 font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
+          <div class="w-6 h-6 rounded-md bg-blue-700 flex items-center justify-center text-white font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
             S
           </div>
           <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
-          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80 font-medium">v0.1</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-900 border border-blue-200/80 font-medium">v0.1</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="/#workbench" class="hover:text-ink transition">Demo</a>
-          <a href="/#security" class="hover:text-ink transition">Data Boundaries</a>
+          <a href="/how-it-works" class="hover:text-ink transition">How It Works</a>
           <a href="/#benchmarks" class="hover:text-ink transition">Benchmarks</a>
           <a href="/#quickstart" class="hover:text-ink transition">Quickstart</a>
         </nav>
@@ -102,7 +102,7 @@
 
         <!-- Light / Dark Theme Switch Button -->
         <button id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light / Dark Theme" aria-label="Toggle theme" class="w-8 h-8 rounded-lg bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
-          <svg id="themeSunIcon" class="w-4 h-4 text-amber-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg id="themeSunIcon" class="w-4 h-4 text-blue-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
           <svg id="themeMoonIcon" class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,7 +110,7 @@
           </svg>
         </button>
 
-        <a href="/#quickstart" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-medium text-xs shadow-sm transition cursor-pointer btn-press flex items-center gap-1.5">
+        <a href="/#quickstart" class="px-3 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-600 text-white font-medium text-xs shadow-sm transition cursor-pointer btn-press flex items-center gap-1.5">
           <span>Get Started</span>
         </a>
       </div>
@@ -122,7 +122,7 @@
     
     <!-- Title Area -->
     <div class="space-y-3 border-b border-zinc-200/80 pb-8">
-      <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-mono font-semibold uppercase tracking-wider">
+      <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-900 text-[10px] font-mono font-semibold uppercase tracking-wider">
         THE SIFTRCODE MISSION
       </div>
       <h1 class="text-4xl sm:text-5xl font-normal text-ink font-serif tracking-tight">About SiftrCode</h1>
@@ -160,7 +160,7 @@
         </div>
 
         <div class="p-5 bg-white border border-zinc-200/90 rounded-xl space-y-2 shadow-2xs">
-          <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
+          <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-sm">
             ⚡
           </div>
           <h3 class="font-bold text-ink text-sm">Sub-150ms Speed</h3>
@@ -198,7 +198,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs pt-1">
           <div class="p-4 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
             <div class="text-[10px] text-zinc-400 font-sans uppercase font-semibold">General Inquiries &amp; Team Pilots:</div>
-            <a href="mailto:info@siftrcode.com" class="text-amber-600 dark:text-amber-400 font-bold hover:underline">info@siftrcode.com</a>
+            <a href="mailto:info@siftrcode.com" class="text-blue-700 dark:text-blue-400 font-bold hover:underline">info@siftrcode.com</a>
           </div>
           <div class="p-4 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
             <div class="text-[10px] text-zinc-400 font-sans uppercase font-semibold">Open Source Contributions &amp; Issues:</div>
@@ -216,7 +216,7 @@
     <div class="max-w-6xl mx-auto space-y-5 text-[11px]">
       <div class="flex flex-col md:flex-row items-center justify-between gap-4 pb-4 border-b border-zinc-200/60 dark:border-zinc-800/60">
         <div class="flex items-center gap-2.5">
-          <div class="w-5 h-5 rounded bg-amber-500 flex items-center justify-center text-zinc-950 font-mono font-bold text-[10px]">
+          <div class="w-5 h-5 rounded bg-blue-700 flex items-center justify-center text-white font-mono font-bold text-[10px]">
             S
           </div>
           <span class="font-bold text-ink text-xs">SiftrCode</span>
@@ -225,7 +225,7 @@
         </div>
         
         <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-sans font-medium text-zinc-600 dark:text-zinc-400">
-          <a href="/about" class="text-amber-600 font-semibold transition">About us</a>
+          <a href="/about" class="text-blue-700 font-semibold transition">About us</a>
           <a href="/how-it-works" class="hover:text-ink transition">How it works</a>
           <a href="/privacy" class="hover:text-ink transition">Privacy</a>
           <a href="/terms" class="hover:text-ink transition">Terms</a>

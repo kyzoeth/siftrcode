@@ -42,51 +42,18 @@
               secondary: '#52525b',
               tertiary: '#a1a1aa'
             },
-            signal: {
-              yellow: '#c59b27',
-              gold: '#d1a84b',
-              amber: '#aa801e',
-              softBg: '#fbf8ee',
-              crimson: '#e11d48'
-            },
-            amber: {
-              50: '#fbf8ee',
-              100: '#f5edd3',
-              200: '#ebdaa9',
-              300: '#dec278',
-              400: '#d1a84b',
-              500: '#c59b27',
-              600: '#aa801e',
-              700: '#88621b',
-              800: '#714f1c',
-              900: '#5e411b',
-              950: '#36230b',
-            },
-            yellow: {
-              50: '#fbf8ee',
-              100: '#f5edd3',
-              200: '#ebdaa9',
-              300: '#dec278',
-              400: '#d1a84b',
-              500: '#c59b27',
-              600: '#aa801e',
-              700: '#88621b',
-              800: '#714f1c',
-              900: '#5e411b',
-              950: '#36230b',
-            },
-            gold: {
-              50: '#fbf8ee',
-              100: '#f5edd3',
-              200: '#ebdaa9',
-              300: '#dec278',
-              400: '#d1a84b',
-              500: '#c59b27',
-              600: '#aa801e',
-              700: '#88621b',
-              800: '#714f1c',
-              900: '#5e411b',
-              950: '#36230b',
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+              950: '#172554',
             }
           }
         }
@@ -107,7 +74,7 @@
       font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
     }
 
-    ::selection { background: #dec278; color: #18181b; }
+    ::selection { background: #bfdbfe; color: #0f172a; }
 
     /* Hide scrollbar for horizontal single-line ticker streams */
     .no-scrollbar {
@@ -202,8 +169,8 @@
       border-color: #27272a !important;
     }
     html.dark .glow-card:hover {
-      border-color: #c59b27 !important;
-      box-shadow: 0 12px 32px -10px rgba(197, 155, 39, 0.28) !important;
+      border-color: #3b82f6 !important;
+      box-shadow: 0 12px 32px -10px rgba(59, 130, 246, 0.28) !important;
     }
     html.dark textarea#rawInput {
       color: #f4f4f5 !important;
@@ -211,10 +178,6 @@
     }
     html.dark #benchmarks {
       background-color: #0c0c0e !important;
-      border-color: #27272a !important;
-    }
-    html.dark #security {
-      background-color: #0d0d10 !important;
       border-color: #27272a !important;
     }
     html.dark #quickstart {
@@ -234,17 +197,17 @@
     html.dark a[href="#workbench"].bg-ink span.text-zinc-400 {
       color: #71717a !important;
     }
-    html.dark .bg-amber-50\/40 {
-      background-color: rgba(197, 155, 39, 0.08) !important;
-      border-color: #c59b27 !important;
+    html.dark .bg-blue-50\/40 {
+      background-color: rgba(30, 64, 175, 0.12) !important;
+      border-color: #2563eb !important;
     }
-    html.dark .border-amber-200,
-    html.dark .border-amber-200\/80 {
-      border-color: rgba(197, 155, 39, 0.3) !important;
+    html.dark .border-blue-200,
+    html.dark .border-blue-200\/80 {
+      border-color: rgba(59, 130, 246, 0.3) !important;
     }
-    html.dark .bg-amber-50 {
-      background-color: rgba(197, 155, 39, 0.12) !important;
-      color: #dec278 !important;
+    html.dark .bg-blue-50 {
+      background-color: rgba(30, 64, 175, 0.2) !important;
+      color: #93c5fd !important;
     }
     html.dark .bg-emerald-50 {
       background-color: rgba(16, 185, 129, 0.12) !important;
@@ -283,7 +246,7 @@
     html.dark #trialModal input:focus,
     html.dark #trialModal select:focus {
       background-color: #1c1c22 !important;
-      border-color: #c59b27 !important;
+      border-color: #2563eb !important;
     }
     html.dark #trialModal label {
       color: #d4d4d8 !important;
@@ -324,8 +287,8 @@
       transition: border-color 0.25s ease, box-shadow 0.25s ease;
     }
     .glow-card:hover {
-      border-color: #c59b27;
-      box-shadow: 0 12px 32px -10px rgba(197, 155, 39, 0.22);
+      border-color: #1d4ed8;
+      box-shadow: 0 12px 32px -10px rgba(29, 78, 216, 0.22);
     }
 
     /* Token Diff Pulse */
@@ -355,7 +318,7 @@
       width: 7px;
       height: 13px;
       vertical-align: -1px;
-      background-color: #dec278;
+      background-color: #60a5fa;
       animation: ci-cursor-blink 1.05s infinite;
     }
 
@@ -370,15 +333,15 @@
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #c59b27; }
+    ::-webkit-scrollbar-thumb:hover { background: #1d4ed8; }
 
     /* Continuous Glowing 90% Typography (No Box) - Ultra-subtle, slow ambient cadence */
     @keyframes continuous-text-aura {
       0%, 100% {
-        filter: drop-shadow(0 0 6px rgba(197, 155, 39, 0.16));
+        filter: drop-shadow(0 0 6px rgba(29, 78, 216, 0.16));
       }
       50% {
-        filter: drop-shadow(0 0 12px rgba(197, 155, 39, 0.32));
+        filter: drop-shadow(0 0 12px rgba(37, 99, 235, 0.32));
       }
     }
 
@@ -390,18 +353,23 @@
 
     .hero-glow-text {
       display: inline-block;
-      background: linear-gradient(90deg, #aa801e 0%, #c59b27 35%, #dec278 50%, #c59b27 65%, #aa801e 100%);
+      background: linear-gradient(90deg, #1e40af 0%, #2563eb 35%, #3b82f6 50%, #2563eb 65%, #1e40af 100%);
       background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       animation: pct-shimmer-sweep 14s linear infinite, continuous-text-aura 10s ease-in-out infinite;
     }
-
+    html.dark .hero-glow-text {
+      background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 35%, #93c5fd 50%, #60a5fa 65%, #3b82f6 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
 
     /* Synthesized Signal Glow */
     @keyframes signal-breathe {
       0%, 100% { opacity: 0.95; }
-      50% { opacity: 1; filter: drop-shadow(0 0 6px rgba(197, 155, 39, 0.4)); }
+      50% { opacity: 1; filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.4)); }
     }
 
     .signal-glow {
@@ -457,8 +425,8 @@
       transition: all 0.3s ease;
     }
     .dissolve-pill:hover {
-      border-color: rgba(197, 155, 39, 0.5);
-      background-color: rgba(197, 155, 39, 0.15);
+      border-color: rgba(37, 99, 235, 0.5);
+      background-color: rgba(37, 99, 235, 0.15);
     }
 
     @keyframes scanline-sweep {
@@ -471,20 +439,20 @@
       left: 0;
       right: 0;
       height: 2.5px;
-      background: linear-gradient(90deg, transparent, #c59b27, #fef08a, #f43f5e, #c59b27, transparent);
-      box-shadow: 0 0 14px #c59b27, 0 0 28px #f43f5e;
+      background: linear-gradient(90deg, transparent, #2563eb, #60a5fa, #f43f5e, #2563eb, transparent);
+      box-shadow: 0 0 14px #2563eb, 0 0 28px #f43f5e;
       pointer-events: none;
       z-index: 20;
       animation: scanline-sweep 1.6s ease-in-out forwards;
     }
   </style>
 </head>
-<body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-amber-400 selection:text-zinc-950">
+<body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-blue-200 selection:text-blue-950">
 
   <!-- Background Ambient Lights -->
   <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
-    <div class="ambient-glow w-[600px] h-[600px] bg-amber-200/30 -top-40 -left-20"></div>
-    <div class="ambient-glow w-[500px] h-[500px] bg-amber-100/25 top-96 -right-20" style="animation-delay: -5s;"></div>
+    <div class="ambient-glow w-[600px] h-[600px] bg-blue-200/25 -top-40 -left-20"></div>
+    <div class="ambient-glow w-[500px] h-[500px] bg-blue-100/20 top-96 -right-20" style="animation-delay: -5s;"></div>
   </div>
 
   <!-- Header Navigation -->
@@ -492,15 +460,15 @@
     <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
       <div class="flex items-center gap-6">
         <a href="#" class="flex items-center gap-2.5 font-bold tracking-tight text-ink text-sm group">
-          <div class="w-6 h-6 rounded-md bg-amber-500 flex items-center justify-center text-zinc-950 font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
+          <div class="w-6 h-6 rounded-md bg-blue-700 flex items-center justify-center text-white font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
             S
           </div>
           <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
-          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80 font-medium">v0.1</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-900 border border-blue-200/80 font-medium">v0.1</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="#workbench" class="hover:text-ink transition">Demo</a>
-          <a href="#security" class="hover:text-ink transition">Data Boundaries</a>
+          <a href="/how-it-works" class="hover:text-ink transition">How It Works</a>
           <a href="#benchmarks" class="hover:text-ink transition">Benchmarks</a>
           <a href="#quickstart" class="hover:text-ink transition">Quickstart</a>
         </nav>
@@ -521,7 +489,7 @@
         <!-- Light / Dark Theme Switch Button -->
         <button id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light / Dark Theme" aria-label="Toggle theme" class="w-8 h-8 rounded-lg bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
           <!-- Sun Icon (shown in dark mode) -->
-          <svg id="themeSunIcon" class="w-4 h-4 text-amber-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg id="themeSunIcon" class="w-4 h-4 text-blue-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
           <!-- Moon Icon (shown in light mode) -->
@@ -529,8 +497,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
           </svg>
         </button>
-        <button onclick="openTrialModal()" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-medium text-xs shadow-sm transition cursor-pointer btn-press flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-zinc-950 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button onclick="openTrialModal()" class="px-3 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-600 text-white font-medium text-xs shadow-sm transition cursor-pointer btn-press flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
           <span>Start Team Trial</span>
@@ -571,7 +539,7 @@
         </div>
         <span class="hidden sm:inline text-zinc-300">•</span>
         <div class="flex items-center gap-1.5 hover:text-zinc-800 transition">
-          <svg class="w-3.5 h-3.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3.5 h-3.5 text-blue-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
           </svg>
           <span class="font-medium text-zinc-700">&lt;0.15s AST Synthesis</span>
@@ -639,7 +607,7 @@
             <span class="text-zinc-400 text-[10px] uppercase font-semibold">Context:</span>
             <span class="text-rose-500 font-semibold" id="bridgeRaw">1,840 tokens</span>
             <span class="text-zinc-300">➔</span>
-            <span class="text-amber-600 font-bold" id="bridgeSkel">138 tokens</span>
+            <span class="text-blue-700 dark:text-blue-400 font-bold" id="bridgeSkel">138 tokens</span>
           </div>
 
           <!-- Dollar Cost Savings Badge -->
@@ -653,7 +621,7 @@
           </div>
 
           <!-- Reduction Tag (Always on same line) -->
-          <span class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-bold text-[11px] whitespace-nowrap shrink-0" id="bridgeReductionTag">
+          <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-900 border border-blue-200 font-bold text-[11px] whitespace-nowrap shrink-0" id="bridgeReductionTag">
             -92.5% Evaporated
           </span>
         </div>
@@ -685,7 +653,7 @@
           <div class="bg-zinc-50/50 px-4 py-2 border-t border-zinc-100 text-[11px] font-mono text-zinc-400 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-2">
               <span>Edit code to test real-time synthesis</span>
-              <button type="button" onclick="resetDemoSample()" class="text-amber-600 hover:text-amber-700 underline decoration-amber-500/40 text-[10px] font-medium transition cursor-pointer">Reset sample</button>
+              <button type="button" onclick="resetDemoSample()" class="text-blue-700 hover:text-blue-800 underline decoration-blue-500/40 text-[10px] font-medium transition cursor-pointer">Reset sample</button>
             </div>
             <span class="text-rose-500 font-semibold flex items-center gap-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
@@ -703,14 +671,14 @@
             </div>
             <div class="flex items-center gap-3">
               <button onclick="replayDissolve()" title="Replay code dissolution animation" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800/90 hover:bg-zinc-700 text-zinc-300 hover:text-white text-[11px] font-mono transition btn-press border border-zinc-700/80 cursor-pointer shadow-2xs group">
-                <svg class="w-3 h-3 text-amber-400 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <svg class="w-3 h-3 text-blue-400 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 <span>Replay</span>
               </button>
               <span class="font-bold text-[11px] text-blue-300" id="skelTokenCount">138 tokens (-92%)</span>
             </div>
           </div>
           <div class="relative flex-1 overflow-hidden flex flex-col min-h-0">
-            <div id="skelOutput" class="w-full h-full p-4 font-mono text-xs text-zinc-200 leading-relaxed overflow-y-auto selection:bg-amber-400 selection:text-zinc-950 signal-glow"></div>
+            <div id="skelOutput" class="w-full h-full p-4 font-mono text-xs text-zinc-200 leading-relaxed overflow-y-auto selection:bg-blue-200 selection:text-blue-950 signal-glow"></div>
           </div>
           <div class="bg-zinc-900/60 px-4 py-2 border-t border-zinc-800/80 text-[11px] font-mono text-zinc-400 flex items-center justify-between shrink-0">
             <span class="text-emerald-400 flex items-center gap-1.5">
@@ -721,177 +689,6 @@
               Saved ~1,702 tokens (Save $51.06/10k)
             </span>
           </div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Architecture & Data Boundaries Section (Inspired by CheaperInference Security & Live Telemetry Terminal) -->
-  <section id="security" class="py-14 px-4 bg-zinc-50 border-t border-zinc-200/80">
-    <div class="max-w-5xl mx-auto space-y-9">
-      
-      <!-- Section Header -->
-      <div class="text-center space-y-2 max-w-2xl mx-auto">
-        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-200/70 border border-zinc-300 text-zinc-800 text-[10px] font-mono font-semibold uppercase tracking-wider shadow-2xs">
-          <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-          </svg>
-          <span>LOCAL DATA BOUNDARIES &amp; PRIVACY</span>
-        </div>
-        <h2 class="text-3xl sm:text-4xl font-normal tracking-tight text-ink font-serif">
-          Your code never leaves your workstation
-        </h2>
-        <p class="text-xs sm:text-sm text-ink-secondary">
-          SiftrCode operates 100% locally via our proprietary Deterministic AST Synthesis Engine. No external network egress, no code telemetry, zero cloud dependencies.
-        </p>
-      </div>
-
-      <!-- Fact Bar: 4 Horizontal Spec Pills (CheaperInference Pattern) -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 font-mono text-xs">
-        <div class="p-3 bg-white border border-zinc-200/90 rounded-xl flex items-center gap-2.5 shadow-2xs">
-          <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-          </div>
-          <div>
-            <div class="font-bold text-zinc-800 text-[11px]">0 Bytes Egress</div>
-            <div class="text-[10px] text-zinc-400 font-sans">No cloud calls</div>
-          </div>
-        </div>
-
-        <div class="p-3 bg-white border border-zinc-200/90 rounded-xl flex items-center gap-2.5 shadow-2xs">
-          <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          </div>
-          <div>
-            <div class="font-bold text-zinc-800 text-[11px]">&lt;0.15s Synthesis</div>
-            <div class="text-[10px] text-zinc-400 font-sans">Deterministic Local AST</div>
-          </div>
-        </div>
-
-        <div class="p-3 bg-white border border-zinc-200/90 rounded-xl flex items-center gap-2.5 shadow-2xs">
-          <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-          </div>
-          <div>
-            <div class="font-bold text-zinc-800 text-[11px]">Universal Stdio MCP</div>
-            <div class="text-[10px] text-zinc-400 font-sans">Claude, Cursor, Windsurf</div>
-          </div>
-        </div>
-
-        <div class="p-3 bg-white border border-zinc-200/90 rounded-xl flex items-center gap-2.5 shadow-2xs">
-          <div class="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-          </div>
-          <div>
-            <div class="font-bold text-zinc-800 text-[11px]">100% Contract Fidelity</div>
-            <div class="text-[10px] text-zinc-400 font-sans">Zero hallucination risk</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Main Visual: Terminal Telemetry Log + 3 Security Assurance Pillars -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        
-        <!-- Left 7 cols: Terminal Log (CheaperInference request.log inspired) -->
-        <div class="lg:col-span-7 bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl text-zinc-300 font-mono text-xs">
-          <!-- Terminal Title Bar -->
-          <div class="bg-zinc-900/90 px-4 py-3 border-b border-zinc-800 flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-2">
-              <div class="flex items-center gap-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-zinc-700"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-zinc-700"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-zinc-700"></span>
-              </div>
-              <span class="text-[11px] text-zinc-400 ml-2 font-medium">siftr.audit.log — local_daemon [pid: 89421]</span>
-            </div>
-            <div class="flex items-center gap-1.5 text-[10px] text-emerald-400">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ci-live-dot"></span>
-              <span>AUDIT ACTIVE</span>
-            </div>
-          </div>
-
-          <!-- Terminal Content Stream -->
-          <div class="p-5 space-y-2.5 text-[11px] leading-relaxed select-all">
-            <div class="text-zinc-500"># SiftrCode Ingest Audit — Local Runtime Verification</div>
-            
-            <div class="flex items-start gap-2">
-              <span class="text-amber-400 shrink-0">›</span>
-              <div><span class="text-zinc-400">target_scope:</span> <span class="text-white">./src/**/*.ts</span> <span class="text-zinc-500">(128 source files)</span></div>
-            </div>
-
-            <div class="flex items-start gap-2">
-              <span class="text-amber-400 shrink-0">›</span>
-              <div><span class="text-zinc-400">siftr.engine.compile(local):</span> <span class="text-emerald-400 font-semibold">status: complete</span> <span class="text-zinc-500">(0.14s elapsed • 0 bytes egress)</span></div>
-            </div>
-
-            <div class="flex items-start gap-2">
-              <span class="text-amber-400 shrink-0">›</span>
-              <div><span class="text-zinc-400">symbols_indexed:</span> <span class="text-blue-300">7,420 signatures</span> <span class="text-zinc-500">[functions, classes, interfaces]</span></div>
-            </div>
-
-            <div class="flex items-start gap-2">
-              <span class="text-amber-400 shrink-0">›</span>
-              <div><span class="text-zinc-400">body_pruning:</span> <span class="text-amber-400 font-semibold">-92.5% bloat dissolved</span> <span class="text-zinc-500">(implementation details omitted)</span></div>
-            </div>
-
-            <div class="flex items-start gap-2">
-              <span class="text-emerald-400 shrink-0">✔</span>
-              <div><span class="text-zinc-400">network_egress:</span> <span class="text-emerald-400 font-bold bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/80">0 bytes</span> <span class="text-zinc-400">[100% offline — zero cloud upload]</span></div>
-            </div>
-
-            <div class="flex items-start gap-2">
-              <span class="text-emerald-400 shrink-0">✔</span>
-              <div><span class="text-zinc-400">contract_hash:</span> <span class="text-zinc-300">sha256:4f8e...</span> <span class="text-emerald-400">[100% type preservation verified]</span></div>
-            </div>
-
-            <div class="flex items-start gap-2 pt-1 border-t border-zinc-800/80">
-              <span class="text-amber-400 shrink-0">›</span>
-              <div><span class="text-zinc-400">agent_bridge:</span> <span class="text-white">stdio://pipe/mcp-context-stream</span> <span class="ci-terminal-cursor"></span></div>
-            </div>
-          </div>
-
-          <!-- Terminal Footer -->
-          <div class="bg-zinc-900/40 px-4 py-2 border-t border-zinc-800/80 text-[10px] text-zinc-500 flex items-center justify-between">
-            <span>Verified: siftr-engine-v0.1.1 (Air-Gapped Local Runtime)</span>
-            <span class="text-zinc-400 font-sans">Encrypted memory • Non-persistent AST cache</span>
-          </div>
-        </div>
-
-        <!-- Right 5 cols: 3 Assurance Cards -->
-        <div class="lg:col-span-5 space-y-3.5">
-          
-          <div class="p-4 bg-white border border-zinc-200/90 rounded-xl shadow-2xs space-y-1.5 hover:border-zinc-300 transition">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <h3 class="font-bold text-xs text-ink uppercase tracking-wider">100% Local CPU Execution</h3>
-            </div>
-            <p class="text-xs text-zinc-600 font-sans leading-relaxed">
-              Every parse, token count, and skeleton synthesis runs directly on your workstation's CPU via SiftrCode's air-gapped local runtime. No code is transmitted to any cloud API.
-            </p>
-          </div>
-
-          <div class="p-4 bg-white border border-zinc-200/90 rounded-xl shadow-2xs space-y-1.5 hover:border-zinc-300 transition">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-              <h3 class="font-bold text-xs text-ink uppercase tracking-wider">Interface Fidelity Guarantees</h3>
-            </div>
-            <p class="text-xs text-zinc-600 font-sans leading-relaxed">
-              Coding agents need exact signatures, generics, and exported interfaces to write correct code. SiftrCode dissolves the internal bodies while keeping 100% of the contracts agents rely on.
-            </p>
-          </div>
-
-          <div class="p-4 bg-white border border-zinc-200/90 rounded-xl shadow-2xs space-y-1.5 hover:border-zinc-300 transition">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-              <h3 class="font-bold text-xs text-ink uppercase tracking-wider">Standard Stdio MCP Protocol</h3>
-            </div>
-            <p class="text-xs text-zinc-600 font-sans leading-relaxed">
-              No proprietary background daemons or closed network proxies. SiftrCode integrates through the open Model Context Protocol (MCP) using standard Unix pipes.
-            </p>
-          </div>
-
         </div>
 
       </div>
@@ -916,9 +713,9 @@
         <!-- Macro Metrics -->
         <div class="inline-flex items-center divide-x divide-zinc-200 bg-surface-50 border border-zinc-200 rounded-lg px-1 py-1 shadow-2xs text-xs font-mono self-start md:self-auto">
           <div class="px-2.5 py-0.5 flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
             <span class="text-zinc-400">Reduction:</span>
-            <span class="font-bold text-amber-600">-85% to -98%</span>
+            <span class="font-bold text-blue-700 dark:text-blue-400">-85% to -98%</span>
           </div>
           <div class="px-2.5 py-0.5 flex items-center gap-1.5">
             <span class="text-zinc-400">Latency:</span>
@@ -946,10 +743,10 @@
             <div class="flex items-center gap-1.5">
               <span class="text-rose-500 font-semibold line-through">175,353</span>
               <span class="text-zinc-300">➔</span>
-              <span class="text-amber-600 font-bold">2,357</span>
+              <span class="text-blue-700 dark:text-blue-400 font-bold">2,357</span>
               <span class="text-[10px] text-zinc-400">tokens</span>
             </div>
-            <span class="font-extrabold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded text-[11px]">-98.7%</span>
+            <span class="font-extrabold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 px-1.5 py-0.5 rounded text-[11px]">-98.7%</span>
           </div>
           <div class="flex items-center justify-between text-[10px] text-zinc-400">
             <span>Pack Latency</span>
@@ -970,10 +767,10 @@
             <div class="flex items-center gap-1.5">
               <span class="text-rose-500 font-semibold line-through">3,498,358</span>
               <span class="text-zinc-300">➔</span>
-              <span class="text-amber-600 font-bold">720,715</span>
+              <span class="text-blue-700 dark:text-blue-400 font-bold">720,715</span>
               <span class="text-[10px] text-zinc-400">tokens</span>
             </div>
-            <span class="font-extrabold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded text-[11px]">-79.4%</span>
+            <span class="font-extrabold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 px-1.5 py-0.5 rounded text-[11px]">-79.4%</span>
           </div>
           <div class="flex items-center justify-between text-[10px] text-zinc-400">
             <span>Net Reduction</span>
@@ -994,10 +791,10 @@
             <div class="flex items-center gap-1.5">
               <span class="text-rose-500 font-semibold line-through">15,931</span>
               <span class="text-zinc-300">➔</span>
-              <span class="text-amber-600 font-bold">817</span>
+              <span class="text-blue-700 dark:text-blue-400 font-bold">817</span>
               <span class="text-[10px] text-zinc-400">tokens</span>
             </div>
-            <span class="font-extrabold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded text-[11px]">-94.9%</span>
+            <span class="font-extrabold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 px-1.5 py-0.5 rounded text-[11px]">-94.9%</span>
           </div>
           <div class="flex items-center justify-between text-[10px] text-zinc-400">
             <span>Pack Latency</span>
@@ -1028,7 +825,7 @@
           </div>
           <div class="bg-zinc-900 text-zinc-200 p-3 rounded-lg font-mono text-[11px] select-all flex items-center justify-between">
             <span>npx siftrcode audit</span>
-            <button onclick="copyText('npx siftrcode audit', this)" class="text-[10px] font-mono text-zinc-400 hover:text-amber-400 transition btn-press px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">COPY</button>
+            <button onclick="copyText('npx siftrcode audit', this)" class="text-[10px] font-mono text-zinc-400 hover:text-blue-400 transition btn-press px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">COPY</button>
           </div>
           <p class="text-[11px] text-ink-secondary font-sans">
             Instantly scans your directory and calculates monthly token waste.
@@ -1043,7 +840,7 @@
           </div>
           <div class="bg-zinc-900 text-zinc-200 p-3 rounded-lg font-mono text-[11px] select-all flex items-center justify-between">
             <span>npx siftrcode init</span>
-            <button onclick="copyText('npx siftrcode init', this)" class="text-[10px] font-mono text-zinc-400 hover:text-amber-400 transition btn-press px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">COPY</button>
+            <button onclick="copyText('npx siftrcode init', this)" class="text-[10px] font-mono text-zinc-400 hover:text-blue-400 transition btn-press px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">COPY</button>
           </div>
           <p class="text-[11px] text-ink-secondary font-sans">
             Automatically configures Claude Desktop, Cursor, and Windsurf MCP settings.
@@ -1108,20 +905,20 @@
         </div>
 
         <!-- Team Pro -->
-        <div class="p-6 bg-amber-50/40 border-2 border-amber-500 rounded-xl flex flex-col justify-between relative shadow-sm">
-          <span class="absolute -top-2.5 right-4 px-2.5 py-0.5 bg-amber-500 text-zinc-950 font-bold text-[9px] rounded-full uppercase tracking-wider">TEAM PRO</span>
+        <div class="p-6 bg-blue-50/40 border-2 border-blue-600 rounded-xl flex flex-col justify-between relative shadow-sm">
+          <span class="absolute -top-2.5 right-4 px-2.5 py-0.5 bg-blue-700 text-white font-bold text-[9px] rounded-full uppercase tracking-wider">TEAM PRO</span>
           <div class="space-y-4">
             <div>
-              <div class="text-[10px] text-amber-800 uppercase font-semibold tracking-wider">FOR STARTUPS &amp; TEAMS</div>
+              <div class="text-[10px] text-blue-800 uppercase font-semibold tracking-wider">FOR STARTUPS &amp; TEAMS</div>
               <h3 class="text-xl font-bold text-ink mt-0.5">SiftrCode Pro</h3>
             </div>
 
             <div class="flex items-baseline gap-1.5 font-mono">
-              <span class="text-3xl font-extrabold text-amber-700">$19</span>
+              <span class="text-3xl font-extrabold text-blue-800 dark:text-blue-400">$19</span>
               <span class="text-xs text-zinc-500">/ seat / mo</span>
             </div>
 
-            <ul class="space-y-2.5 text-zinc-700 text-[11px] font-mono border-t border-amber-200/80 pt-3.5">
+            <ul class="space-y-2.5 text-zinc-700 text-[11px] font-mono border-t border-blue-200/80 pt-3.5">
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
                 <span>Everything in Community CLI</span>
@@ -1142,8 +939,8 @@
           </div>
 
           <div class="pt-6">
-            <button onclick="openTrialModal()" class="w-full h-10 flex items-center justify-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold transition btn-press text-xs shadow-sm cursor-pointer">
-              <svg class="w-3.5 h-3.5 text-zinc-950 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button onclick="openTrialModal()" class="w-full h-10 flex items-center justify-center gap-2 rounded-lg bg-blue-700 hover:bg-blue-600 text-white font-bold transition btn-press text-xs shadow-sm cursor-pointer">
+              <svg class="w-3.5 h-3.5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
               <span>Start 14-Day Trial</span>
@@ -1161,7 +958,7 @@
     <div class="max-w-6xl mx-auto space-y-5 text-[11px]">
       <div class="flex flex-col md:flex-row items-center justify-between gap-4 pb-4 border-b border-zinc-200/60 dark:border-zinc-800/60">
         <div class="flex items-center gap-2.5">
-          <div class="w-5 h-5 rounded bg-amber-500 flex items-center justify-center text-zinc-950 font-mono font-bold text-[10px]">
+          <div class="w-5 h-5 rounded bg-blue-700 flex items-center justify-center text-white font-mono font-bold text-[10px]">
             S
           </div>
           <span class="font-bold text-ink text-xs">SiftrCode</span>
@@ -1586,7 +1383,7 @@ impl Gateway for StripeGateway {`
         const trimmed = line.trim();
         if (trimmed.includes('dissolved by SiftrCode') || trimmed.includes('lines dissolved')) {
           const cleanText = trimmed.replace(/^(\/\/|#)\s*(⟡\s*)?/, '').replace(/^\[\s*/, '').replace(/\s*\]$/, '');
-          return `<div class="my-2 py-1 px-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 font-semibold text-[11px] flex items-center gap-1.5"><span class="text-amber-400">⟡</span> ${escapeHtml(cleanText)}</div>`;
+          return `<div class="my-2 py-1 px-2.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 font-semibold text-[11px] flex items-center gap-1.5"><span class="text-blue-400">⟡</span> ${escapeHtml(cleanText)}</div>`;
         }
         if (trimmed.startsWith('// [SiftrCode') || trimmed.startsWith('# [SiftrCode')) {
           return `<span class="text-zinc-500 font-medium">${escapeHtml(line)}</span>`;
@@ -1596,16 +1393,16 @@ impl Gateway for StripeGateway {`
         }
 
         let kwColor = 'text-blue-400';
-        let typeColor = 'text-amber-300';
+        let typeColor = 'text-sky-300';
         if (lang === 'py') {
           kwColor = 'text-emerald-400';
-          typeColor = 'text-amber-300';
+          typeColor = 'text-sky-300';
         } else if (lang === 'go') {
           kwColor = 'text-cyan-400';
-          typeColor = 'text-amber-300';
+          typeColor = 'text-sky-300';
         } else if (lang === 'rs') {
           kwColor = 'text-orange-400';
-          typeColor = 'text-amber-300';
+          typeColor = 'text-sky-300';
         }
 
         const langKeywords = {
@@ -1661,8 +1458,8 @@ impl Gateway for StripeGateway {`
       if (!label) return;
       label.innerText = text;
       if (type === 'compiling') {
-        pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-300 text-amber-800 text-[10px] font-mono font-semibold shadow-2xs transition-all duration-300';
-        if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping shrink-0';
+        pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-300 text-blue-800 text-[10px] font-mono font-semibold shadow-2xs transition-all duration-300';
+        if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping shrink-0';
       } else if (type === 'success') {
         pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[10px] font-mono font-semibold shadow-2xs transition-all duration-300';
         if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500 ci-live-dot shrink-0';
@@ -1702,15 +1499,15 @@ ${highlightPrunedCode(item.rawCode, lang)}
       </div>
     </div>
   </div>
-  <div class="dissolve-pill flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-300 font-mono text-[11px] select-none my-1 transition hover:border-amber-400/50">
+  <div class="dissolve-pill flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/25 text-blue-300 font-mono text-[11px] select-none my-1 transition hover:border-blue-400/50">
     <div class="flex items-center gap-2 flex-wrap">
-      <span class="text-amber-400 font-bold">⟡</span>
-      <span class="font-semibold text-amber-200">${item.lineCount} lines dissolved</span>
+      <span class="text-blue-400 font-bold">⟡</span>
+      <span class="font-semibold text-blue-200">${item.lineCount} lines dissolved</span>
       <span class="text-emerald-400 font-semibold bg-emerald-950/70 border border-emerald-800/80 px-1.5 py-0.5 rounded text-[10px]">${item.costSaved}</span>
       <span class="text-zinc-600">•</span>
       <span class="text-zinc-400 text-[10px]">100% types preserved</span>
     </div>
-    <button onclick="toggleDissolve('${item.id}')" id="btn-${item.id}" class="text-[11px] font-semibold text-amber-400 hover:text-amber-200 underline decoration-amber-400/40 transition cursor-pointer px-1.5 py-0.5 rounded hover:bg-amber-400/10">
+    <button onclick="toggleDissolve('${item.id}')" id="btn-${item.id}" class="text-[11px] font-semibold text-blue-400 hover:text-blue-200 underline decoration-blue-400/40 transition cursor-pointer px-1.5 py-0.5 rounded hover:bg-blue-400/10">
       ${shouldAnimate ? 'dissolving...' : 'inspect'}
     </button>
   </div>
@@ -1958,10 +1755,10 @@ ${highlightPrunedCode(item.rawCode, lang)}
       }
       const orig = btn.innerText;
       btn.innerText = 'COPIED!';
-      btn.className = 'text-[10px] font-mono text-amber-300 bg-amber-950/70 border border-amber-800/80 px-2 py-0.5 rounded transition';
+      btn.className = 'text-[10px] font-mono text-blue-300 bg-blue-950/70 border border-blue-800/80 px-2 py-0.5 rounded transition';
       setTimeout(() => {
         btn.innerText = orig;
-        btn.className = 'text-[10px] font-mono text-zinc-400 hover:text-amber-400 transition px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer';
+        btn.className = 'text-[10px] font-mono text-zinc-400 hover:text-blue-400 transition px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer';
       }, 2000);
     }
 
@@ -1995,7 +1792,7 @@ ${highlightPrunedCode(item.rawCode, lang)}
       // 2. Update Intel Banner
       const intelBadge = document.getElementById('langIntelBadge');
       if (intelBadge) {
-        intelBadge.className = `inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold text-[10px] uppercase tracking-wider shrink-0 ${conf.intelBadgeClass}`;
+        intelBadge.className = `inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md font-semibold text-[10px] uppercase tracking-wider shrink-0 ${conf.intelBadgeClass}`;
         intelBadge.innerHTML = `${conf.icon} <span>${conf.intelTitle}</span>`;
       }
       const intelDesc = document.getElementById('langIntelText');
@@ -2103,7 +1900,7 @@ ${highlightPrunedCode(item.rawCode, lang)}
       errEl.classList.add('hidden');
       btn.disabled = true;
       const originalText = btn.innerHTML;
-      btn.innerHTML = `<span class="flex items-center gap-2"><svg class="animate-spin h-4 w-4 text-zinc-950" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Activating Trial...</span>`;
+      btn.innerHTML = `<span class="flex items-center gap-2"><svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Activating Trial...</span>`;
 
       const email = document.getElementById('trialEmail').value.trim();
       const teamSize = document.getElementById('trialTeamSize').value;
@@ -2192,8 +1989,8 @@ ${highlightPrunedCode(item.rawCode, lang)}
 
       <!-- Modal Header -->
       <div class="space-y-1.5 text-left">
-        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-mono font-semibold uppercase tracking-wider">
-          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-900 text-[10px] font-mono font-semibold uppercase tracking-wider">
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
           14-Day Free Team Trial
         </div>
         <h3 class="text-2xl sm:text-3xl font-normal text-zinc-900 tracking-tight font-serif">Supercharge your team's coding agents</h3>
@@ -2206,13 +2003,13 @@ ${highlightPrunedCode(item.rawCode, lang)}
       <form id="trialForm" onsubmit="submitTrialForm(event)" class="space-y-4 text-left font-mono text-xs">
         <div>
           <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider font-sans">Work Email *</label>
-          <input type="email" id="trialEmail" required placeholder="alex@company.com" class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200/50 outline-none text-zinc-900 font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
+          <input type="email" id="trialEmail" required placeholder="alex@company.com" class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-900 font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider font-sans">Team Size</label>
-            <select id="trialTeamSize" class="w-full px-3 py-2.5 rounded-lg border border-zinc-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200/50 outline-none text-zinc-800 font-sans text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
+            <select id="trialTeamSize" class="w-full px-3 py-2.5 rounded-lg border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-800 font-sans text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
               <option value="1-5 devs">1–5 engineers</option>
               <option value="5-20 devs" selected>5–20 engineers</option>
               <option value="20-50 devs">20–50 engineers</option>
@@ -2222,7 +2019,7 @@ ${highlightPrunedCode(item.rawCode, lang)}
 
           <div>
             <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider font-sans">Primary AI Agent</label>
-            <select id="trialAgent" class="w-full px-3 py-2.5 rounded-lg border border-zinc-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200/50 outline-none text-zinc-800 font-sans text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
+            <select id="trialAgent" class="w-full px-3 py-2.5 rounded-lg border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-800 font-sans text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
               <option value="Cursor" selected>Cursor</option>
               <option value="Claude Code">Claude Code</option>
               <option value="Windsurf">Windsurf</option>
@@ -2234,12 +2031,12 @@ ${highlightPrunedCode(item.rawCode, lang)}
 
         <div>
           <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider font-sans">Repository URL / Stack (Optional)</label>
-          <input type="text" id="trialRepo" placeholder="github.com/company/repo" class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200/50 outline-none text-zinc-900 font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
+          <input type="text" id="trialRepo" placeholder="github.com/company/repo" class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-900 font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
         </div>
 
         <div id="trialError" class="hidden text-[11px] text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2.5 font-sans"></div>
 
-        <button type="submit" id="trialSubmitBtn" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs sm:text-sm transition btn-press shadow-md hover:shadow-lg active:scale-[0.99] flex items-center justify-center gap-2">
+        <button type="submit" id="trialSubmitBtn" class="w-full py-3 rounded-xl bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs sm:text-sm transition btn-press shadow-md hover:shadow-lg active:scale-[0.99] flex items-center justify-center gap-2">
           <span>Activate 14-Day Team Trial</span>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
         </button>
@@ -2264,7 +2061,7 @@ ${highlightPrunedCode(item.rawCode, lang)}
         </div>
         <div class="p-4 bg-zinc-50 border border-zinc-200 rounded-xl text-left space-y-2 font-mono text-[11px]">
           <div class="text-zinc-500 font-sans text-[10px] uppercase font-semibold">Start auditing your repo right now:</div>
-          <div class="bg-zinc-900 text-amber-400 p-2.5 rounded-lg flex items-center justify-between">
+          <div class="bg-zinc-900 text-blue-400 p-2.5 rounded-lg flex items-center justify-between">
             <code>npx siftrcode audit</code>
           </div>
         </div>
