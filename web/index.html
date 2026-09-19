@@ -110,7 +110,7 @@
     }
     html.dark .bg-dot-matrix {
       background-size: 32px 32px;
-      background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1.2px, transparent 1.2px) !important;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px) !important;
     }
     html.dark .ambient-glow {
       opacity: 0.16;
@@ -258,7 +258,7 @@
     /* Dot Matrix Pattern Fallback */
     .bg-dot-matrix {
       background-size: 32px 32px;
-      background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1.2px, transparent 1.2px);
+      background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px);
     }
 
     /* Ambient Floating Auras */
@@ -2184,9 +2184,9 @@ ${highlightPrunedCode(item.rawCode, lang)}
           x: e.clientX,
           y: e.clientY,
           radius: 0,
-          maxRadius: Math.max(width, height) * 0.45,
-          speed: 14,
-          strength: 1.0
+          maxRadius: Math.max(width, height) * 0.35,
+          speed: 8,
+          strength: 0.4
         });
       }, { passive: true });
 
@@ -2195,9 +2195,9 @@ ${highlightPrunedCode(item.rawCode, lang)}
           x: x !== undefined ? x : width / 2,
           y: y !== undefined ? y : height * 0.35,
           radius: 0,
-          maxRadius: Math.max(width, height) * 0.45,
-          speed: 12,
-          strength: 0.9
+          maxRadius: Math.max(width, height) * 0.35,
+          speed: 8,
+          strength: 0.35
         });
       };
 
@@ -2214,8 +2214,8 @@ ${highlightPrunedCode(item.rawCode, lang)}
 
         // Smooth mouse position interpolation
         if (mouseActive) {
-          mouseX += (targetMouseX - mouseX) * 0.2;
-          mouseY += (targetMouseY - mouseY) * 0.2;
+          mouseX += (targetMouseX - mouseX) * 0.15;
+          mouseY += (targetMouseY - mouseY) * 0.15;
           if (now - lastMouseMoveTime > 2500) {
             mouseActive = false;
           }
@@ -2228,8 +2228,8 @@ ${highlightPrunedCode(item.rawCode, lang)}
         for (let i = ripples.length - 1; i >= 0; i--) {
           const r = ripples[i];
           r.radius += r.speed;
-          r.strength *= 0.965;
-          if (r.radius > r.maxRadius || r.strength < 0.02) {
+          r.strength *= 0.96;
+          if (r.radius > r.maxRadius || r.strength < 0.01) {
             ripples.splice(i, 1);
           }
         }
@@ -2237,8 +2237,8 @@ ${highlightPrunedCode(item.rawCode, lang)}
         ctx.clearRect(0, 0, width, height);
 
         const isDark = document.documentElement.classList.contains('dark');
-        const baseDotRadius = 1.05;
-        const mouseRadius = 160;
+        const baseDotRadius = 0.8;
+        const mouseRadius = 140;
         const timeSeconds = now * 0.001;
 
         const cols = Math.ceil(width / spacing) + 1;
@@ -2249,9 +2249,9 @@ ${highlightPrunedCode(item.rawCode, lang)}
           for (let r = 0; r < rows; r++) {
             const y = r * spacing;
 
-            // 1. Ambient autonomous harmonic wave
-            const wave1 = Math.sin(x * 0.007 + y * 0.005 - timeSeconds * 1.1);
-            const wave2 = Math.cos(x * 0.004 - y * 0.007 + timeSeconds * 0.7);
+            // 1. Slow, organic breathing harmonic wave
+            const wave1 = Math.sin(x * 0.005 + y * 0.004 - timeSeconds * 0.35);
+            const wave2 = Math.cos(x * 0.003 - y * 0.005 + timeSeconds * 0.25);
             const ambientFactor = (wave1 + wave2 + 2) * 0.25;
 
             // 2. Interactive mouse proximity
@@ -2280,29 +2280,29 @@ ${highlightPrunedCode(item.rawCode, lang)}
               }
             }
 
-            // Soft vertical vignette: maximum at top hero, gentle tapering down
-            const vFade = Math.max(0.35, 1 - (y / (height * 1.3)));
-            const excitation = Math.min(1.0, mouseFactor * 1.3 + rippleFactor * 1.5 + ambientFactor * 0.2) * vFade;
-            const radius = baseDotRadius + excitation * 1.7;
+            // Soft vertical vignette: gentle tapering down towards bottom
+            const vFade = Math.max(0.2, 1 - (y / (height * 1.4)));
+            const excitation = Math.min(1.0, mouseFactor * 0.7 + rippleFactor * 0.65 + ambientFactor * 0.1) * vFade;
+            const radius = baseDotRadius + excitation * 0.55;
 
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
 
             if (isDark) {
-              if (excitation > 0.15) {
-                const glowAlpha = Math.min(0.9, 0.2 + excitation * 0.7);
-                ctx.fillStyle = `rgba(96, 165, 250, ${glowAlpha})`;
+              if (excitation > 0.18) {
+                const glowAlpha = Math.min(0.28, 0.06 + excitation * 0.22);
+                ctx.fillStyle = `rgba(147, 197, 253, ${glowAlpha})`;
               } else {
-                const baseAlpha = (0.08 + ambientFactor * 0.08) * vFade;
+                const baseAlpha = (0.035 + ambientFactor * 0.025) * vFade;
                 ctx.fillStyle = `rgba(255, 255, 255, ${baseAlpha})`;
               }
             } else {
-              if (excitation > 0.15) {
-                const glowAlpha = Math.min(0.85, 0.25 + excitation * 0.65);
+              if (excitation > 0.18) {
+                const glowAlpha = Math.min(0.22, 0.05 + excitation * 0.17);
                 ctx.fillStyle = `rgba(37, 99, 235, ${glowAlpha})`;
               } else {
-                const baseAlpha = (0.11 + ambientFactor * 0.09) * vFade;
-                ctx.fillStyle = `rgba(113, 113, 122, ${baseAlpha})`;
+                const baseAlpha = (0.045 + ambientFactor * 0.03) * vFade;
+                ctx.fillStyle = `rgba(82, 82, 91, ${baseAlpha})`;
               }
             }
 
