@@ -725,10 +725,10 @@
 
       <!-- Focused Single-Panel Terminal: In-Place AST Morphing & Sparkle Dissolution -->
       <div class="w-full">
-        <div class="bg-white dark:bg-zinc-950 border border-zinc-200/90 dark:border-zinc-800 rounded-lg overflow-hidden shadow-sm dark:shadow-2xl flex flex-col text-zinc-900 dark:text-zinc-100 relative transition min-h-[340px]">
+        <div class="bg-white dark:bg-zinc-950 border border-zinc-200/90 dark:border-zinc-800 rounded-lg overflow-hidden shadow-sm dark:shadow-2xl flex flex-col text-zinc-900 dark:text-zinc-100 relative transition">
           
           <!-- Terminal Header Bar with Consolidated Metrics Stream -->
-          <div class="bg-zinc-50 dark:bg-zinc-900/95 px-3 sm:px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs font-sans shrink-0 select-none gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
+          <div class="bg-zinc-50 dark:bg-zinc-900/95 px-3 sm:px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs font-sans shrink-0 select-none gap-2 sm:gap-3 min-h-[46px] overflow-x-auto no-scrollbar">
             <!-- Left: macOS Traffic Lights & Subtle File Name -->
             <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
               <div class="flex items-center gap-1.5 shrink-0">
@@ -749,8 +749,8 @@
             </div>
           </div>
 
-          <!-- Code Viewport Body with Sparkle Particle Overlay -->
-          <div class="relative flex-1 overflow-hidden flex flex-col min-h-[300px] max-h-[480px] bg-white dark:bg-zinc-950">
+          <!-- Code Viewport Body with Sparkle Particle Overlay (Fixed Height to Prevent Layout Shift) -->
+          <div class="relative overflow-hidden flex flex-col h-[460px] sm:h-[480px] bg-white dark:bg-zinc-950 shrink-0">
             <!-- Modern Compiler Pipeline Progress Track -->
             <div id="astProgressTrack" class="absolute top-0 left-0 right-0 h-[2px] bg-zinc-200/40 dark:bg-zinc-800/40 z-30 pointer-events-none overflow-hidden">
               <div id="astProgressBar" class="ast-compiler-runner"></div>
@@ -762,7 +762,7 @@
           </div>
 
           <!-- Terminal Footer with Consolidated Telemetry Stream -->
-          <div class="bg-zinc-50/95 dark:bg-zinc-900/90 px-3.5 sm:px-4 py-2.5 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-3 shrink-0">
+          <div class="bg-zinc-50/95 dark:bg-zinc-900/90 px-3.5 sm:px-4 py-2.5 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-3 shrink-0 min-h-[48px]">
             <!-- Left Live Pulse Telemetry Indicator -->
             <div class="hidden sm:flex items-center gap-2 text-xs font-mono text-zinc-500 dark:text-zinc-400 select-none">
               <span class="relative flex h-2 w-2">
