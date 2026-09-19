@@ -69,8 +69,10 @@
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       letter-spacing: -0.015em;
-      background-color: #eef1f5;
-      background-image: radial-gradient(circle at 50% 0%, #f4f6f9 0%, #eef1f5 55%, #e6ebf1 100%);
+      background-color: #e8eff8;
+      background-image: 
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(191, 219, 254, 0.65) 0%, rgba(224, 238, 255, 0.45) 45%, transparent 80%),
+        radial-gradient(circle at 50% 0%, #edf4fe 0%, #e5eef9 40%, #dce7f5 75%, #d5e2f2 100%);
       background-attachment: fixed;
     }
     .font-serif, h1.font-serif, h2.font-serif, h3.font-serif, .font-display {
@@ -675,8 +677,10 @@
 
   <!-- Background Ambient Lights -->
   <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
-    <div class="ambient-glow w-[600px] h-[600px] bg-blue-200/25 -top-40 -left-20"></div>
-    <div class="ambient-glow w-[500px] h-[500px] bg-blue-100/20 top-96 -right-20" style="animation-delay: -5s;"></div>
+    <div class="ambient-glow w-[800px] h-[500px] bg-blue-300/35 -top-28 left-1/2 -translate-x-1/2" style="filter: blur(110px);"></div>
+    <div class="ambient-glow w-[600px] h-[600px] bg-indigo-200/35 -top-20 -left-20" style="filter: blur(100px);"></div>
+    <div class="ambient-glow w-[550px] h-[550px] bg-sky-200/40 top-80 -right-20" style="animation-delay: -5s; filter: blur(100px);"></div>
+    <div class="ambient-glow w-[650px] h-[500px] bg-blue-200/30 top-[850px] -left-20" style="animation-delay: -10s; filter: blur(110px);"></div>
   </div>
 
   <!-- Header Navigation -->
@@ -3259,11 +3263,11 @@ ${renderedRaw}
               }
             } else {
               if (excitation > 0.68) {
-                const glowAlpha = Math.min(0.48, 0.12 + (excitation - 0.68) * 1.15);
-                ctx.fillStyle = `rgba(37, 99, 235, ${glowAlpha})`;
+                const glowAlpha = Math.min(0.52, 0.14 + (excitation - 0.68) * 1.2);
+                ctx.fillStyle = `rgba(29, 78, 216, ${glowAlpha})`;
               } else {
                 const baseAlpha = (0.085 + excitation * 0.065);
-                ctx.fillStyle = `rgba(82, 82, 91, ${baseAlpha})`;
+                ctx.fillStyle = `rgba(37, 99, 235, ${baseAlpha * 0.85})`;
               }
             }
 
