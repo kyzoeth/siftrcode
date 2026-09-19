@@ -625,10 +625,10 @@
     <div class="max-w-4xl mx-auto space-y-3.5">
       
       <!-- Integrated Language Selector & AST Synthesis Contract Deck -->
-      <div id="langSelectorDeck" class="bg-surface-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 rounded-xl p-2 sm:p-2.5 shadow-2xs space-y-2">
-        <!-- Top: Selector Controls & Measured Benchmark Pill -->
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex items-center gap-2">
+      <div id="langSelectorDeck" class="bg-surface-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 rounded-xl p-2 sm:px-3 sm:py-2 shadow-2xs">
+        <div class="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
+          <!-- Left: Language Selection Tabs -->
+          <div class="flex items-center gap-2 shrink-0">
             <span class="text-zinc-400 dark:text-zinc-500 text-[11px] font-semibold uppercase tracking-wider pl-1 font-sans">LANG:</span>
             <div class="inline-flex p-1 rounded-xl bg-zinc-200/70 dark:bg-zinc-800/80 border border-zinc-200/80 dark:border-zinc-700/80 gap-1 shadow-2xs">
               <button onclick="setLang('ts', true)" id="tab-ts" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition btn-press">
@@ -658,23 +658,16 @@
             </div>
           </div>
 
-          <!-- Token Reduction Metric Pill for Selected Language -->
-          <div class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-mono text-[11px] font-semibold shadow-2xs">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span id="langReductionPct">-92.5% Token Reduction</span>
+          <!-- Right: Consolidated Active Synthesis Rule Description -->
+          <div id="langIntelBar" class="flex items-center gap-2 text-xs font-sans min-w-0">
+            <span id="langIntelBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md font-semibold text-[10px] font-mono uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800 shrink-0 transition-colors">
+              TypeScript Synthesis
+            </span>
+            <span id="langIntelText" class="text-zinc-600 dark:text-zinc-400 text-[11px] font-sans leading-snug">
+              Strips function &amp; method bodies • Preserves interfaces, types &amp; classes
+            </span>
           </div>
         </div>
-
-        <!-- Integrated Active Synthesis Rule Description -->
-        <div id="langIntelBar" class="flex flex-col sm:flex-row sm:items-center gap-2 pt-2 border-t border-zinc-200/80 dark:border-zinc-800 text-xs font-sans">
-          <span id="langIntelBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md font-semibold text-[10px] font-mono uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800 shrink-0 self-start sm:self-auto transition-colors">
-            TypeScript Synthesis
-          </span>
-          <span id="langIntelText" class="text-zinc-600 dark:text-zinc-400 text-[11px] font-sans leading-relaxed transition-opacity">
-            Strips function &amp; method bodies • Preserves 100% exported interfaces, type aliases, generic signatures, and class layouts
-          </span>
-        </div>
-
       </div>
 
       <!-- Focused Single-Panel Terminal: In-Place AST Morphing & Sparkle Dissolution -->
@@ -1034,7 +1027,7 @@ impl Gateway for StripeGateway {
         pingColor: 'bg-blue-500',
         intelTitle: 'TypeScript Synthesis',
         intelBadgeClass: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800',
-        intelDesc: 'Strips function & method bodies • Preserves 100% exported interfaces, type aliases, generic signatures, and class layouts',
+        intelDesc: 'Strips function & method bodies • Preserves interfaces, types & classes',
         rawTokens: 1840,
         skelTokens: 138,
         reduction: 92.5,
@@ -1056,7 +1049,7 @@ impl Gateway for StripeGateway {
         pingColor: 'bg-emerald-500',
         intelTitle: 'Python Synthesis',
         intelBadgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
-        intelDesc: 'Dissolves imperative implementation logic • Preserves PEP 484 type hints, docstrings & class structures',
+        intelDesc: 'Strips function & loop logic • Preserves type hints, docstrings & classes',
         rawTokens: 2120,
         skelTokens: 164,
         reduction: 92.3,
@@ -1078,7 +1071,7 @@ impl Gateway for StripeGateway {
         pingColor: 'bg-cyan-500',
         intelTitle: 'Go Synthesis',
         intelBadgeClass: 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/60 dark:text-cyan-300 dark:border-cyan-800',
-        intelDesc: 'Strips goroutines, handlers & error branches • Preserves structs, method sets, interfaces & receiver contracts',
+        intelDesc: 'Strips goroutines & handlers • Preserves structs, interfaces & receivers',
         rawTokens: 1460,
         skelTokens: 118,
         reduction: 91.9,
@@ -1100,7 +1093,7 @@ impl Gateway for StripeGateway {
         pingColor: 'bg-orange-500',
         intelTitle: 'Rust Synthesis',
         intelBadgeClass: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/60 dark:text-orange-300 dark:border-orange-800',
-        intelDesc: 'Strips trait method implementations & match arms • Preserves trait contracts, public structs, enums & Result types',
+        intelDesc: 'Strips trait methods & match arms • Preserves traits, structs & enums',
         rawTokens: 1980,
         skelTokens: 142,
         reduction: 92.8,
@@ -1971,10 +1964,6 @@ ${highlightPrunedCode(item.rawCode, lang)}
       const intelDesc = document.getElementById('langIntelText');
       if (intelDesc) {
         intelDesc.innerText = conf.intelDesc;
-      }
-      const redPct = document.getElementById('langReductionPct');
-      if (redPct) {
-        redPct.textContent = `-${conf.reduction}% Token Reduction`;
       }
 
       // 3. Update File Badges
