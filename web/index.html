@@ -2509,14 +2509,14 @@ impl PaymentGateway for StripeGateway {
       if (costSavedTag) costSavedTag.classList.add('hidden');
 
       setMorphStatus('raw', 1, 'Raw Code');
-      const rawHoldDuration = 2200;
+      const rawHoldDuration = 3000;
 
       // Gentle preview scroll downward to showcase file depth
       const scrollTimer = setTimeout(() => {
         if (currentMorphState !== 'raw' && currentMorphState !== 'scan') return;
         const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
         const targetScroll = Math.min(maxScroll, Math.round(maxScroll * 0.65));
-        smoothScrollContainer(container, targetScroll, 3200);
+        smoothScrollContainer(container, targetScroll, 3400);
       }, 400);
       morphTimeouts.push(scrollTimer);
 
@@ -2525,7 +2525,7 @@ impl PaymentGateway for StripeGateway {
       // Progress runner advances 0% -> 100% while ambient wave passes through scopes
       // Context token count starts counting during profiling step
       // ==========================================
-      const scanDuration = 2200;
+      const scanDuration = 3000;
       scanTimeout = setTimeout(() => {
         setMorphStatus('scan', 2, 'Profiling');
 
@@ -2548,7 +2548,7 @@ impl PaymentGateway for StripeGateway {
         }
 
         // Context token count starts counting during profiling step
-        const profileCountDuration = scanDuration - 200;
+        const profileCountDuration = scanDuration - 300;
         animateNumber('bridgeRaw', 0, conf.rawTokens, profileCountDuration, v => `${Math.round(v).toLocaleString()} tokens`);
         animateNumber('costRaw', 0, conf.rawCost, profileCountDuration, v => `$${v.toFixed(2)}`);
         animateNumber('bridgeSkel', 0, conf.rawTokens, profileCountDuration, v => `${Math.round(v).toLocaleString()} tokens`);
@@ -2560,7 +2560,7 @@ impl PaymentGateway for StripeGateway {
       // PHASE 3: AST Bloat Targeting & Highlighting (Step 3)
       // Auto-scrolls to Section 1 so user clearly sees the isolated bloat
       // ==========================================
-      const bloatHoldDuration = 1100;
+      const bloatHoldDuration = 2400;
       highlightTimeout = setTimeout(() => {
         if (scanBeam) scanBeam.style.opacity = '0';
         if (astProgressBar) {
@@ -2572,7 +2572,7 @@ impl PaymentGateway for StripeGateway {
         if (dissolveItems.length > 0) {
           const firstSec = document.getElementById('section-' + dissolveItems[0].id);
           const scrollTarget = getElementScrollTop(container, firstSec);
-          smoothScrollContainer(container, scrollTarget, 550);
+          smoothScrollContainer(container, scrollTarget, 650);
         }
 
         allCards.forEach(c => {
@@ -2612,27 +2612,31 @@ impl PaymentGateway for StripeGateway {
           if (currentMorphState !== 'sparkle' && currentMorphState !== 'targeting' && currentMorphState !== 'raw') return;
           if (index >= totalSections) {
             // All sections removed in succession! Smooth glide to top and line re-index
-            smoothScrollContainer(container, 0, 450);
+            const returnScrollDuration = 750;
+            smoothScrollContainer(container, 0, returnScrollDuration);
 
-            const survivingLineNums = container.querySelectorAll('.code-line:not(.prune-line) .line-num');
-            survivingLineNums.forEach((numEl, idx) => {
-              numEl.style.opacity = '0.2';
-              setTimeout(() => {
-                numEl.innerText = idx + 1;
-                numEl.style.opacity = '1';
-              }, 120);
-            });
+            const reindexTimer = setTimeout(() => {
+              const survivingLineNums = container.querySelectorAll('.code-line:not(.prune-line) .line-num');
+              survivingLineNums.forEach((numEl, idx) => {
+                numEl.style.opacity = '0.2';
+                setTimeout(() => {
+                  numEl.innerText = idx + 1;
+                  numEl.style.opacity = '1';
+                }, 160);
+              });
+            }, returnScrollDuration * 0.4);
+            morphTimeouts.push(reindexTimer);
 
             // PHASE 5: Seamless Handshake into Synthesized Contract
             const finishTimer = setTimeout(() => {
               currentMorphState = 'skel';
               container.classList.add('synthesis-pulse');
-              setTimeout(() => container.classList.remove('synthesis-pulse'), 850);
+              setTimeout(() => container.classList.remove('synthesis-pulse'), 950);
               setMorphStatus('synthesized', 5, 'Synthesized');
               setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
               container.scrollTop = 0;
               renderSynthesizedPure(curLang);
-            }, 550);
+            }, returnScrollDuration + 600);
             morphTimeouts.push(finishTimer);
             return;
           }
@@ -2646,58 +2650,63 @@ impl PaymentGateway for StripeGateway {
           const targetSaved = sectionTargets[index].targetSaved;
 
           // 1. Auto-scroll to center this bloat section in view
+          const scrollDuration = 550;
           if (secEl) {
             const scrollTarget = getElementScrollTop(container, secEl);
-            smoothScrollContainer(container, scrollTarget, 400);
+            smoothScrollContainer(container, scrollTarget, scrollDuration);
           }
 
           if (cardEl) {
             cardEl.classList.add('bloat-highlighted');
           }
 
-          // 2. Razor red cut lines strike through
-          const lines = blockEl ? blockEl.querySelectorAll('.prune-line') : [];
-          lines.forEach(l => l.classList.add('line-struck'));
+          // 2. Pause so user registers this bloat method, then strike red lines
+          const strikeTimer = setTimeout(() => {
+            const lines = blockEl ? blockEl.querySelectorAll('.prune-line') : [];
+            lines.forEach(l => l.classList.add('line-struck'));
 
-          // 3. Mechanical slide-out
-          const slideTimer = setTimeout(() => {
-            lines.forEach((l, idx) => {
-              setTimeout(() => l.classList.add('line-sliced'), idx * 25);
-            });
-          }, 260);
-          morphTimeouts.push(slideTimer);
+            // 3. Hold red strike lines for 650ms, then mechanically slide lines out
+            const slideTimer = setTimeout(() => {
+              lines.forEach((l, idx) => {
+                setTimeout(() => l.classList.add('line-sliced'), idx * 35);
+              });
 
-          // 4. Accordion fold shut & count down tokens
-          const foldTimer = setTimeout(() => {
-            if (blockEl) {
-              blockEl.classList.remove('expanded');
-              blockEl.classList.add('collapsing');
-              blockEl.style.maxHeight = '0px';
-              spawnSparkles(blockEl, 10);
-            }
-            if (typeof window.triggerDotRipple === 'function') window.triggerDotRipple();
+              // 4. Once lines have sliced away (~850ms), accordion-fold the block shut & count down tokens
+              const foldTimer = setTimeout(() => {
+                if (blockEl) {
+                  blockEl.classList.remove('expanded');
+                  blockEl.classList.add('collapsing');
+                  blockEl.style.maxHeight = '0px';
+                  spawnSparkles(blockEl, 12);
+                }
+                if (typeof window.triggerDotRipple === 'function') window.triggerDotRipple();
 
-            const prevTokens = index === 0 ? conf.rawTokens : sectionTargets[index - 1].targetTokens;
-            const prevCost = index === 0 ? conf.rawCost : sectionTargets[index - 1].targetCost;
-            const prevSaved = index === 0 ? 0 : sectionTargets[index - 1].targetSaved;
+                const prevTokens = index === 0 ? conf.rawTokens : sectionTargets[index - 1].targetTokens;
+                const prevCost = index === 0 ? conf.rawCost : sectionTargets[index - 1].targetCost;
+                const prevSaved = index === 0 ? 0 : sectionTargets[index - 1].targetSaved;
 
-            animateNumber('bridgeSkel', prevTokens, targetTokens, 450, v => `${Math.round(v).toLocaleString()} tokens`);
-            animateNumber('costSkel', prevCost, targetCost, 450, v => `$${v.toFixed(2)}`);
+                const tokenCountdownDuration = 700;
+                animateNumber('bridgeSkel', prevTokens, targetTokens, tokenCountdownDuration, v => `${Math.round(v).toLocaleString()} tokens`);
+                animateNumber('costSkel', prevCost, targetCost, tokenCountdownDuration, v => `$${v.toFixed(2)}`);
 
-            const costSavedTag = document.getElementById('costSavedTag');
-            if (costSavedTag) {
-              costSavedTag.classList.remove('hidden');
-              costSavedTag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight transition-all duration-200 shrink-0 bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300';
-            }
-            animateNumber('costSavedTag', prevSaved, targetSaved, 450, v => `Save $${v.toFixed(2)}`);
+                const costSavedTag = document.getElementById('costSavedTag');
+                if (costSavedTag) {
+                  costSavedTag.classList.remove('hidden');
+                  costSavedTag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight transition-all duration-200 shrink-0 bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300';
+                }
+                animateNumber('costSavedTag', prevSaved, targetSaved, tokenCountdownDuration, v => `Save $${v.toFixed(2)}`);
 
-            // 5. Advance to next bloat section
-            const nextTimer = setTimeout(() => {
-              removeSectionsSequentially(index + 1);
-            }, 600);
-            morphTimeouts.push(nextTimer);
-          }, 540);
-          morphTimeouts.push(foldTimer);
+                // 5. Hold on collapsed section for 800ms before camera glides to the next section
+                const nextTimer = setTimeout(() => {
+                  removeSectionsSequentially(index + 1);
+                }, tokenCountdownDuration + 550);
+                morphTimeouts.push(nextTimer);
+              }, 850);
+              morphTimeouts.push(foldTimer);
+            }, 650);
+            morphTimeouts.push(slideTimer);
+          }, scrollDuration + 350);
+          morphTimeouts.push(strikeTimer);
         }
 
         // Begin removing from Section 0
