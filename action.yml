@@ -1,5 +1,5 @@
 name: 'SiftrCode Context Auditor'
-description: 'Audits repository token footprint and creates zero-loss interface skeletons for downstream AI coding agents'
+description: 'Audits repository token footprint and creates pruned interface skeletons for downstream AI coding agents'
 author: 'SiftrCode Team'
 branding:
   icon: 'scissors'

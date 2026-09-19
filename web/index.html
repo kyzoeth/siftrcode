@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SiftrCode — Zero-Loss Codebase Pruner for AI Coding Agents</title>
-  <meta name="description" content="SiftrCode synthesizes codebases into zero-loss interface skeletons before LLM inference. Slashing Claude Code & Cursor token waste by 85–98%.">
+  <title>SiftrCode — AST Codebase Pruner for AI Coding Agents</title>
+  <meta name="description" content="SiftrCode synthesizes codebases into clean interface skeletons before LLM inference. Slashing Claude Code & Cursor token waste by 85–98%.">
   
   <link rel="canonical" href="https://siftrcode.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -263,7 +263,7 @@
 
       <!-- Subtitle -->
       <p class="text-sm sm:text-base text-zinc-500 sm:whitespace-nowrap max-w-none mx-auto font-normal -mt-2">
-        Our proprietary synthesis engine strips implementation bloat into zero-loss interfaces before inference.
+        Strips implementation bloat before LLM inference while preserving 100% of types and signatures.
       </p>
 
       <!-- Instant CLI Bar -->
@@ -348,19 +348,13 @@
       </div>
 
       <!-- Language Information & Synthesis Rule Banner -->
-      <div id="langIntelBar" class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-white border border-zinc-200/80 shadow-2xs text-xs font-mono">
-        <div class="flex items-center gap-2.5">
-          <span id="langIntelBadge" class="px-2 py-0.5 rounded-md font-semibold text-[10px] uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
-            TypeScript Synthesis
-          </span>
-          <span id="langIntelText" class="text-zinc-600 text-[11px] font-sans">
-            Strips function &amp; method bodies • Preserves 100% exported interfaces, type aliases, generic signatures, and class layouts
-          </span>
-        </div>
-        <div class="flex items-center gap-2 text-[11px] text-zinc-400 shrink-0 self-end sm:self-auto">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-          <span>Zero-Loss Interface</span>
-        </div>
+      <div id="langIntelBar" class="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white border border-zinc-200/80 shadow-2xs text-xs font-mono">
+        <span id="langIntelBadge" class="px-2 py-0.5 rounded-md font-semibold text-[10px] uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+          TypeScript Synthesis
+        </span>
+        <span id="langIntelText" class="text-zinc-600 text-[11px] font-sans">
+          Strips function &amp; method bodies • Preserves 100% exported interfaces, type aliases, generic signatures, and class layouts
+        </span>
       </div>
 
       <!-- Spacious Dual Viewport: Raw Implementation vs. Synthesized Context -->
@@ -372,7 +366,6 @@
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-rose-500"></span>
               <span id="rawFileBadge" class="font-semibold text-zinc-800 bg-white px-2 py-0.5 rounded border border-zinc-200">src/services/user_service.ts</span>
-              <span class="text-zinc-400 text-[10px] hidden sm:inline">(Raw Source)</span>
             </div>
             <span class="text-rose-600 font-semibold text-[11px]" id="rawTokenCount">~1,840 tokens ($55.20)</span>
           </div>
@@ -392,7 +385,6 @@
             <div class="flex items-center gap-2">
               <span id="skelPingDot" class="w-2 h-2 rounded-full bg-blue-400 signal-ping"></span>
               <span id="skelFileBadge" class="font-semibold text-xs px-2 py-0.5 rounded border text-blue-300 bg-blue-950/70 border-blue-800/80">src/services/user_service.ts.siftr</span>
-              <span class="text-emerald-400 text-[10px] hidden sm:inline">Zero-Loss Interface</span>
             </div>
             <div class="flex items-center gap-3">
               <button onclick="replayDissolve()" title="Re-trigger inline code dissolution animation" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800/90 hover:bg-zinc-700 text-zinc-300 hover:text-white text-[11px] font-mono transition border border-zinc-700/80 cursor-pointer shadow-2xs group">
@@ -603,7 +595,7 @@
             <ul class="space-y-2.5 text-zinc-600 text-[11px] font-mono border-t border-zinc-200 pt-3.5">
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
-                <span>Local Zero-Loss Pruning (TS, Py, Go, Rust)</span>
+                <span>Local AST Pruning (TS, Py, Go, Rust)</span>
               </li>
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>

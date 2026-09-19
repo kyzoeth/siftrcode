@@ -1,7 +1,7 @@
 # SiftrCode (siftrcode.com)
 
 > **Cut agent token waste by 90%.**  
-> Our proprietary AST compiler strips function bodies into zero-loss skeletons before inference.
+> AST compiler that strips function bodies before inference while preserving 100% of types and signatures.
 
 [![Version](https://img.shields.io/badge/version-0.1.0-amber.svg)](https://siftrcode.com)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
