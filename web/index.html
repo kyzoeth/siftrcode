@@ -2126,8 +2126,7 @@ ${highlightPrunedCode(item.rawCode, lang)}
     // ==========================================
     // Dynamic Dot Matrix Engine
     // High-performance canvas-based matrix with
-    // interactive cursor waves, ambient harmonic motion,
-    // and click ripples.
+    // autonomous organic random fluctuations.
     // ==========================================
     (function initDynamicDotMatrix() {
       const canvas = document.getElementById('dotMatrixCanvas');
@@ -2139,13 +2138,12 @@ ${highlightPrunedCode(item.rawCode, lang)}
       let height = 0;
       let dpr = 1;
       const spacing = 32;
-      let mouseX = -9999;
-      let mouseY = -9999;
-      let targetMouseX = -9999;
-      let targetMouseY = -9999;
-      let mouseActive = false;
-      let lastMouseMoveTime = 0;
       let animFrameId = null;
+
+      let cols = 0;
+      let rows = 0;
+      let seeds = null;
+      let speeds = null;
 
       const ripples = [];
 
@@ -2158,41 +2156,29 @@ ${highlightPrunedCode(item.rawCode, lang)}
         canvas.style.width = width + 'px';
         canvas.style.height = height + 'px';
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        cols = Math.ceil(width / spacing) + 1;
+        rows = Math.ceil(height / spacing) + 1;
+        const total = cols * rows;
+        seeds = new Float32Array(total);
+        speeds = new Float32Array(total);
+        for (let i = 0; i < total; i++) {
+          seeds[i] = Math.random() * Math.PI * 2;
+          speeds[i] = 0.35 + Math.random() * 0.75;
+        }
       }
 
       window.addEventListener('resize', resize, { passive: true });
       resize();
-
-      window.addEventListener('mousemove', (e) => {
-        targetMouseX = e.clientX;
-        targetMouseY = e.clientY;
-        mouseActive = true;
-        lastMouseMoveTime = performance.now();
-      }, { passive: true });
-
-      window.addEventListener('mouseleave', () => {
-        mouseActive = false;
-      }, { passive: true });
-
-      window.addEventListener('pointerdown', (e) => {
-        ripples.push({
-          x: e.clientX,
-          y: e.clientY,
-          radius: 0,
-          maxRadius: Math.max(width, height) * 0.4,
-          speed: 10,
-          strength: 0.65
-        });
-      }, { passive: true });
 
       window.triggerDotRipple = function(x, y) {
         ripples.push({
           x: x !== undefined ? x : width / 2,
           y: y !== undefined ? y : height * 0.35,
           radius: 0,
-          maxRadius: Math.max(width, height) * 0.4,
-          speed: 10,
-          strength: 0.55
+          maxRadius: Math.max(width, height) * 0.45,
+          speed: 9,
+          strength: 0.5
         });
       };
 
@@ -2206,18 +2192,6 @@ ${highlightPrunedCode(item.rawCode, lang)}
 
         const dt = Math.min((now - lastTime) / 1000, 0.1);
         lastTime = now;
-
-        // Smooth mouse position interpolation
-        if (mouseActive) {
-          mouseX += (targetMouseX - mouseX) * 0.15;
-          mouseY += (targetMouseY - mouseY) * 0.15;
-          if (now - lastMouseMoveTime > 2500) {
-            mouseActive = false;
-          }
-        } else {
-          mouseX += (-9999 - mouseX) * 0.05;
-          mouseY += (-9999 - mouseY) * 0.05;
-        }
 
         // Update active ripples
         for (let i = ripples.length - 1; i >= 0; i--) {
@@ -2233,35 +2207,29 @@ ${highlightPrunedCode(item.rawCode, lang)}
 
         const isDark = document.documentElement.classList.contains('dark');
         const baseDotRadius = 1.05;
-        const mouseRadius = 170;
         const timeSeconds = now * 0.001;
-
-        const cols = Math.ceil(width / spacing) + 1;
-        const rows = Math.ceil(height / spacing) + 1;
 
         for (let c = 0; c < cols; c++) {
           const x = c * spacing;
           for (let r = 0; r < rows; r++) {
             const y = r * spacing;
+            const idx = c * rows + r;
+            const seed = seeds ? seeds[idx] : 0;
+            const speed = speeds ? speeds[idx] : 0.5;
 
-            // 1. Slow, organic breathing harmonic wave
-            const wave1 = Math.sin(x * 0.005 + y * 0.004 - timeSeconds * 0.45);
-            const wave2 = Math.cos(x * 0.003 - y * 0.005 + timeSeconds * 0.35);
-            const ambientFactor = (wave1 + wave2 + 2) * 0.25;
+            // 1. Organic spatial atmospheric waves
+            const wave1 = Math.sin(x * 0.004 + y * 0.003 - timeSeconds * 0.35);
+            const wave2 = Math.cos(x * 0.003 - y * 0.004 + timeSeconds * 0.28);
+            const cloudFactor = (wave1 + wave2 + 2) * 0.25;
 
-            // 2. Interactive mouse proximity
-            let mouseFactor = 0;
-            if (mouseActive || mouseX > -1000) {
-              const dx = x - mouseX;
-              const dy = y - mouseY;
-              const dist = Math.sqrt(dx * dx + dy * dy);
-              if (dist < mouseRadius) {
-                const norm = 1 - dist / mouseRadius;
-                mouseFactor = norm * norm * (3 - 2 * norm);
-              }
-            }
+            // 2. Individual random dot fluctuation (stochastic pulse)
+            const dotPulse = (Math.sin(timeSeconds * speed + seed) + 1) * 0.5;
+            const microShimmer = Math.sin(timeSeconds * (speed * 1.7) + seed * 2.3);
 
-            // 3. Interactive ripple proximity
+            // 3. Combined organic fluctuation
+            const fluctuation = cloudFactor * 0.40 + dotPulse * 0.50 + (microShimmer > 0.7 ? 0.15 : 0);
+
+            // 4. Interactive programmatic ripple proximity (e.g. tab switches)
             let rippleFactor = 0;
             for (let i = 0; i < ripples.length; i++) {
               const rip = ripples[i];
@@ -2276,27 +2244,27 @@ ${highlightPrunedCode(item.rawCode, lang)}
             }
 
             // Soft vertical vignette: gentle tapering down towards bottom
-            const vFade = Math.max(0.4, 1 - (y / (height * 1.8)));
-            const excitation = Math.min(1.0, mouseFactor * 0.95 + rippleFactor * 0.85 + ambientFactor * 0.18) * vFade;
-            const radius = baseDotRadius + excitation * 0.85;
+            const vFade = Math.max(0.42, 1 - (y / (height * 1.8)));
+            const excitation = Math.min(1.0, fluctuation + rippleFactor * 0.6) * vFade;
+            const radius = baseDotRadius + (excitation * 0.42);
 
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
 
             if (isDark) {
-              if (excitation > 0.15) {
-                const glowAlpha = Math.min(0.65, 0.15 + excitation * 0.50);
+              if (excitation > 0.68) {
+                const glowAlpha = Math.min(0.55, 0.15 + (excitation - 0.68) * 1.25);
                 ctx.fillStyle = `rgba(147, 197, 253, ${glowAlpha})`;
               } else {
-                const baseAlpha = (0.085 + ambientFactor * 0.045) * vFade;
+                const baseAlpha = (0.075 + excitation * 0.055);
                 ctx.fillStyle = `rgba(255, 255, 255, ${baseAlpha})`;
               }
             } else {
-              if (excitation > 0.15) {
-                const glowAlpha = Math.min(0.58, 0.12 + excitation * 0.46);
+              if (excitation > 0.68) {
+                const glowAlpha = Math.min(0.48, 0.12 + (excitation - 0.68) * 1.15);
                 ctx.fillStyle = `rgba(37, 99, 235, ${glowAlpha})`;
               } else {
-                const baseAlpha = (0.095 + ambientFactor * 0.055) * vFade;
+                const baseAlpha = (0.085 + excitation * 0.065);
                 ctx.fillStyle = `rgba(82, 82, 91, ${baseAlpha})`;
               }
             }
