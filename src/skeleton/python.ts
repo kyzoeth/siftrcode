@@ -1,9 +1,12 @@
 import { spawnSync } from 'child_process';
 import * as path from 'path';
+import * as fs from 'fs';
 import { SkeletonResult } from './types';
 
 export function skeletonizePython(code: string, filePath: string = 'file.py'): SkeletonResult {
-  const scriptPath = path.join(__dirname, 'python_ast.py');
+  const localDist = path.join(__dirname, 'python_ast.py');
+  const srcFallback = path.join(__dirname, '..', '..', 'src', 'skeleton', 'python_ast.py');
+  const scriptPath = fs.existsSync(localDist) ? localDist : srcFallback;
 
   const proc = spawnSync('python3', [scriptPath], {
     input: code,

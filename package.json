@@ -3,23 +3,42 @@
   "version": "0.1.0",
   "description": "AST-powered codebase skeletonizer and context pruner for AI coding agents",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "siftrcode": "./dist/bin/siftrcode.js",
     "siftr": "./dist/bin/siftrcode.js"
   },
+  "files": [
+    "dist",
+    "src/skeleton/python_ast.py",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node -e \"require('fs').copyFileSync('src/skeleton/python_ast.py', 'dist/skeleton/python_ast.py')\"",
     "start": "node dist/bin/siftrcode.js",
-    "test": "node dist/tests/run_tests.js"
+    "test": "node dist/tests/run_tests.js",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "homepage": "https://siftrcode.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/siftrcode/siftrcode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/siftrcode/siftrcode/issues"
   },
   "keywords": [
     "ast",
     "ai",
     "claude",
     "cursor",
+    "antigravity",
     "context",
     "token-optimization",
     "mcp",
+    "model-context-protocol",
+    "prompt-engineering",
     "jev"
   ],
   "author": "SiftrCode Team",
