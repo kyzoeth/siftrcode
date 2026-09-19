@@ -518,7 +518,6 @@
       user-select: none;
       z-index: 40;
       line-height: 1;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       animation: sparkle-drift var(--sparkle-duration, 2.6s) cubic-bezier(0.22, 1, 0.36, 1) forwards;
       filter: drop-shadow(0 0 6px currentColor);
     }
@@ -626,7 +625,7 @@
     <div class="max-w-4xl mx-auto space-y-3.5">
       
       <!-- Minimalist Language Selector Bar -->
-      <div class="flex items-center justify-center gap-2 pb-1 font-mono text-xs">
+      <div class="flex items-center justify-center gap-2 pb-1 font-sans text-xs">
         <span class="text-zinc-400 text-[11px] font-medium uppercase tracking-wider mr-1">LANG:</span>
         <div class="inline-flex p-1 rounded-xl bg-zinc-100/90 dark:bg-zinc-800/80 border border-zinc-200/80 dark:border-zinc-700/80 gap-1 shadow-2xs">
           <button onclick="setLang('ts', true)" id="tab-ts" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition btn-press">
@@ -657,8 +656,8 @@
       </div>
 
       <!-- Language Information & Synthesis Rule Banner -->
-      <div id="langIntelBar" class="flex items-center gap-2.5 px-3.5 py-2 rounded-lg bg-surface-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 text-xs font-mono shadow-2xs">
-        <span id="langIntelBadge" class="px-2 py-0.5 rounded-md font-semibold text-[10px] uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800 shrink-0">
+      <div id="langIntelBar" class="flex items-center gap-2.5 px-3.5 py-2 rounded-lg bg-surface-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 text-xs font-sans shadow-2xs">
+        <span id="langIntelBadge" class="px-2 py-0.5 rounded-md font-semibold text-[10px] font-mono uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800 shrink-0">
           TypeScript Synthesis
         </span>
         <span id="langIntelText" class="text-zinc-600 dark:text-zinc-400 text-[11px] font-sans">
@@ -671,7 +670,7 @@
         <div class="bg-white dark:bg-zinc-950 border border-zinc-200/90 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm dark:shadow-2xl flex flex-col text-zinc-900 dark:text-zinc-100 relative transition min-h-[340px]">
           
           <!-- Terminal Header Bar with Consolidated Metrics Stream -->
-          <div class="bg-zinc-50 dark:bg-zinc-900/95 px-3 sm:px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs font-mono shrink-0 select-none gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
+          <div class="bg-zinc-50 dark:bg-zinc-900/95 px-3 sm:px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs font-sans shrink-0 select-none gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
             <!-- Left: macOS Traffic Lights & Active File Badge -->
             <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
               <div class="flex items-center gap-1.5 shrink-0">
@@ -686,22 +685,22 @@
             </div>
 
             <!-- Right: Consolidated Context Metrics Stream & Synthesis Trigger -->
-            <button onclick="triggerPruneMorph()" title="Click to trigger AST synthesis & prune bloat" class="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-lg bg-white dark:bg-zinc-800/90 border border-zinc-200/90 dark:border-zinc-700/80 font-mono text-xs shadow-2xs whitespace-nowrap hover:border-blue-400 dark:hover:border-blue-500 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition btn-press cursor-pointer shrink-0">
+            <button onclick="triggerPruneMorph()" title="Click to trigger AST synthesis & prune bloat" class="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-lg bg-white dark:bg-zinc-800/90 border border-zinc-200/90 dark:border-zinc-700/80 font-sans text-xs shadow-2xs whitespace-nowrap hover:border-blue-400 dark:hover:border-blue-500 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition btn-press cursor-pointer shrink-0">
               <span class="text-zinc-400 dark:text-zinc-500 text-[10px] sm:text-[11px] uppercase font-semibold">Context:</span>
               
-              <div class="flex items-center gap-1 font-semibold text-rose-500 whitespace-nowrap shrink-0">
+              <div class="flex items-center gap-1 font-mono font-semibold text-rose-500 whitespace-nowrap shrink-0">
                 <span id="bridgeRaw">1,840 tokens</span>
                 <span class="text-[11px] font-normal opacity-90">(<span id="costRaw">$55.20</span>)</span>
               </div>
 
               <span class="text-zinc-300 dark:text-zinc-600 font-bold">➔</span>
 
-              <div class="flex items-center gap-1 font-bold text-blue-700 dark:text-blue-400 whitespace-nowrap shrink-0">
+              <div class="flex items-center gap-1 font-mono font-bold text-blue-700 dark:text-blue-400 whitespace-nowrap shrink-0">
                 <span id="bridgeSkel">138 tokens</span>
                 <span class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">(<span id="costSkel">$4.14</span>)</span>
               </div>
 
-              <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-600 text-white font-bold tracking-wide whitespace-nowrap shrink-0 ml-0.5" id="costSavedTag">Save $51.06</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-600 text-white font-mono font-bold tracking-wide whitespace-nowrap shrink-0 ml-0.5" id="costSavedTag">Save $51.06</span>
             </button>
           </div>
 
@@ -713,12 +712,12 @@
           </div>
 
           <!-- Terminal Footer -->
-          <div class="bg-zinc-50/90 dark:bg-zinc-900/70 px-4 py-2 border-t border-zinc-200 dark:border-zinc-800 text-[11px] font-mono text-zinc-500 dark:text-zinc-400 flex items-center justify-between shrink-0">
-            <span class="text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 font-medium">
+          <div class="bg-zinc-50/90 dark:bg-zinc-900/70 px-4 py-2 border-t border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-500 dark:text-zinc-400 flex items-center justify-between shrink-0">
+            <span class="text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 font-sans font-medium">
               <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 inline shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               <span>100% Types, Interfaces &amp; Signatures Preserved</span>
             </span>
-            <span id="savedTokensCount" class="text-emerald-800 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800/80 px-2.5 py-0.5 rounded shadow-2xs">
+            <span id="savedTokensCount" class="font-mono text-emerald-800 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800/80 px-2.5 py-0.5 rounded shadow-2xs">
               Original Code (1,840 tokens)
             </span>
           </div>
@@ -738,34 +737,34 @@
         <p class="text-xs sm:text-sm text-ink-secondary">Works with Claude Code, Cursor, Windsurf, and Antigravity.</p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
         
         <!-- Step 1: Audit -->
         <div class="p-5 bg-white border border-zinc-200 rounded-xl space-y-3 shadow-sm">
-          <div class="flex items-center gap-2 text-zinc-500 text-[11px]">
-            <span class="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center font-bold text-ink">1</span>
+          <div class="flex items-center gap-2 text-zinc-500 text-[11px] font-semibold tracking-wider">
+            <span class="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center font-bold text-ink font-mono text-xs">1</span>
             <span>AUDIT YOUR REPO</span>
           </div>
           <div class="bg-zinc-900 text-zinc-200 p-3 rounded-lg font-mono text-[11px] select-all flex items-center justify-between">
             <span>npx siftrcode audit</span>
             <button onclick="copyText('npx siftrcode audit', this)" class="text-[10px] font-mono text-zinc-400 hover:text-blue-400 transition btn-press px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">COPY</button>
           </div>
-          <p class="text-[11px] text-ink-secondary font-sans">
+          <p class="text-[11px] text-ink-secondary">
             Instantly scans your directory and calculates monthly token waste.
           </p>
         </div>
 
         <!-- Step 2: Auto-Config MCP -->
         <div class="p-5 bg-white border border-zinc-200 rounded-xl space-y-3 shadow-sm">
-          <div class="flex items-center gap-2 text-zinc-500 text-[11px]">
-            <span class="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center font-bold text-ink">2</span>
+          <div class="flex items-center gap-2 text-zinc-500 text-[11px] font-semibold tracking-wider">
+            <span class="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center font-bold text-ink font-mono text-xs">2</span>
             <span>AUTO-CONNECT MCP</span>
           </div>
           <div class="bg-zinc-900 text-zinc-200 p-3 rounded-lg font-mono text-[11px] select-all flex items-center justify-between">
             <span>npx siftrcode init</span>
             <button onclick="copyText('npx siftrcode init', this)" class="text-[10px] font-mono text-zinc-400 hover:text-blue-400 transition btn-press px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">COPY</button>
           </div>
-          <p class="text-[11px] text-ink-secondary font-sans">
+          <p class="text-[11px] text-ink-secondary">
             Automatically configures Claude Desktop, Cursor, and Windsurf MCP settings.
           </p>
         </div>
@@ -784,7 +783,7 @@
         <p class="text-xs sm:text-sm text-ink-secondary">Free open-source CLI for individuals. Paid caching for teams.</p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
         
         <!-- Community -->
         <div class="p-6 bg-surface-50 border-2 border-zinc-200 rounded-xl glow-card flex flex-col justify-between relative shadow-2xs">
@@ -795,23 +794,23 @@
               <h3 class="text-xl font-bold text-ink mt-0.5">Community CLI</h3>
             </div>
 
-            <div class="flex items-baseline gap-1.5 font-mono">
-              <span class="text-3xl font-extrabold text-ink">$0</span>
+            <div class="flex items-baseline gap-1.5">
+              <span class="text-3xl font-extrabold text-ink font-mono">$0</span>
               <span class="text-xs text-zinc-500">Free forever (MIT)</span>
             </div>
 
-            <ul class="space-y-2.5 text-zinc-600 text-[11px] font-mono border-t border-zinc-200 pt-3.5">
+            <ul class="space-y-2.5 text-zinc-600 text-xs border-t border-zinc-200 pt-3.5">
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
                 <span>Local AST Pruning (TS, Py, Go, Rust)</span>
               </li>
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
-                <span>Codebase Auditor (<span class="text-zinc-800 font-semibold">siftrcode audit</span>)</span>
+                <span>Codebase Auditor (<code class="font-mono text-[11px] text-zinc-800 font-semibold bg-zinc-100 px-1.5 py-0.5 rounded">siftrcode audit</code>)</span>
               </li>
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
-                <span>Context Packer (<span class="text-zinc-800 font-semibold">siftrcode pack</span>)</span>
+                <span>Context Packer (<code class="font-mono text-[11px] text-zinc-800 font-semibold bg-zinc-100 px-1.5 py-0.5 rounded">siftrcode pack</code>)</span>
               </li>
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
@@ -821,7 +820,7 @@
           </div>
 
           <div class="pt-6">
-            <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="w-full h-10 flex items-center justify-center rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white font-bold transition btn-press text-xs shadow-2xs">
+            <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="w-full h-10 flex items-center justify-center rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white font-semibold transition btn-press text-xs shadow-2xs">
               GitHub Repository →
             </a>
           </div>
@@ -836,12 +835,12 @@
               <h3 class="text-xl font-bold text-ink mt-0.5">SiftrCode Pro</h3>
             </div>
 
-            <div class="flex items-baseline gap-1.5 font-mono">
-              <span class="text-3xl font-extrabold text-blue-800 dark:text-blue-400">$19</span>
+            <div class="flex items-baseline gap-1.5">
+              <span class="text-3xl font-extrabold text-blue-800 dark:text-blue-400 font-mono">$19</span>
               <span class="text-xs text-zinc-500">/ seat / mo</span>
             </div>
 
-            <ul class="space-y-2.5 text-zinc-700 text-[11px] font-mono border-t border-blue-200/80 pt-3.5">
+            <ul class="space-y-2.5 text-zinc-700 text-xs border-t border-blue-200/80 pt-3.5">
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
                 <span>Everything in Community CLI</span>
@@ -862,7 +861,7 @@
           </div>
 
           <div class="pt-6">
-            <button onclick="openTrialModal()" class="w-full h-10 flex items-center justify-center gap-2 rounded-lg bg-blue-700 hover:bg-blue-600 text-white font-bold transition btn-press text-xs shadow-sm cursor-pointer">
+            <button onclick="openTrialModal()" class="w-full h-10 flex items-center justify-center gap-2 rounded-lg bg-blue-700 hover:bg-blue-600 text-white font-semibold transition btn-press text-xs shadow-sm cursor-pointer">
               <svg class="w-3.5 h-3.5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
@@ -2324,15 +2323,15 @@ ${highlightPrunedCode(item.rawCode, lang)}
       </div>
 
       <!-- Form Container -->
-      <form id="trialForm" onsubmit="submitTrialForm(event)" class="space-y-4 text-left font-mono text-xs">
+      <form id="trialForm" onsubmit="submitTrialForm(event)" class="space-y-4 text-left font-sans text-xs">
         <div>
-          <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider font-sans">Work Email *</label>
+          <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider">Work Email *</label>
           <input type="email" id="trialEmail" required placeholder="alex@company.com" class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-900 font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider font-sans">Team Size</label>
+            <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider">Team Size</label>
             <select id="trialTeamSize" class="w-full px-3 py-2.5 rounded-lg border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-800 font-sans text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
               <option value="1-5 devs">1–5 engineers</option>
               <option value="5-20 devs" selected>5–20 engineers</option>
@@ -2342,7 +2341,7 @@ ${highlightPrunedCode(item.rawCode, lang)}
           </div>
 
           <div>
-            <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider font-sans">Primary AI Agent</label>
+            <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider">Primary AI Agent</label>
             <select id="trialAgent" class="w-full px-3 py-2.5 rounded-lg border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-800 font-sans text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
               <option value="Cursor" selected>Cursor</option>
               <option value="Claude Code">Claude Code</option>
@@ -2354,7 +2353,7 @@ ${highlightPrunedCode(item.rawCode, lang)}
         </div>
 
         <div>
-          <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider font-sans">Repository URL / Stack (Optional)</label>
+          <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider">Repository URL / Stack (Optional)</label>
           <input type="text" id="trialRepo" placeholder="github.com/company/repo" class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-900 font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
         </div>
 
@@ -2383,9 +2382,9 @@ ${highlightPrunedCode(item.rawCode, lang)}
             We've registered your team. Check your work email shortly for your trial activation key and team cache access.
           </p>
         </div>
-        <div class="p-4 bg-zinc-50 border border-zinc-200 rounded-xl text-left space-y-2 font-mono text-[11px]">
-          <div class="text-zinc-500 font-sans text-[10px] uppercase font-semibold">Start auditing your repo right now:</div>
-          <div class="bg-zinc-900 text-blue-400 p-2.5 rounded-lg flex items-center justify-between">
+        <div class="p-4 bg-zinc-50 border border-zinc-200 rounded-xl text-left space-y-2 font-sans text-xs">
+          <div class="text-zinc-500 text-[10px] uppercase font-semibold">Start auditing your repo right now:</div>
+          <div class="bg-zinc-900 text-blue-400 p-2.5 rounded-lg flex items-center justify-between font-mono text-xs">
             <code>npx siftrcode audit</code>
           </div>
         </div>
