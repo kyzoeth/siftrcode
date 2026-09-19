@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SiftrCode — AST Context Pruner for AI Coding Agents</title>
-  <meta name="description" content="SiftrCode parses your repository's Abstract Syntax Tree before LLM inference, stripping function bodies into zero-loss interface skeletons. Slash Claude Code and Cursor context waste by 85-98%.">
+  <meta name="description" content="SiftrCode compiles codebases into lightweight AST interface skeletons before LLM inference. Slashing Claude Code & Cursor token waste by 85–98%.">
   
   <link rel="canonical" href="https://siftrcode.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
 
   <script>
@@ -17,23 +17,27 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['"Space Grotesk"', 'sans-serif'],
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'monospace'],
           },
           colors: {
-            space: {
-              950: '#060709',
-              900: '#0c0e12',
-              850: '#11141a',
-              800: '#181c24',
-              700: '#262d3a',
+            surface: {
+              50: '#fafafa',
+              100: '#f4f4f6',
+              200: '#e5e7eb',
+              300: '#d1d5db',
+            },
+            ink: {
+              DEFAULT: '#09090b',
+              secondary: '#52525b',
+              tertiary: '#a1a1aa'
             },
             signal: {
-              emerald: '#00f59b',
-              lime: '#b8ff24',
-              amber: '#ffb224',
-              crimson: '#ff3b5c',
-              cyan: '#00e1ff'
+              emerald: '#059669',
+              lightEmerald: '#10b981',
+              softBg: '#ecfdf5',
+              crimson: '#e11d48',
+              amber: '#d97706'
             }
           }
         }
@@ -42,222 +46,309 @@
   </script>
 
   <style>
-    /* Custom Brutalist & Precision Styles */
-    ::selection { background: #00f59b; color: #000; }
-    
-    .bg-grid-pattern {
-      background-size: 32px 32px;
+    ::selection { background: #10b981; color: #fff; }
+
+    /* Luminous Grid Pattern */
+    .bg-grid {
+      background-size: 40px 40px;
       background-image: 
-        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        linear-gradient(to right, rgba(0, 0, 0, 0.035) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.035) 1px, transparent 1px);
     }
 
-    .hairline-border {
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    
-    .hairline-border-hover:hover {
-      border-color: rgba(0, 245, 155, 0.35);
-    }
-
-    .terminal-glow {
-      box-shadow: 0 0 50px -15px rgba(0, 245, 155, 0.15);
+    /* Ambient Floating Auras */
+    .ambient-glow {
+      position: absolute;
+      border-radius: 9999px;
+      filter: blur(90px);
+      pointer-events: none;
+      opacity: 0.6;
+      animation: float 14s ease-in-out infinite alternate;
     }
 
-    .shimmer-text {
-      background: linear-gradient(90deg, #ffffff 0%, #9ca3af 50%, #ffffff 100%);
-      background-size: 200% 100%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: shimmer 6s infinite linear;
+    @keyframes float {
+      0% { transform: translate(0px, 0px) scale(1); }
+      100% { transform: translate(40px, -30px) scale(1.1); }
     }
 
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
+    /* Interactive Card Glow Effect */
+    .glow-card {
+      position: relative;
+      background: #ffffff;
+      border: 1px solid #e4e4e7;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .glow-card:hover {
+      border-color: #10b981;
+      box-shadow: 0 12px 32px -10px rgba(16, 185, 129, 0.12);
     }
 
-    /* Custom Scrollbars */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0c0e12; }
-    ::-webkit-scrollbar-thumb { background: #262d3a; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #00f59b; }
-
-    .pulse-dot {
-      box-shadow: 0 0 10px #00f59b;
+    /* Token Diff Pulse */
+    @keyframes pulse-signal {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.96); }
     }
+    .signal-ping {
+      animation: pulse-signal 2.5s infinite ease-in-out;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #10b981; }
   </style>
 </head>
-<body class="bg-space-950 text-slate-200 font-sans antialiased overflow-x-hidden selection:bg-signal-emerald selection:text-black">
+<body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-signal-lightEmerald selection:text-white">
 
-  <!-- HUD Telemetry Top Bar -->
-  <div class="border-b border-white/5 bg-space-900/90 backdrop-blur-md sticky top-0 z-50 px-4 py-2 font-mono text-[11px] tracking-wider">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
+  <!-- Background Ambient Lights -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div class="ambient-glow w-[600px] h-[600px] bg-emerald-200/50 -top-40 -left-20"></div>
+    <div class="ambient-glow w-[500px] h-[500px] bg-cyan-200/40 top-96 -right-20" style="animation-delay: -5s;"></div>
+  </div>
+
+  <!-- Header Navigation -->
+  <header class="border-b border-zinc-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
       <div class="flex items-center gap-6">
-        <a href="#" class="flex items-center gap-2.5 font-bold tracking-tight text-white group">
-          <div class="w-5 h-5 rounded bg-signal-emerald/20 border border-signal-emerald/60 flex items-center justify-center text-signal-emerald font-mono font-bold text-xs group-hover:scale-105 transition">
-            ⚡
+        <a href="#" class="flex items-center gap-2.5 font-bold tracking-tight text-ink text-sm group">
+          <div class="w-6 h-6 rounded-md bg-emerald-600 flex items-center justify-center text-white font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
+            S
           </div>
-          <span>SIFTR<span class="text-signal-emerald">CODE</span></span>
-          <span class="text-[10px] text-slate-500 font-normal">v0.1.0</span>
+          <span>SiftrCode</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-medium">v0.1</span>
         </a>
-        <div class="hidden md:flex items-center gap-4 text-slate-400 border-l border-white/10 pl-6">
-          <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-signal-emerald pulse-dot"></span> MCP STDIO: ACTIVE</span>
-          <span class="text-slate-600">/</span>
-          <span>PARSERS: <span class="text-slate-300">TS · PY · GO · RS</span></span>
-          <span class="text-slate-600">/</span>
-          <span>GATE: <span class="text-signal-lime">TYPESAFE JEV</span></span>
-        </div>
+        <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
+          <a href="#workbench" class="hover:text-ink transition">Interactive Workbench</a>
+          <a href="#benchmarks" class="hover:text-ink transition">Benchmarks</a>
+          <a href="#quickstart" class="hover:text-ink transition">Quickstart</a>
+        </nav>
       </div>
 
-      <div class="flex items-center gap-4">
-        <a href="#playground" class="hidden sm:inline-block text-slate-400 hover:text-white transition">Workbench</a>
-        <a href="#benchmarks" class="hidden sm:inline-block text-slate-400 hover:text-white transition">Benchmarks</a>
-        <a href="#quickstart" class="hidden sm:inline-block text-slate-400 hover:text-white transition">Quickstart</a>
-        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="px-3 py-1 rounded bg-white/5 hover:bg-white/10 text-white border border-white/10 transition flex items-center gap-1.5 font-mono text-[11px]">
+      <div class="flex items-center gap-3">
+        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-ink font-mono text-xs border border-zinc-200 transition flex items-center gap-1.5 font-medium">
           <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
           GitHub
         </a>
       </div>
     </div>
-  </div>
+  </header>
 
   <!-- Hero Section -->
-  <section class="relative pt-20 pb-16 md:pt-32 md:pb-24 px-4 bg-grid-pattern overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-space-950/70 to-space-950 pointer-events-none"></div>
-
-    <div class="max-w-6xl mx-auto text-center space-y-8 relative z-10">
-      <!-- Tag Pill -->
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-space-850 border border-white/10 text-slate-300 font-mono text-xs">
-        <span class="w-1.5 h-1.5 rounded-full bg-signal-emerald animate-pulse"></span>
-        <span>AST-POWERED CONTEXT FINOPS FOR AI CODING AGENTS</span>
+  <section class="relative pt-16 pb-12 md:pt-24 md:pb-16 px-4 bg-grid">
+    <div class="max-w-4xl mx-auto text-center space-y-6 relative z-10">
+      
+      <!-- Pill Badge -->
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-zinc-200 text-ink-secondary text-xs font-mono shadow-sm">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 signal-ping"></span>
+        <span>AST-POWERED CODEBASE SKELETONIZER FOR CODING AGENTS</span>
       </div>
 
-      <!-- Main Headline -->
-      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white max-w-4xl mx-auto leading-[1.08]">
-        Feed Coding Agents <span class="shimmer-text">Signal.</span><br>
-        <span class="text-signal-emerald font-mono">Sift Out</span> The Token Bloat.
+      <!-- Hero Headline -->
+      <h1 class="text-4xl sm:text-6xl font-bold tracking-tight text-ink max-w-3xl mx-auto leading-[1.12]">
+        Strip the bloat.<br>
+        Feed agents <span class="text-emerald-600 underline decoration-emerald-300 decoration-wavy underline-offset-8">pure signal.</span>
       </h1>
 
-      <!-- Subheadline -->
-      <p class="text-base sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-normal">
-        When Claude Code or Cursor reads your repo, 90% of the ingested text is internal function loops. 
-        SiftrCode compiles your codebase into <span class="text-slate-200 font-medium">zero-loss AST interface skeletons</span> before LLM inference.
+      <!-- Crisp Subtitle -->
+      <p class="text-base sm:text-lg text-ink-secondary max-w-xl mx-auto font-normal leading-relaxed">
+        SiftrCode compiles repositories into zero-loss AST interface skeletons before inference. Slashing token waste by <strong class="text-ink font-semibold">85–98%</strong> with zero hallucinations.
       </p>
 
-      <!-- Key Stat HUD -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl mx-auto pt-4 text-left font-mono">
-        <div class="p-3.5 bg-space-900/80 border border-white/10 rounded-lg">
-          <div class="text-xs text-slate-500 uppercase">Token Compression</div>
-          <div class="text-2xl font-bold text-signal-emerald mt-1">-85% to -98%</div>
+      <!-- Instant CLI Bar -->
+      <div class="pt-2 max-w-md mx-auto flex items-center justify-center gap-2">
+        <div class="flex-1 bg-white border border-zinc-200 rounded-lg px-3.5 py-2 text-xs font-mono text-ink flex items-center justify-between shadow-sm">
+          <div class="flex items-center gap-2">
+            <span class="text-emerald-600 font-bold select-none">$</span>
+            <span>npx siftrcode audit</span>
+          </div>
+          <button onclick="copyCommand()" id="copyBtn" class="text-[11px] font-mono text-zinc-500 hover:text-emerald-600 transition px-2 py-0.5 rounded bg-zinc-50 border border-zinc-200">
+            COPY
+          </button>
         </div>
-        <div class="p-3.5 bg-space-900/80 border border-white/10 rounded-lg">
-          <div class="text-xs text-slate-500 uppercase">Agent Turn Speed</div>
-          <div class="text-2xl font-bold text-signal-cyan mt-1">4.2x Faster</div>
+        <a href="#workbench" class="px-4 py-2 bg-ink hover:bg-zinc-800 text-white rounded-lg text-xs font-medium transition shadow-sm">
+          Try Live Demo ↓
+        </a>
+      </div>
+
+      <!-- 3 Key Metric Badges -->
+      <div class="pt-4 grid grid-cols-3 gap-3 max-w-lg mx-auto font-mono text-left">
+        <div class="p-3 bg-white/90 border border-zinc-200 rounded-lg shadow-sm">
+          <div class="text-[11px] text-zinc-500 uppercase font-medium">Reduction</div>
+          <div class="text-xl font-bold text-emerald-600 mt-0.5">-85% to -98%</div>
         </div>
-        <div class="p-3.5 bg-space-900/80 border border-white/10 rounded-lg">
-          <div class="text-xs text-slate-500 uppercase">Jev Decision Reflex</div>
-          <div class="text-2xl font-bold text-signal-lime mt-1">&lt;60ms</div>
+        <div class="p-3 bg-white/90 border border-zinc-200 rounded-lg shadow-sm">
+          <div class="text-[11px] text-zinc-500 uppercase font-medium">Latency</div>
+          <div class="text-xl font-bold text-ink mt-0.5">4.2x Faster</div>
         </div>
-        <div class="p-3.5 bg-space-900/80 border border-white/10 rounded-lg">
-          <div class="text-xs text-slate-500 uppercase">Hallucination Drift</div>
-          <div class="text-2xl font-bold text-white mt-1">~0%</div>
+        <div class="p-3 bg-white/90 border border-zinc-200 rounded-lg shadow-sm">
+          <div class="text-[11px] text-zinc-500 uppercase font-medium">Parsing</div>
+          <div class="text-xl font-bold text-ink mt-0.5">&lt;0.15s</div>
         </div>
       </div>
 
-      <!-- Quick Command Bar -->
-      <div class="pt-4 max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3">
-        <div class="w-full sm:w-auto flex-1 bg-space-900 border border-white/15 rounded-lg px-4 py-2.5 font-mono text-sm text-slate-300 flex items-center justify-between gap-3 shadow-inner">
-          <div class="flex items-center gap-2 truncate">
-            <span class="text-signal-emerald select-none">$</span>
-            <span id="quickCmd">npx siftrcode audit</span>
+    </div>
+  </section>
+
+  <!-- Interactive Dual-Viewport Workbench (Centered Product Experience) -->
+  <section id="workbench" class="py-12 px-4 relative z-10">
+    <div class="max-w-6xl mx-auto space-y-4">
+      
+      <!-- Workbench Controls & Tabs -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-zinc-200 p-3 rounded-xl shadow-sm">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-mono text-zinc-500 font-medium mr-1">LANG:</span>
+          <div class="flex items-center gap-1 font-mono text-xs">
+            <button onclick="setLang('ts')" id="tab-ts" class="px-2.5 py-1 rounded-md bg-zinc-900 text-white font-medium">TypeScript</button>
+            <button onclick="setLang('py')" id="tab-py" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink">Python</button>
+            <button onclick="setLang('go')" id="tab-go" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink">Go</button>
+            <button onclick="setLang('rs')" id="tab-rs" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink">Rust</button>
           </div>
-          <button onclick="copyCommand()" class="text-xs text-slate-400 hover:text-signal-emerald transition px-2 py-0.5 rounded bg-white/5 border border-white/10" title="Copy to clipboard">
-            <span id="copyText">COPY</span>
-          </button>
         </div>
-        <a href="#playground" class="w-full sm:w-auto px-6 py-2.5 bg-signal-emerald hover:bg-[#1affaa] text-black font-semibold rounded-lg text-sm transition tracking-tight flex items-center justify-center gap-2">
-          <span>Open AST Workbench</span>
-          <span>→</span>
-        </a>
+
+        <div class="flex items-center gap-3 font-mono text-xs">
+          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span id="reductionTag">-92.1% Token Mass</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dual-Pane Viewport -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        
+        <!-- Left: Full Implementation Source -->
+        <div class="bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
+          <div class="bg-zinc-50/80 px-4 py-2 border-b border-zinc-200 flex items-center justify-between text-xs font-mono">
+            <span class="text-zinc-600 font-medium">RAW SOURCE (AGENTS INGEST THIS BY DEFAULT)</span>
+            <span class="text-rose-600 font-bold" id="rawTokenCount">~1,420 tokens</span>
+          </div>
+          <textarea id="rawInput" oninput="onInputChanged()" spellcheck="false" class="w-full h-80 p-4 font-mono text-xs text-zinc-800 leading-relaxed border-0 focus:outline-none resize-none font-normal bg-white"></textarea>
+          <div class="bg-zinc-50/50 px-4 py-1.5 border-t border-zinc-100 text-[11px] font-mono text-zinc-400">
+            Edit or paste any code above to test live
+          </div>
+        </div>
+
+        <!-- Right: AST Pruned Interface Skeleton -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg flex flex-col text-white">
+          <div class="bg-zinc-950 px-4 py-2 border-b border-zinc-800 flex items-center justify-between text-xs font-mono">
+            <span class="text-emerald-400 font-medium flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              SIFTRCODE AST SKELETON (FED TO AGENT)
+            </span>
+            <span class="text-emerald-400 font-bold" id="skelTokenCount">~112 tokens (-92.1%)</span>
+          </div>
+          <pre id="skelOutput" class="w-full h-80 p-4 font-mono text-xs text-emerald-300/90 leading-relaxed overflow-auto whitespace-pre-wrap selection:bg-emerald-500 selection:text-black"></pre>
+          <div class="bg-zinc-950 px-4 py-1.5 border-t border-zinc-800 text-[11px] font-mono text-zinc-400 flex items-center justify-between">
+            <span class="text-emerald-400">Zero-Loss Interfaces Preserved</span>
+            <span id="savedTokensCount" class="text-emerald-400 font-semibold">Saved ~1,308 tokens</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 3 Hard Benchmarks (Compact & Verified) -->
+  <section id="benchmarks" class="py-12 px-4 bg-white border-y border-zinc-200">
+    <div class="max-w-5xl mx-auto space-y-6">
+      <div class="text-center space-y-1">
+        <h2 class="text-2xl font-bold tracking-tight text-ink">Verified Production Benchmarks</h2>
+        <p class="text-xs sm:text-sm text-ink-secondary">Exact figures scanned directly from public GitHub repositories.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+        
+        <!-- Express -->
+        <div class="p-5 bg-surface-50 border border-zinc-200 rounded-xl space-y-3 glow-card">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-ink font-sans text-sm">expressjs/express</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-zinc-200/60 text-zinc-700">JavaScript</span>
+          </div>
+          <div class="space-y-1 text-[11px] text-zinc-600">
+            <div class="flex justify-between"><span>Raw Code:</span> <span class="text-rose-600 font-bold">175,353 tokens</span></div>
+            <div class="flex justify-between"><span>SiftrCode:</span> <span class="text-emerald-600 font-bold">2,357 tokens</span></div>
+          </div>
+          <div class="pt-2 border-t border-zinc-200 flex items-baseline justify-between">
+            <span class="text-2xl font-extrabold text-emerald-600">-98.7%</span>
+            <span class="text-[11px] text-zinc-500">0.15s pack</span>
+          </div>
+        </div>
+
+        <!-- FastAPI -->
+        <div class="p-5 bg-surface-50 border border-zinc-200 rounded-xl space-y-3 glow-card">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-ink font-sans text-sm">tiangolo/fastapi</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-zinc-200/60 text-zinc-700">Python</span>
+          </div>
+          <div class="space-y-1 text-[11px] text-zinc-600">
+            <div class="flex justify-between"><span>Raw Code:</span> <span class="text-rose-600 font-bold">3,498,358 tokens</span></div>
+            <div class="flex justify-between"><span>SiftrCode:</span> <span class="text-emerald-600 font-bold">720,715 tokens</span></div>
+          </div>
+          <div class="pt-2 border-t border-zinc-200 flex items-baseline justify-between">
+            <span class="text-2xl font-extrabold text-emerald-600">-79.4%</span>
+            <span class="text-[11px] text-zinc-500">2.7M saved</span>
+          </div>
+        </div>
+
+        <!-- SiftrCode -->
+        <div class="p-5 bg-surface-50 border border-zinc-200 rounded-xl space-y-3 glow-card">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-ink font-sans text-sm">siftrcode/siftrcode</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-zinc-200/60 text-zinc-700">TypeScript</span>
+          </div>
+          <div class="space-y-1 text-[11px] text-zinc-600">
+            <div class="flex justify-between"><span>Raw Code:</span> <span class="text-rose-600 font-bold">15,931 tokens</span></div>
+            <div class="flex justify-between"><span>SiftrCode:</span> <span class="text-emerald-600 font-bold">817 tokens</span></div>
+          </div>
+          <div class="pt-2 border-t border-zinc-200 flex items-baseline justify-between">
+            <span class="text-2xl font-extrabold text-emerald-600">-94.9%</span>
+            <span class="text-[11px] text-zinc-500">0.13s pack</span>
+          </div>
+        </div>
+
       </div>
     </div>
   </section>
 
-  <!-- Interactive Dual-Viewport AST Workbench -->
-  <section id="playground" class="py-20 px-4 border-t border-white/5 bg-space-900/40">
-    <div class="max-w-7xl mx-auto space-y-8">
+  <!-- Quickstart & 1-Command Integration -->
+  <section id="quickstart" class="py-14 px-4 bg-surface-50">
+    <div class="max-w-4xl mx-auto space-y-8">
       
-      <!-- Section Header -->
-      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6">
-        <div>
-          <div class="text-xs font-mono text-signal-emerald mb-1">[01 // INTERACTIVE AST DIFF LENS]</div>
-          <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">The AST Skeletonizer Workbench</h2>
-          <p class="text-sm text-slate-400 mt-1 max-w-xl">
-            Type or paste code below to test SiftrCode's AST pruning engine live. Implementation bodies evaporate; type signatures, interfaces, and docstrings remain intact.
+      <div class="text-center space-y-1">
+        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-ink">30-Second Setup</h2>
+        <p class="text-xs sm:text-sm text-ink-secondary">Works with Claude Code, Cursor, Windsurf, and Antigravity.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+        
+        <!-- Step 1: Audit -->
+        <div class="p-5 bg-white border border-zinc-200 rounded-xl space-y-3 shadow-sm">
+          <div class="flex items-center gap-2 text-zinc-500 text-[11px]">
+            <span class="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center font-bold text-ink">1</span>
+            <span>AUDIT YOUR REPO</span>
+          </div>
+          <div class="bg-zinc-900 text-zinc-200 p-3 rounded-lg font-mono text-[11px] select-all">
+            npx siftrcode audit
+          </div>
+          <p class="text-[11px] text-ink-secondary font-sans">
+            Instantly scans your directory AST and calculates monthly token waste.
           </p>
         </div>
 
-        <!-- Language Switcher Tabs -->
-        <div class="flex items-center gap-1.5 p-1 bg-space-850 border border-white/10 rounded-lg font-mono text-xs self-start md:self-auto">
-          <button onclick="switchLang('ts')" id="btn-ts" class="px-3 py-1.5 rounded text-white bg-white/10 border border-white/10">TypeScript</button>
-          <button onclick="switchLang('py')" id="btn-py" class="px-3 py-1.5 rounded text-slate-400 hover:text-white">Python</button>
-          <button onclick="switchLang('go')" id="btn-go" class="px-3 py-1.5 rounded text-slate-400 hover:text-white">Go</button>
-          <button onclick="switchLang('rs')" id="btn-rs" class="px-3 py-1.5 rounded text-slate-400 hover:text-white">Rust</button>
-        </div>
-      </div>
-
-      <!-- Workbench Frame -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        
-        <!-- Left: Raw Source Code Editor -->
-        <div class="bg-space-950 border border-white/10 rounded-xl overflow-hidden shadow-2xl flex flex-col">
-          <!-- Editor Titlebar -->
-          <div class="bg-space-900 px-4 py-2.5 border-b border-white/10 flex items-center justify-between text-xs font-mono">
-            <div class="flex items-center gap-2 text-slate-400">
-              <span class="w-2.5 h-2.5 rounded-full bg-signal-crimson/80"></span>
-              <span class="font-semibold text-slate-200">SOURCE FILE (WHAT AGENTS USUALLY INGEST)</span>
-            </div>
-            <div class="text-slate-400 font-mono">
-              Mass: <span id="rawTokens" class="text-signal-crimson font-bold">1,420</span> tokens
-            </div>
+        <!-- Step 2: Auto-Config MCP -->
+        <div class="p-5 bg-white border border-zinc-200 rounded-xl space-y-3 shadow-sm">
+          <div class="flex items-center gap-2 text-zinc-500 text-[11px]">
+            <span class="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center font-bold text-ink">2</span>
+            <span>AUTO-CONNECT MCP</span>
           </div>
-
-          <!-- Code Textarea -->
-          <div class="relative flex-1">
-            <textarea id="editorInput" oninput="handleEditorInput()" spellcheck="false" class="w-full h-[450px] bg-space-950 p-4 font-mono text-xs text-slate-300 leading-relaxed border-0 focus:outline-none resize-none font-normal"></textarea>
+          <div class="bg-zinc-900 text-zinc-200 p-3 rounded-lg font-mono text-[11px] select-all">
+            npx siftrcode init
           </div>
-
-          <!-- Editor Footer Status -->
-          <div class="bg-space-900/60 px-4 py-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-slate-500">
-            <span>Encoding: UTF-8</span>
-            <span class="text-signal-crimson">Unpruned Payload: Heavy</span>
-          </div>
-        </div>
-
-        <!-- Right: Pruned AST Skeleton Output -->
-        <div class="bg-space-950 border border-signal-emerald/30 rounded-xl overflow-hidden shadow-2xl flex flex-col terminal-glow">
-          <!-- Editor Titlebar -->
-          <div class="bg-space-900 px-4 py-2.5 border-b border-white/10 flex items-center justify-between text-xs font-mono">
-            <div class="flex items-center gap-2 text-signal-emerald">
-              <span class="w-2.5 h-2.5 rounded-full bg-signal-emerald pulse-dot"></span>
-              <span class="font-semibold text-signal-emerald">SIFTRCODE AST SKELETON (SIGNAL FED TO AGENT)</span>
-            </div>
-            <div class="text-slate-400 font-mono">
-              Mass: <span id="skelTokens" class="text-signal-emerald font-bold">112</span> tokens (<span id="reductionPct" class="text-signal-emerald">-92.1%</span>)
-            </div>
-          </div>
-
-          <!-- Skeleton Output -->
-          <div class="relative flex-1 bg-space-950 p-4 overflow-auto">
-            <pre id="editorOutput" class="font-mono text-xs text-signal-emerald/90 leading-relaxed whitespace-pre-wrap selection:bg-signal-emerald selection:text-black"></pre>
-          </div>
-
-          <!-- Output Footer Status -->
-          <div class="bg-space-900/60 px-4 py-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-slate-500">
-            <span class="text-signal-emerald">Bodies Dropped · Interfaces Preserved</span>
-            <span id="savingsBadge" class="text-signal-emerald font-semibold">Saved ~1,308 Tokens</span>
-          </div>
+          <p class="text-[11px] text-ink-secondary font-sans">
+            Automatically configures Claude Desktop, Cursor, and Windsurf MCP settings.
+          </p>
         </div>
 
       </div>
@@ -265,293 +356,51 @@
     </div>
   </section>
 
-  <!-- Real-World Benchmarks Teardown -->
-  <section id="benchmarks" class="py-20 px-4 border-t border-white/5 bg-space-950">
-    <div class="max-w-7xl mx-auto space-y-12">
+  <!-- Clean Spec & Pricing -->
+  <section class="py-14 px-4 bg-white border-t border-zinc-200">
+    <div class="max-w-4xl mx-auto space-y-8">
       
-      <div class="text-center max-w-3xl mx-auto space-y-3">
-        <div class="text-xs font-mono text-signal-emerald">[02 // EMPIRICAL PRODUCTION BENCHMARKS]</div>
-        <h2 class="text-3xl sm:text-5xl font-bold text-white tracking-tight">Tested Against Millions of Tokens</h2>
-        <p class="text-sm sm:text-base text-slate-400">
-          We audited and packed top production open-source repositories with SiftrCode. Here are the exact verified numbers:
-        </p>
+      <div class="text-center space-y-1">
+        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-ink">Simple Licensing</h2>
+        <p class="text-xs sm:text-sm text-ink-secondary">Free open-source CLI for individuals. Paid caching for teams.</p>
       </div>
 
-      <!-- 3 Benchmark Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
         
-        <!-- Express Benchmark -->
-        <div class="bg-space-900 border border-white/10 rounded-xl p-6 space-y-6 relative group hairline-border-hover transition">
-          <div class="flex items-center justify-between border-b border-white/10 pb-4">
-            <div>
-              <h3 class="text-base font-bold text-white font-sans">expressjs/express</h3>
-              <span class="text-xs text-slate-500">JavaScript / CommonJS Prototype Stack</span>
-            </div>
-            <span class="px-2 py-0.5 rounded bg-white/5 text-slate-300 text-xs">201 Files</span>
-          </div>
-
+        <!-- Community -->
+        <div class="p-6 bg-surface-50 border border-zinc-200 rounded-xl space-y-4 glow-card flex flex-col justify-between">
           <div class="space-y-3">
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-400">Raw Repository:</span>
-              <span class="text-signal-crimson font-bold">175,353 tokens</span>
-            </div>
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-400">SiftrCode Pack:</span>
-              <span class="text-signal-emerald font-bold">2,357 tokens</span>
-            </div>
-            <!-- Progress Bar -->
-            <div class="w-full h-2 rounded-full bg-space-800 overflow-hidden">
-              <div class="h-full bg-signal-emerald rounded-full" style="width: 1.3%"></div>
-            </div>
-          </div>
-
-          <div class="pt-2 border-t border-white/5 flex items-center justify-between">
-            <span class="text-3xl font-extrabold text-signal-emerald">-98.7%</span>
-            <span class="text-xs text-slate-400">Packed in 0.15s</span>
-          </div>
-        </div>
-
-        <!-- FastAPI Benchmark -->
-        <div class="bg-space-900 border border-white/10 rounded-xl p-6 space-y-6 relative group hairline-border-hover transition">
-          <div class="flex items-center justify-between border-b border-white/10 pb-4">
-            <div>
-              <h3 class="text-base font-bold text-white font-sans">tiangolo/fastapi</h3>
-              <span class="text-xs text-slate-500">Python / Starlette / Pydantic Engine</span>
-            </div>
-            <span class="px-2 py-0.5 rounded bg-white/5 text-slate-300 text-xs">2,857 Files</span>
-          </div>
-
-          <div class="space-y-3">
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-400">Raw Repository:</span>
-              <span class="text-signal-crimson font-bold">3,498,358 tokens</span>
-            </div>
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-400">SiftrCode Pack:</span>
-              <span class="text-signal-emerald font-bold">720,715 tokens</span>
-            </div>
-            <!-- Progress Bar -->
-            <div class="w-full h-2 rounded-full bg-space-800 overflow-hidden">
-              <div class="h-full bg-signal-emerald rounded-full" style="width: 20.6%"></div>
-            </div>
-          </div>
-
-          <div class="pt-2 border-t border-white/5 flex items-center justify-between">
-            <span class="text-3xl font-extrabold text-signal-emerald">-79.4%</span>
-            <span class="text-xs text-slate-400">2.7M Tokens Saved</span>
-          </div>
-        </div>
-
-        <!-- SiftrCode Benchmark -->
-        <div class="bg-space-900 border border-white/10 rounded-xl p-6 space-y-6 relative group hairline-border-hover transition">
-          <div class="flex items-center justify-between border-b border-white/10 pb-4">
-            <div>
-              <h3 class="text-base font-bold text-white font-sans">siftrcode/siftrcode</h3>
-              <span class="text-xs text-slate-500">TypeScript / MCP Stdio Server</span>
-            </div>
-            <span class="px-2 py-0.5 rounded bg-white/5 text-slate-300 text-xs">18 Files</span>
-          </div>
-
-          <div class="space-y-3">
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-400">Raw Repository:</span>
-              <span class="text-signal-crimson font-bold">15,931 tokens</span>
-            </div>
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-400">SiftrCode Pack:</span>
-              <span class="text-signal-emerald font-bold">817 tokens</span>
-            </div>
-            <!-- Progress Bar -->
-            <div class="w-full h-2 rounded-full bg-space-800 overflow-hidden">
-              <div class="h-full bg-signal-emerald rounded-full" style="width: 5.1%"></div>
-            </div>
-          </div>
-
-          <div class="pt-2 border-t border-white/5 flex items-center justify-between">
-            <span class="text-3xl font-extrabold text-signal-emerald">-94.9%</span>
-            <span class="text-xs text-slate-400">Packed in 0.13s</span>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Context Collapse Visualizer Section -->
-  <section class="py-20 px-4 border-t border-white/5 bg-space-900/40">
-    <div class="max-w-5xl mx-auto space-y-8">
-      
-      <div class="text-center max-w-2xl mx-auto space-y-2">
-        <div class="text-xs font-mono text-signal-emerald">[03 // THE ROOT CAUSE]</div>
-        <h2 class="text-3xl sm:text-4xl font-bold text-white tracking-tight">Why "Read File" Cripples Coding Agents</h2>
-        <p class="text-sm text-slate-400">
-          When an agent investigates a bug, it calls built-in file reading tools. Within 3 turns, your 200k context window is exhausted.
-        </p>
-      </div>
-
-      <!-- Before vs After Comparison Visualizer -->
-      <div class="bg-space-950 border border-white/10 rounded-2xl p-6 sm:p-8 space-y-8 font-mono">
-        
-        <!-- Bar 1: Without SiftrCode -->
-        <div class="space-y-2">
-          <div class="flex items-center justify-between text-xs">
-            <span class="text-slate-300 font-sans font-semibold">Standard Agent (Claude Code / Cursor without SiftrCode):</span>
-            <span class="text-signal-crimson font-bold">185,000 / 200,000 Tokens (92.5% Full)</span>
-          </div>
-          <div class="w-full h-8 rounded-lg bg-space-800 border border-white/10 flex overflow-hidden text-[10px] font-bold text-black">
-            <div class="h-full bg-signal-crimson/90 flex items-center justify-center px-2 truncate" style="width: 78%">
-              78% INTERNAL LOOP BODIES (WASTE)
-            </div>
-            <div class="h-full bg-signal-amber/90 flex items-center justify-center px-2 truncate" style="width: 14.5%">
-              DEADWEIGHT FILES
-            </div>
-            <div class="h-full bg-signal-emerald flex items-center justify-center px-2 truncate" style="width: 7.5%">
-              TYPES
-            </div>
-          </div>
-          <div class="flex items-center justify-between text-[11px] text-slate-500">
-            <span class="text-signal-crimson">⚠ Result: 45s turn latency · Model suffers "Lost in the Middle" hallucination</span>
-            <span>$5.55 / 10 turns</span>
-          </div>
-        </div>
-
-        <!-- Bar 2: With SiftrCode -->
-        <div class="space-y-2 pt-4 border-t border-white/10">
-          <div class="flex items-center justify-between text-xs">
-            <span class="text-signal-emerald font-sans font-semibold">Optimized with SiftrCode AST Skeletonizer:</span>
-            <span class="text-signal-emerald font-bold">14,200 / 200,000 Tokens (7.1% Full)</span>
-          </div>
-          <div class="w-full h-8 rounded-lg bg-space-800 border border-signal-emerald/40 flex overflow-hidden text-[10px] font-bold text-black">
-            <div class="h-full bg-signal-emerald flex items-center justify-center px-3 truncate" style="width: 7.1%">
-              SIGNAL (100% TYPES)
-            </div>
-            <div class="h-full bg-space-900 text-slate-600 flex items-center px-4 font-mono text-[11px]">
-              ← 92.9% CONTEXT HEADROOM FREE FOR REASONING & ACCURACY
-            </div>
-          </div>
-          <div class="flex items-center justify-between text-[11px] text-slate-500">
-            <span class="text-signal-emerald">✔ Result: 3.8s turn latency · 100% recall on critical signatures · Zero hallucinations</span>
-            <span>$0.42 / 10 turns</span>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Interactive Terminal Quickstart -->
-  <section id="quickstart" class="py-20 px-4 border-t border-white/5 bg-space-950">
-    <div class="max-w-5xl mx-auto space-y-8">
-      
-      <div class="text-center max-w-2xl mx-auto space-y-2">
-        <div class="text-xs font-mono text-signal-emerald">[04 // ONE-CLICK INTEGRATION]</div>
-        <h2 class="text-3xl sm:text-4xl font-bold text-white tracking-tight">Run Instantly with Zero Install</h2>
-        <p class="text-sm text-slate-400">
-          No compilation, no complex configuration. Connect SiftrCode to your agent workflow in 30 seconds.
-        </p>
-      </div>
-
-      <!-- Terminal Window -->
-      <div class="bg-space-900 border border-white/15 rounded-xl shadow-2xl overflow-hidden font-mono text-xs">
-        
-        <!-- Terminal Header -->
-        <div class="bg-space-850 px-4 py-3 border-b border-white/10 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
-            <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
-            <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
-            <span class="ml-2 text-slate-400">zsh — siftrcode cli</span>
-          </div>
-          <div class="flex items-center gap-3 text-slate-400">
-            <button onclick="setTermTab('audit')" id="tab-audit" class="px-2 py-0.5 rounded bg-white/10 text-white">siftrcode audit</button>
-            <button onclick="setTermTab('init')" id="tab-init" class="px-2 py-0.5 rounded hover:text-white">siftrcode init</button>
-            <button onclick="setTermTab('pack')" id="tab-pack" class="px-2 py-0.5 rounded hover:text-white">siftrcode pack</button>
-          </div>
-        </div>
-
-        <!-- Terminal Body -->
-        <div id="terminalBody" class="p-6 space-y-3 text-slate-300 leading-relaxed bg-[#0a0c10] min-h-[220px]">
-          <!-- Dynamic Terminal Content -->
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Architectural Spec / Pricing -->
-  <section class="py-20 px-4 border-t border-white/5 bg-space-900/30">
-    <div class="max-w-5xl mx-auto space-y-12">
-      
-      <div class="text-center max-w-2xl mx-auto space-y-2">
-        <div class="text-xs font-mono text-signal-emerald">[05 // SPECS & DEPLOYMENT]</div>
-        <h2 class="text-3xl sm:text-4xl font-bold text-white tracking-tight">Open Source Core. Enterprise Precision.</h2>
-        <p class="text-sm text-slate-400">
-          Transparent licensing designed for developers, startups, and high-security enterprise teams.
-        </p>
-      </div>
-
-      <!-- 3 Tier Spec Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
-        
-        <!-- Tier 1 -->
-        <div class="bg-space-900 border border-white/10 rounded-xl p-6 space-y-4 flex flex-col justify-between hairline-border-hover transition">
-          <div class="space-y-3">
-            <div class="text-slate-400 uppercase text-[10px]">TIER_01 // OSS</div>
-            <h3 class="text-lg font-bold text-white font-sans">Community CLI</h3>
-            <div class="text-2xl font-bold text-white">$0 <span class="text-xs font-normal text-slate-500">Free forever (MIT)</span></div>
-            <p class="text-slate-400 font-sans text-xs">For solo engineers seeking instant token savings on their local machine.</p>
-            <ul class="space-y-2 text-slate-300 border-t border-white/5 pt-4">
-              <li>✔ Local AST Pruner (TS, Py, Go, Rs)</li>
+            <div class="text-[10px] text-zinc-500 uppercase font-semibold">OPEN SOURCE</div>
+            <h3 class="text-lg font-bold text-ink font-sans">Community CLI</h3>
+            <div class="text-2xl font-bold text-ink">$0 <span class="text-xs font-normal text-zinc-500">Free forever (MIT)</span></div>
+            <ul class="space-y-2 text-zinc-600 text-[11px] border-t border-zinc-200 pt-3">
+              <li>✔ Local AST Pruning (TS, Py, Go, Rust)</li>
+              <li>✔ Codebase Auditor (`siftrcode audit`)</li>
               <li>✔ Context Packer (`siftrcode pack`)</li>
-              <li>✔ Repo Token Auditor (`siftrcode audit`)</li>
-              <li>✔ Native Stdio MCP Server</li>
+              <li>✔ Stdio MCP Server integration</li>
             </ul>
           </div>
-          <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="block text-center py-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold transition">
-            View on GitHub
+          <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="block text-center py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white font-medium transition text-xs">
+            GitHub Repository →
           </a>
         </div>
 
-        <!-- Tier 2 -->
-        <div class="bg-gradient-to-b from-space-850 to-space-900 border-2 border-signal-emerald/60 rounded-xl p-6 space-y-4 flex flex-col justify-between shadow-2xl relative">
-          <span class="absolute -top-3 right-4 px-2 py-0.5 bg-signal-emerald text-black font-bold text-[10px] rounded-full uppercase">RECOMMENDED</span>
+        <!-- Team Pro -->
+        <div class="p-6 bg-emerald-50/40 border-2 border-emerald-600 rounded-xl space-y-4 flex flex-col justify-between relative shadow-sm">
+          <span class="absolute -top-2.5 right-4 px-2 py-0.5 bg-emerald-600 text-white font-bold text-[9px] rounded-full uppercase tracking-wider">TEAM PRO</span>
           <div class="space-y-3">
-            <div class="text-signal-emerald uppercase text-[10px]">TIER_02 // CLOUD</div>
-            <h3 class="text-lg font-bold text-white font-sans">SiftrCode Pro</h3>
-            <div class="text-2xl font-bold text-signal-emerald">$19 <span class="text-xs font-normal text-slate-500">/ seat / month</span></div>
-            <p class="text-slate-400 font-sans text-xs">For dev teams burning thousands on Claude Code, Cursor, and Copilot API bills.</p>
-            <ul class="space-y-2 text-slate-300 border-t border-white/5 pt-4">
-              <li>✔ Everything in Community</li>
+            <div class="text-[10px] text-emerald-800 uppercase font-semibold">FOR STARTUPS & TEAMS</div>
+            <h3 class="text-lg font-bold text-ink font-sans">SiftrCode Pro</h3>
+            <div class="text-2xl font-bold text-emerald-700">$19 <span class="text-xs font-normal text-zinc-500">/ seat / mo</span></div>
+            <ul class="space-y-2 text-zinc-700 text-[11px] border-t border-emerald-200 pt-3">
+              <li>✔ Everything in Community CLI</li>
               <li>✔ TypeSafe Jev Cloud Relevance Gate</li>
-              <li>✔ Cross-Repo Dependency Graph Cache</li>
-              <li>✔ Team FinOps Token Analytics Dashboard</li>
+              <li>✔ Team Cross-Repo AST Cache</li>
               <li>✔ CI/CD Pull Request Context Auditor</li>
             </ul>
           </div>
-          <button class="w-full py-2.5 rounded-lg bg-signal-emerald hover:bg-[#1affaa] text-black font-bold transition">
-            Start 14-Day Free Trial
-          </button>
-        </div>
-
-        <!-- Tier 3 -->
-        <div class="bg-space-900 border border-white/10 rounded-xl p-6 space-y-4 flex flex-col justify-between hairline-border-hover transition">
-          <div class="space-y-3">
-            <div class="text-slate-400 uppercase text-[10px]">TIER_03 // AIRGAP</div>
-            <h3 class="text-lg font-bold text-white font-sans">Enterprise Dedicated</h3>
-            <div class="text-2xl font-bold text-white">Custom <span class="text-xs font-normal text-slate-500">/ site license</span></div>
-            <p class="text-slate-400 font-sans text-xs">For organizations with strict zero-egress, air-gapped, or SOC2 compliance mandates.</p>
-            <ul class="space-y-2 text-slate-300 border-t border-white/5 pt-4">
-              <li>✔ 100% Air-Gapped On-Premises Engine</li>
-              <li>✔ Zero Telemetry & Egress Guarantee</li>
-              <li>✔ Custom Language Grammars & AST Rules</li>
-              <li>✔ Dedicated Engineering SLA</li>
-            </ul>
-          </div>
-          <button class="w-full py-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold transition">
-            Contact Enterprise Sales
+          <button class="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition text-xs">
+            Start 14-Day Trial
           </button>
         </div>
 
@@ -561,22 +410,24 @@
   </section>
 
   <!-- Footer -->
-  <footer class="border-t border-white/5 py-10 px-4 bg-space-950 font-mono text-xs text-slate-500">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <span class="font-bold text-white">SIFTRCODE</span>
-        <span>—</span>
-        <span>AST Context FinOps for AI Agents</span>
+  <footer class="py-8 px-4 border-t border-zinc-200 bg-surface-50 font-mono text-xs text-zinc-500">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-ink">SiftrCode</span>
+        <span>•</span>
+        <span>siftrcode.com</span>
+        <span>•</span>
+        <span>MIT License</span>
       </div>
       <div>
-        MIT License · Domain: <a href="https://siftrcode.com" class="text-slate-400 hover:text-signal-emerald">siftrcode.com</a> · GitHub: <a href="https://github.com/kyzoeth/siftrcode" class="text-slate-400 hover:text-signal-emerald">kyzoeth/siftrcode</a>
+        <a href="https://github.com/kyzoeth/siftrcode" class="text-zinc-600 hover:text-ink">GitHub</a>
       </div>
     </div>
   </footer>
 
-  <!-- Interactive Scripts -->
+  <!-- Workbench Script -->
   <script>
-    const codeSamples = {
+    const samples = {
       ts: `import { Database } from './database';
 import { User, UserCreateInput } from '../types';
 
@@ -587,10 +438,10 @@ export class UserService {
   constructor(db: Database) {
     this.db = db;
     this.logger = new Logger('UserService');
-    console.log("Database connection pool initialized on port 5432");
+    console.log("Database connection initialized on pool port 5432");
   }
 
-  /** Retrieves a user record by primary UUID */
+  /** Finds a user by their unique primary ID */
   public async getUserById(id: string): Promise<User | null> {
     this.logger.debug(\`Fetching user \${id}\`);
     const sql = "SELECT id, email, created_at FROM users WHERE id = $1 LIMIT 1";
@@ -601,35 +452,34 @@ export class UserService {
     return result.rows[0];
   }
 
-  /** Registers a new account with retry transactions */
+  /** Creates a user with retries and hashing */
   public async createUser(data: UserCreateInput): Promise<User> {
-    // 60 lines of bcrypt password hashing, audit log writes, and webhook dispatches...
+    // 50 lines of field validation, password hashing, and audit log writes...
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         return await this.db.transaction(async (tx) => {
           return await tx.insert(data);
         });
       } catch (err) {
-        this.logger.error("Database deadlock detected, retrying...");
+        this.logger.error("Transaction failed, retrying...");
       }
     }
-    throw new Error("Transaction aborted after 3 retries");
+    throw new Error("Unable to create user after retries");
   }
 }`,
       py: `from typing import Optional, List, Dict
 import stripe
 
-class StripePaymentGateway:
-    """Manages credit card authorization and recurring subscriptions."""
-
+class StripeGateway:
+    """Manages credit card and subscription payments."""
     def __init__(self, api_key: str, webhook_secret: str):
         self.client = stripe.Client(api_key)
         self.secret = webhook_secret
         self._verify_credentials()
 
     def charge_customer(self, customer_id: str, amount_cents: int) -> Dict[str, any]:
-        """Executes one-time credit card charge with automated retry."""
-        # 50 lines of idempotency key generation, card exception handling, and telemetry...
+        """Executes one-time payment charge."""
+        # 40 lines of error handling, telemetry, and card token verification...
         for retry in range(3):
             try:
                 charge = self.client.charges.create(customer=customer_id, amount=amount_cents)
@@ -639,7 +489,7 @@ class StripePaymentGateway:
         return {"status": "timeout"}
 
     def cancel_subscription(self, sub_id: str) -> bool:
-        """Transitions subscription to cancelled state."""
+        """Cancels active recurring subscription."""
         # 30 lines of state machine transition...
         return True`,
       go: `package server
@@ -647,197 +497,128 @@ class StripePaymentGateway:
 import (
     "context"
     "net/http"
-    "time"
 )
 
-type ServerConfig struct {
+type Config struct {
     Port int
-    ReadTimeout time.Duration
-    WriteTimeout time.Duration
+    DBUrl string
 }
 
-type APIServer struct {
-    cfg ServerConfig
+type Server struct {
+    cfg Config
     mux *http.ServeMux
 }
 
-func NewAPIServer(cfg ServerConfig) *APIServer {
-    // 45 lines of middleware chain registration, health probes, and route binding...
+func NewServer(cfg Config) *Server {
+    // 40 lines of pool initialization and route setup...
     mux := http.NewServeMux()
-    return &APIServer{cfg: cfg, mux: mux}
+    return &Server{cfg: cfg, mux: mux}
 }
 
-func (s *APIServer) ListenAndServe(ctx context.Context) error {
-    // 35 lines of graceful signal traps and drain handlers...
-    server := &http.Server{Addr: ":8080", Handler: s.mux}
-    return server.ListenAndServe()
+func (s *Server) Start(ctx context.Context) error {
+    // 30 lines of graceful shutdown handling...
+    return http.ListenAndServe(":8080", s.mux)
 }`,
-      rs: `use std::collections::HashMap;
-use std::sync::Arc;
-
-pub struct ClusterConfig {
-    pub nodes: Vec<String>,
-    pub heartbeat_ms: u64,
+      rs: `pub struct Config {
+    pub api_key: String,
+    pub timeout_ms: u64,
 }
 
-pub trait ConsensusEngine {
-    fn propose(&self, entry: Vec<u8>) -> Result<u64, String>;
-    fn read_state(&self, key: &str) -> Option<Vec<u8>>;
+pub trait Gateway {
+    fn charge(&self, customer_id: &str, amount: u64) -> Result<String, String>;
 }
 
-pub struct RaftEngine {
-    config: Arc<ClusterConfig>,
-    storage: HashMap<String, Vec<u8>>,
+pub struct StripeGateway {
+    config: Config,
 }
 
-impl ConsensusEngine for RaftEngine {
-    pub fn propose(&self, entry: Vec<u8>) -> Result<u64, String> {
-        // 80 lines of quorum calculations, term validation, and RPC broadcasts...
-        Ok(42)
-    }
-
-    pub fn read_state(&self, key: &str) -> Option<Vec<u8>> {
-        self.storage.get(key).cloned()
+impl Gateway for StripeGateway {
+    pub fn charge(&self, customer_id: &str, amount: u64) -> Result<String, String> {
+        // 50 lines of TLS handshakes and error mappings...
+        Ok(format!("ch_{}", customer_id))
     }
 }`
     };
 
-    let activeLang = 'ts';
-    let debounceTimeout = null;
+    let curLang = 'ts';
+    let debounceTimer = null;
 
-    function switchLang(lang) {
-      activeLang = lang;
+    function setLang(lang) {
+      curLang = lang;
       ['ts', 'py', 'go', 'rs'].forEach(l => {
-        const btn = document.getElementById('btn-' + l);
+        const el = document.getElementById('tab-' + l);
         if (l === lang) {
-          btn.className = 'px-3 py-1.5 rounded text-white bg-white/10 border border-white/10';
+          el.className = 'px-2.5 py-1 rounded-md bg-zinc-900 text-white font-medium';
         } else {
-          btn.className = 'px-3 py-1.5 rounded text-slate-400 hover:text-white';
+          el.className = 'px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink';
         }
       });
-      document.getElementById('editorInput').value = codeSamples[lang];
+      document.getElementById('rawInput').value = samples[lang];
       renderAST();
     }
 
-    function handleEditorInput() {
-      clearTimeout(debounceTimeout);
-      debounceTimeout = setTimeout(() => {
-        renderAST();
-      }, 120);
+    function onInputChanged() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(renderAST, 100);
     }
 
     async function renderAST() {
-      const code = document.getElementById('editorInput').value;
+      const code = document.getElementById('rawInput').value;
       const rawTokens = Math.ceil(code.length / 4);
 
       try {
         const res = await fetch('/api/skeleton', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: code, language: activeLang })
+          body: JSON.stringify({ code: code, language: curLang })
         });
 
         if (res.ok) {
           const data = await res.json();
-          updateView(data.skeletonContent, rawTokens, data.skeletonTokensEstimate);
+          updateUI(data.skeletonContent, rawTokens, data.skeletonTokensEstimate);
           return;
         }
       } catch (e) {}
 
-      // Robust Client-Side AST Simulation Fallback
-      let skeleton = `// [SiftrCode Skeleton] service.${activeLang} (AST Interface)\n`;
+      // Fallback
+      let skel = `// [SiftrCode Skeleton] service.${curLang} (AST Interface)\n`;
       const lines = code.split('\n');
-      const sigs = lines.filter(l => {
+      const filtered = lines.filter(l => {
         const t = l.trim();
         return t.startsWith('import') || t.startsWith('export') || t.startsWith('type') ||
                t.startsWith('interface') || t.startsWith('pub') || t.startsWith('package') ||
                t.startsWith('func') || t.startsWith('class') || t.startsWith('def') ||
-               t.startsWith('use ') || t.startsWith('impl') || t.startsWith('/**') ||
-               t.startsWith('*') || t.startsWith('//');
+               t.startsWith('/**') || t.startsWith('*') || t.startsWith('//');
       });
-      skeleton += sigs.join('\n') + '\n\n// ✨ Bodies pruned by SiftrCode (-90% context footprint)';
-      const skelTokens = Math.ceil(skeleton.length / 4);
-      updateView(skeleton, rawTokens, skelTokens);
+      skel += filtered.join('\n') + '\n\n// ✨ Implementation bodies pruned by SiftrCode';
+      const skelTokens = Math.ceil(skel.length / 4);
+      updateUI(skel, rawTokens, skelTokens);
     }
 
-    function updateView(skelContent, rawTokens, skelTokens) {
+    function updateUI(skel, rawTokens, skelTokens) {
       const reduction = Math.max(0, ((rawTokens - skelTokens) / rawTokens) * 100).toFixed(1);
       const saved = Math.max(0, rawTokens - skelTokens);
 
-      document.getElementById('rawTokens').innerText = rawTokens.toLocaleString();
-      document.getElementById('skelTokens').innerText = skelTokens.toLocaleString();
-      document.getElementById('reductionPct').innerText = `-${reduction}%`;
-      document.getElementById('savingsBadge').innerText = `Saved ~${saved.toLocaleString()} Tokens`;
-      document.getElementById('editorOutput').innerText = skelContent;
-    }
-
-    // Terminal Quickstart Tabs
-    const termLogs = {
-      audit: `<span class="text-slate-500">$</span> <span class="text-signal-emerald">npx siftrcode audit .</span>
-<span class="text-signal-cyan">🔍 [SiftrCode Audit]</span> Analyzing repository token footprint...
-<span class="text-slate-400">├── Target Directory:</span> /Users/dev/stripe-checkout
-<span class="text-slate-400">├── Scanned Files:</span>    141 source files (21,633 lines)
-<span class="text-slate-400">├── Current Tokens:</span>   <span class="text-signal-crimson">137,188 raw tokens</span>
-<span class="text-slate-400">└── Skeleton Tokens:</span>  <span class="text-signal-emerald">21,920 tokens</span>
-
-<span class="text-signal-amber font-bold">💰 Financial Impact & Savings:</span>
-   Potential Token Waste Eliminated: <span class="text-signal-emerald font-bold">115,268 tokens (-84.0%)</span>
-   Solo Developer Monthly Waste:     <span class="text-signal-crimson font-bold">~$55.33 USD</span>
-   Team of 10 Monthly Waste:         <span class="text-signal-crimson font-bold">~$553.29 USD</span>
-
-<span class="text-slate-500">Run \`siftrcode pack\` to compress this codebase for your next prompt.</span>`,
-      init: `<span class="text-slate-500">$</span> <span class="text-signal-emerald">npx siftrcode init</span>
-<span class="text-signal-emerald">🚀 [SiftrCode Init]</span> Auto-configuring AI agent MCP settings...
-
-<span class="text-white font-bold">✔ Successfully configured SiftrCode MCP in:</span>
-   • Claude Desktop (/Users/dev/Library/Application Support/Claude/claude_desktop_config.json)
-   • Cursor MCP (~/.cursor/mcp.json)
-   • Claude Code Settings (~/.claude/settings.json)
-
-<span class="text-white font-bold">✔ Created agent optimization rule:</span>
-   • .cursorrules (Guiding agent to prefer siftr_pack AST interface reads)
-
-<span class="text-slate-500">Restart your editor to activate SiftrCode tools over stdio.</span>`,
-      pack: `<span class="text-slate-500">$</span> <span class="text-signal-emerald">npx siftrcode pack -f "auth webhook race condition" -o context.md</span>
-<span class="text-signal-emerald">⚡ [SiftrCode v0.1.0]</span> Scanning repository AST...
-<span class="text-slate-400">├── Scanned 201 source files in 0.15s</span>
-<span class="text-slate-400">├── [Full Files]</span>     <span class="text-signal-cyan">1 kept as root candidate</span>
-<span class="text-slate-400">├── [Skeletonized]</span>   <span class="text-signal-emerald">2 stripped to interface skeletons</span>
-<span class="text-slate-400">└── [Pruned]</span>         <span class="text-slate-500">196 deadweight files omitted</span>
-
-<span class="text-signal-emerald font-bold">✔ Context Pack Created:</span> <span class="underline">context.md</span>
-   Original Volume: <span class="text-signal-crimson">175,353 tokens</span> ➔ Packed: <span class="text-signal-emerald">2,357 tokens (-98.7%)</span>
-   Estimated prompt savings: <span class="text-signal-emerald font-bold">~$0.52 USD / prompt</span>
-
-<span class="text-slate-500">Tip: Feed this to your agent: claude "Review @context.md and fix webhook race condition"</span>`
-    };
-
-    function setTermTab(tab) {
-      ['audit', 'init', 'pack'].forEach(t => {
-        const btn = document.getElementById('tab-' + t);
-        if (t === tab) {
-          btn.className = 'px-2 py-0.5 rounded bg-white/10 text-white';
-        } else {
-          btn.className = 'px-2 py-0.5 rounded hover:text-white';
-        }
-      });
-      document.getElementById('terminalBody').innerHTML = termLogs[tab];
+      document.getElementById('rawTokenCount').innerText = `~${rawTokens.toLocaleString()} tokens`;
+      document.getElementById('skelTokenCount').innerText = `~${skelTokens.toLocaleString()} tokens (-${reduction}%)`;
+      document.getElementById('reductionTag').innerText = `-${reduction}% Token Mass`;
+      document.getElementById('savedTokensCount').innerText = `Saved ~${saved.toLocaleString()} tokens`;
+      document.getElementById('skelOutput').innerText = skel;
     }
 
     function copyCommand() {
       navigator.clipboard.writeText('npx siftrcode audit');
-      const t = document.getElementById('copyText');
-      t.innerText = 'COPIED!';
-      t.className = 'text-signal-emerald';
+      const btn = document.getElementById('copyBtn');
+      btn.innerText = 'COPIED!';
+      btn.className = 'text-[11px] font-mono text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded';
       setTimeout(() => {
-        t.innerText = 'COPY';
-        t.className = '';
+        btn.innerText = 'COPY';
+        btn.className = 'text-[11px] font-mono text-zinc-500 hover:text-emerald-600 transition px-2 py-0.5 rounded bg-zinc-50 border border-zinc-200';
       }, 2000);
     }
 
-    // Initialize Default States
-    switchLang('ts');
-    setTermTab('audit');
+    // Init
+    setLang('ts');
   </script>
 </body>
 </html>
