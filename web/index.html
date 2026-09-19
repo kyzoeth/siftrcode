@@ -709,13 +709,13 @@
         </nav>
       </div>
 
-      <div class="flex items-center gap-2 sm:gap-2.5">
-        <a href="mailto:info@siftrcode.com" title="Contact Us" aria-label="Contact Us" class="w-8 h-8 rounded-md bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
+      <div class="flex items-center gap-1.5 sm:gap-2.5">
+        <a href="mailto:info@siftrcode.com" title="Contact Us" aria-label="Contact Us" class="hidden sm:flex w-8 h-8 rounded-md bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press items-center justify-center shadow-2xs cursor-pointer">
           <svg class="w-4 h-4 text-zinc-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
           </svg>
         </a>
-        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" title="GitHub" aria-label="GitHub" class="w-8 h-8 rounded-md bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
+        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" title="GitHub" aria-label="GitHub" class="hidden sm:flex w-8 h-8 rounded-md bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press items-center justify-center shadow-2xs cursor-pointer">
           <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
         </a>
 
@@ -761,6 +761,21 @@
         <span>Claude Code Integration</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
+      <a href="#economics" onclick="toggleMobileMenu()" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+        <span>Token Economics</span>
+        <span class="text-zinc-400 font-mono text-[10px]">→</span>
+      </a>
+      <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+        <span class="flex items-center gap-2">
+          <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>GitHub Repository</span>
+        </span>
+        <span class="text-zinc-400 font-mono text-[10px]">↗</span>
+      </a>
+      <a href="mailto:info@siftrcode.com" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+        <span>Contact Us</span>
+        <span class="text-zinc-400 font-mono text-[10px]">→</span>
+      </a>
       <a href="/about" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>About SiftrCode</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
@@ -769,15 +784,15 @@
   </header>
 
   <!-- Hero Section -->
-  <section class="relative pt-16 pb-8 md:pt-22 md:pb-10 px-4">
-    <div class="max-w-4xl mx-auto text-center space-y-5 relative z-10">
+  <section class="relative pt-10 pb-6 sm:pt-16 sm:pb-8 md:pt-20 md:pb-10 px-3 sm:px-4">
+    <div class="max-w-4xl mx-auto text-center space-y-3.5 sm:space-y-5 relative z-10">
       
-      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-normal tracking-tight text-ink font-serif sm:whitespace-nowrap max-w-none mx-auto leading-[1.08]">
+      <h1 class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-normal tracking-tight text-ink font-serif sm:whitespace-nowrap max-w-none mx-auto leading-[1.12] sm:leading-[1.08]">
         Cut agent token waste by <span class="italic hero-glow-text">90%</span>
       </h1>
 
       <!-- Subtitle -->
-      <p class="text-sm sm:text-base text-zinc-500 sm:whitespace-nowrap max-w-none mx-auto font-normal -mt-1">
+      <p class="text-xs sm:text-base text-zinc-500 max-w-md sm:max-w-none mx-auto font-normal -mt-0.5 leading-relaxed">
         Our proprietary synthesis engine strips implementation bloat into clean interfaces before inference.
       </p>
 
@@ -785,11 +800,11 @@
   </section>
 
   <!-- Interactive Dual-Viewport Workbench (Centered Product Experience) -->
-  <section id="workbench" class="py-10 px-4 relative z-10">
+  <section id="workbench" class="py-6 sm:py-10 px-2 sm:px-4 relative z-10">
     <div class="max-w-4xl mx-auto space-y-3.5">
       
       <!-- Modern Flat Language Selector Bar -->
-      <div id="langSelectorDeck" class="flex items-center justify-start gap-2 sm:gap-3 py-1 mb-2 overflow-x-auto no-scrollbar">
+      <div id="langSelectorDeck" class="flex items-center justify-start gap-2 sm:gap-3 py-1 mb-2 overflow-x-auto no-scrollbar touch-pan-x" style="-webkit-overflow-scrolling: touch;">
         <span class="text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-300 select-none shrink-0">Demo:</span>
         <!-- Language Selection Tabs -->
         <div class="inline-flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 gap-0.5 shadow-2xs shrink-0">
@@ -817,7 +832,7 @@
         <div class="bg-white dark:bg-zinc-950 border border-zinc-200/90 dark:border-zinc-800 rounded-lg overflow-hidden shadow-sm dark:shadow-2xl flex flex-col text-zinc-900 dark:text-zinc-100 relative transition">
           
           <!-- Terminal Header Bar -->
-          <div class="bg-zinc-50 dark:bg-zinc-900/95 px-3 sm:px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs font-sans shrink-0 select-none gap-2 sm:gap-3 min-h-[42px]">
+          <div class="bg-zinc-50 dark:bg-zinc-900/95 px-3 sm:px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs font-sans shrink-0 select-none gap-2 sm:gap-3 min-h-[40px]">
             <!-- Left: macOS Traffic Lights & File Name -->
             <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
               <div class="flex items-center gap-1.5 shrink-0">
@@ -832,20 +847,20 @@
           </div>
 
           <!-- Code Viewport Body with Sparkle Particle Overlay (Fixed Height to Prevent Layout Shift) -->
-          <div class="relative overflow-hidden flex flex-col h-[380px] sm:h-[480px] bg-white dark:bg-zinc-950 shrink-0">
+          <div class="relative overflow-hidden flex flex-col h-[320px] sm:h-[420px] md:h-[480px] bg-white dark:bg-zinc-950 shrink-0">
             <!-- Focused AST Precision Laser Beam Scanner -->
             <div id="scanBeam" class="ast-laser-beam"></div>
             <div id="sparkleOverlay" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
-            <div id="skelOutput" class="w-full h-full p-3.5 sm:p-5 font-mono text-[11px] sm:text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-auto selection:bg-[#ECCBBE]/60 selection:text-[#411A0E] signal-glow"></div>
+            <div id="skelOutput" class="w-full h-full p-2.5 sm:p-5 font-mono text-[10.5px] sm:text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-auto selection:bg-[#ECCBBE]/60 selection:text-[#411A0E] signal-glow"></div>
           </div>
 
           <!-- Terminal Footer: Consolidated Step, Context Telemetry & Horizontal Transition Bar -->
-          <div class="bg-zinc-50/95 dark:bg-zinc-900/90 px-3 sm:px-4 py-2 sm:py-2.5 border-t border-zinc-200 dark:border-zinc-800 flex flex-col gap-2 sm:gap-2.5 shrink-0 select-none text-xs font-mono">
-            <!-- Top Line: Stage Step Badge + Context Transition Telemetry + Savings Tag + Replay Button -->
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-2.5 w-full">
-              <!-- Mobile Line 1 (Step Badge on Left, Replay Button on Right) / Desktop Inline Badge -->
-              <div class="flex items-center justify-between w-full sm:w-auto gap-2 border-b border-zinc-200/60 dark:border-zinc-800/60 sm:border-b-0 pb-1.5 sm:pb-0">
-                <span id="morphStepBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-transparent shrink-0 transition-all duration-200">
+          <div class="bg-zinc-50/95 dark:bg-zinc-900/90 px-2.5 sm:px-4 py-2 sm:py-2.5 border-t border-zinc-200 dark:border-zinc-800 flex flex-col gap-1.5 sm:gap-2 shrink-0 select-none text-xs font-mono">
+            <!-- Top Line: Stage Step Badge + Hint + Replay Action Button (Clean Single Row on Mobile!) -->
+            <div class="flex items-center justify-between gap-2 w-full">
+              <!-- Left: Step Badge -->
+              <div class="flex items-center gap-2 min-w-0">
+                <span id="morphStepBadge" class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-mono font-medium bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-transparent shrink-0 transition-all duration-200">
                   <span id="stepThinkingAnim" class="inline-flex items-center justify-center shrink-0 w-3 h-3 text-[#D97757] dark:text-[#F39C82]">
                     <svg class="w-3 h-3 claude-thinking-spin" viewBox="0 0 16 16" fill="currentColor">
                       <circle cx="8" cy="8" r="2.2"/>
@@ -862,22 +877,22 @@
               </div>
 
               <!-- Replay Action -->
-              <button onclick="triggerPruneMorph()" title="Replay AST synthesis demo" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-sans text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition btn-press cursor-pointer shrink-0 border border-zinc-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-800/80 shadow-2xs">
+              <button onclick="triggerPruneMorph()" title="Replay AST synthesis demo" class="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded text-[11px] sm:text-xs font-sans text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition btn-press cursor-pointer shrink-0 border border-zinc-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-800/80 shadow-2xs">
                 <span class="text-xs">↺</span>
                 <span>Replay</span>
               </button>
             </div>
 
             <!-- Bottom Line: Dynamic Token Gauge Bar (Green/Low to Red/High) -->
-            <div class="w-full pt-1.5 border-t border-zinc-200/60 dark:border-zinc-800/60 flex flex-col gap-1">
+            <div class="w-full pt-1 sm:pt-1.5 border-t border-zinc-200/60 dark:border-zinc-800/60 flex flex-col gap-1">
               <!-- Scale Markers: $ Values on Top of Bar -->
-              <div class="flex items-center justify-between text-[10px] sm:text-[11px] font-mono select-none px-1 py-0.5">
+              <div class="flex items-center justify-between text-[9.5px] sm:text-[11px] font-mono select-none px-0.5 sm:px-1 py-0.5">
                 <span class="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400" title="Minimum Cost">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                   <span id="barMinCostLabel">$0.00</span>
                 </span>
-                <span class="flex items-center gap-1 font-bold text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800/90 px-2 py-0.5 rounded border border-zinc-200/80 dark:border-zinc-700/80 shadow-2xs">
-                  <span class="text-zinc-400 font-normal text-[10px]">Cost:</span>
+                <span class="flex items-center gap-1 font-bold text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800/90 px-1.5 sm:px-2 py-0.5 rounded border border-zinc-200/80 dark:border-zinc-700/80 shadow-2xs">
+                  <span class="text-zinc-400 font-normal text-[9px] sm:text-[10px]">Cost:</span>
                   <span id="barActiveCostValue" class="font-mono text-zinc-900 dark:text-white">$0.00</span>
                 </span>
                 <span id="barTargetMaxLabel" class="flex items-center gap-1 font-semibold text-rose-600 dark:text-rose-400" title="Unpruned Raw Bloat Cost">
@@ -897,16 +912,16 @@
 
                 <!-- Floating Head Tally Tracker (strictly follows the moving head of the bar, token values inside) -->
                 <div id="payloadHeadTracker" class="absolute top-0 bottom-0 pointer-events-none flex items-center transition-[left] duration-500 ease-out z-10" style="left: 0%;">
-                  <div id="payloadHeadTally" class="flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-2xs whitespace-nowrap transition-all duration-300 transform translate-x-1 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700">
+                  <div id="payloadHeadTally" class="flex items-center gap-1 font-mono text-[9px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded shadow-2xs whitespace-nowrap transition-all duration-300 transform translate-x-1 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700">
                     <span id="payloadTallyValue">0 tokens</span>
                   </div>
                 </div>
 
                 <!-- Visual Highlight of Total Token Savings (from where it started to where it ended up) -->
-                <div id="footerSavingsZone" class="absolute top-0 bottom-0 right-0 opacity-0 pointer-events-none transition-opacity duration-500 flex items-center justify-center px-2 sm:px-3 z-[5] bg-emerald-500/15 dark:bg-emerald-400/20 border-l-2 border-dashed border-emerald-500 dark:border-emerald-400" style="left: 0%;">
-                  <div class="flex items-center gap-1.5 font-mono text-[10px] sm:text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-white/95 dark:bg-zinc-900/95 px-2 sm:px-2.5 py-0.5 rounded-md border border-emerald-400/80 dark:border-emerald-600/80 shadow-2xs">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span id="footerSavingsText">−0 tokens saved (Save $0.00)</span>
+                <div id="footerSavingsZone" class="absolute top-0 bottom-0 right-0 opacity-0 pointer-events-none transition-opacity duration-500 flex items-center justify-center px-1.5 sm:px-3 z-[5] bg-emerald-500/15 dark:bg-emerald-400/20 border-l-2 border-dashed border-emerald-500 dark:border-emerald-400" style="left: 0%;">
+                  <div class="flex items-center gap-1 sm:gap-1.5 font-mono text-[9px] sm:text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-white/95 dark:bg-zinc-900/95 px-1.5 sm:px-2.5 py-0.5 rounded-md border border-emerald-400/80 dark:border-emerald-600/80 shadow-2xs truncate max-w-full">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                    <span id="footerSavingsText" class="truncate">−0 tokens saved (Save $0.00)</span>
                   </div>
                 </div>
 
@@ -925,18 +940,18 @@
     <div class="max-w-4xl mx-auto space-y-6">
       
       <div class="text-center space-y-1">
-        <h2 class="text-3xl sm:text-4xl font-normal tracking-tight text-ink font-serif">Works with Claude Code &amp; Cursor</h2>
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-ink font-serif">Works with Claude Code &amp; Cursor</h2>
         <p class="text-xs sm:text-sm text-ink-secondary">Select your coding agent to view instant setup commands.</p>
       </div>
 
       <!-- Agent Selection Switcher Deck -->
       <div class="flex items-center justify-center p-1 rounded-lg bg-zinc-200/60 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs max-w-xs mx-auto">
         <div class="inline-flex items-center p-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 gap-1 w-full">
-          <button onclick="setAgent('claude')" id="agent-tab-claude" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80">
+          <button onclick="setAgent('claude')" id="agent-tab-claude" class="flex-1 flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80">
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="#D97757"><circle cx="12" cy="12" r="10" fill="#D97757" fill-opacity="0.2"/><path d="M12 4L14 10H20L15 14L17 20L12 16L7 20L9 14L4 10H10L12 4Z" fill="#D97757"/></svg>
             <span>Claude Code</span>
           </button>
-          <button onclick="setAgent('cursor')" id="agent-tab-cursor" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent">
+          <button onclick="setAgent('cursor')" id="agent-tab-cursor" class="flex-1 flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent">
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l-8-4 8-4 8 4-8 4zm-10 4l10 5 10-5v-2l-10 5-10-5v2zm0 4l10 5 10-5v-2l-10 5-10-5v2z"/></svg>
             <span>Cursor</span>
           </button>
@@ -945,7 +960,7 @@
 
       <!-- Agent Integration Panel -->
       <div class="bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden text-xs font-sans">
-        <div class="p-5 sm:p-6 space-y-4">
+        <div class="p-4 sm:p-6 space-y-3.5 sm:space-y-4">
           <!-- Title, Link & Clean Description -->
           <div class="space-y-1">
             <span id="agentConfigBadge" class="hidden"></span>
@@ -963,12 +978,12 @@
           </div>
 
           <!-- Command Terminal Bar -->
-          <div class="bg-zinc-950 text-zinc-100 p-3 rounded-lg font-mono text-xs flex items-center justify-between gap-3 border border-zinc-800 shadow-2xs select-all">
-            <div class="flex items-center gap-2.5 overflow-x-auto min-w-0">
+          <div class="bg-zinc-950 text-zinc-100 p-2.5 sm:p-3 rounded-lg font-mono text-[11px] sm:text-xs flex items-center justify-between gap-2.5 sm:gap-3 border border-zinc-800 shadow-2xs select-all">
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar min-w-0 py-0.5">
               <span class="text-emerald-400 select-none font-bold shrink-0">$</span>
-              <span id="agentCommandText" class="truncate">claude mcp add siftrcode -- npx -y siftrcode mcp</span>
+              <span id="agentCommandText" class="whitespace-nowrap">claude mcp add siftrcode -- npx -y siftrcode mcp</span>
             </div>
-            <button id="agentCommandCopyBtn" onclick="copyAgentCommand(this)" class="text-[10px] font-mono text-zinc-400 hover:text-white px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer shrink-0 font-medium">
+            <button id="agentCommandCopyBtn" onclick="copyAgentCommand(this)" class="text-[10px] font-mono text-zinc-400 hover:text-white px-2 sm:px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer shrink-0 font-medium">
               COPY
             </button>
           </div>
@@ -979,8 +994,8 @@
   </section>
 
   <!-- Dedicated Token Economics Section -->
-  <section id="economics" class="py-12 sm:py-16 px-4 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800">
-    <div class="max-w-4xl mx-auto space-y-7">
+  <section id="economics" class="py-10 sm:py-16 px-3 sm:px-4 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800">
+    <div class="max-w-4xl mx-auto space-y-6 sm:space-y-7">
 
       <!-- Section Header -->
       <div class="text-center space-y-1.5 max-w-2xl mx-auto">
@@ -988,29 +1003,29 @@
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
           <span>FinOps for AI Coding Agents</span>
         </div>
-        <h2 class="text-3xl sm:text-4xl font-normal tracking-tight text-ink font-serif">Token Economics</h2>
-        <p class="text-sm sm:text-base text-ink-secondary">
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-ink font-serif">Token Economics</h2>
+        <p class="text-xs sm:text-base text-ink-secondary">
           The math is simple. SiftrCode saves a lot of money per developer.
         </p>
       </div>
 
       <!-- Pricing Model Switcher -->
-      <div class="flex flex-wrap items-center justify-between gap-3 p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 max-w-xl mx-auto">
-        <div class="flex items-center gap-1.5">
-          <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold pl-1.5">Model:</span>
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-2.5 p-2 sm:p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 max-w-xl mx-auto">
+        <div class="flex items-center justify-between w-full sm:w-auto gap-2">
+          <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold pl-1">Model:</span>
           <div class="inline-flex items-center p-0.5 rounded-md bg-white dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 gap-1">
-            <button onclick="setModel('claude-3-7')" id="model-tab-claude" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80">
+            <button onclick="setModel('claude-3-7')" id="model-tab-claude" class="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded text-[11px] sm:text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80">
               <span class="w-1.5 h-1.5 rounded-full bg-[#D97757]"></span>
               <span>Claude 3.7 Sonnet</span>
             </button>
-            <button onclick="setModel('gpt-4o')" id="model-tab-gpt4o" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent">
+            <button onclick="setModel('gpt-4o')" id="model-tab-gpt4o" class="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded text-[11px] sm:text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
               <span>GPT-4o</span>
             </button>
           </div>
         </div>
 
-        <span id="modelRatesBadge" class="text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 px-2 py-0.5">
+        <span id="modelRatesBadge" class="text-[10px] sm:text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 text-center sm:text-right w-full sm:w-auto px-1">
           Claude 3.7 Sonnet: $3.00/MTok in • $15.00/MTok out
         </span>
       </div>
@@ -1108,17 +1123,17 @@
       </div>
 
       <!-- Compact Team Scale & Audit Bar -->
-      <div class="p-3.5 sm:p-4 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-        <div class="flex items-center gap-2 text-zinc-600 dark:text-zinc-300 font-sans">
+      <div class="p-3 sm:p-4 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 text-xs">
+        <div class="flex items-center gap-2 text-zinc-600 dark:text-zinc-300 font-sans text-xs">
           <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
           </svg>
-          <span><strong>Team Scale:</strong> 5 devs save ~$23k/yr • 10 devs save ~$47k/yr • 50 devs save ~$237k/yr</span>
+          <span class="leading-snug"><strong>Team Scale:</strong> 5 devs save ~$23k/yr • 10 devs save ~$47k/yr • 50 devs save ~$237k/yr</span>
         </div>
-        <div class="flex items-center gap-2 font-mono text-xs shrink-0">
-          <span class="text-zinc-400">Audit your repo:</span>
+        <div class="flex items-center justify-between w-full sm:w-auto gap-2 font-mono text-xs shrink-0 pt-2 sm:pt-0 border-t border-zinc-200/60 dark:border-zinc-800/60 sm:border-t-0">
+          <span class="text-zinc-400 text-[11px]">Audit repo:</span>
           <code class="px-2 py-0.5 rounded bg-zinc-200/70 dark:bg-zinc-800 text-ink text-[11px]">npx siftrcode audit</code>
-          <button onclick="copySnippet('npx siftrcode audit', this)" class="text-[10px] font-mono text-zinc-500 hover:text-ink px-1.5 py-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 transition cursor-pointer">
+          <button onclick="copySnippet('npx siftrcode audit', this)" class="text-[10px] font-mono text-zinc-500 hover:text-ink px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 transition cursor-pointer">
             COPY
           </button>
         </div>
@@ -1128,11 +1143,11 @@
   </section>
 
   <!-- Clean Spec & Pricing -->
-  <section class="py-14 px-4 bg-white border-t border-zinc-200">
-    <div class="max-w-4xl mx-auto space-y-8">
+  <section class="py-10 sm:py-14 px-3 sm:px-4 bg-white border-t border-zinc-200">
+    <div class="max-w-4xl mx-auto space-y-6 sm:space-y-8">
       
       <div class="text-center space-y-1">
-        <h2 class="text-3xl sm:text-4xl font-normal tracking-tight text-ink font-serif">Simple Licensing</h2>
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-ink font-serif">Simple Licensing</h2>
         <p class="text-xs sm:text-sm text-ink-secondary">Free open-source CLI for individuals. Paid caching for teams.</p>
       </div>
 
@@ -2266,10 +2281,10 @@ impl PaymentGateway for StripeGateway {
         const highlighted = highlightSingleLine(line, lang);
         const safeText = (highlighted && highlighted.length > 0) ? highlighted : '&nbsp;';
         return `<div class="code-line flex items-baseline leading-relaxed py-0.5">
-          <span class="line-num select-none w-8 sm:w-9 text-right pr-2.5 sm:pr-3 mr-2 sm:mr-2.5 text-zinc-400 dark:text-zinc-600 font-mono text-[11px] sm:text-xs shrink-0 font-normal border-r border-zinc-200/80 dark:border-zinc-800/80">${lineNum}</span>
+          <span class="line-num select-none w-7 sm:w-9 text-right pr-1.5 sm:pr-3 mr-1.5 sm:mr-2.5 text-zinc-400 dark:text-zinc-600 font-mono text-[10px] sm:text-xs shrink-0 font-normal border-r border-zinc-200/80 dark:border-zinc-800/80">${lineNum}</span>
           <div class="flex items-baseline overflow-hidden">
-            <span class="code-marker select-none shrink-0 w-3 inline-block"></span>
-            <span class="code-text font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre">${safeText}</span>
+            <span class="code-marker select-none shrink-0 w-2 sm:w-3 inline-block"></span>
+            <span class="code-text font-mono text-[11px] sm:text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre">${safeText}</span>
           </div>
         </div>`;
       }).join('');
@@ -2282,10 +2297,10 @@ impl PaymentGateway for StripeGateway {
         const highlighted = highlightSingleLine(line, lang);
         const safeText = (highlighted && highlighted.length > 0) ? highlighted : '&nbsp;';
         return `<div class="prune-line flex items-baseline leading-relaxed py-0.5 rounded transition-all duration-300 relative overflow-hidden" data-line="${idx}">
-          <span class="line-num select-none w-8 sm:w-9 text-right pr-2.5 sm:pr-3 mr-2 sm:mr-2.5 text-zinc-400 dark:text-zinc-600 font-mono text-[11px] sm:text-xs shrink-0 font-normal border-r border-zinc-200/80 dark:border-zinc-800/80">${lineNum}</span>
+          <span class="line-num select-none w-7 sm:w-9 text-right pr-1.5 sm:pr-3 mr-1.5 sm:mr-2.5 text-zinc-400 dark:text-zinc-600 font-mono text-[10px] sm:text-xs shrink-0 font-normal border-r border-zinc-200/80 dark:border-zinc-800/80">${lineNum}</span>
           <div class="flex items-baseline overflow-hidden">
-            <span class="prune-marker text-rose-600 dark:text-rose-400 select-none text-[11px] font-bold font-mono shrink-0 w-3 text-center transition-colors">−</span>
-            <span class="prune-text font-mono text-xs text-zinc-700 dark:text-rose-100/90 whitespace-pre transition-all duration-300">${safeText}</span>
+            <span class="prune-marker text-rose-600 dark:text-rose-400 select-none text-[10px] sm:text-[11px] font-bold font-mono shrink-0 w-2 sm:w-3 text-center transition-colors">−</span>
+            <span class="prune-text font-mono text-[11px] sm:text-xs text-zinc-700 dark:text-rose-100/90 whitespace-pre transition-all duration-300">${safeText}</span>
           </div>
         </div>`;
       }).join('');
@@ -2487,7 +2502,10 @@ impl PaymentGateway for StripeGateway {
           savingsZone.style.opacity = '1';
         }
         if (savingsText) {
-          savingsText.innerText = `−${savedCount.toLocaleString()} tokens saved (Save $${savedCostVal.toFixed(2)})`;
+          const isNarrowMobile = typeof window !== 'undefined' && window.innerWidth < 420;
+          savingsText.innerText = isNarrowMobile
+            ? `Save $${savedCostVal.toFixed(2)} (−${Math.round((savedCount / conf.rawTokens) * 100)}%)`
+            : `−${savedCount.toLocaleString()} tokens saved (Save $${savedCostVal.toFixed(2)})`;
         }
       }
     }
@@ -3068,16 +3086,16 @@ impl PaymentGateway for StripeGateway {
 
         return `
 <div class="dissolve-section relative" id="section-${item.id}">
-  <div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">${renderedIface}</div>
+  <div class="font-mono text-[11px] sm:text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">${renderedIface}</div>
   <div id="block-${item.id}" class="dissolve-block overflow-hidden my-0.5 relative" style="max-height: 2500px;">
-    <div id="card-${item.id}" class="targeted-prune-card rounded font-mono text-[11px] leading-relaxed relative">
-      <div id="card-header-${item.id}" class="bloat-card-header flex items-center justify-between border-b text-[10px] gap-2">
+    <div id="card-${item.id}" class="targeted-prune-card rounded font-mono text-[10.5px] sm:text-[11px] leading-relaxed relative">
+      <div id="card-header-${item.id}" class="bloat-card-header flex items-center justify-between border-b text-[10px] gap-1.5 sm:gap-2">
         <span class="flex items-center gap-1.5 font-bold tracking-wide uppercase text-rose-700 dark:text-rose-300 truncate">
-          <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>
-          <span id="label-${item.id}" class="truncate">Implementation details (${item.lineCount} lines)</span>
+          <span class="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-rose-500 shrink-0"></span>
+          <span id="label-${item.id}" class="truncate">Implementation (${item.lineCount} lines)</span>
         </span>
-        <span class="text-[9px] sm:text-[9.5px] font-mono px-2 py-0.5 rounded bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 font-semibold border border-rose-300/80 dark:border-rose-800/80 whitespace-nowrap shrink-0 shadow-2xs">
-          &minus;${sectionTokens.toLocaleString()} tokens to be pruned
+        <span class="text-[8.5px] sm:text-[9.5px] font-mono px-1.5 sm:px-2 py-0.5 rounded bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 font-semibold border border-rose-300/80 dark:border-rose-800/80 whitespace-nowrap shrink-0 shadow-2xs">
+          &minus;${sectionTokens.toLocaleString()} tokens<span class="hidden sm:inline"> to be pruned</span>
         </span>
       </div>
       <div class="space-y-0.5 overflow-x-auto no-scrollbar">
@@ -3898,13 +3916,13 @@ ${renderedRaw}
       <form id="trialForm" onsubmit="submitTrialForm(event)" class="space-y-3 text-left font-sans text-xs">
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Work Email *</label>
-          <input type="email" id="trialEmail" required placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-900 font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
+          <input type="email" id="trialEmail" required placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-900 font-sans text-base sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div>
             <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Team Size</label>
-            <select id="trialTeamSize" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-800 font-sans text-sm sm:text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
+            <select id="trialTeamSize" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-800 font-sans text-base sm:text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
               <option value="1-5 devs">1–5 engineers</option>
               <option value="5-20 devs" selected>5–20 engineers</option>
               <option value="20-50 devs">20–50 engineers</option>
@@ -3914,7 +3932,7 @@ ${renderedRaw}
 
           <div>
             <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Primary AI Agent</label>
-            <select id="trialAgent" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-800 font-sans text-sm sm:text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
+            <select id="trialAgent" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-800 font-sans text-base sm:text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
               <option value="Cursor" selected>Cursor</option>
               <option value="Claude Code">Claude Code</option>
               <option value="Antigravity">Antigravity</option>
@@ -3925,7 +3943,7 @@ ${renderedRaw}
 
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Repository URL / Stack (Optional)</label>
-          <input type="text" id="trialRepo" placeholder="github.com/company/repo" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-900 font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
+          <input type="text" id="trialRepo" placeholder="github.com/company/repo" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-900 font-sans text-base sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
         </div>
 
         <div id="trialError" class="hidden text-[11px] text-rose-600 bg-rose-50 border border-rose-200 rounded-md p-2 font-sans"></div>
@@ -4010,12 +4028,12 @@ ${renderedRaw}
 
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Your Feedback *</label>
-          <textarea id="fbMessage" required rows="4" placeholder="What works well, what feels clunky, or what language/feature should we support next?..." class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-ink font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850 resize-none"></textarea>
+          <textarea id="fbMessage" required rows="4" placeholder="What works well, what feels clunky, or what language/feature should we support next?..." class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-ink font-sans text-base sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850 resize-none"></textarea>
         </div>
 
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Email (Optional — only if you'd like a response)</label>
-          <input type="email" id="fbEmail" placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-ink font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850" />
+          <input type="email" id="fbEmail" placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-ink font-sans text-base sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850" />
         </div>
 
         <div id="fbError" class="hidden text-[11px] text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-md p-2 font-sans"></div>
