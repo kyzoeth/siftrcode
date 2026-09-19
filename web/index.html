@@ -408,12 +408,19 @@
     /* Inline Code Dissolution & Accordion Collapse */
     .dissolve-block {
       overflow: hidden;
-      transition: max-height 1.1s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.85s ease, filter 0.85s ease, margin 0.85s ease, padding 0.85s ease;
+      transition: max-height 1.6s cubic-bezier(0.4, 0, 0.2, 1), 
+                  opacity 1.4s ease, 
+                  filter 1.4s ease, 
+                  transform 1.4s ease, 
+                  margin 1.4s ease, 
+                  padding 1.4s ease;
+      transform-origin: top center;
     }
     .dissolve-block.collapsing {
       max-height: 0px !important;
       opacity: 0 !important;
-      filter: blur(1px) !important;
+      filter: blur(2.5px) !important;
+      transform: scale(0.97) translateY(-6px) !important;
       pointer-events: none !important;
       margin-top: 0 !important;
       margin-bottom: 0 !important;
@@ -421,14 +428,30 @@
       padding-bottom: 0 !important;
     }
     .dissolve-block.expanded {
-      max-height: 380px !important;
-      opacity: 0.9 !important;
-      filter: blur(0px) !important;
+      max-height: 520px !important;
+      opacity: 1 !important;
+      filter: none !important;
+      transform: scale(1) translateY(0) !important;
       pointer-events: auto !important;
     }
 
-    .dissolve-pill {
+    /* Targeted Implementation Highlight Card */
+    .targeted-prune-card {
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.12) 0%, rgba(225, 29, 72, 0.05) 100%);
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      border-left: 3px solid #f43f5e;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px -4px rgba(244, 63, 94, 0.2), inset 0 0 16px rgba(244, 63, 94, 0.05);
       transition: all 0.4s ease;
+    }
+    html.dark .targeted-prune-card {
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.18) 0%, rgba(225, 29, 72, 0.08) 100%);
+      border-color: rgba(244, 63, 94, 0.45);
+      border-left-color: #f43f5e;
+    }
+
+    .dissolve-pill {
+      transition: all 0.3s ease;
     }
     .dissolve-pill:hover {
       border-color: rgba(197, 155, 39, 0.5);
@@ -436,19 +459,20 @@
     }
 
     @keyframes scanline-sweep {
-      0% { top: 0%; opacity: 0.9; }
+      0% { top: 0%; opacity: 0.95; }
+      50% { opacity: 1; }
       100% { top: 100%; opacity: 0; }
     }
     .ast-scanline {
       position: absolute;
       left: 0;
       right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, #c59b27, #fef08a, #c59b27, transparent);
-      box-shadow: 0 0 12px #c59b27, 0 0 24px #eab308;
+      height: 2.5px;
+      background: linear-gradient(90deg, transparent, #c59b27, #fef08a, #f43f5e, #c59b27, transparent);
+      box-shadow: 0 0 14px #c59b27, 0 0 28px #f43f5e;
       pointer-events: none;
       z-index: 20;
-      animation: scanline-sweep 0.8s ease-out forwards;
+      animation: scanline-sweep 1.6s ease-in-out forwards;
     }
   </style>
 </head>
@@ -1615,6 +1639,17 @@ impl Gateway for StripeGateway {`
       return highlightedLines.join('\n');
     }
 
+    function highlightPrunedCode(code, lang) {
+      const highlighted = highlightCode(code, lang);
+      const lines = highlighted.split('\n');
+      return lines.map(line => {
+        return `<div class="flex items-baseline gap-2 py-0.5 px-1.5 rounded hover:bg-rose-500/10 transition-colors">
+          <span class="text-rose-400 select-none text-[10px] font-bold font-mono shrink-0 w-3">−</span>
+          <span class="font-mono text-[11px] text-rose-100/90 whitespace-pre">${line}</span>
+        </div>`;
+      }).join('');
+    }
+
     function setCompilerStatus(text, type = 'ready') {
       const pill = document.getElementById('demoStatusPill');
       if (!pill) return;
@@ -1622,7 +1657,6 @@ impl Gateway for StripeGateway {`
       const label = document.getElementById('demoStatusText');
       if (!label) return;
       label.innerText = text;
-      if (!pill) return;
       if (type === 'compiling') {
         pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-300 text-amber-800 text-[10px] font-mono font-semibold shadow-2xs transition-all duration-300';
         if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping shrink-0';
@@ -1647,23 +1681,34 @@ impl Gateway for StripeGateway {`
           return `<div>${highlightCode(item.content, lang)}</div>`;
         }
         return `
-<div class="dissolve-section my-1.5" id="section-${item.id}">
-  <div>${highlightCode(item.interfaceCode, lang)}</div>
-  <div id="block-${item.id}" class="dissolve-block overflow-hidden my-1" style="max-height: ${shouldAnimate ? '180px' : '0px'}; opacity: ${shouldAnimate ? '0.85' : '0'};">
-    <div class="px-2.5 py-2 rounded bg-zinc-900/80 border-l-2 border-amber-400/50 font-mono text-[11px] text-zinc-400 leading-relaxed whitespace-pre">
-${escapeHtml(item.rawCode)}
+<div class="dissolve-section my-2" id="section-${item.id}">
+  <div class="font-mono text-xs text-zinc-200">${highlightCode(item.interfaceCode, lang)}</div>
+  <div id="block-${item.id}" class="dissolve-block overflow-hidden my-1.5" style="max-height: ${shouldAnimate ? '280px' : '0px'}; opacity: ${shouldAnimate ? '1' : '0'};">
+    <div class="targeted-prune-card rounded-lg p-2.5 my-1 font-mono text-[11px] leading-relaxed">
+      <div class="flex items-center justify-between pb-1.5 mb-1.5 border-b border-rose-500/25 text-[10px]">
+        <span class="flex items-center gap-1.5 font-bold tracking-wide uppercase text-rose-300">
+          <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+          <span>Targeted Implementation (${item.lineCount} lines)</span>
+        </span>
+        <span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-200 font-semibold border border-rose-500/30">
+          Will be dissolved &bull; 0% types lost
+        </span>
+      </div>
+      <div class="space-y-0.5 overflow-x-auto no-scrollbar">
+${highlightPrunedCode(item.rawCode, lang)}
+      </div>
     </div>
   </div>
-  <div class="dissolve-pill flex items-center justify-between px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/25 text-amber-300 font-mono text-[11px] select-none my-1">
-    <div class="flex items-center gap-1.5">
+  <div class="dissolve-pill flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-300 font-mono text-[11px] select-none my-1 transition hover:border-amber-400/50">
+    <div class="flex items-center gap-2 flex-wrap">
       <span class="text-amber-400 font-bold">⟡</span>
       <span class="font-semibold text-amber-200">${item.lineCount} lines dissolved</span>
       <span class="text-emerald-400 font-semibold bg-emerald-950/70 border border-emerald-800/80 px-1.5 py-0.5 rounded text-[10px]">${item.costSaved}</span>
       <span class="text-zinc-600">•</span>
-      <span class="text-zinc-400">100% types preserved</span>
+      <span class="text-zinc-400 text-[10px]">100% types preserved</span>
     </div>
-    <button onclick="toggleDissolve('${item.id}')" id="btn-${item.id}" class="text-[10px] text-amber-400 hover:text-amber-200 underline decoration-amber-400/40 transition cursor-pointer">
-      ${shouldAnimate ? 'folding...' : 'inspect'}
+    <button onclick="toggleDissolve('${item.id}')" id="btn-${item.id}" class="text-[11px] font-semibold text-amber-400 hover:text-amber-200 underline decoration-amber-400/40 transition cursor-pointer px-1.5 py-0.5 rounded hover:bg-amber-400/10">
+      ${shouldAnimate ? 'dissolving...' : 'inspect'}
     </button>
   </div>
 </div>`;
@@ -1671,11 +1716,10 @@ ${escapeHtml(item.rawCode)}
 
       container.innerHTML = html;
 
-      const duration = 750;
+      // Slower, easier-to-follow pacing: 1.6s smooth dissolution duration
+      const duration = 1600;
       if (shouldAnimate) {
-        setCompilerStatus('SCANNING AST NODES...', 'compiling');
-
-        // Laser scanline effect
+        // Laser scanline effect matching 1.6s sweep
         const parent = container.parentElement;
         if (parent) {
           const oldScan = parent.querySelector('.ast-scanline');
@@ -1685,10 +1729,10 @@ ${escapeHtml(item.rawCode)}
           parent.appendChild(scan);
           setTimeout(() => {
             if (scan && scan.parentNode) scan.parentNode.removeChild(scan);
-          }, 850);
+          }, 1800);
         }
 
-        // Initial numbers
+        // Initial numbers before dissolution
         document.getElementById('rawTokenCount').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
         document.getElementById('rawCostFoot').innerText = `Burn: $${conf.rawCost.toFixed(2)} / 10k calls`;
         document.getElementById('bridgeRaw').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
@@ -1701,10 +1745,8 @@ ${escapeHtml(item.rawCode)}
         document.getElementById('costSavedTag').innerText = `Save $0.00`;
         document.getElementById('savedTokensCount').innerText = `Synthesizing...`;
 
-        // Crisp 450ms beat then fold
+        // Generous 1.7s inspection beat so visitors can easily read and follow the highlighted affected code
         dissolveTimeout = setTimeout(() => {
-          setCompilerStatus('DISSOLVING BODIES & PRUNING...', 'compiling');
-
           const allBlocks = container.querySelectorAll('.dissolve-block');
           allBlocks.forEach(b => {
             b.classList.add('collapsing');
@@ -1716,19 +1758,15 @@ ${escapeHtml(item.rawCode)}
             btn.innerText = 'inspect';
           });
 
+          // Silky smooth 1.6s numeric odometer interpolation in perfect sync with collapse
           animateNumber('skelTokenCount', conf.rawTokens, conf.skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens (-${Math.round(conf.reduction)}%)`);
           animateNumber('bridgeSkel', conf.rawTokens, conf.skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
           animateNumber('costSkel', conf.rawCost, conf.skelCost, duration, v => `$${v.toFixed(2)}`);
           animateNumber('costSavedTag', 0, conf.savedCost, duration, v => `Save $${v.toFixed(2)}`);
           animateNumber('bridgeReductionTag', 0, conf.reduction, duration, v => `-${v.toFixed(1)}% Evaporated`);
           animateNumber('savedTokensCount', 0, conf.savedTokens, duration, v => `Saved ${Math.round(v).toLocaleString()} tokens (Save $${conf.savedCost.toFixed(2)}/10k)`);
-
-          setTimeout(() => {
-            setCompilerStatus(`✓ 100% TYPES PRESERVED (-${Math.round(conf.reduction)}% TOKENS)`, 'success');
-          }, duration);
-        }, 450);
+        }, 1700);
       } else {
-        setCompilerStatus('LIVE AST SYNTHESIS', 'success');
         document.getElementById('rawTokenCount').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
         document.getElementById('rawCostFoot').innerText = `Burn: $${conf.rawCost.toFixed(2)} / 10k calls`;
         document.getElementById('skelTokenCount').innerText = `${conf.skelTokens.toLocaleString()} tokens (-${Math.round(conf.reduction)}%)`;
@@ -1765,8 +1803,8 @@ ${escapeHtml(item.rawCode)}
       if (isCollapsed) {
         block.classList.remove('collapsing');
         block.classList.add('expanded');
-        block.style.maxHeight = '360px';
-        block.style.opacity = '0.95';
+        block.style.maxHeight = '480px';
+        block.style.opacity = '1';
         block.style.filter = 'none';
         btn.innerText = 'fold';
       } else {
@@ -1992,17 +2030,17 @@ ${escapeHtml(item.rawCode)}
       debounceTimer = setTimeout(renderAST, 120);
     }
 
-    // Smart Auto-Tour: cycles every 7s when user is idle and not typing
+    // Smart Auto-Tour: cycles every 9.5s when user is idle and not typing
     function startAutoTour() {
       if (autoTourInterval) clearInterval(autoTourInterval);
       autoTourInterval = setInterval(() => {
         const isFocused = document.activeElement === document.getElementById('rawInput');
         const idleDuration = Date.now() - lastActivityTime;
-        if (!isFocused && idleDuration >= 6500) {
+        if (!isFocused && idleDuration >= 9500) {
           langIndex = (langIndex + 1) % langs.length;
           setLang(langs[langIndex], false);
         }
-      }, 6500);
+      }, 9500);
     }
 
     // Attach activity listeners to pause tour during interaction
