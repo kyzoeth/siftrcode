@@ -17,6 +17,7 @@
   "scripts": {
     "build": "tsc && node -e \"require('fs').copyFileSync('src/skeleton/python_ast.py', 'dist/skeleton/python_ast.py')\"",
     "start": "node dist/bin/siftrcode.js",
+    "serve": "node dist/server/web.js",
     "test": "node dist/tests/run_tests.js",
     "prepublishOnly": "npm run build && npm test"
   },
