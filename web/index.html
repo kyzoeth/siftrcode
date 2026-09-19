@@ -275,14 +275,27 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-3 text-xs">
-          <div class="flex items-center gap-2">
-            <span class="text-zinc-400 text-[11px]">Context Mass:</span>
+        <div class="flex flex-wrap items-center gap-2.5 sm:gap-3 text-xs">
+          <!-- Token Reduction -->
+          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-100/80 border border-zinc-200/80">
+            <span class="text-zinc-400 text-[10px] uppercase font-semibold">Context:</span>
             <span class="text-rose-500 font-semibold" id="bridgeRaw">1,840 tokens</span>
             <span class="text-zinc-300">➔</span>
-            <span class="text-amber-500 font-bold" id="bridgeSkel">138 tokens</span>
+            <span class="text-amber-600 font-bold" id="bridgeSkel">138 tokens</span>
           </div>
-          <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-semibold text-[11px]" id="bridgeReductionTag">
+
+          <!-- Dollar Cost Savings Badge -->
+          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 font-mono text-[11px] shadow-2xs" title="Estimated inference waste at Claude 3.5 Sonnet ($3.00 / 1M tokens) per 10,000 agent iterations">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-emerald-700 text-[10px] uppercase font-bold tracking-tight">API Cost:</span>
+            <span class="text-rose-500 font-semibold line-through" id="costRaw">$55.20</span>
+            <span class="text-zinc-300">➔</span>
+            <span class="text-emerald-700 font-bold" id="costSkel">$4.14</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-600 text-white font-bold tracking-wide" id="costSavedTag">Save $51.06</span>
+          </div>
+
+          <!-- Reduction Tag -->
+          <span class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-bold text-[11px]" id="bridgeReductionTag">
             -92.5% Evaporated
           </span>
         </div>
@@ -315,12 +328,15 @@
               <span id="rawFileBadge" class="font-semibold text-zinc-800 bg-white px-2 py-0.5 rounded border border-zinc-200">src/services/user_service.ts</span>
               <span class="text-zinc-400 text-[10px] hidden sm:inline">(Raw Source)</span>
             </div>
-            <span class="text-rose-600 font-semibold text-[11px]" id="rawTokenCount">~1,840 tokens</span>
+            <span class="text-rose-600 font-semibold text-[11px]" id="rawTokenCount">~1,840 tokens ($55.20)</span>
           </div>
           <textarea id="rawInput" oninput="onInputChanged()" spellcheck="false" class="w-full h-88 p-4 font-mono text-xs text-zinc-800 leading-relaxed border-0 focus:outline-none resize-none font-normal bg-transparent"></textarea>
           <div class="bg-zinc-50/50 px-4 py-2 border-t border-zinc-100 text-[11px] font-mono text-zinc-400 flex items-center justify-between">
             <span>Edit code to test real-time synthesis</span>
-            <span class="text-rose-500/80 font-medium">Contains function bodies &amp; loops</span>
+            <span class="text-rose-500 font-semibold flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+              <span id="rawCostFoot">Burn: $55.20 / 10k calls</span>
+            </span>
           </div>
         </div>
 
@@ -348,7 +364,9 @@
               <svg class="w-3.5 h-3.5 text-emerald-400 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               100% Types &amp; Signatures Preserved
             </span>
-            <span id="savedTokensCount" class="text-amber-400 font-medium">Saved ~1,702 tokens</span>
+            <span id="savedTokensCount" class="text-emerald-400 font-bold bg-emerald-950/70 border border-emerald-800/80 px-2.5 py-0.5 rounded shadow-2xs">
+              Saved ~1,702 tokens (Save $51.06/10k)
+            </span>
           </div>
         </div>
 
@@ -699,7 +717,10 @@ impl Gateway for StripeGateway {
         rawTokens: 1840,
         skelTokens: 138,
         reduction: 92.5,
-        savedTokens: 1702
+        savedTokens: 1702,
+        rawCost: 55.20,
+        skelCost: 4.14,
+        savedCost: 51.06
       },
       py: {
         name: 'Python',
@@ -718,7 +739,10 @@ impl Gateway for StripeGateway {
         rawTokens: 2120,
         skelTokens: 164,
         reduction: 92.3,
-        savedTokens: 1956
+        savedTokens: 1956,
+        rawCost: 63.60,
+        skelCost: 4.92,
+        savedCost: 58.68
       },
       go: {
         name: 'Go',
@@ -737,7 +761,10 @@ impl Gateway for StripeGateway {
         rawTokens: 1460,
         skelTokens: 118,
         reduction: 91.9,
-        savedTokens: 1342
+        savedTokens: 1342,
+        rawCost: 43.80,
+        skelCost: 3.54,
+        savedCost: 40.26
       },
       rs: {
         name: 'Rust',
@@ -756,7 +783,10 @@ impl Gateway for StripeGateway {
         rawTokens: 1980,
         skelTokens: 142,
         reduction: 92.8,
-        savedTokens: 1838
+        savedTokens: 1838,
+        rawCost: 59.40,
+        skelCost: 4.26,
+        savedCost: 55.14
       }
     };
 
@@ -778,6 +808,7 @@ export class UserService {
           type: 'dissolve',
           id: 'ts-1',
           lineCount: 8,
+          costSaved: 'Save ~$0.54/1k calls',
           rawCode: `    this.logger.debug(\`Fetching user \${id}\`);
     const sql = "SELECT id, email FROM users WHERE id = $1 LIMIT 1";
     const result = await this.db.query(sql, [id]);
@@ -790,6 +821,7 @@ export class UserService {
           type: 'dissolve',
           id: 'ts-2',
           lineCount: 12,
+          costSaved: 'Save ~$0.72/1k calls',
           rawCode: `    for (let attempt = 0; attempt < 3; attempt++) {
       try {
         return await this.db.transaction(async (tx) => {
@@ -822,6 +854,7 @@ class StripeGateway:
           type: 'dissolve',
           id: 'py-1',
           lineCount: 4,
+          costSaved: 'Save ~$0.27/1k calls',
           rawCode: `        self.client = stripe.Client(api_key)
         self.secret = webhook_secret
         self._verify_credentials()`,
@@ -832,6 +865,7 @@ class StripeGateway:
           type: 'dissolve',
           id: 'py-2',
           lineCount: 11,
+          costSaved: 'Save ~$0.78/1k calls',
           rawCode: `        for retry in range(3):
             try:
                 charge = self.client.charges.create(customer=customer_id, amount=amount_cents)
@@ -847,6 +881,7 @@ class StripeGateway:
           type: 'dissolve',
           id: 'py-3',
           lineCount: 3,
+          costSaved: 'Save ~$0.21/1k calls',
           rawCode: `        # 30 lines of state machine transition...
         return True`,
           interfaceCode: `    def cancel_subscription(self, sub_id: str) -> bool:
@@ -879,6 +914,7 @@ type Server struct {
           type: 'dissolve',
           id: 'go-1',
           lineCount: 5,
+          costSaved: 'Save ~$0.45/1k calls',
           rawCode: `    // 40 lines of pool initialization and route setup...
     mux := http.NewServeMux()
     return &Server{cfg: cfg, mux: mux}`,
@@ -888,6 +924,7 @@ type Server struct {
           type: 'dissolve',
           id: 'go-2',
           lineCount: 4,
+          costSaved: 'Save ~$0.36/1k calls',
           rawCode: `    // 30 lines of graceful shutdown handling...
     return http.ListenAndServe(":8080", s.mux)`,
           interfaceCode: `func (s *Server) Start(ctx context.Context) error`
@@ -916,6 +953,7 @@ impl Gateway for StripeGateway {`
           type: 'dissolve',
           id: 'rs-1',
           lineCount: 6,
+          costSaved: 'Save ~$0.51/1k calls',
           rawCode: `        // 50 lines of TLS handshakes and error mappings...
         Ok(format!("ch_{}", customer_id))`,
           interfaceCode: `    pub fn charge(&self, customer_id: &str, amount: u64) -> Result<String, String>;`
@@ -1020,6 +1058,7 @@ ${escapeHtml(item.rawCode)}
     <div class="flex items-center gap-1.5">
       <span class="text-amber-400 font-bold">⟡</span>
       <span class="font-semibold text-amber-200">${item.lineCount} lines dissolved</span>
+      <span class="text-emerald-400 font-semibold bg-emerald-950/70 border border-emerald-800/80 px-1.5 py-0.5 rounded text-[10px]">${item.costSaved}</span>
       <span class="text-zinc-600">•</span>
       <span class="text-zinc-400">100% types preserved</span>
     </div>
@@ -1035,11 +1074,16 @@ ${escapeHtml(item.rawCode)}
       const duration = 650;
       if (shouldAnimate) {
         // Initial raw numbers
-        document.getElementById('rawTokenCount').innerText = `~${conf.rawTokens.toLocaleString()} tokens`;
+        document.getElementById('rawTokenCount').innerText = `~${conf.rawTokens.toLocaleString()} tokens ($${conf.rawCost.toFixed(2)})`;
+        document.getElementById('rawCostFoot').innerText = `Burn: $${conf.rawCost.toFixed(2)} / 10k calls`;
         document.getElementById('bridgeRaw').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
+        document.getElementById('costRaw').innerText = `$${conf.rawCost.toFixed(2)}`;
+
         document.getElementById('skelTokenCount').innerText = `~${conf.rawTokens.toLocaleString()} tokens (0%)`;
         document.getElementById('bridgeSkel').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
+        document.getElementById('costSkel').innerText = `$${conf.rawCost.toFixed(2)}`;
         document.getElementById('bridgeReductionTag').innerText = `0% Evaporated`;
+        document.getElementById('costSavedTag').innerText = `Save $0.00`;
         document.getElementById('savedTokensCount').innerText = `Calculating...`;
 
         // Trigger dissolution fold at 350ms
@@ -1055,20 +1099,39 @@ ${escapeHtml(item.rawCode)}
             btn.innerText = 'inspect';
           });
 
-          // Animate tokens down
+          // Animate tokens and dollars down
           animateNumber('skelTokenCount', conf.rawTokens, conf.skelTokens, duration, v => `~${Math.round(v).toLocaleString()} tokens (-${conf.reduction}%)`);
           animateNumber('bridgeSkel', conf.rawTokens, conf.skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
+          animateNumber('costSkel', conf.rawCost, conf.skelCost, duration, v => `$${v.toFixed(2)}`);
+          animateNumber('costSavedTag', 0, conf.savedCost, duration, v => `Save $${v.toFixed(2)}`);
           animateNumber('bridgeReductionTag', 0, conf.reduction, duration, v => `-${v.toFixed(1)}% Evaporated`);
-          animateNumber('savedTokensCount', 0, conf.savedTokens, duration, v => `Saved ~${Math.round(v).toLocaleString()} tokens`);
+          animateNumber('savedTokensCount', 0, conf.savedTokens, duration, v => `Saved ~${Math.round(v).toLocaleString()} tokens (Save $${conf.savedCost.toFixed(2)}/10k)`);
         }, 380);
       } else {
-        document.getElementById('rawTokenCount').innerText = `~${conf.rawTokens.toLocaleString()} tokens`;
+        document.getElementById('rawTokenCount').innerText = `~${conf.rawTokens.toLocaleString()} tokens ($${conf.rawCost.toFixed(2)})`;
+        document.getElementById('rawCostFoot').innerText = `Burn: $${conf.rawCost.toFixed(2)} / 10k calls`;
         document.getElementById('skelTokenCount').innerText = `~${conf.skelTokens.toLocaleString()} tokens (-${conf.reduction}%)`;
-        document.getElementById('savedTokensCount').innerText = `Saved ~${conf.savedTokens.toLocaleString()} tokens`;
+        document.getElementById('savedTokensCount').innerText = `Saved ~${conf.savedTokens.toLocaleString()} tokens (Save $${conf.savedCost.toFixed(2)}/10k)`;
         document.getElementById('bridgeRaw').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
+        document.getElementById('costRaw').innerText = `$${conf.rawCost.toFixed(2)}`;
         document.getElementById('bridgeSkel').innerText = `${conf.skelTokens.toLocaleString()} tokens`;
+        document.getElementById('costSkel').innerText = `$${conf.skelCost.toFixed(2)}`;
+        document.getElementById('costSavedTag').innerText = `Save $${conf.savedCost.toFixed(2)}`;
         document.getElementById('bridgeReductionTag').innerText = `-${conf.reduction}% Evaporated`;
       }
+
+      prevMetrics = {
+        rawTokens: conf.rawTokens,
+        skelTokens: conf.skelTokens,
+        rawCost: conf.rawCost,
+        skelCost: conf.skelCost,
+        savedCost: conf.savedCost,
+        rawPct: 0,
+        skelPct: 0,
+        reduction: conf.reduction,
+        latencySecs: 0,
+        savedTokens: conf.savedTokens
+      };
     }
 
     function toggleDissolve(id) {
@@ -1136,6 +1199,9 @@ ${escapeHtml(item.rawCode)}
     let prevMetrics = {
       rawTokens: 0,
       skelTokens: 0,
+      rawCost: 0,
+      skelCost: 0,
+      savedCost: 0,
       rawPct: 0,
       skelPct: 0,
       reduction: 0,
@@ -1169,14 +1235,22 @@ ${escapeHtml(item.rawCode)}
     function updateUI(skel, rawTokens, skelTokens) {
       const reduction = Math.max(0, ((rawTokens - skelTokens) / rawTokens) * 100);
       const saved = Math.max(0, rawTokens - skelTokens);
+      // Pricing basis: Claude 3.5 Sonnet ($3.00 / 1M tokens) per 10,000 runs
+      const rawCost = (rawTokens * 10000 * 3.0) / 1000000;
+      const skelCost = (skelTokens * 10000 * 3.0) / 1000000;
+      const savedCost = Math.max(0, rawCost - skelCost);
 
       const duration = 550;
-      animateNumber('rawTokenCount', prevMetrics.rawTokens, rawTokens, duration, v => `~${Math.round(v).toLocaleString()} tokens`);
+      animateNumber('rawTokenCount', prevMetrics.rawTokens, rawTokens, duration, v => `~${Math.round(v).toLocaleString()} tokens ($${((v * 10000 * 3.0) / 1000000).toFixed(2)})`);
+      animateNumber('rawCostFoot', prevMetrics.rawCost, rawCost, duration, v => `Burn: $${v.toFixed(2)} / 10k calls`);
       animateNumber('skelTokenCount', prevMetrics.skelTokens, skelTokens, duration, v => `~${Math.round(v).toLocaleString()} tokens (-${reduction.toFixed(1)}%)`);
-      animateNumber('savedTokensCount', prevMetrics.savedTokens, saved, duration, v => `Saved ~${Math.round(v).toLocaleString()} tokens`);
+      animateNumber('savedTokensCount', prevMetrics.savedTokens, saved, duration, v => `Saved ~${Math.round(v).toLocaleString()} tokens (Save $${((v * 10000 * 3.0) / 1000000).toFixed(2)}/10k)`);
 
       animateNumber('bridgeRaw', prevMetrics.rawTokens, rawTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
+      animateNumber('costRaw', prevMetrics.rawCost, rawCost, duration, v => `$${v.toFixed(2)}`);
       animateNumber('bridgeSkel', prevMetrics.skelTokens, skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
+      animateNumber('costSkel', prevMetrics.skelCost, skelCost, duration, v => `$${v.toFixed(2)}`);
+      animateNumber('costSavedTag', prevMetrics.savedCost, savedCost, duration, v => `Save $${v.toFixed(2)}`);
       animateNumber('bridgeReductionTag', prevMetrics.reduction, reduction, duration, v => `-${v.toFixed(1)}% Evaporated`);
 
       document.getElementById('skelOutput').innerHTML = highlightCode(skel, curLang);
@@ -1184,6 +1258,9 @@ ${escapeHtml(item.rawCode)}
       prevMetrics = {
         rawTokens,
         skelTokens,
+        rawCost,
+        skelCost,
+        savedCost,
         rawPct: 0,
         skelPct: 0,
         reduction,
