@@ -45,12 +45,6 @@ export function runInstaller(): InitResult {
     path: path.join(home, '.cursor', 'mcp.json')
   });
 
-  // Windsurf MCP configuration
-  potentialTargets.push({
-    name: 'Windsurf MCP (Global)',
-    path: path.join(home, '.codeium', 'windsurf', 'mcp_config.json')
-  });
-
   // Claude Code configuration
   potentialTargets.push({
     name: 'Claude Code Settings',

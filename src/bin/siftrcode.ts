@@ -19,7 +19,7 @@ program
 // COMMAND: INIT
 program
   .command('init')
-  .description('Automatically detects and configures SiftrCode MCP in Claude Code, Cursor, and Windsurf')
+  .description('Automatically detects and configures SiftrCode MCP in Claude Code and Cursor')
   .action(() => {
     console.log(chalk.bold.green('🚀 [SiftrCode Init]'), 'Auto-configuring AI agent MCP settings...\n');
     const result = runInstaller();
@@ -40,7 +40,7 @@ program
       }
     }
 
-    console.log(chalk.gray('\nRestart your editor (Claude Desktop, Cursor, Windsurf) to activate SiftrCode tools.'));
+    console.log(chalk.gray('\nRestart your editor (Claude Desktop, Cursor) to activate SiftrCode tools.'));
   });
 
 // COMMAND: PACK

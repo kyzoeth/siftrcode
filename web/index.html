@@ -753,7 +753,7 @@
     <div class="max-w-4xl mx-auto space-y-8">
       
       <div class="text-center space-y-1">
-        <h2 class="text-3xl sm:text-4xl font-normal tracking-tight text-ink font-serif">Works with Claude Code, Cursor &amp; Windsurf</h2>
+        <h2 class="text-3xl sm:text-4xl font-normal tracking-tight text-ink font-serif">Works with Claude Code &amp; Cursor</h2>
         <p class="text-xs sm:text-sm text-ink-secondary">Select your coding agent and LLM model to view instant setup commands and real-world token savings.</p>
       </div>
 
@@ -769,10 +769,6 @@
           <button onclick="setAgent('cursor')" id="agent-tab-cursor" class="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent">
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l-8-4 8-4 8 4-8 4zm-10 4l10 5 10-5v-2l-10 5-10-5v2zm0 4l10 5 10-5v-2l-10 5-10-5v2z"/></svg>
             <span>Cursor</span>
-          </button>
-          <button onclick="setAgent('windsurf')" id="agent-tab-windsurf" class="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent">
-            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2" stroke-linecap="round"><path d="M3 17c3-3 6-3 9 0s6 3 9 0M3 12c3-3 6-3 9 0s6 3 9 0M3 7c3-3 6-3 9 0s6 3 9 0"/></svg>
-            <span>Windsurf</span>
           </button>
         </div>
 
@@ -2016,15 +2012,6 @@ ${highlightPrunedCode(item.rawCode, lang)}
         ruleHint: 'Generates <code class="font-mono">.cursorrules</code> &amp; MCP config',
         guideUrl: '/how-it-works',
         guideText: 'Docs →'
-      },
-      windsurf: {
-        badge: 'WINDSURF CASCADE SETUP',
-        title: 'Configure SiftrCode in Windsurf Cascade',
-        desc: 'Integrates SiftrCode MCP server with Windsurf\'s Cascade agent so context windows never overflow during multi-file refactors.',
-        command: 'npx siftrcode init --windsurf',
-        ruleHint: 'Configures <code class="font-mono">mcp_config.json</code> Cascade rules',
-        guideUrl: '/how-it-works',
-        guideText: 'Docs →'
       }
     };
 
@@ -2055,7 +2042,7 @@ ${highlightPrunedCode(item.rawCode, lang)}
       curAgent = agentKey;
       const conf = agentConfigs[agentKey];
 
-      ['claude', 'cursor', 'windsurf'].forEach(k => {
+      ['claude', 'cursor'].forEach(k => {
         const tab = document.getElementById(`agent-tab-${k}`);
         if (!tab) return;
         if (k === agentKey) {
@@ -2499,7 +2486,6 @@ ${highlightPrunedCode(item.rawCode, lang)}
             <select id="trialAgent" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-800 font-sans text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
               <option value="Cursor" selected>Cursor</option>
               <option value="Claude Code">Claude Code</option>
-              <option value="Windsurf">Windsurf</option>
               <option value="Antigravity">Antigravity</option>
               <option value="Custom / Other">Custom / Other</option>
             </select>

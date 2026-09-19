@@ -27,7 +27,7 @@ When an AI coding agent (Claude Code, Cursor, Antigravity) investigates a task, 
 Run SiftrCode instantly in any repository with zero configuration:
 
 ```bash
-# 1-command auto-configuration for Claude Code, Cursor, and Windsurf MCP
+# 1-command auto-configuration for Claude Code and Cursor MCP
 npx siftrcode init
 
 # Audit token waste in your current repo

@@ -170,7 +170,7 @@
           </div>
         </div>
         <p>
-          Coding agents like Claude Code, Cursor, and Windsurf are loaded with thousands of lines of repo code. When you ingest 50,000 to 200,000 tokens of raw source code, <strong>80% to 95% of those tokens are imperative function bodies</strong> — database queries, loops, retry handlers, internal error formatting, and SQL strings.
+          Coding agents like Claude Code and Cursor are loaded with thousands of lines of repo code. When you ingest 50,000 to 200,000 tokens of raw source code, <strong>80% to 95% of those tokens are imperative function bodies</strong> — database queries, loops, retry handlers, internal error formatting, and SQL strings.
         </p>
         <p>
           When an agent is asked to build a new feature or resolve a bug in one file, it doesn't need to read the 50 lines of internal logic inside every helper class across the repository. It only needs the <strong>signatures, exported types, parameter constraints, and interface shapes</strong> of the surrounding codebase. SiftrCode acts as an AST filter between your filesystem and the agent's context window.
@@ -275,7 +275,7 @@
           <code>{ "mcpServers": { "siftrcode": { "command": "npx", "args": ["-y", "siftrcode", "mcp"] } } }</code>
         </div>
         <p>
-          Compatible natively with Claude Desktop, Cursor, Windsurf, Antigravity, and any custom agent pipeline.
+          Compatible natively with Claude Desktop, Cursor, Antigravity, and any custom agent pipeline.
         </p>
       </section>
 
