@@ -588,11 +588,6 @@
             <span class="text-emerald-700 font-bold" id="costSkel">$4.14</span>
             <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-600 text-white font-bold tracking-wide whitespace-nowrap shrink-0" id="costSavedTag">Save $51.06</span>
           </div>
-
-          <!-- Reduction Tag (Always on same line) -->
-          <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-900 border border-blue-200 font-bold text-[11px] whitespace-nowrap shrink-0" id="bridgeReductionTag">
-            -92.5% Evaporated
-          </span>
         </div>
       </div>
 
@@ -1510,7 +1505,6 @@ ${highlightPrunedCode(item.rawCode, lang)}
         document.getElementById('skelTokenCount').innerText = `${conf.rawTokens.toLocaleString()} tokens (0%)`;
         document.getElementById('bridgeSkel').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
         document.getElementById('costSkel').innerText = `$${conf.rawCost.toFixed(2)}`;
-        document.getElementById('bridgeReductionTag').innerText = `0% Evaporated`;
         document.getElementById('costSavedTag').innerText = `Save $0.00`;
         document.getElementById('savedTokensCount').innerText = `Synthesizing...`;
 
@@ -1532,7 +1526,6 @@ ${highlightPrunedCode(item.rawCode, lang)}
           animateNumber('bridgeSkel', conf.rawTokens, conf.skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
           animateNumber('costSkel', conf.rawCost, conf.skelCost, duration, v => `$${v.toFixed(2)}`);
           animateNumber('costSavedTag', 0, conf.savedCost, duration, v => `Save $${v.toFixed(2)}`);
-          animateNumber('bridgeReductionTag', 0, conf.reduction, duration, v => `-${v.toFixed(1)}% Evaporated`);
           animateNumber('savedTokensCount', 0, conf.savedTokens, duration, v => `Saved ${Math.round(v).toLocaleString()} tokens (Save $${conf.savedCost.toFixed(2)}/10k)`);
         }, 1700);
       } else {
@@ -1545,7 +1538,6 @@ ${highlightPrunedCode(item.rawCode, lang)}
         document.getElementById('bridgeSkel').innerText = `${conf.skelTokens.toLocaleString()} tokens`;
         document.getElementById('costSkel').innerText = `$${conf.skelCost.toFixed(2)}`;
         document.getElementById('costSavedTag').innerText = `Save $${conf.savedCost.toFixed(2)}`;
-        document.getElementById('bridgeReductionTag').innerText = `-${conf.reduction}% Evaporated`;
       }
 
       prevMetrics = {
@@ -1691,7 +1683,6 @@ ${highlightPrunedCode(item.rawCode, lang)}
       animateNumber('bridgeSkel', prevMetrics.skelTokens, skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
       animateNumber('costSkel', prevMetrics.skelCost, skelCost, duration, v => `$${v.toFixed(2)}`);
       animateNumber('costSavedTag', prevMetrics.savedCost, savedCost, duration, v => `Save $${v.toFixed(2)}`);
-      animateNumber('bridgeReductionTag', prevMetrics.reduction, reduction, duration, v => `-${v.toFixed(1)}% Evaporated`);
 
       document.getElementById('skelOutput').innerHTML = highlightCode(skel, curLang);
 
