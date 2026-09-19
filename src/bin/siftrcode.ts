@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { skeletonizeFile } from '../skeleton/dispatcher';
 import { packRepository } from '../core/packer';
-import { auditRepository } from '../core/auditor';
+import { auditRepository, formatAuditMarkdown } from '../core/auditor';
 import { runMcpServer } from '../mcp/server';
 import { runInstaller } from '../core/installer';
 
@@ -88,13 +88,25 @@ program
 program
   .command('audit [directory]')
   .description('Audits a codebase for context bloat and token waste')
-  .action(async (directory) => {
-    console.log(chalk.bold.cyan('🔍 [SiftrCode Audit]'), 'Analyzing repository token footprint...');
+  .option('--json', 'Output audit report as JSON')
+  .option('--markdown', 'Output audit report as GitHub Flavored Markdown')
+  .action(async (directory, options) => {
     const dir = directory || process.cwd();
 
     try {
       const audit = await auditRepository(dir);
 
+      if (options.json) {
+        process.stdout.write(JSON.stringify(audit, null, 2) + '\n');
+        return;
+      }
+
+      if (options.markdown) {
+        process.stdout.write(formatAuditMarkdown(audit) + '\n');
+        return;
+      }
+
+      console.log(chalk.bold.cyan('🔍 [SiftrCode Audit]'), 'Analyzing repository token footprint...');
       console.log(chalk.gray(`├── Target Directory: ${audit.directory}`));
       console.log(chalk.white(`├── Scanned Files:    ${audit.totalFiles} code files (${audit.totalRawLines.toLocaleString()} lines)`));
       console.log(chalk.white(`├── Current Tokens:   ${chalk.red(audit.totalRawTokens.toLocaleString())} raw tokens`));

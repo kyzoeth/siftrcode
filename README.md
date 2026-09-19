@@ -1,11 +1,12 @@
 # SiftrCode (siftrcode.com)
 
-> **Feed Agents Signal. Sift Out The Bloat.**  
-> The AST-powered codebase skeletonizer and context pruner for AI coding agents.
+> **Cut agent token waste by 90%.**  
+> Our proprietary AST compiler strips function bodies into zero-loss skeletons before inference.
 
-[![Version](https://img.shields.io/badge/version-0.1.0-emerald.svg)](https://siftrcode.com)
+[![Version](https://img.shields.io/badge/version-0.1.0-amber.svg)](https://siftrcode.com)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://modelcontextprotocol.io)
+[![CI](https://github.com/kyzoeth/siftrcode/actions/workflows/ci.yml/badge.svg)](https://github.com/kyzoeth/siftrcode/actions)
 
 ---
 
@@ -26,10 +27,13 @@ When an AI coding agent (Claude Code, Cursor, Antigravity) investigates a task, 
 Run SiftrCode instantly in any repository with zero configuration:
 
 ```bash
+# 1-command auto-configuration for Claude Code, Cursor, and Windsurf MCP
+npx siftrcode init
+
 # Audit token waste in your current repo
 npx siftrcode audit
 
-# Pack a repository into a token-slammed context pack (e.g. context.md)
+# Pack a repository into a token-pruned context pack (e.g. siftr_context.md)
 npx siftrcode pack --focus "checkout subscription webhook" -o context.md
 ```
 
@@ -40,20 +44,40 @@ claude "Review @context.md and fix the webhook idempotency bug"
 
 ---
 
-## 🛠️ Commands
+## 🔄 GitHub Action (Automated PR Token Auditing)
 
-### 1. `siftrcode pack [options] [directory]`
-Scans the codebase, analyzes AST dependencies, applies Jev relevance scoring, and compiles a clean, token-pruned context pack:
+Track token mass reductions directly in your Pull Requests:
 
-```bash
-siftrcode pack -f "auth middleware" -o auth_context.md
+```yaml
+name: SiftrCode PR Context Audit
+on: [pull_request]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: kyzoeth/siftrcode@v0.1.0
+        with:
+          output_summary: 'true'
 ```
 
-### 2. `siftrcode audit [directory]`
+---
+
+## 🛠️ Commands
+
+### 1. `siftrcode audit [options] [directory]`
 Analyzes repository token footprint and calculates how much token bloat can be eliminated:
 
 ```bash
+# Human-readable terminal output
 siftrcode audit
+
+# GitHub Flavored Markdown (great for PR comments & CI step summaries)
+siftrcode audit --markdown
+
+# Programmatic JSON output
+siftrcode audit --json
 ```
 
 ### 3. `siftrcode skeleton <file>`

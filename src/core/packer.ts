@@ -34,6 +34,7 @@ export async function packRepository(options: PackOptions = {}): Promise<PackRes
     '**/.git/**',
     '**/dist/**',
     '**/build/**',
+    '**/benchmarks/**',
     '**/.next/**',
     '**/.venv/**',
     '**/__pycache__/**',

@@ -1,0 +1,24 @@
+name: SiftrCode PR Context Audit
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  audit:
+    name: Audit PR Token Footprint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run SiftrCode Auditor
+        uses: ./
+        with:
+          path: '.'
+          output_summary: 'true'

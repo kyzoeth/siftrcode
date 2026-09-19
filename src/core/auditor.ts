@@ -33,6 +33,7 @@ export async function auditRepository(dir: string = process.cwd()): Promise<Audi
     '**/.git/**',
     '**/dist/**',
     '**/build/**',
+    '**/benchmarks/**',
     '**/.next/**',
     '**/.venv/**',
     '**/__pycache__/**',
@@ -43,7 +44,7 @@ export async function auditRepository(dir: string = process.cwd()): Promise<Audi
     '**/*.map'
   ];
 
-  const files = await glob('**/*.{ts,tsx,js,jsx,py}', {
+  const files = await glob('**/*.{ts,tsx,js,jsx,py,go,rs}', {
     cwd: rootDir,
     nodir: true,
     ignore: defaultExcludes
@@ -113,4 +114,31 @@ export async function auditRepository(dir: string = process.cwd()): Promise<Audi
     },
     topBloatedFiles: bloatedList.slice(0, 10)
   };
+}
+
+export function formatAuditMarkdown(audit: AuditReport): string {
+  let md = `## ⚡ SiftrCode Context & Token Audit Report\n\n`;
+  md += `> **Directory:** \`${path.basename(audit.directory)}\` • **Files Analyzed:** ${audit.totalFiles} • **Lines:** ${audit.totalRawLines.toLocaleString()}\n\n`;
+  md += `### 📊 Token Reduction Summary\n\n`;
+  md += `| Metric | Value |\n`;
+  md += `| :--- | :--- |\n`;
+  md += `| **Raw Codebase Footprint** | \`${audit.totalRawTokens.toLocaleString()}\` tokens |\n`;
+  md += `| **SiftrCode AST Skeleton Footprint** | \`${audit.potentialSkeletonTokens.toLocaleString()}\` tokens |\n`;
+  md += `| **Deadweight Tokens Eliminated** | **\`${audit.potentialTokensSaved.toLocaleString()}\` tokens (-${audit.savingsPercentage}%)** |\n`;
+  md += `| **Estimated Solo Dev Monthly Waste** | ~\$${audit.monthlyWasteEstimateUSD.soloDeveloper.toFixed(2)} USD |\n`;
+  md += `| **Estimated Team (10 Devs) Monthly Waste** | ~\$${audit.monthlyWasteEstimateUSD.teamOfTen.toFixed(2)} USD |\n\n`;
+
+  if (audit.topBloatedFiles.length > 0) {
+    md += `### 🎯 Top Bloat Candidates (Largest Token Reductions)\n\n`;
+    md += `| File | Raw Tokens | AST Skeleton | Tokens Saved | Reduction |\n`;
+    md += `| :--- | :---: | :---: | :---: | :---: |\n`;
+    for (const item of audit.topBloatedFiles.slice(0, 10)) {
+      const saved = item.rawTokens - item.skeletonTokens;
+      md += `| \`${item.file}\` | ${item.rawTokens.toLocaleString()} | ${item.skeletonTokens.toLocaleString()} | -${saved.toLocaleString()} | **-${item.reduction}%** |\n`;
+    }
+    md += `\n`;
+  }
+
+  md += `*Generated automatically by [SiftrCode](https://siftrcode.com) AST Compiler.*\n`;
+  return md;
 }

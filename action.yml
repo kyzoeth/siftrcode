@@ -1,0 +1,33 @@
+name: 'SiftrCode Context Auditor'
+description: 'Audits repository token footprint and creates zero-loss interface skeletons for downstream AI coding agents'
+author: 'SiftrCode Team'
+branding:
+  icon: 'scissors'
+  color: 'yellow'
+
+inputs:
+  path:
+    description: 'Path to repository or directory to audit'
+    required: false
+    default: '.'
+  output_summary:
+    description: 'Append markdown audit report to GitHub Actions Step Summary ($GITHUB_STEP_SUMMARY)'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Run SiftrCode Audit
+      shell: bash
+      run: |
+        npx --yes siftrcode audit "${{ inputs.path }}" --markdown > siftr_audit_report.md
+        cat siftr_audit_report.md
+        if [ "${{ inputs.output_summary }}" = "true" ]; then
+          cat siftr_audit_report.md >> $GITHUB_STEP_SUMMARY
+        fi
