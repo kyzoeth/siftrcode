@@ -598,6 +598,7 @@
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="#workbench" class="hover:text-ink transition">Demo</a>
           <a href="/how-it-works" class="hover:text-ink transition">How It Works</a>
+          <a href="/claude" class="hover:text-ink transition">Claude Code</a>
           <a href="#quickstart" class="hover:text-ink transition">Quickstart</a>
         </nav>
       </div>
@@ -742,12 +743,12 @@
 
               <span class="text-zinc-300 dark:text-zinc-600 font-bold">➔</span>
 
-              <div class="flex items-center gap-1 font-mono font-bold text-blue-700 dark:text-blue-400 whitespace-nowrap shrink-0">
-                <span id="bridgeSkel">138 tokens</span>
-                <span class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">(<span id="costSkel">$4.14</span>)</span>
+              <div class="flex items-center gap-1 font-mono font-bold text-zinc-600 dark:text-zinc-400 whitespace-nowrap shrink-0">
+                <span id="bridgeSkel">Raw Bloat</span>
+                <span class="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">(<span id="costSkel">$55.20</span>)</span>
               </div>
 
-              <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-600 text-white font-mono font-bold tracking-wide whitespace-nowrap shrink-0 ml-0.5" id="costSavedTag">Save $51.06</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-600 text-white font-mono font-bold tracking-wide whitespace-nowrap shrink-0 ml-0.5" id="costSavedTag">✨ Click to Synthesize</span>
             </button>
           </div>
 
@@ -757,45 +758,130 @@
     </div>
   </section>
 
-  <!-- Quickstart & 1-Command Integration -->
+  <!-- Quickstart & Agent Integration Suite -->
   <section id="quickstart" class="py-14 px-4 bg-surface-50 border-t border-zinc-200 dark:border-zinc-800">
     <div class="max-w-4xl mx-auto space-y-8">
       
       <div class="text-center space-y-1">
-        <h2 class="text-3xl sm:text-4xl font-normal tracking-tight text-ink font-serif">30-Second Setup</h2>
-        <p class="text-xs sm:text-sm text-ink-secondary">Works with Claude Code, Cursor, Windsurf, and Antigravity.</p>
+        <h2 class="text-3xl sm:text-4xl font-normal tracking-tight text-ink font-serif">Works with Claude Code, Cursor &amp; Windsurf</h2>
+        <p class="text-xs sm:text-sm text-ink-secondary">Select your coding agent and LLM model to view instant setup commands and real-world token savings.</p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
+      <!-- Agent Selection Switcher Deck -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-1.5 rounded-lg bg-zinc-200/60 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
         
-        <!-- Step 1: Audit -->
-        <div class="p-5 bg-white border border-zinc-200 rounded-lg space-y-3 shadow-sm">
-          <div class="flex items-center gap-2 text-zinc-500 text-[11px] font-semibold tracking-wider">
-            <span class="w-5 h-5 rounded bg-zinc-100 flex items-center justify-center font-bold text-ink font-mono text-xs">1</span>
-            <span>AUDIT YOUR REPO</span>
-          </div>
-          <div class="bg-zinc-900 text-zinc-200 p-3 rounded-md font-mono text-[11px] select-all flex items-center justify-between">
-            <span>npx siftrcode audit</span>
-            <button onclick="copyText('npx siftrcode audit', this)" class="text-[10px] font-mono text-zinc-400 hover:text-blue-400 transition btn-press px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">COPY</button>
-          </div>
-          <p class="text-[11px] text-ink-secondary">
-            Instantly scans your directory and calculates monthly token waste.
-          </p>
+        <!-- Left: Agent Switcher Tabs -->
+        <div class="inline-flex items-center p-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 gap-1 w-full sm:w-auto">
+          <button onclick="setAgent('claude')" id="agent-tab-claude" class="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80">
+            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="#D97757"><circle cx="12" cy="12" r="10" fill="#D97757" fill-opacity="0.2"/><path d="M12 4L14 10H20L15 14L17 20L12 16L7 20L9 14L4 10H10L12 4Z" fill="#D97757"/></svg>
+            <span>Claude Code</span>
+          </button>
+          <button onclick="setAgent('cursor')" id="agent-tab-cursor" class="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent">
+            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l-8-4 8-4 8 4-8 4zm-10 4l10 5 10-5v-2l-10 5-10-5v2zm0 4l10 5 10-5v-2l-10 5-10-5v2z"/></svg>
+            <span>Cursor</span>
+          </button>
+          <button onclick="setAgent('windsurf')" id="agent-tab-windsurf" class="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent">
+            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2" stroke-linecap="round"><path d="M3 17c3-3 6-3 9 0s6 3 9 0M3 12c3-3 6-3 9 0s6 3 9 0M3 7c3-3 6-3 9 0s6 3 9 0"/></svg>
+            <span>Windsurf</span>
+          </button>
         </div>
 
-        <!-- Step 2: Auto-Config MCP -->
-        <div class="p-5 bg-white border border-zinc-200 rounded-lg space-y-3 shadow-sm">
-          <div class="flex items-center gap-2 text-zinc-500 text-[11px] font-semibold tracking-wider">
-            <span class="w-5 h-5 rounded bg-zinc-100 flex items-center justify-center font-bold text-ink font-mono text-xs">2</span>
-            <span>AUTO-CONNECT MCP</span>
+        <!-- Right: Model Benchmark Pricing Toggle -->
+        <div class="flex items-center gap-1.5 text-xs font-sans w-full sm:w-auto justify-end">
+          <span class="text-zinc-400 dark:text-zinc-500 text-[11px] font-semibold uppercase tracking-wider">Model:</span>
+          <div class="inline-flex items-center p-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 gap-1">
+            <button onclick="setModel('claude-3-7')" id="model-tab-claude" class="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#D97757]"></span>
+              <span>Claude 3.7 Sonnet</span>
+            </button>
+            <button onclick="setModel('gpt-4o')" id="model-tab-gpt4o" class="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span>GPT-4o</span>
+            </button>
           </div>
-          <div class="bg-zinc-900 text-zinc-200 p-3 rounded-md font-mono text-[11px] select-all flex items-center justify-between">
-            <span>npx siftrcode init</span>
-            <button onclick="copyText('npx siftrcode init', this)" class="text-[10px] font-mono text-zinc-400 hover:text-blue-400 transition btn-press px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">COPY</button>
+        </div>
+
+      </div>
+
+      <!-- Agent Integration Panel & Real Token Savings Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 text-xs font-sans">
+        
+        <!-- Left: Configuration Box (5 cols) -->
+        <div class="lg:col-span-5 p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-4 shadow-sm flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span id="agentConfigBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 font-semibold uppercase tracking-wider">
+                CLAUDE CODE SETUP
+              </span>
+              <span class="text-[11px] text-zinc-400 font-mono">10s config</span>
+            </div>
+            
+            <h3 id="agentConfigTitle" class="text-sm font-bold text-ink">Connect SiftrCode to Claude Code CLI</h3>
+            <p id="agentConfigDesc" class="text-ink-secondary text-[11px] leading-relaxed">
+              Registers SiftrCode's Stdio MCP server with Claude Code. Claude automatically invokes <code class="font-mono text-zinc-800 dark:text-zinc-200">siftr_skeleton</code> to prune code before reading.
+            </p>
+
+            <div class="bg-zinc-900 text-zinc-100 p-3 rounded-md font-mono text-[11px] flex items-center justify-between select-all">
+              <span id="agentCommandText" class="truncate mr-2">claude mcp add siftrcode -- npx -y siftrcode mcp</span>
+              <button id="agentCommandCopyBtn" onclick="copyAgentCommand(this)" class="text-[10px] font-mono text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer shrink-0">
+                COPY
+              </button>
+            </div>
           </div>
-          <p class="text-[11px] text-ink-secondary">
-            Automatically configures Claude Desktop, Cursor, and Windsurf MCP settings.
-          </p>
+
+          <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-[11px]">
+            <span id="agentRuleHint" class="text-zinc-500">Supports <code class="font-mono">/siftr</code> slash command &amp; <code class="font-mono">.mcp.json</code></span>
+            <a id="agentGuideLink" href="/claude" class="text-blue-700 dark:text-blue-400 font-semibold hover:underline">
+              Guide →
+            </a>
+          </div>
+        </div>
+
+        <!-- Right: Real Token & Dollar Savings Comparison Grid (7 cols) -->
+        <div class="lg:col-span-7 p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-4 shadow-sm">
+          
+          <div class="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+              <span class="font-bold text-ink text-xs uppercase tracking-wider font-mono">Real-World Token Economics</span>
+            </div>
+            <span id="modelRatesBadge" class="text-[10px] font-mono text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">
+              Claude 3.7 Sonnet: $3.00/MTok in • $15.00/MTok out
+            </span>
+          </div>
+
+          <!-- Comparison Metrics Row -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div class="p-3 rounded-md bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/70 dark:border-zinc-700/70 space-y-1">
+              <div class="text-[10px] uppercase font-mono text-zinc-400">Context Reduction</div>
+              <div class="text-base sm:text-lg font-mono font-bold text-rose-500 line-through">125,000 tok</div>
+              <div class="text-base sm:text-lg font-mono font-bold text-emerald-600 dark:text-emerald-400">9,800 tok</div>
+              <div class="text-[10px] text-emerald-600 font-bold font-mono">-92.2% Evaporated</div>
+            </div>
+
+            <div class="p-3 rounded-md bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/70 dark:border-zinc-700/70 space-y-1">
+              <div class="text-[10px] uppercase font-mono text-zinc-400">Query API Cost</div>
+              <div id="costComparisonRaw" class="text-base sm:text-lg font-mono font-bold text-rose-500 line-through">$0.375</div>
+              <div id="costComparisonSkel" class="text-base sm:text-lg font-mono font-bold text-blue-700 dark:text-blue-400">$0.029</div>
+              <div id="costSavingsTag" class="text-[10px] text-blue-700 dark:text-blue-400 font-bold font-mono">Save $0.346 / query</div>
+            </div>
+
+            <div class="col-span-2 sm:col-span-1 p-3 rounded-md bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/70 space-y-1">
+              <div class="text-[10px] uppercase font-mono text-emerald-700 dark:text-emerald-300 font-semibold">Monthly Dev Savings</div>
+              <div id="monthlySavingsMetric" class="text-xl sm:text-2xl font-mono font-extrabold text-emerald-700 dark:text-emerald-300">+$396<span class="text-xs font-normal">/dev</span></div>
+              <div id="monthlySavingsNote" class="text-[10px] text-emerald-800 dark:text-emerald-400 leading-tight">Based on 50 agent turns/day • 11x faster latency (3.4s vs 38s)</div>
+            </div>
+          </div>
+
+          <!-- Bottom Audit Callout -->
+          <div class="bg-zinc-50 dark:bg-zinc-800/40 p-3 rounded-md border border-zinc-200/70 dark:border-zinc-700/70 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
+            <span class="text-[11px] text-ink-secondary">Calculate exact waste on your own codebase:</span>
+            <div class="flex items-center gap-1.5 font-mono text-[11px] select-all">
+              <code class="bg-zinc-900 text-zinc-100 px-2 py-0.5 rounded">npx siftrcode audit</code>
+              <button onclick="copySnippet('npx siftrcode audit', this)" class="text-[10px] text-zinc-500 hover:text-ink px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 transition cursor-pointer">COPY</button>
+            </div>
+          </div>
+
         </div>
 
       </div>
@@ -914,6 +1000,7 @@
       <nav class="flex flex-wrap items-center justify-center md:justify-end gap-x-5 gap-y-2 font-sans font-medium text-zinc-600 dark:text-zinc-400">
         <a href="/about" class="hover:text-ink transition">About us</a>
         <a href="/how-it-works" class="hover:text-ink transition">How it works</a>
+        <a href="/claude" class="hover:text-ink transition">Claude Code</a>
         <a href="/privacy" class="hover:text-ink transition">Privacy</a>
         <a href="/terms" class="hover:text-ink transition">Terms</a>
         <a href="https://github.com/kyzoeth/siftrcode" target="_blank" rel="noopener noreferrer" class="hover:text-ink transition">GitHub</a>
@@ -1386,7 +1473,7 @@ impl Gateway for StripeGateway {`
 
     function setMetricsInstant(skelTokens, skelCost, savedCost, savedTokens, reduction = null) {
       const conf = langConfig[curLang];
-      const isRawMode = skelTokens === conf.rawTokens;
+      const isRawMode = (skelTokens === conf.rawTokens || savedCost === 0);
 
       const bridgeRaw = document.getElementById('bridgeRaw');
       if (bridgeRaw) bridgeRaw.innerText = `${conf.rawTokens.toLocaleString()} tokens`;
@@ -1394,11 +1481,24 @@ impl Gateway for StripeGateway {`
       if (costRaw) costRaw.innerText = `$${conf.rawCost.toFixed(2)}`;
 
       const bridgeSkel = document.getElementById('bridgeSkel');
-      if (bridgeSkel) bridgeSkel.innerText = `${conf.skelTokens.toLocaleString()} tokens`;
       const costSkel = document.getElementById('costSkel');
-      if (costSkel) costSkel.innerText = `$${conf.skelCost.toFixed(2)}`;
       const costSavedTag = document.getElementById('costSavedTag');
-      if (costSavedTag) costSavedTag.innerText = `Save $${conf.savedCost.toFixed(2)}`;
+
+      if (isRawMode) {
+        if (bridgeSkel) bridgeSkel.innerText = 'Raw Bloat';
+        if (costSkel) costSkel.innerText = `$${conf.rawCost.toFixed(2)}`;
+        if (costSavedTag) {
+          costSavedTag.innerText = '✨ Click to Synthesize';
+          costSavedTag.className = 'text-[10px] px-1.5 py-0.5 rounded bg-blue-600 text-white font-mono font-bold tracking-wide whitespace-nowrap shrink-0 ml-0.5';
+        }
+      } else {
+        if (bridgeSkel) bridgeSkel.innerText = `${conf.skelTokens.toLocaleString()} tokens`;
+        if (costSkel) costSkel.innerText = `$${conf.skelCost.toFixed(2)}`;
+        if (costSavedTag) {
+          costSavedTag.innerText = `Save $${conf.savedCost.toFixed(2)}`;
+          costSavedTag.className = 'text-[10px] px-1.5 py-0.5 rounded bg-emerald-600 text-white font-mono font-bold tracking-wide whitespace-nowrap shrink-0 ml-0.5';
+        }
+      }
     }
 
     function setMorphMode(mode) {
@@ -1568,7 +1668,10 @@ impl Gateway for StripeGateway {`
       if (costSkel) costSkel.innerText = `$${conf.rawCost.toFixed(2)}`;
 
       const costSavedTag = document.getElementById('costSavedTag');
-      if (costSavedTag) costSavedTag.innerText = 'Scanning...';
+      if (costSavedTag) {
+        costSavedTag.innerText = 'Scanning...';
+        costSavedTag.className = 'text-[10px] px-1.5 py-0.5 rounded bg-blue-600 text-white font-mono font-bold tracking-wide whitespace-nowrap shrink-0 ml-0.5';
+      }
 
       setMorphStatus('scan', 'Step 2: AST Telemetry • Scanning Code & Token Density...');
 
@@ -1604,7 +1707,10 @@ impl Gateway for StripeGateway {`
           c.classList.add('bloat-highlighted');
         });
 
-        if (costSavedTag) costSavedTag.innerText = 'Bloat Isolated';
+        if (costSavedTag) {
+          costSavedTag.innerText = 'Bloat Isolated';
+          costSavedTag.className = 'text-[10px] px-1.5 py-0.5 rounded bg-amber-600 text-white font-mono font-bold tracking-wide whitespace-nowrap shrink-0 ml-0.5';
+        }
         setMorphStatus('targeting', `Step 3: AST Analysis • Redundant Implementation Isolated`);
       }, scanDuration);
 
@@ -1631,6 +1737,9 @@ impl Gateway for StripeGateway {`
         animateNumber('bridgeSkel', conf.rawTokens, conf.skelTokens, countdownDuration, v => `${Math.round(v).toLocaleString()} tokens`);
         animateNumber('costSkel', conf.rawCost, conf.skelCost, countdownDuration, v => `$${v.toFixed(2)}`);
         animateNumber('costSavedTag', 0, conf.savedCost, countdownDuration, v => `Save $${v.toFixed(2)}`);
+        if (costSavedTag) {
+          costSavedTag.className = 'text-[10px] px-1.5 py-0.5 rounded bg-emerald-600 text-white font-mono font-bold tracking-wide whitespace-nowrap shrink-0 ml-0.5';
+        }
 
         if (typeof window.triggerDotRipple === 'function') window.triggerDotRipple();
 
@@ -1900,11 +2009,137 @@ ${highlightPrunedCode(item.rawCode, lang)}
       }
       const orig = btn.innerText;
       btn.innerText = 'COPIED!';
-      btn.className = 'text-[10px] font-mono text-blue-300 bg-blue-950/70 border border-blue-800/80 px-2 py-0.5 rounded transition';
+      const origClass = btn.className;
+      btn.className = 'text-[10px] font-mono text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800 px-2 py-0.5 rounded transition';
       setTimeout(() => {
         btn.innerText = orig;
-        btn.className = 'text-[10px] font-mono text-zinc-400 hover:text-blue-400 transition px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer';
+        btn.className = origClass;
       }, 2000);
+    }
+
+    function copySnippet(text, btn) {
+      copyText(text, btn);
+    }
+
+    function copyAgentCommand(btn) {
+      const text = document.getElementById('agentCommandText')?.innerText || '';
+      copyText(text, btn);
+    }
+
+    // ==========================================
+    // Agent & Model Interactive Switcher Engine
+    // ==========================================
+    const agentConfigs = {
+      claude: {
+        badge: 'CLAUDE CODE SETUP',
+        title: 'Connect SiftrCode to Claude Code CLI',
+        desc: 'Registers SiftrCode\'s Stdio MCP server with Claude Code. Claude automatically invokes <code class="font-mono text-zinc-800 dark:text-zinc-200">siftr_skeleton</code> to prune code before reading.',
+        command: 'claude mcp add siftrcode -- npx -y siftrcode mcp',
+        ruleHint: 'Supports <code class="font-mono">/siftr</code> slash command &amp; <code class="font-mono">.mcp.json</code>',
+        guideUrl: '/claude',
+        guideText: 'Guide →'
+      },
+      cursor: {
+        badge: 'CURSOR IDE SETUP',
+        title: 'Add SiftrCode MCP to Cursor',
+        desc: 'Adds SiftrCode MCP to your Cursor Settings &gt; MCP Servers. Cursor composer automatically retrieves condensed skeletons for any large repository context.',
+        command: 'npx siftrcode init --cursor',
+        ruleHint: 'Generates <code class="font-mono">.cursorrules</code> + MCP config automatically',
+        guideUrl: '/how-it-works',
+        guideText: 'Docs →'
+      },
+      windsurf: {
+        badge: 'WINDSURF CASCADE SETUP',
+        title: 'Configure SiftrCode in Windsurf Cascade',
+        desc: 'Integrates SiftrCode MCP server with Windsurf\'s Cascade agent so context windows never overflow during multi-file refactors.',
+        command: 'npx siftrcode init --windsurf',
+        ruleHint: 'Configures <code class="font-mono">mcp_config.json</code> Cascade rules',
+        guideUrl: '/how-it-works',
+        guideText: 'Docs →'
+      }
+    };
+
+    const modelRates = {
+      'claude-3-7': {
+        badge: 'Claude 3.7 Sonnet: $3.00/MTok in • $15.00/MTok out',
+        rawCost: '$0.375',
+        skelCost: '$0.029',
+        savingsTag: 'Save $0.346 / query',
+        monthlySavings: '+$396',
+        monthlyNote: 'Based on 50 agent turns/day • 11x faster latency (3.4s vs 38s)'
+      },
+      'gpt-4o': {
+        badge: 'GPT-4o: $2.50/MTok in • $10.00/MTok out',
+        rawCost: '$0.312',
+        skelCost: '$0.025',
+        savingsTag: 'Save $0.287 / query',
+        monthlySavings: '+$330',
+        monthlyNote: 'Based on 50 agent turns/day • 8x faster latency (2.9s vs 24s)'
+      }
+    };
+
+    let curAgent = 'claude';
+    let curModel = 'claude-3-7';
+
+    function setAgent(agentKey) {
+      if (!agentConfigs[agentKey]) return;
+      curAgent = agentKey;
+      const conf = agentConfigs[agentKey];
+
+      ['claude', 'cursor', 'windsurf'].forEach(k => {
+        const tab = document.getElementById(`agent-tab-${k}`);
+        if (!tab) return;
+        if (k === agentKey) {
+          tab.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80';
+        } else {
+          tab.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent';
+        }
+      });
+
+      const badge = document.getElementById('agentConfigBadge');
+      if (badge) badge.innerText = conf.badge;
+      const title = document.getElementById('agentConfigTitle');
+      if (title) title.innerText = conf.title;
+      const desc = document.getElementById('agentConfigDesc');
+      if (desc) desc.innerHTML = conf.desc;
+      const cmdText = document.getElementById('agentCommandText');
+      if (cmdText) cmdText.innerText = conf.command;
+      const hint = document.getElementById('agentRuleHint');
+      if (hint) hint.innerHTML = conf.ruleHint;
+      const link = document.getElementById('agentGuideLink');
+      if (link) {
+        link.href = conf.guideUrl;
+        link.innerText = conf.guideText;
+      }
+    }
+
+    function setModel(modelKey) {
+      if (!modelRates[modelKey]) return;
+      curModel = modelKey;
+      const m = modelRates[modelKey];
+
+      const tabClaude = document.getElementById('model-tab-claude');
+      const tabGpt = document.getElementById('model-tab-gpt4o');
+      const isClaude = modelKey === 'claude-3-7';
+
+      const activeClass = 'flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80';
+      const inactiveClass = 'flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent';
+
+      if (tabClaude) tabClaude.className = isClaude ? activeClass : inactiveClass;
+      if (tabGpt) tabGpt.className = isClaude ? inactiveClass : activeClass;
+
+      const ratesBadge = document.getElementById('modelRatesBadge');
+      if (ratesBadge) ratesBadge.innerText = m.badge;
+      const rawCostEl = document.getElementById('costComparisonRaw');
+      if (rawCostEl) rawCostEl.innerText = m.rawCost;
+      const skelCostEl = document.getElementById('costComparisonSkel');
+      if (skelCostEl) skelCostEl.innerText = m.skelCost;
+      const savingsTagEl = document.getElementById('costSavingsTag');
+      if (savingsTagEl) savingsTagEl.innerText = m.savingsTag;
+      const monthlyMetricEl = document.getElementById('monthlySavingsMetric');
+      if (monthlyMetricEl) monthlyMetricEl.innerHTML = `${m.monthlySavings}<span class="text-xs font-normal">/dev</span>`;
+      const monthlyNoteEl = document.getElementById('monthlySavingsNote');
+      if (monthlyNoteEl) monthlyNoteEl.innerText = m.monthlyNote;
     }
 
     const langs = ['ts', 'py', 'go', 'rs'];

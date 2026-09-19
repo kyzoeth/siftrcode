@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "siftrcode": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "siftrcode",
+        "mcp"
+      ]
+    }
+  }
+}

@@ -104,7 +104,45 @@ export function runInstaller(): InitResult {
     configsUpdated.push(`Workspace Cursor MCP (.cursor/mcp.json)`);
   } catch {}
 
-  // Generate .cursorrules and .clauderules in current repo for agent guidance
+  // Configure local workspace .mcp.json for Claude Code
+  const localClaudeMcpPath = path.join(process.cwd(), '.mcp.json');
+  try {
+    let claudeConfig: any = { mcpServers: {} };
+    if (fs.existsSync(localClaudeMcpPath)) {
+      try {
+        claudeConfig = JSON.parse(fs.readFileSync(localClaudeMcpPath, 'utf-8'));
+      } catch {}
+    }
+    if (!claudeConfig.mcpServers) claudeConfig.mcpServers = {};
+    claudeConfig.mcpServers.siftrcode = siftrMcpConfig;
+    fs.writeFileSync(localClaudeMcpPath, JSON.stringify(claudeConfig, null, 2) + '\n', 'utf-8');
+    configsUpdated.push(`Workspace Claude Code MCP (.mcp.json)`);
+  } catch {}
+
+  // Generate Claude Code slash command: .claude/commands/siftr.md
+  const claudeCommandsDir = path.join(process.cwd(), '.claude', 'commands');
+  const claudeSiftrCmdPath = path.join(claudeCommandsDir, 'siftr.md');
+  try {
+    if (!fs.existsSync(claudeCommandsDir)) {
+      fs.mkdirSync(claudeCommandsDir, { recursive: true });
+    }
+    if (!fs.existsSync(claudeSiftrCmdPath)) {
+      const siftrCmdContent = `# SiftrCode AST Context Pruning Command
+
+When this command is invoked:
+1. If an argument (file path or directory) is provided (\`$ARGUMENTS\`):
+   - For a single file: Call the MCP tool \`siftr_skeleton\` with the file's content and path to extract its public interface signatures, types, and exported symbols.
+   - For a directory: Call the MCP tool \`siftr_pack\` with the focus parameter set to \`$ARGUMENTS\` to generate an AST-pruned context pack.
+2. If no argument is provided:
+   - Call the MCP tool \`siftr_audit\` to scan the repository for context bloat, dead weight, and estimate potential token savings.
+3. Present the synthesized interface contract concisely to the user, highlighting key exported interfaces, methods, and types.
+`;
+      fs.writeFileSync(claudeSiftrCmdPath, siftrCmdContent, 'utf-8');
+      rulesCreated.push('.claude/commands/siftr.md');
+    }
+  } catch {}
+
+  // Generate .cursorrules in current repo for Cursor
   const promptRule = `# SiftrCode Agent Prompt Optimization Rule
 When investigating or refactoring this codebase:
 - Use the 'siftr_pack' or 'siftr_skeleton' MCP tools before reading large full source files.
@@ -115,6 +153,24 @@ When investigating or refactoring this codebase:
   if (!fs.existsSync(cursorRulesPath)) {
     fs.writeFileSync(cursorRulesPath, promptRule, 'utf-8');
     rulesCreated.push('.cursorrules');
+  }
+
+  // Generate CLAUDE.md in current repo for Claude Code
+  const claudeRulesPath = path.join(process.cwd(), 'CLAUDE.md');
+  if (!fs.existsSync(claudeRulesPath)) {
+    const claudeMdContent = `# Claude Code Guidelines for SiftrCode
+
+## Context Optimization Rules
+When exploring, refactoring, or navigating code in this repository:
+- **Use SiftrCode MCP Tools**: Before loading large, full-text implementation files into the context window, call \`siftr_skeleton\` or \`siftr_pack\`.
+- **AST Interface First**: SiftrCode strips internal method bodies and imperative logic while preserving 100% of interfaces, types, and exported signatures. This preserves reasoning depth and prevents context window exhaustion.
+- **Commands**:
+  - \`/siftr <file>\`: Prunes a single file down to its type signatures.
+  - \`/siftr <dir>\`: Packs a directory into an AST interface bundle.
+  - \`siftr_audit\`: Evaluates repository bloat and potential token savings.
+`;
+    fs.writeFileSync(claudeRulesPath, claudeMdContent, 'utf-8');
+    rulesCreated.push('CLAUDE.md');
   }
 
   return {

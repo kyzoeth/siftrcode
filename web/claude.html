@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code Integration Guide — SiftrCode</title>
+  <meta name="description" content="Configure SiftrCode AST skeletonizer with Claude Code in 10 seconds. Slash Claude 3.7 Sonnet token bloat by 90% and keep agent turns blazing fast.">
+  
+  <link rel="canonical" href="https://siftrcode.com/claude">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            serif: ['"Instrument Serif"', 'Georgia', 'serif'],
+            display: ['"Instrument Serif"', 'Georgia', 'serif'],
+            mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            surface: { 50: '#eef1f5', 100: '#e2e6eb', 200: '#cbd2d9', 300: '#94a3b8' },
+            ink: { DEFAULT: '#09090b', secondary: '#52525b', tertiary: '#a1a1aa' }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html {
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      letter-spacing: -0.015em;
+      background-color: #eef1f5;
+      background-image: radial-gradient(circle at 50% 0%, #f4f6f9 0%, #eef1f5 55%, #e6ebf1 100%);
+      background-attachment: fixed;
+    }
+    .font-serif, h1.font-serif, h2.font-serif, h3.font-serif, .font-display { font-family: 'Instrument Serif', Georgia, serif; letter-spacing: -0.02em; }
+    code, pre, .font-mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; }
+    ::selection { background: #bfdbfe; color: #0f172a; }
+    body, header, section, footer { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #1d4ed8; }
+    html.dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
+    html.dark ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+
+    html.dark { color-scheme: dark; }
+    html.dark body {
+      background-color: #09090b !important;
+      background-image: radial-gradient(circle at 50% 0%, #111218 0%, #09090b 70%) !important;
+      background-attachment: fixed;
+      color: #fafafa !important;
+    }
+    html.dark header { background-color: rgba(9, 9, 11, 0.85) !important; border-color: rgba(39, 39, 42, 0.8) !important; }
+    html.dark .text-ink { color: #fafafa !important; }
+    html.dark .text-ink-secondary { color: #a1a1aa !important; }
+    html.dark .bg-surface-50 { background-color: #09090b !important; }
+    html.dark .bg-white { background-color: #121215 !important; }
+    html.dark .border-zinc-200 { border-color: #27272a !important; }
+    html.dark .border-zinc-100 { border-color: #1c1c20 !important; }
+    html.dark .bg-zinc-50 { background-color: #141418 !important; }
+    html.dark .bg-zinc-100 { background-color: #18181c !important; }
+    html.dark .text-zinc-800 { color: #f4f4f5 !important; }
+    html.dark .text-zinc-700 { color: #e4e4e7 !important; }
+    html.dark .text-zinc-600 { color: #d4d4d8 !important; }
+    html.dark .text-zinc-500 { color: #a1a1aa !important; }
+    html.dark #themeToggleBtn { background-color: #18181c !important; border-color: #27272a !important; }
+    html.dark footer { background-color: #09090b !important; border-color: #27272a !important; }
+    .btn-press:active { transform: translateY(1px); }
+  </style>
+</head>
+<body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-blue-200 selection:text-blue-950">
+
+  <!-- Header Navigation -->
+  <header class="border-b border-zinc-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-6">
+        <a href="/" class="flex items-center gap-2.5 font-bold tracking-tight text-ink text-sm group">
+          <div class="w-6 h-6 rounded bg-blue-700 flex items-center justify-center text-white font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
+            S
+          </div>
+          <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-200/80 font-medium">v0.1</span>
+        </a>
+        <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
+          <a href="/#workbench" class="hover:text-ink transition">Demo</a>
+          <a href="/how-it-works" class="hover:text-ink transition">How It Works</a>
+          <a href="/claude" class="text-blue-700 dark:text-blue-400 font-semibold border-b-2 border-blue-700 dark:border-blue-400 pb-0.5">Claude Code</a>
+          <a href="/#quickstart" class="hover:text-ink transition">Quickstart</a>
+        </nav>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-2.5">
+        <a href="mailto:info@siftrcode.com" title="Contact Us" aria-label="Contact Us" class="w-8 h-8 rounded-md bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
+          <svg class="w-4 h-4 text-zinc-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+        </a>
+        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" title="GitHub" aria-label="GitHub" class="w-8 h-8 rounded-md bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
+          <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        </a>
+        <button id="themeToggleBtn" aria-label="Toggle Dark Mode" class="w-8 h-8 rounded-md bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-zinc-600 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
+          <svg id="themeIconSun" class="w-4 h-4 hidden text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9h-1m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <svg id="themeIconMoon" class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+        <a href="/#workbench" class="hidden sm:inline-flex items-center justify-center px-3.5 py-1.5 rounded-md bg-blue-700 hover:bg-blue-600 text-white font-semibold text-xs transition btn-press shadow-2xs">
+          Try Live Demo
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main class="max-w-4xl mx-auto px-4 py-16 sm:py-24 space-y-16">
+    
+    <div class="space-y-6 text-center">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-semibold bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/80 shadow-2xs">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>OFFICIAL CLAUDE CODE INTEGRATION</span>
+      </div>
+
+      <h1 class="text-4xl sm:text-6xl font-normal tracking-tight text-ink font-serif leading-[1.08]">
+        Supercharge Claude Code with <br>
+        <span class="italic text-blue-700 dark:text-blue-400">AST Interface Skeletons</span>
+      </h1>
+
+      <p class="text-base sm:text-lg text-ink-secondary max-w-2xl mx-auto leading-relaxed">
+        Slash Claude 3.7 Sonnet context window bloat by <strong>90%</strong>. Eliminate prompt saturation, accelerate turn latency from 45s to 4s, and stop context degradation in large codebases.
+      </p>
+
+      <div class="pt-2 flex flex-wrap items-center justify-center gap-3 font-mono text-xs">
+        <div class="bg-zinc-900 text-zinc-100 px-4 py-2 rounded-lg border border-zinc-800 flex items-center gap-3 shadow-sm select-all">
+          <span class="text-emerald-400">$</span>
+          <span>claude mcp add siftrcode -- npx -y siftrcode mcp</span>
+          <button onclick="copySnippet('claude mcp add siftrcode -- npx -y siftrcode mcp', this)" class="text-[10px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer">
+            COPY
+          </button>
+        </div>
+        <a href="/#workbench" class="px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-ink font-sans font-medium hover:bg-zinc-50 dark:hover:bg-zinc-750 transition btn-press">
+          View Live Demo →
+        </a>
+      </div>
+    </div>
+
+    <!-- 10-Second Quick Setup Guide -->
+    <section class="space-y-6">
+      <div class="border-b border-zinc-200 dark:border-zinc-800 pb-3">
+        <h2 class="text-2xl sm:text-3xl font-normal text-ink font-serif">10-Second Setup for Claude Code</h2>
+        <p class="text-xs sm:text-sm text-ink-secondary mt-1">Connect SiftrCode to your Claude Code CLI environment in seconds.</p>
+      </div>
+
+      <div class="space-y-4 text-xs font-sans">
+        
+        <!-- Step 1: CLI Direct Add -->
+        <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-3 shadow-2xs">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 flex items-center justify-center font-bold font-mono">1</span>
+              <span class="font-bold text-ink text-sm">Add SiftrCode to Claude Code CLI</span>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">RECOMMENDED</span>
+          </div>
+          <p class="text-ink-secondary text-xs">
+            Run the standard Claude Code MCP registration command from any terminal:
+          </p>
+          <div class="bg-zinc-900 text-zinc-100 p-3 rounded-md font-mono text-[11px] flex items-center justify-between select-all">
+            <code>claude mcp add siftrcode -- npx -y siftrcode mcp</code>
+            <button onclick="copySnippet('claude mcp add siftrcode -- npx -y siftrcode mcp', this)" class="text-[10px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer">
+              COPY
+            </button>
+          </div>
+          <p class="text-[11px] text-zinc-500">Claude Code will automatically register SiftrCode's Stdio MCP server.</p>
+        </div>
+
+        <!-- Step 2: Project-Level .mcp.json -->
+        <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-3 shadow-2xs">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 flex items-center justify-center font-bold font-mono">2</span>
+            <span class="font-bold text-ink text-sm">Or drop in workspace <code class="font-mono text-xs">.mcp.json</code></span>
+          </div>
+          <p class="text-ink-secondary text-xs">
+            To automatically enable SiftrCode for every developer on your repository, commit a <code class="font-mono">.mcp.json</code> in your project root:
+          </p>
+          <div class="bg-zinc-900 text-zinc-100 p-3.5 rounded-md font-mono text-[11px] relative">
+            <pre class="overflow-x-auto no-scrollbar"><code>{
+  "mcpServers": {
+    "siftrcode": {
+      "command": "npx",
+      "args": ["-y", "siftrcode", "mcp"]
+    }
+  }
+}</code></pre>
+            <button onclick="copySnippet('{\n  \"mcpServers\": {\n    \"siftrcode\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"siftrcode\", \"mcp\"]\n    }\n  }\n}', this)" class="absolute top-3 right-3 text-[10px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer">
+              COPY JSON
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Slash Command /siftr -->
+        <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-3 shadow-2xs">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 flex items-center justify-center font-bold font-mono">3</span>
+            <span class="font-bold text-ink text-sm">Add Custom Slash Command <code class="font-mono text-xs">/siftr</code></span>
+          </div>
+          <p class="text-ink-secondary text-xs">
+            Drop <code class="font-mono">.claude/commands/siftr.md</code> into your repository to trigger AST interface synthesis on demand by typing <code class="font-mono text-blue-700 dark:text-blue-400">/siftr [path]</code> directly inside Claude Code.
+          </p>
+          <div class="bg-zinc-900 text-zinc-100 p-3 rounded-md font-mono text-[11px] flex items-center justify-between select-all">
+            <code>npx siftrcode init</code>
+            <button onclick="copySnippet('npx siftrcode init', this)" class="text-[10px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer">
+              COPY
+            </button>
+          </div>
+          <p class="text-[11px] text-zinc-500"><code class="font-mono">npx siftrcode init</code> automatically creates <code class="font-mono">.mcp.json</code>, <code class="font-mono">.claude/commands/siftr.md</code>, and <code class="font-mono">CLAUDE.md</code> rules for you.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Why Claude Code + SiftrCode Matters -->
+    <section class="space-y-6">
+      <div class="border-b border-zinc-200 dark:border-zinc-800 pb-3">
+        <h2 class="text-2xl sm:text-3xl font-normal text-ink font-serif">Why Claude 3.7 Sonnet Needs SiftrCode</h2>
+        <p class="text-xs sm:text-sm text-ink-secondary mt-1">200k context windows exist, but loading full codebases into them creates severe penalties.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-sans">
+        
+        <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-2">
+          <div class="text-rose-600 dark:text-rose-400 font-bold text-sm">⚡ Latency Spike</div>
+          <p class="text-ink-secondary text-[11px] leading-relaxed">
+            Feeding 100k+ tokens of raw method bodies to Claude 3.7 Sonnet drives query latency up to <strong>45+ seconds</strong>. With SiftrCode, context drops to 8k tokens and turns finish in <strong>3.8s</strong>.
+          </p>
+        </div>
+
+        <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-2">
+          <div class="text-blue-700 dark:text-blue-400 font-bold text-sm">🎯 Context Dilution</div>
+          <p class="text-ink-secondary text-[11px] leading-relaxed">
+            LLMs lose needle-in-haystack precision when drowned in TLS logic and loop implementations. Skeletons guarantee 100% focus on interface boundaries.
+          </p>
+        </div>
+
+        <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-2">
+          <div class="text-emerald-600 dark:text-emerald-400 font-bold text-sm">💰 Token Economics</div>
+          <p class="text-ink-secondary text-[11px] leading-relaxed">
+            Claude 3.7 Sonnet costs <strong>$3.00/MTok</strong> input. A 100k query costs $0.30; a SiftrCode pruned query costs $0.024. Teams save <strong>$360+/engineer/month</strong>.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Comparison Matrix -->
+      <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-x-auto">
+        <table class="w-full text-left text-xs font-sans">
+          <thead>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-500 font-mono">
+              <th class="pb-2">Metric</th>
+              <th class="pb-2 text-rose-600 dark:text-rose-400">Raw Full-File Reading</th>
+              <th class="pb-2 text-blue-700 dark:text-blue-400">With SiftrCode AST Synthesis</th>
+              <th class="pb-2 text-emerald-600">Net Improvement</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800/60 font-mono text-[11px]">
+            <tr>
+              <td class="py-2.5 font-sans font-medium text-ink">Typical Repo Context Load</td>
+              <td class="py-2.5 text-zinc-600 dark:text-zinc-400">125,000 tokens</td>
+              <td class="py-2.5 text-blue-700 dark:text-blue-400 font-bold">9,800 tokens</td>
+              <td class="py-2.5 text-emerald-600 font-bold">-92.2% Token Reduction</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 font-sans font-medium text-ink">Turn Latency (Claude 3.7)</td>
+              <td class="py-2.5 text-zinc-600 dark:text-zinc-400">38.4s – 46.2s</td>
+              <td class="py-2.5 text-blue-700 dark:text-blue-400 font-bold">3.2s – 4.5s</td>
+              <td class="py-2.5 text-emerald-600 font-bold">10x Faster Turnaround</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 font-sans font-medium text-ink">Cost per 50-turn day</td>
+              <td class="py-2.5 text-zinc-600 dark:text-zinc-400">$18.75 / day</td>
+              <td class="py-2.5 text-blue-700 dark:text-blue-400 font-bold">$1.47 / day</td>
+              <td class="py-2.5 text-emerald-600 font-bold">Save $518/mo per dev</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 font-sans font-medium text-ink">Interface Contract Loss</td>
+              <td class="py-2.5 text-zinc-600 dark:text-zinc-400">0%</td>
+              <td class="py-2.5 text-blue-700 dark:text-blue-400 font-bold">0% (100% Types Preserved)</td>
+              <td class="py-2.5 text-emerald-600 font-bold">Zero Type Degradation</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Available MCP Tools -->
+    <section class="space-y-6">
+      <div class="border-b border-zinc-200 dark:border-zinc-800 pb-3">
+        <h2 class="text-2xl sm:text-3xl font-normal text-ink font-serif">Available MCP Tools in Claude Code</h2>
+        <p class="text-xs sm:text-sm text-ink-secondary mt-1">Once connected, Claude automatically calls these tools via Model Context Protocol.</p>
+      </div>
+
+      <div class="space-y-3 font-mono text-xs">
+        
+        <div class="p-4 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-blue-700 dark:text-blue-400 font-bold">siftr_skeleton</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-sans">Single File Tool</span>
+          </div>
+          <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs">
+            Synthesizes clean interface contracts from source code in TypeScript, Python, Go, and Rust. Strips implementation bodies while keeping all types, classes, interfaces, and docstrings intact.
+          </p>
+        </div>
+
+        <div class="p-4 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-blue-700 dark:text-blue-400 font-bold">siftr_pack</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-sans">Directory / Repo Tool</span>
+          </div>
+          <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs">
+            Prepares an AST-compressed architecture pack across entire directories or modules for Claude Code to understand project structure without importing gigabytes of raw source.
+          </p>
+        </div>
+
+        <div class="p-4 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-blue-700 dark:text-blue-400 font-bold">siftr_audit</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-sans">Audit &amp; Telemetry</span>
+          </div>
+          <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs">
+            Scans code or repositories for dead weight and calculates exact token bloat, potential cost reductions, and efficiency opportunities.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Bottom CTA -->
+    <div class="p-8 bg-blue-50/50 dark:bg-zinc-900 border border-blue-200 dark:border-zinc-800 rounded-xl text-center space-y-4 shadow-sm">
+      <h3 class="text-2xl sm:text-3xl font-normal text-ink font-serif">Ready to optimize your team's Claude Code workflow?</h3>
+      <p class="text-xs sm:text-sm text-ink-secondary max-w-xl mx-auto">
+        Join engineering teams using SiftrCode to eliminate 90% token waste and speed up AI coding agents.
+      </p>
+      <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+        <a href="/#workbench" class="px-5 py-2 rounded-lg bg-blue-700 hover:bg-blue-600 text-white font-semibold text-xs transition btn-press shadow-sm">
+          Interactive Live Demo →
+        </a>
+        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="px-5 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-ink font-medium text-xs hover:bg-zinc-50 dark:hover:bg-zinc-750 transition btn-press">
+          View on GitHub
+        </a>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-zinc-200/80 bg-white/60 py-12 px-4 text-xs font-sans">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-zinc-500">
+      <div class="flex items-center gap-2">
+        <div class="w-5 h-5 rounded bg-blue-700 flex items-center justify-center text-white font-mono font-bold text-[10px]">
+          S
+        </div>
+        <span class="font-semibold text-ink">SiftrCode</span>
+        <span>•</span>
+        <span>Deterministic AST Synthesis for AI Coding Agents</span>
+      </div>
+      <div class="flex items-center gap-5">
+        <a href="/#workbench" class="hover:text-ink transition">Demo</a>
+        <a href="/how-it-works" class="hover:text-ink transition">How It Works</a>
+        <a href="/claude" class="hover:text-ink transition text-blue-700 dark:text-blue-400 font-medium">Claude Code</a>
+        <a href="/about" class="hover:text-ink transition">About</a>
+        <a href="/privacy" class="hover:text-ink transition">Privacy</a>
+        <a href="/terms" class="hover:text-ink transition">Terms</a>
+        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="hover:text-ink transition">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function copySnippet(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const original = btn.innerText;
+        btn.innerText = 'COPIED!';
+        btn.classList.add('text-emerald-400');
+        setTimeout(() => {
+          btn.innerText = original;
+          btn.classList.remove('text-emerald-400');
+        }, 1800);
+      });
+    }
+
+    // Theme Toggle Handler
+    const themeBtn = document.getElementById('themeToggleBtn');
+    const sunIcon = document.getElementById('themeIconSun');
+    const moonIcon = document.getElementById('themeIconMoon');
+
+    function updateThemeIcons() {
+      const isDark = document.documentElement.classList.contains('dark');
+      if (isDark) {
+        sunIcon.classList.remove('hidden');
+        moonIcon.classList.add('hidden');
+      } else {
+        sunIcon.classList.add('hidden');
+        moonIcon.classList.remove('hidden');
+      }
+    }
+    updateThemeIcons();
+
+    themeBtn.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.theme = isDark ? 'dark' : 'light';
+      updateThemeIcons();
+    });
+  </script>
+</body>
+</html>
