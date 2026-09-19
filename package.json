@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "siftrcode": "./dist/bin/siftrcode.js",
-    "siftr": "./dist/bin/siftrcode.js"
+    "siftrcode": "dist/bin/siftrcode.js",
+    "siftr": "dist/bin/siftrcode.js"
   },
   "files": [
     "dist",
@@ -24,10 +24,10 @@
   "homepage": "https://siftrcode.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/siftrcode/siftrcode.git"
+    "url": "git+https://github.com/kyzoeth/siftrcode.git"
   },
   "bugs": {
-    "url": "https://github.com/siftrcode/siftrcode/issues"
+    "url": "https://github.com/kyzoeth/siftrcode/issues"
   },
   "keywords": [
     "ast",
