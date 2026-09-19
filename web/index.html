@@ -375,22 +375,16 @@
       animation: signal-breathe 5s ease-in-out infinite;
     }
 
-    /* Inline Code Dissolution & Accordion Collapse */
+    /* Mechanical Code Accordion Collapse (NO FADING) */
     .dissolve-block {
       overflow: hidden;
-      transition: max-height 3.0s cubic-bezier(0.25, 1, 0.5, 1), 
-                  opacity 2.4s ease-in-out, 
-                  filter 2.4s ease, 
-                  transform 2.6s ease-out, 
-                  margin 2.6s ease, 
-                  padding 2.6s ease;
+      transition: max-height 0.8s cubic-bezier(0.25, 1, 0.5, 1), 
+                  margin 0.8s ease, 
+                  padding 0.8s ease;
       transform-origin: top center;
     }
     .dissolve-block.collapsing {
       max-height: 0px !important;
-      opacity: 0 !important;
-      filter: blur(2px) !important;
-      transform: scale(0.99) translateY(-2px) !important;
       pointer-events: none !important;
       margin-top: 0 !important;
       margin-bottom: 0 !important;
@@ -399,10 +393,40 @@
     }
     .dissolve-block.expanded {
       max-height: 520px !important;
-      opacity: 1 !important;
-      filter: none !important;
-      transform: scale(1) translateY(0) !important;
       pointer-events: auto !important;
+    }
+
+    /* Pruned Code Lines: Animated Strikethrough & Laser Slide-Out Deletion (NO FADING) */
+    .prune-line {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1), 
+                  background-color 0.25s ease;
+    }
+    .prune-line.line-struck {
+      background-color: rgba(244, 63, 94, 0.12) !important;
+    }
+    html.dark .prune-line.line-struck {
+      background-color: rgba(244, 63, 94, 0.22) !important;
+    }
+    .prune-line.line-struck .prune-text {
+      text-decoration: line-through 2px #f43f5e !important;
+      color: #e11d48 !important;
+    }
+    html.dark .prune-line.line-struck .prune-text {
+      text-decoration: line-through 2px #f43f5e !important;
+      color: #fda4af !important;
+    }
+    .prune-line.line-struck .prune-marker {
+      color: #e11d48 !important;
+      font-weight: 800;
+    }
+    html.dark .prune-line.line-struck .prune-marker {
+      color: #fb7185 !important;
+    }
+    .prune-line.line-sliced {
+      transform: translateX(-104%);
+      pointer-events: none;
     }
 
     /* Targeted Implementation Highlight Card System */
@@ -1358,10 +1382,10 @@ impl Gateway for StripeGateway {`
     function highlightPrunedCode(code, lang) {
       const highlighted = highlightCode(code, lang);
       const lines = highlighted.split('\n');
-      return lines.map(line => {
-        return `<div class="flex items-baseline gap-2 py-0.5 px-1.5 rounded hover:bg-rose-100/60 dark:hover:bg-rose-500/10 transition-colors">
-          <span class="text-rose-600 dark:text-rose-400 select-none text-[10px] font-bold font-mono shrink-0 w-3">−</span>
-          <span class="font-mono text-[11px] text-zinc-700 dark:text-rose-100/90 whitespace-pre">${line}</span>
+      return lines.map((line, idx) => {
+        return `<div class="prune-line flex items-baseline gap-2 py-0.5 px-1.5 rounded transition-all duration-300 relative overflow-hidden" data-line="${idx}">
+          <span class="prune-marker text-rose-600 dark:text-rose-400 select-none text-[10px] font-bold font-mono shrink-0 w-3 transition-colors">−</span>
+          <span class="prune-text font-mono text-[11px] text-zinc-700 dark:text-rose-100/90 whitespace-pre transition-all duration-300">${line}</span>
         </div>`;
       }).join('');
     }
@@ -1544,6 +1568,7 @@ impl Gateway for StripeGateway {`
       const allBlocks = container.querySelectorAll('.dissolve-block');
       const allPills = container.querySelectorAll('.dissolve-pill');
       const allCards = container.querySelectorAll('.targeted-prune-card');
+      const allLines = container.querySelectorAll('.prune-line');
       const allBtns = container.querySelectorAll('[id^="btn-"]');
 
       // Reset inspect buttons
@@ -1558,12 +1583,15 @@ impl Gateway for StripeGateway {`
         c.classList.remove('shimmer-active');
       });
 
+      allLines.forEach(l => {
+        l.classList.remove('line-struck');
+        l.classList.remove('line-sliced');
+      });
+
       allBlocks.forEach(b => {
         b.classList.remove('collapsing');
         b.classList.add('expanded');
         b.style.maxHeight = '520px';
-        b.style.opacity = '1';
-        b.style.filter = 'none';
       });
 
       allPills.forEach(p => {
@@ -1588,10 +1616,10 @@ impl Gateway for StripeGateway {`
       setMorphStatus('raw', `Scanning telemetry: counting tokens...`);
 
       // ==========================================
-      // PHASE 2: Token Telemetry & Cost Tally
+      // PHASE 2: Token Telemetry & Cost Tally (0ms - 2000ms)
       // Laser scan beam sweeps down editor while tokens & cost count UP
       // ==========================================
-      const scanDuration = 1200;
+      const scanDuration = 2000;
       if (scanBeam) {
         scanBeam.style.transition = 'none';
         scanBeam.style.top = '0%';
@@ -1612,10 +1640,11 @@ impl Gateway for StripeGateway {`
       }
 
       // ==========================================
-      // PHASE 3: AST Bloat Targeting & Highlighting
-      // (at scanDuration = 1200ms)
+      // PHASE 3: AST Bloat Targeting & Highlighting (2000ms - 5200ms)
       // AST isolates internal implementation bloat and blooms warning cards
+      // Pacing hold: 3.2s so visitor can comfortably read the targeted lines!
       // ==========================================
+      const bloatHoldDuration = 3200;
       highlightTimeout = setTimeout(() => {
         if (scanBeam) scanBeam.style.opacity = '0';
 
@@ -1628,61 +1657,61 @@ impl Gateway for StripeGateway {`
       }, scanDuration);
 
       // ==========================================
-      // PHASE 4: Sparkle Dissolution & Granular Countdown / Savings Tally
-      // (at 2300ms)
-      // Implementation bloat folds smoothly while tokens count DOWN
-      // and savings tally UP simultaneously
+      // PHASE 4: Strikethrough & Laser Slide-Out Deletion (5200ms - 8400ms)
+      // Strikethrough cut lines, cascading slide-away, mechanical fold (NO FADING)
       // ==========================================
       stageTimeout = setTimeout(() => {
-        setMorphStatus('sparkle', '✨ Dissolving bloat with SiftrCode AST...');
+        setMorphStatus('sparkle', '✂️ Slicing bloat lines from AST contract...');
 
-        // Spawn sparkles
-        allCards.forEach(card => spawnSparkles(card, 16));
-        setTimeout(() => {
-          allCards.forEach(card => spawnSparkles(card, 10));
-        }, 600);
+        // 1. Strike through all lines with razor red deletion line
+        const currentLines = container.querySelectorAll('.prune-line');
+        currentLines.forEach(l => l.classList.add('line-struck'));
 
-        // Fold implementation bloat
-        allBlocks.forEach(b => {
-          b.classList.remove('expanded');
-          b.classList.add('collapsing');
-          b.style.maxHeight = '0px';
-          b.style.opacity = '0';
+        // 2. Cascading horizontal slide-out (clean mechanical slice)
+        currentLines.forEach((l, idx) => {
+          setTimeout(() => {
+            l.classList.add('line-sliced');
+          }, 350 + idx * 35);
         });
 
-        const dissolveDuration = 2200;
-        // Count DOWN bridgeSkel from rawTokens to skelTokens
-        animateNumber('bridgeSkel', conf.rawTokens, conf.skelTokens, dissolveDuration, v => `${Math.round(v).toLocaleString()} tokens`);
-        // Count DOWN costSkel from rawCost to skelCost
-        animateNumber('costSkel', conf.rawCost, conf.skelCost, dissolveDuration, v => `$${v.toFixed(2)}`);
-        // Tally UP costSavedTag from 0 to savedCost
-        animateNumber('costSavedTag', 0, conf.savedCost, dissolveDuration, v => `Save $${v.toFixed(2)}`);
+        // 3. Count down tokens and cost simultaneously
+        const countdownDuration = 2400;
+        animateNumber('bridgeSkel', conf.rawTokens, conf.skelTokens, countdownDuration, v => `${Math.round(v).toLocaleString()} tokens`);
+        animateNumber('costSkel', conf.rawCost, conf.skelCost, countdownDuration, v => `$${v.toFixed(2)}`);
+        animateNumber('costSavedTag', 0, conf.savedCost, countdownDuration, v => `Save $${v.toFixed(2)}`);
 
         if (savedTokensCount) {
-          animateNumber('savedTokensCount', 0, conf.savedTokens, dissolveDuration, v => `Saved ~${Math.round(v).toLocaleString()} tokens (Save $${((v * 10000 * 3.0) / 1000000).toFixed(2)}/10k)`);
+          animateNumber('savedTokensCount', 0, conf.savedTokens, countdownDuration, v => `Saved ~${Math.round(v).toLocaleString()} tokens (Save $${((v * 10000 * 3.0) / 1000000).toFixed(2)}/10k)`);
         }
 
         if (typeof window.triggerDotRipple === 'function') window.triggerDotRipple();
 
-        // ==========================================
-        // PHASE 5: Reveal Final Synthesized Interface Contract
-        // (at 1400ms into dissolve phase, total 3700ms)
-        // ==========================================
+        // 4. Once lines have sliced away, smoothly fold the empty container shut
+        setTimeout(() => {
+          allBlocks.forEach(b => {
+            b.classList.remove('expanded');
+            b.classList.add('collapsing');
+            b.style.maxHeight = '0px';
+          });
+        }, 1300);
+
+        // 5. Reveal final synthesized interface contract pill
         pillTimeout = setTimeout(() => {
           allPills.forEach(p => {
             p.style.maxHeight = '48px';
             p.style.opacity = '1';
           });
-        }, 1400);
+        }, 1900);
 
+        // 6. Complete transition
         dissolveTimeout = setTimeout(() => {
           currentMorphState = 'skel';
           allCards.forEach(c => c.classList.remove('bloat-highlighted'));
           setMorphStatus('synthesized', `✓ Synthesized Contract (-${Math.round(conf.reduction)}% Tokens)`);
           setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
-        }, dissolveDuration + 200);
+        }, countdownDuration + 200);
 
-      }, scanDuration + 1100);
+      }, scanDuration + bloatHoldDuration);
     }
 
     function renderDemo(lang, mode = 'raw') {
@@ -1715,7 +1744,7 @@ impl Gateway for StripeGateway {`
         return `
 <div class="dissolve-section my-3 relative" id="section-${item.id}">
   <div class="font-mono text-xs text-zinc-800 dark:text-zinc-200">${highlightCode(item.interfaceCode, lang)}</div>
-  <div id="block-${item.id}" class="dissolve-block overflow-hidden my-1.5 relative" style="max-height: ${isRaw ? '520px' : '0px'}; opacity: ${isRaw ? '1' : '0'};">
+  <div id="block-${item.id}" class="dissolve-block overflow-hidden my-1.5 relative" style="max-height: ${isRaw ? '520px' : '0px'};">
     <div id="card-${item.id}" class="targeted-prune-card rounded-lg font-mono text-[11px] leading-relaxed relative">
       <div id="card-header-${item.id}" class="bloat-card-header flex items-center justify-between border-b text-[10px]">
         <span class="flex items-center gap-1.5 font-bold tracking-wide uppercase text-rose-700 dark:text-rose-300">
@@ -1761,21 +1790,27 @@ ${highlightPrunedCode(item.rawCode, lang)}
       resetUserActivity();
       const block = document.getElementById('block-' + id);
       const btn = document.getElementById('btn-' + id);
+      const card = document.getElementById('card-' + id);
       if (!block || !btn) return;
 
-      const isCollapsed = block.classList.contains('collapsing') || block.style.maxHeight === '0px' || !block.style.maxHeight || block.style.opacity === '0';
+      const isCollapsed = block.classList.contains('collapsing') || block.style.maxHeight === '0px' || !block.style.maxHeight;
       if (isCollapsed) {
+        if (card) {
+          card.classList.add('bloat-highlighted');
+          const lines = card.querySelectorAll('.prune-line');
+          lines.forEach(l => {
+            l.classList.remove('line-struck');
+            l.classList.remove('line-sliced');
+          });
+        }
         block.classList.remove('collapsing');
         block.classList.add('expanded');
         block.style.maxHeight = '480px';
-        block.style.opacity = '1';
-        block.style.filter = 'none';
         btn.innerText = 'fold';
       } else {
         block.classList.remove('expanded');
         block.classList.add('collapsing');
         block.style.maxHeight = '0px';
-        block.style.opacity = '0';
         btn.innerText = 'inspect';
       }
     }
