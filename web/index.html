@@ -520,27 +520,24 @@
       pointer-events: auto;
     }
 
-    /* AST Precision Laser Beam Scanner (Razor-thin, luminous core, focused laser flare) */
+    /* AST Precision Laser Beam Scanner (Thin hairline, subtle ambient glow, non-intrusive) */
     .ast-laser-beam, .ast-scope-wave {
       position: absolute;
       left: 0;
       right: 0;
-      height: 2px;
+      height: 1px;
       background: linear-gradient(90deg, 
         transparent 0%, 
-        rgba(217, 119, 87, 0.3) 10%, 
-        #D97757 25%, 
-        #F39C82 45%, 
-        #FFFFFF 50%, 
-        #F39C82 55%, 
-        #D97757 75%, 
-        rgba(217, 119, 87, 0.3) 90%, 
+        rgba(217, 119, 87, 0.15) 15%, 
+        rgba(217, 119, 87, 0.6) 35%, 
+        #D97757 50%, 
+        rgba(217, 119, 87, 0.6) 65%, 
+        rgba(217, 119, 87, 0.15) 85%, 
         transparent 100%
       );
       box-shadow: 
-        0 0 6px 1.5px rgba(255, 255, 255, 0.9),
-        0 0 14px 3px rgba(243, 156, 130, 0.85),
-        0 0 24px 5px rgba(217, 119, 87, 0.45);
+        0 0 3px 0.5px rgba(217, 119, 87, 0.4),
+        0 0 6px 1px rgba(217, 119, 87, 0.2);
       opacity: 0;
       top: 0;
       pointer-events: none;
@@ -552,25 +549,24 @@
       position: absolute;
       left: 0;
       right: 0;
-      top: -9px;
-      height: 20px;
+      top: -3px;
+      height: 7px;
       background: linear-gradient(180deg, 
         transparent 0%, 
-        rgba(217, 119, 87, 0.2) 50%, 
+        rgba(217, 119, 87, 0.08) 50%, 
         transparent 100%
       );
       pointer-events: none;
     }
     html.dark .ast-laser-beam, html.dark .ast-scope-wave {
       box-shadow: 
-        0 0 8px 2px rgba(255, 255, 255, 0.95),
-        0 0 16px 4px rgba(243, 156, 130, 0.9),
-        0 0 28px 6px rgba(217, 119, 87, 0.6);
+        0 0 4px 0.5px rgba(243, 156, 130, 0.45),
+        0 0 8px 1px rgba(217, 119, 87, 0.25);
     }
     html.dark .ast-laser-beam::before, html.dark .ast-scope-wave::before {
       background: linear-gradient(180deg, 
         transparent 0%, 
-        rgba(217, 119, 87, 0.28) 50%, 
+        rgba(217, 119, 87, 0.12) 50%, 
         transparent 100%
       );
     }
@@ -2721,7 +2717,7 @@ impl PaymentGateway for StripeGateway {
 
           // 1. Goes down slowly: steady, deliberate laser scan across AST scopes
           scanBeam.style.transition = `top ${downDuration}ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.2s ease`;
-          scanBeam.style.top = 'calc(100% - 3px)';
+          scanBeam.style.top = 'calc(100% - 2px)';
 
           // 2. Quickly up when done: zips rapidly back to top home position
           const upTimer = setTimeout(() => {
