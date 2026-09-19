@@ -102,6 +102,16 @@ func NewUserService() *UserServiceImpl {
     }
     return &UserServiceImpl{}
 }
+
+func CreateUserWithDetails(
+    ctx context.Context,
+    name string,
+    email string,
+    role string,
+) (*User, error) {
+    println("saving user to database...")
+    return &User{ID: "123", Email: email}, nil
+}
 `;
 
 const goResult = skeletonizeGolang(sampleGo, 'user_service.go');
@@ -109,6 +119,13 @@ console.log('Original Lines:', goResult.originalLines, '-> Skeleton Lines:', goR
 console.log('Token Reduction:', (goResult.reductionRatio * 100).toFixed(1) + '%');
 console.log('Symbols Extracted:', goResult.symbols);
 console.log('\nGenerated Go Skeleton:\n' + goResult.skeletonContent);
+
+if (goResult.skeletonContent.includes('saving user to database...')) {
+  throw new Error('Go skeletonizer failed: function body was not stripped');
+}
+if (!goResult.skeletonContent.includes('func CreateUserWithDetails(')) {
+  throw new Error('Go skeletonizer failed: multiline function header was not captured');
+}
 
 console.log('--- Testing Rust Skeletonizer ---');
 const sampleRust = `
@@ -138,4 +155,11 @@ console.log('Original Lines:', rustResult.originalLines, '-> Skeleton Lines:', r
 console.log('Token Reduction:', (rustResult.reductionRatio * 100).toFixed(1) + '%');
 console.log('Symbols Extracted:', rustResult.symbols);
 console.log('\nGenerated Rust Skeleton:\n' + rustResult.skeletonContent);
+
+if (!rustResult.skeletonContent.includes('pub struct UserServiceImpl;')) {
+  throw new Error('Rust skeletonizer failed: struct declaration after trait was swallowed');
+}
+if (rustResult.skeletonContent.includes('println!("connecting");')) {
+  throw new Error('Rust skeletonizer failed: impl method body was not stripped');
+}
 

@@ -1623,12 +1623,12 @@ ${escapeHtml(item.rawCode)}
       const duration = 1200;
       if (shouldAnimate) {
         // Initial raw numbers
-        document.getElementById('rawTokenCount').innerText = `~${conf.rawTokens.toLocaleString()} tokens ($${conf.rawCost.toFixed(2)})`;
+        document.getElementById('rawTokenCount').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
         document.getElementById('rawCostFoot').innerText = `Burn: $${conf.rawCost.toFixed(2)} / 10k calls`;
         document.getElementById('bridgeRaw').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
         document.getElementById('costRaw').innerText = `$${conf.rawCost.toFixed(2)}`;
 
-        document.getElementById('skelTokenCount').innerText = `~${conf.rawTokens.toLocaleString()} tokens (0%)`;
+        document.getElementById('skelTokenCount').innerText = `${conf.rawTokens.toLocaleString()} tokens (0%)`;
         document.getElementById('bridgeSkel').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
         document.getElementById('costSkel').innerText = `$${conf.rawCost.toFixed(2)}`;
         document.getElementById('bridgeReductionTag').innerText = `0% Evaporated`;
@@ -1819,7 +1819,18 @@ ${escapeHtml(item.rawCode)}
     }
 
     function copyText(text, btn) {
-      navigator.clipboard.writeText(text);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(() => {});
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+      }
       const orig = btn.innerText;
       btn.innerText = 'COPIED!';
       btn.className = 'text-[10px] font-mono text-amber-300 bg-amber-950/70 border border-amber-800/80 px-2 py-0.5 rounded transition';

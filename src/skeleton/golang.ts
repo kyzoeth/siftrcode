@@ -1,5 +1,16 @@
 import { SkeletonResult } from './types';
 
+function countBraces(str: string): { opens: number; closes: number } {
+  // Strip raw strings (`...`), interpreted strings ("..."), and comments (//...)
+  const sanitized = str
+    .replace(/`[^`]*`/g, '``')
+    .replace(/"(?:[^"\\]|\\.)*"/g, '""')
+    .replace(/\/\/.*/g, '');
+  const opens = (sanitized.match(/{/g) || []).length;
+  const closes = (sanitized.match(/}/g) || []).length;
+  return { opens, closes };
+}
+
 /**
  * Go skeletonizer: Keeps package, imports, types, structs, interfaces,
  * and function/method signatures while stripping implementation bodies.
@@ -19,35 +30,38 @@ export function skeletonizeGolang(code: string, filePath: string = 'file.go'): S
 
     // Preserve comments, package declarations, imports, types
     if (!inFuncBody) {
-      // Check if line declares a function: func ... { or func ...
-      const funcMatch = line.match(/^(\s*func\s+(?:\([^)]+\)\s+)?([A-Za-z0-9_]+)\s*\([^)]*\)[^{]*)(.*)$/);
-      if (funcMatch) {
-        const [, sig, funcName, rest] = funcMatch;
-        symbols.push(funcName);
+      // Check if line begins a function declaration: func (receiver)? funcName
+      const funcStart = line.match(/^\s*func\s+(?:\([^)]+\)\s+)?([A-Za-z0-9_]+)/);
+      if (funcStart) {
+        symbols.push(funcStart[1]);
 
-        if (rest.includes('{')) {
-          // Function opens on same line
-          resultLines.push(sig.trimEnd());
+        if (line.includes('{')) {
+          const braceIdx = line.indexOf('{');
+          resultLines.push(line.slice(0, braceIdx).trimEnd());
           inFuncBody = true;
-          braceDepth = (rest.match(/{/g) || []).length - (rest.match(/}/g) || []).length;
+          const { opens, closes } = countBraces(line.slice(braceIdx));
+          braceDepth = opens - closes;
           if (braceDepth <= 0) {
             inFuncBody = false;
             braceDepth = 0;
           }
           continue;
         } else {
-          // Signature might span multiple lines or open brace is on next line
-          pendingFuncSig = sig;
+          pendingFuncSig = line;
           continue;
         }
       }
 
       if (pendingFuncSig) {
         if (line.includes('{')) {
-          resultLines.push(pendingFuncSig.trimEnd());
+          const braceIdx = line.indexOf('{');
+          const sigPart = line.slice(0, braceIdx).trim();
+          const fullSig = sigPart ? `${pendingFuncSig} ${sigPart}` : pendingFuncSig;
+          resultLines.push(fullSig.trimEnd());
           pendingFuncSig = '';
           inFuncBody = true;
-          braceDepth = (line.match(/{/g) || []).length - (line.match(/}/g) || []).length;
+          const { opens, closes } = countBraces(line.slice(braceIdx));
+          braceDepth = opens - closes;
           if (braceDepth <= 0) {
             inFuncBody = false;
             braceDepth = 0;
@@ -67,9 +81,8 @@ export function skeletonizeGolang(code: string, filePath: string = 'file.go'): S
 
       resultLines.push(line);
     } else {
-      // Inside function body, count braces until matching close
-      const opens = (line.match(/{/g) || []).length;
-      const closes = (line.match(/}/g) || []).length;
+      // Inside function body, count braces safely until matching close
+      const { opens, closes } = countBraces(line);
       braceDepth += opens - closes;
 
       if (braceDepth <= 0) {

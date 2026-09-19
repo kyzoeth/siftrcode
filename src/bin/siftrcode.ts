@@ -14,7 +14,7 @@ const program = new Command();
 program
   .name('siftrcode')
   .description('AST-powered codebase skeletonizer and context pruner for AI coding agents')
-  .version('0.1.0');
+  .version('0.1.1');
 
 // COMMAND: INIT
 program
@@ -50,7 +50,7 @@ program
   .option('-f, --focus <task>', 'Task description or focus area (e.g., "checkout webhook race condition")')
   .option('-o, --output <file>', 'Output file path', 'siftr_context.md')
   .action(async (directory, options) => {
-    console.log(chalk.bold.green('⚡ [SiftrCode v0.1.0]'), 'Scanning repository AST...');
+    console.log(chalk.bold.green('⚡ [SiftrCode v0.1.1]'), 'Scanning repository AST...');
     const dir = directory || process.cwd();
     const startTime = Date.now();
 

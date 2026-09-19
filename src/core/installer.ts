@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import chalk from 'chalk';
 
 export interface InitResult {
   configsUpdated: string[];

@@ -11,7 +11,7 @@ export async function runMcpServer() {
   const server = new Server(
     {
       name: 'siftrcode',
-      version: '0.1.0'
+      version: '0.1.1'
     },
     {
       capabilities: {
@@ -25,13 +25,13 @@ export async function runMcpServer() {
       tools: [
         {
           name: 'siftr_skeleton',
-          description: 'Returns the pruned AST interface skeleton of a source code file. Strips function bodies and internal implementation loops while preserving 100% of exported types, signatures, classes, and docstrings. Cuts token usage by 80-95%.',
+          description: 'Returns the pruned AST interface skeleton of a source code file. Strips function bodies and internal implementation loops while preserving 100% of exported types, signatures, classes, and docstrings. Cuts token usage by 80-95%. Supports TypeScript, JavaScript, Python, Go, and Rust.',
           inputSchema: {
             type: 'object',
             properties: {
               filePath: {
                 type: 'string',
-                description: 'Relative or absolute path to the TypeScript, JavaScript, or Python file'
+                description: 'Relative or absolute path to the TypeScript, JavaScript, Python, Go, or Rust file'
               }
             },
             required: ['filePath']

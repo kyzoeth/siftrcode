@@ -1,5 +1,15 @@
 import { SkeletonResult } from './types';
 
+function countBraces(str: string): { opens: number; closes: number } {
+  // Strip strings and comments so braces inside them don't throw off depth
+  const sanitized = str
+    .replace(/"(?:[^"\\]|\\.)*"/g, '""')
+    .replace(/\/\/.*/g, '');
+  const opens = (sanitized.match(/{/g) || []).length;
+  const closes = (sanitized.match(/}/g) || []).length;
+  return { opens, closes };
+}
+
 /**
  * Rust skeletonizer: Keeps modules, uses, structs, enums, traits,
  * and function/method signatures while stripping implementation bodies.
@@ -24,10 +34,18 @@ export function skeletonizeRust(code: string, filePath: string = 'file.rs'): Ske
         const [, sig, fnName, rest] = fnMatch;
         symbols.push(fnName);
 
+        // Case A: Trait method declaration or extern fn ending in semicolon
+        if (trimmed.endsWith(';') || rest.trim().startsWith(';')) {
+          resultLines.push(line);
+          continue;
+        }
+
+        // Case B: Function opens on same line with {
         if (rest.includes('{')) {
           resultLines.push(sig.trimEnd() + ';');
           inFuncBody = true;
-          braceDepth = (rest.match(/{/g) || []).length - (rest.match(/}/g) || []).length;
+          const { opens, closes } = countBraces(rest);
+          braceDepth = opens - closes;
           if (braceDepth <= 0) {
             inFuncBody = false;
             braceDepth = 0;
@@ -40,11 +58,21 @@ export function skeletonizeRust(code: string, filePath: string = 'file.rs'): Ske
       }
 
       if (pendingFuncSig) {
+        if (trimmed.endsWith(';')) {
+          // Multiline trait signature ending in semicolon
+          resultLines.push((pendingFuncSig + ' ' + trimmed).trimEnd());
+          pendingFuncSig = '';
+          continue;
+        }
         if (line.includes('{')) {
-          resultLines.push(pendingFuncSig.trimEnd() + ';');
+          const braceIdx = line.indexOf('{');
+          const sigPart = line.slice(0, braceIdx).trim();
+          const fullSig = sigPart ? `${pendingFuncSig} ${sigPart}` : pendingFuncSig;
+          resultLines.push(fullSig.trimEnd() + ';');
           pendingFuncSig = '';
           inFuncBody = true;
-          braceDepth = (line.match(/{/g) || []).length - (line.match(/}/g) || []).length;
+          const { opens, closes } = countBraces(line.slice(braceIdx));
+          braceDepth = opens - closes;
           if (braceDepth <= 0) {
             inFuncBody = false;
             braceDepth = 0;
@@ -64,8 +92,7 @@ export function skeletonizeRust(code: string, filePath: string = 'file.rs'): Ske
 
       resultLines.push(line);
     } else {
-      const opens = (line.match(/{/g) || []).length;
-      const closes = (line.match(/}/g) || []).length;
+      const { opens, closes } = countBraces(line);
       braceDepth += opens - closes;
 
       if (braceDepth <= 0) {

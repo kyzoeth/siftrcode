@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { skeletonizeFile } from '../skeleton/dispatcher';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 const PORT = process.env.PORT || 3000;
@@ -77,9 +76,6 @@ const SERVER_CARD = {
   resources: [],
   prompts: []
 };
-
-// Active SSE transport sessions
-const activeTransports = new Map<string, SSEServerTransport>();
 
 function createMcpServerInstance() {
   const mcpServer = new Server(
@@ -223,9 +219,12 @@ const server = http.createServer(async (req, res) => {
   // Live AST Skeleton API
   if (pathname === '/api/skeleton' && req.method === 'POST') {
     let body = '';
+    let aborted = false;
     req.on('data', chunk => {
+      if (aborted) return;
       body += chunk;
       if (body.length > 5 * 1024 * 1024) { // 5MB limit
+        aborted = true;
         res.writeHead(413, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Payload too large' }));
         req.destroy();
@@ -233,6 +232,7 @@ const server = http.createServer(async (req, res) => {
     });
 
     req.on('end', () => {
+      if (aborted || res.headersSent) return;
       try {
         const payload = JSON.parse(body || '{}');
         const code = payload.code || '';
@@ -260,9 +260,12 @@ const server = http.createServer(async (req, res) => {
   // B2B Team Trial & Lead Capture API
   if (pathname === '/api/leads' && req.method === 'POST') {
     let body = '';
+    let aborted = false;
     req.on('data', chunk => {
+      if (aborted) return;
       body += chunk;
       if (body.length > 64 * 1024) { // 64KB limit
+        aborted = true;
         res.writeHead(413, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Payload too large' }));
         req.destroy();
@@ -270,6 +273,7 @@ const server = http.createServer(async (req, res) => {
     });
 
     req.on('end', () => {
+      if (aborted || res.headersSent) return;
       try {
         const payload = JSON.parse(body || '{}');
         const email = String(payload.email || '').trim().toLowerCase();
@@ -332,6 +336,17 @@ const server = http.createServer(async (req, res) => {
 
   // Admin Leads View (Protected by query token or dev)
   if (pathname === '/api/leads' && req.method === 'GET') {
+    const adminToken = process.env.ADMIN_TOKEN || (process.env.NODE_ENV === 'production' ? null : 'siftr_admin_dev');
+    const authHeader = req.headers.authorization || '';
+    const queryToken = parsedUrl.searchParams.get('token') || '';
+    const providedToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : queryToken;
+
+    if (!adminToken || providedToken !== adminToken) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized: Admin authentication required' }));
+      return;
+    }
+
     const DATA_DIR = path.join(__dirname, '..', '..', 'data');
     const LEADS_FILE = path.join(DATA_DIR, 'leads.json');
     let leads = [];
@@ -347,16 +362,18 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-
   // Serve static files from web/
   let filePath = path.join(WEB_DIR, pathname === '/' ? 'index.html' : pathname);
   
   // Security check: prevent directory traversal
-  if (!filePath.startsWith(WEB_DIR)) {
+  const resolvedFilePath = path.resolve(filePath);
+  const resolvedWebDir = path.resolve(WEB_DIR);
+  if (resolvedFilePath !== resolvedWebDir && !resolvedFilePath.startsWith(resolvedWebDir + path.sep)) {
     res.writeHead(403, { 'Content-Type': 'text/plain' });
     res.end('Forbidden');
     return;
   }
+  filePath = resolvedFilePath;
 
   // Support clean extensionless URLs: e.g. /privacy -> web/privacy.html
   if (!fs.existsSync(filePath) && fs.existsSync(filePath + '.html')) {

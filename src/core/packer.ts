@@ -50,10 +50,20 @@ export async function packRepository(options: PackOptions = {}): Promise<PackRes
     '**/*.ico'
   ];
 
-  const files = await glob('**/*', {
+  const excludes = options.excludePatterns && options.excludePatterns.length > 0
+    ? [...defaultExcludes, ...options.excludePatterns]
+    : defaultExcludes;
+
+  const patterns = options.includePatterns && options.includePatterns.length === 1
+    ? options.includePatterns[0]
+    : options.includePatterns && options.includePatterns.length > 1
+      ? options.includePatterns
+      : '**/*';
+
+  const files = await glob(patterns, {
     cwd: rootDir,
     nodir: true,
-    ignore: defaultExcludes
+    ignore: excludes
   });
 
   const jev = new JevClient();
