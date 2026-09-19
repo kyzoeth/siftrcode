@@ -405,8 +405,8 @@
     .prune-line {
       position: relative;
       overflow: hidden;
-      transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1), 
-                  background-color 0.25s ease;
+      transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), 
+                  background-color 0.35s ease;
     }
     .prune-line.line-struck {
       background-color: rgba(244, 63, 94, 0.12) !important;
@@ -1736,8 +1736,8 @@ impl Gateway for StripeGateway {
       const allLines = container.querySelectorAll('.prune-line');
 
       // ==========================================
-      // PHASE 1: Pure Original Code Baseline
-      // Clean, natural code view without red borders or warning headers
+      // PHASE 1: Pure Original Code Baseline (Step 1)
+      // Clean, natural code view with full line numbers and active bloat
       // ==========================================
       allCards.forEach(c => {
         c.classList.remove('bloat-highlighted');
@@ -1755,11 +1755,11 @@ impl Gateway for StripeGateway {
         b.style.maxHeight = '520px';
       });
 
-      // Reset telemetry counters to 0
+      // Show full baseline metrics in Step 1
       const bridgeRaw = document.getElementById('bridgeRaw');
-      if (bridgeRaw) bridgeRaw.innerText = '0 tokens';
+      if (bridgeRaw) bridgeRaw.innerText = `${conf.rawTokens.toLocaleString()} tokens`;
       const costRaw = document.getElementById('costRaw');
-      if (costRaw) costRaw.innerText = '$0.00';
+      if (costRaw) costRaw.innerText = `$${conf.rawCost.toFixed(2)}`;
 
       const bridgeSkel = document.getElementById('bridgeSkel');
       if (bridgeSkel) bridgeSkel.innerText = `${conf.rawTokens.toLocaleString()} tokens`;
@@ -1768,49 +1768,60 @@ impl Gateway for StripeGateway {
 
       const costSavedTag = document.getElementById('costSavedTag');
       if (costSavedTag) {
-        costSavedTag.innerText = 'Profiling...';
-        costSavedTag.className = 'text-xs sm:text-sm px-3 py-1 rounded-md bg-blue-600 text-white font-mono font-bold tracking-tight whitespace-nowrap shrink-0 shadow-xs ml-1 transition-all duration-300';
+        costSavedTag.innerText = 'Ready';
+        costSavedTag.className = 'text-xs sm:text-sm px-3 py-1 rounded-md bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-mono font-bold tracking-tight whitespace-nowrap shrink-0 shadow-xs ml-1 transition-all duration-300';
       }
 
-      setMorphStatus('scan', 2, 'AST Analysis • Profiling Syntax Tree & Token Density...');
+      setMorphStatus('raw', 1, `Original Code • Implementation Bloat Active (${conf.rawTokens.toLocaleString()} tokens)`);
+
+      // Hold Step 1 for 2200ms so user can read the unoptimized contract & implementation
+      const rawHoldDuration = 2200;
 
       // ==========================================
-      // PHASE 2: Token Telemetry & Compiler Profiling (0ms - 2000ms)
+      // PHASE 2: Token Telemetry & Compiler Profiling (Step 2)
       // Top compiler progress runner advances 0% -> 100% while ambient wave passes through scopes
       // ==========================================
-      const scanDuration = 2000;
-      if (astProgressBar) {
-        astProgressBar.style.transition = 'none';
-        astProgressBar.style.width = '0%';
-        astProgressBar.style.opacity = '1';
-        void astProgressBar.offsetHeight;
-        astProgressBar.style.transition = `width ${scanDuration}ms cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease`;
-        astProgressBar.style.width = '100%';
-      }
+      const scanDuration = 2800;
+      scanTimeout = setTimeout(() => {
+        setMorphStatus('scan', 2, 'AST Analysis • Profiling Syntax Tree & Token Density...');
+        if (costSavedTag) {
+          costSavedTag.innerText = 'Profiling...';
+          costSavedTag.className = 'text-xs sm:text-sm px-3 py-1 rounded-md bg-blue-600 text-white font-mono font-bold tracking-tight whitespace-nowrap shrink-0 shadow-xs ml-1 transition-all duration-300';
+        }
 
-      if (scanBeam) {
-        scanBeam.style.transition = 'none';
-        scanBeam.style.top = '-40px';
-        scanBeam.style.opacity = '1';
-        void scanBeam.offsetHeight;
-        scanBeam.style.transition = `top ${scanDuration}ms cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s ease`;
-        scanBeam.style.top = 'calc(100% - 60px)';
-      }
+        if (astProgressBar) {
+          astProgressBar.style.transition = 'none';
+          astProgressBar.style.width = '0%';
+          astProgressBar.style.opacity = '1';
+          void astProgressBar.offsetHeight;
+          astProgressBar.style.transition = `width ${scanDuration}ms cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease`;
+          astProgressBar.style.width = '100%';
+        }
 
-      // Count UP tokens (0 -> rawTokens) and cost ($0.00 -> rawCost)
-      animateNumber('bridgeRaw', 0, conf.rawTokens, scanDuration, v => `${Math.round(v).toLocaleString()} tokens`);
-      animateNumber('costRaw', 0, conf.rawCost, scanDuration, v => `$${v.toFixed(2)}`);
+        if (scanBeam) {
+          scanBeam.style.transition = 'none';
+          scanBeam.style.top = '-40px';
+          scanBeam.style.opacity = '1';
+          void scanBeam.offsetHeight;
+          scanBeam.style.transition = `top ${scanDuration}ms cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s ease`;
+          scanBeam.style.top = 'calc(100% - 60px)';
+        }
+
+        // Count UP tokens (0 -> rawTokens) and cost ($0.00 -> rawCost)
+        animateNumber('bridgeRaw', 0, conf.rawTokens, scanDuration, v => `${Math.round(v).toLocaleString()} tokens`);
+        animateNumber('costRaw', 0, conf.rawCost, scanDuration, v => `$${v.toFixed(2)}`);
+      }, rawHoldDuration);
 
       // ==========================================
-      // PHASE 3: AST Bloat Targeting & Highlighting (2000ms - 5200ms)
+      // PHASE 3: AST Bloat Targeting & Highlighting (Step 3)
       // AST isolates internal implementation bloat and blooms warning cards
       // ==========================================
-      const bloatHoldDuration = 3200;
+      const bloatHoldDuration = 4500;
       highlightTimeout = setTimeout(() => {
         if (scanBeam) scanBeam.style.opacity = '0';
         if (astProgressBar) {
           astProgressBar.style.opacity = '0';
-          setTimeout(() => { if (astProgressBar) astProgressBar.style.width = '0%'; }, 350);
+          setTimeout(() => { if (astProgressBar) astProgressBar.style.width = '0%'; }, 400);
         }
 
         allCards.forEach(c => {
@@ -1822,16 +1833,16 @@ impl Gateway for StripeGateway {
           costSavedTag.className = 'text-xs sm:text-sm px-3 py-1 rounded-md bg-amber-600 text-white font-mono font-bold tracking-tight whitespace-nowrap shrink-0 shadow-xs ml-1 transition-all duration-300';
         }
         setMorphStatus('targeting', 3, 'AST Analysis • Redundant Implementation Isolated');
-      }, scanDuration);
+      }, rawHoldDuration + scanDuration);
 
       // ==========================================
-      // PHASE 4: Strikethrough & Laser Slide-Out Deletion (5200ms - 8400ms)
+      // PHASE 4: Strikethrough & Laser Slide-Out Deletion (Step 4)
       // Strikethrough cut lines, cascading slide-away, mechanical fold (NO FADING)
       // ==========================================
       stageTimeout = setTimeout(() => {
         setMorphStatus('sparkle', 4, 'Synthesizing Interface • Slicing Bloat Lines...');
 
-        // 1. Strike through all lines with razor red deletion line
+        // 1. Strike through all lines with razor red deletion line (hold for 800ms so user clearly sees the cuts)
         const currentLines = container.querySelectorAll('.prune-line');
         currentLines.forEach(l => l.classList.add('line-struck'));
 
@@ -1839,11 +1850,11 @@ impl Gateway for StripeGateway {
         currentLines.forEach((l, idx) => {
           setTimeout(() => {
             l.classList.add('line-sliced');
-          }, 350 + idx * 35);
+          }, 800 + idx * 65);
         });
 
         // 3. Count down tokens and cost simultaneously
-        const countdownDuration = 2400;
+        const countdownDuration = 3200;
         animateNumber('bridgeSkel', conf.rawTokens, conf.skelTokens, countdownDuration, v => `${Math.round(v).toLocaleString()} tokens`);
         animateNumber('costSkel', conf.rawCost, conf.skelCost, countdownDuration, v => `$${v.toFixed(2)}`);
         animateNumber('costSavedTag', 0, conf.savedCost, countdownDuration, v => `Save $${v.toFixed(2)}`);
@@ -1860,7 +1871,7 @@ impl Gateway for StripeGateway {
             b.classList.add('collapsing');
             b.style.maxHeight = '0px';
           });
-        }, 1300);
+        }, 1900);
 
         // 5. Complete transition - Step 5: Final code with NO extra annotations!
         dissolveTimeout = setTimeout(() => {
@@ -1868,9 +1879,9 @@ impl Gateway for StripeGateway {
           renderSynthesizedPure(curLang);
           setMorphStatus('synthesized', 5, `100% Contract Preserved • Clean Interface Generated (-${Math.round(conf.reduction)}%)`);
           setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
-        }, countdownDuration + 200);
+        }, countdownDuration + 300);
 
-      }, scanDuration + bloatHoldDuration);
+      }, rawHoldDuration + scanDuration + bloatHoldDuration);
     }
 
     function renderDemo(lang, mode = 'raw') {
@@ -2296,7 +2307,7 @@ ${renderedRaw}
     setLang('ts');
     setTimeout(() => {
       runDissolveAnimation();
-    }, 350);
+    }, 1200);
 
     // B2B Team Trial Modal Handlers
     function openTrialModal() {
