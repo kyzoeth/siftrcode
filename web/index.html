@@ -840,57 +840,73 @@
 
       </div>
 
-      <!-- Agent Integration Panel & Real Token Savings Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 text-xs font-sans items-stretch">
+      <!-- Consolidated Single Panel: Agent Integration & Token Economics -->
+      <div class="bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden text-xs font-sans divide-y divide-zinc-200/80 dark:divide-zinc-800">
         
-        <!-- Left: Configuration Box (5 cols) -->
-        <div class="lg:col-span-5 p-5 sm:p-6 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm flex flex-col justify-between min-h-[350px]">
-          <div class="space-y-3.5">
-            <div class="flex items-center justify-between h-5">
-              <span id="agentConfigBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 font-semibold uppercase tracking-wider">
-                CLAUDE CODE SETUP
-              </span>
-              <span class="text-[11px] text-zinc-400 font-mono">10s config</span>
-            </div>
+        <!-- Top Half: Configuration & CLI Command -->
+        <div class="p-5 sm:p-6 lg:p-7">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
             
-            <h3 id="agentConfigTitle" class="text-sm font-bold text-ink min-h-[2.5rem] flex items-center">Connect SiftrCode to Claude Code CLI</h3>
-            <p id="agentConfigDesc" class="text-ink-secondary text-[11px] leading-relaxed min-h-[3.75rem] flex items-start">
-              Registers SiftrCode's Stdio MCP server with Claude Code. Claude automatically invokes <code class="font-mono text-zinc-800 dark:text-zinc-200">siftr_skeleton</code> to prune code before reading.
-            </p>
+            <!-- Left Info (6 cols on lg) -->
+            <div class="lg:col-span-6 space-y-2.5">
+              <div class="flex items-center gap-2">
+                <span id="agentConfigBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 font-semibold uppercase tracking-wider">
+                  CLAUDE CODE SETUP
+                </span>
+                <span class="text-[11px] text-zinc-400 font-mono">10s config</span>
+              </div>
+              
+              <h3 id="agentConfigTitle" class="text-base sm:text-lg font-bold text-ink tracking-tight">Connect SiftrCode to Claude Code CLI</h3>
+              <p id="agentConfigDesc" class="text-ink-secondary text-xs leading-relaxed">
+                Registers SiftrCode's Stdio MCP server with Claude Code. Claude automatically invokes <code class="font-mono text-zinc-800 dark:text-zinc-200">siftr_skeleton</code> to prune code before reading.
+              </p>
 
-            <div class="bg-zinc-900 text-zinc-100 px-3 py-2.5 rounded-md font-mono text-[11px] flex items-center justify-between select-all h-10">
-              <span id="agentCommandText" class="truncate mr-2">claude mcp add siftrcode -- npx -y siftrcode mcp</span>
-              <button id="agentCommandCopyBtn" onclick="copyAgentCommand(this)" class="text-[10px] font-mono text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer shrink-0">
-                COPY
-              </button>
+              <div class="pt-1 flex items-center gap-2 text-[11px] text-zinc-500">
+                <span id="agentRuleHint" class="truncate mr-1">Supports <code class="font-mono">/siftr</code> slash command &amp; <code class="font-mono">.mcp.json</code></span>
+                <span class="text-zinc-300 dark:text-zinc-700">•</span>
+                <a id="agentGuideLink" href="/claude" class="text-blue-700 dark:text-blue-400 font-semibold hover:underline shrink-0">
+                  Guide →
+                </a>
+              </div>
             </div>
-          </div>
 
-          <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-[11px] h-7 mt-auto">
-            <span id="agentRuleHint" class="text-zinc-500 truncate mr-2">Supports <code class="font-mono">/siftr</code> slash command &amp; <code class="font-mono">.mcp.json</code></span>
-            <a id="agentGuideLink" href="/claude" class="text-blue-700 dark:text-blue-400 font-semibold hover:underline shrink-0">
-              Guide →
-            </a>
+            <!-- Right Terminal Command Block (6 cols on lg) -->
+            <div class="lg:col-span-6 space-y-2">
+              <div class="flex items-center justify-between text-[11px] font-mono text-zinc-500">
+                <span>Terminal MCP Registration:</span>
+                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">1-STEP TERMINAL</span>
+              </div>
+              <div class="bg-zinc-950 text-zinc-100 p-3.5 rounded-lg font-mono text-xs flex items-center justify-between gap-3 border border-zinc-800 shadow-2xs select-all">
+                <div class="flex items-center gap-2 overflow-x-auto">
+                  <span class="text-emerald-400 select-none">$</span>
+                  <span id="agentCommandText" class="truncate">claude mcp add siftrcode -- npx -y siftrcode mcp</span>
+                </div>
+                <button id="agentCommandCopyBtn" onclick="copyAgentCommand(this)" class="text-[10px] font-mono text-zinc-400 hover:text-white px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer shrink-0">
+                  COPY
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
 
-        <!-- Right: Real Token & Dollar Savings Comparison Grid (7 cols) -->
-        <div class="lg:col-span-7 p-5 sm:p-6 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm flex flex-col justify-between min-h-[350px] gap-3.5">
+        <!-- Bottom Half: Real-World Token Economics Grid -->
+        <div class="p-5 sm:p-6 lg:p-7 bg-zinc-50/40 dark:bg-zinc-900/40 space-y-5">
           
           <!-- Header Bar: Full untruncated title & model pricing -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3 gap-2 shrink-0">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div class="flex items-center gap-2 shrink-0">
               <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
               <span class="font-bold text-ink text-xs uppercase tracking-wider font-mono">Real-World Token Economics</span>
             </div>
-            <span id="modelRatesBadge" class="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/90 px-2.5 py-1 rounded shrink-0">
+            <span id="modelRatesBadge" class="text-[10px] sm:text-[11px] font-mono text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 px-2.5 py-1 rounded-md shadow-2xs">
               Claude 3.7 Sonnet: $3.00/MTok in • $15.00/MTok out
             </span>
           </div>
 
-          <!-- Comparison Metrics Row -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-auto">
-            <div class="p-3 sm:p-3.5 rounded-md bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/70 dark:border-zinc-700/70 flex flex-col justify-between gap-1.5">
+          <!-- 3 Comparison Metrics Row across full width -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            <div class="p-4 rounded-lg bg-white dark:bg-zinc-800/70 border border-zinc-200/80 dark:border-zinc-700/80 flex flex-col justify-between gap-2 shadow-2xs">
               <div class="text-[10px] uppercase font-mono text-zinc-400 font-semibold tracking-wider">Context Reduction</div>
               <div class="space-y-0.5 my-1">
                 <div class="text-xs font-mono text-rose-500 line-through">125,000 tok</div>
@@ -899,7 +915,7 @@
               <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold font-mono">-92.2% Evaporated</div>
             </div>
 
-            <div class="p-3 sm:p-3.5 rounded-md bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/70 dark:border-zinc-700/70 flex flex-col justify-between gap-1.5">
+            <div class="p-4 rounded-lg bg-white dark:bg-zinc-800/70 border border-zinc-200/80 dark:border-zinc-700/80 flex flex-col justify-between gap-2 shadow-2xs">
               <div class="text-[10px] uppercase font-mono text-zinc-400 font-semibold tracking-wider">Query API Cost</div>
               <div class="space-y-0.5 my-1">
                 <div id="costComparisonRaw" class="text-xs font-mono text-rose-500 line-through">$0.375</div>
@@ -908,7 +924,7 @@
               <div id="costSavingsTag" class="text-[10px] text-blue-700 dark:text-blue-400 font-bold font-mono">Save $0.346 / query</div>
             </div>
 
-            <div class="p-3 sm:p-3.5 rounded-md bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/70 flex flex-col justify-between gap-1.5">
+            <div class="p-4 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/70 flex flex-col justify-between gap-2 shadow-2xs">
               <div class="text-[10px] uppercase font-mono text-emerald-700 dark:text-emerald-300 font-semibold tracking-wider">Monthly Dev Savings</div>
               <div class="space-y-0.5 my-1">
                 <div class="text-xs font-mono text-emerald-600/70 dark:text-emerald-400/70">50 turns / day</div>
@@ -918,18 +934,19 @@
             </div>
           </div>
 
-          <!-- Latency & Turn Note Banner -->
-          <div class="flex items-center gap-2 px-3 py-2 rounded-md bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-700/70 text-zinc-600 dark:text-zinc-300 shrink-0">
-            <svg class="w-3.5 h-3.5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.381z" clip-rule="evenodd"/></svg>
-            <span id="monthlySavingsNote" class="text-[11px] font-mono">Based on 50 agent turns/day • 11x faster latency (3.4s vs 38s)</span>
-          </div>
+          <!-- Bottom Footer Bar: Latency Banner & Audit Callout -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+            <div class="flex items-center gap-2 px-3 py-2 rounded-md bg-white dark:bg-zinc-800/70 border border-zinc-200/80 dark:border-zinc-700/80 text-zinc-600 dark:text-zinc-300 shadow-2xs">
+              <svg class="w-3.5 h-3.5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.381z" clip-rule="evenodd"/></svg>
+              <span id="monthlySavingsNote" class="text-[11px] font-mono">Based on 50 agent turns/day • 11x faster latency (3.4s vs 38s)</span>
+            </div>
 
-          <!-- Bottom Audit Callout -->
-          <div class="mt-auto bg-zinc-100/70 dark:bg-zinc-800/60 px-3.5 py-2.5 rounded-md border border-zinc-200/80 dark:border-zinc-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
-            <span class="text-[11px] text-ink font-medium">Calculate exact waste on your own codebase:</span>
-            <div class="flex items-center gap-1.5 font-mono text-[11px] select-all shrink-0">
-              <code class="bg-zinc-900 text-zinc-100 px-2.5 py-0.5 rounded border border-zinc-800">npx siftrcode audit</code>
-              <button onclick="copySnippet('npx siftrcode audit', this)" class="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 hover:text-ink dark:hover:text-white px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 transition cursor-pointer">COPY</button>
+            <div class="flex flex-wrap items-center gap-2 text-[11px] text-ink font-medium bg-white dark:bg-zinc-800/70 px-3 py-1.5 rounded-md border border-zinc-200/80 dark:border-zinc-700/80 shadow-2xs">
+              <span class="text-zinc-500">Calculate exact waste:</span>
+              <div class="flex items-center gap-1.5 font-mono text-[11px] select-all">
+                <code class="bg-zinc-950 text-zinc-100 px-2.5 py-0.5 rounded border border-zinc-800">npx siftrcode audit</code>
+                <button onclick="copySnippet('npx siftrcode audit', this)" class="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 hover:text-ink dark:hover:text-white px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition cursor-pointer">COPY</button>
+              </div>
             </div>
           </div>
 
