@@ -105,6 +105,15 @@
 
     ::selection { background: #dec278; color: #18181b; }
 
+    /* Hide scrollbar for horizontal single-line ticker streams */
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
     /* Theme Transition Dynamics */
     body, header, section, footer, .glow-card {
       transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
@@ -232,6 +241,13 @@
     html.dark .bg-amber-50 {
       background-color: rgba(197, 155, 39, 0.12) !important;
       color: #dec278 !important;
+    }
+    html.dark .bg-emerald-50 {
+      background-color: rgba(16, 185, 129, 0.12) !important;
+      color: #6ee7b7 !important;
+    }
+    html.dark .border-emerald-200 {
+      border-color: rgba(16, 185, 129, 0.3) !important;
     }
     html.dark #themeToggleBtn {
       background-color: #18181c !important;
@@ -557,13 +573,13 @@
     <div class="max-w-6xl mx-auto space-y-5">
       
       <!-- Minimalist, Breathable Header Bar with Language Selector & Context Mass -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-zinc-200/70 font-mono text-xs">
-        <div class="flex flex-wrap items-center gap-3">
-          <div id="demoStatusPill" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[10px] font-mono font-semibold shadow-2xs transition-all duration-300">
+      <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 pb-3 border-b border-zinc-200/70 dark:border-zinc-800 font-mono text-xs">
+        <div class="flex flex-wrap items-center gap-3 shrink-0">
+          <div id="demoStatusPill" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[10px] font-mono font-semibold shadow-2xs transition-all duration-300 shrink-0">
             <span id="demoStatusDot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 ci-live-dot shrink-0"></span>
             <span id="demoStatusText">LIVE AST SYNTHESIS</span>
           </div>
-          <div class="flex items-center gap-1.5">
+          <div class="flex items-center gap-1.5 shrink-0">
             <span class="text-zinc-400 text-[11px] font-medium uppercase tracking-wider mr-0.5">LANG:</span>
             <div class="inline-flex p-1 rounded-xl bg-zinc-100/90 border border-zinc-200/80 gap-1">
               <button onclick="setLang('ts', true)" id="tab-ts" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition btn-press">
@@ -594,9 +610,10 @@
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2.5 sm:gap-3 text-xs">
+        <!-- Metrics Stream (Guaranteed Single Line Across All Screen Sizes) -->
+        <div class="flex items-center gap-2 sm:gap-2.5 text-xs flex-nowrap whitespace-nowrap overflow-x-auto no-scrollbar py-0.5 shrink-0 max-w-full">
           <!-- Token Reduction -->
-          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-100/80 border border-zinc-200/80">
+          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-100/80 border border-zinc-200/80 whitespace-nowrap shrink-0">
             <span class="text-zinc-400 text-[10px] uppercase font-semibold">Context:</span>
             <span class="text-rose-500 font-semibold" id="bridgeRaw">1,840 tokens</span>
             <span class="text-zinc-300">➔</span>
@@ -604,17 +621,17 @@
           </div>
 
           <!-- Dollar Cost Savings Badge -->
-          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 font-mono text-[11px] shadow-2xs" title="Estimated inference waste at Claude 3.5 Sonnet ($3.00 / 1M tokens) per 10,000 agent iterations">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 font-mono text-[11px] shadow-2xs whitespace-nowrap shrink-0" title="Estimated inference waste at Claude 3.5 Sonnet ($3.00 / 1M tokens) per 10,000 agent iterations">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
             <span class="text-emerald-700 text-[10px] uppercase font-bold tracking-tight">API Cost:</span>
             <span class="text-rose-500 font-semibold line-through" id="costRaw">$55.20</span>
             <span class="text-zinc-300">➔</span>
             <span class="text-emerald-700 font-bold" id="costSkel">$4.14</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-600 text-white font-bold tracking-wide" id="costSavedTag">Save $51.06</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-600 text-white font-bold tracking-wide whitespace-nowrap shrink-0" id="costSavedTag">Save $51.06</span>
           </div>
 
-          <!-- Reduction Tag -->
-          <span class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-bold text-[11px]" id="bridgeReductionTag">
+          <!-- Reduction Tag (Always on same line) -->
+          <span class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-bold text-[11px] whitespace-nowrap shrink-0" id="bridgeReductionTag">
             -92.5% Evaporated
           </span>
         </div>
