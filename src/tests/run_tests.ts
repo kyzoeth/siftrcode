@@ -4,7 +4,8 @@ import * as path from 'path';
 console.log('🧪 [SiftrCode Test Runner] Executing test suites...\n');
 
 const tests = [
-  { name: 'AST Skeletonizer Tests', file: 'test_skeleton.js' },
+  { name: 'AST Skeletonizer Tests (TS, Py, Go, Rust)', file: 'test_skeleton.js' },
+  { name: 'TypeSafe Jev Decision Engine Tests', file: 'test_jev.js' },
   { name: 'Model Context Protocol (MCP) Server Tests', file: 'test_mcp.js' }
 ];
 
