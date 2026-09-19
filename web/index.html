@@ -855,15 +855,15 @@
                 <span class="text-zinc-400 dark:text-zinc-500 font-sans text-[11px] font-medium uppercase tracking-wider select-none">Context:</span>
                 
                 <div class="flex items-baseline gap-1 text-zinc-600 dark:text-zinc-400 shrink-0">
-                  <span id="bridgeRaw" class="font-medium">2,420 tokens</span>
-                  <span class="text-[11px] text-zinc-400 dark:text-zinc-500">(<span id="costRaw">$72.60</span>)</span>
+                  <span id="bridgeRaw" class="font-medium">0 tokens</span>
+                  <span class="text-[11px] text-zinc-400 dark:text-zinc-500">(<span id="costRaw">$0.00</span>)</span>
                 </div>
 
                 <span class="text-zinc-400 dark:text-zinc-600 font-sans select-none px-0.5">➔</span>
 
                 <div class="flex items-baseline gap-1 text-zinc-800 dark:text-zinc-200 font-semibold shrink-0">
-                  <span id="bridgeSkel">2,420 tokens</span>
-                  <span class="text-[11px] text-zinc-500 dark:text-zinc-400 font-normal">(<span id="costSkel">$72.60</span>)</span>
+                  <span id="bridgeSkel">0 tokens</span>
+                  <span class="text-[11px] text-zinc-500 dark:text-zinc-400 font-normal">(<span id="costSkel">$0.00</span>)</span>
                 </div>
               </div>
 
@@ -2413,6 +2413,26 @@ impl PaymentGateway for StripeGateway {
       autoScrollRaf = requestAnimationFrame(step);
     }
 
+    function getElementScrollTop(container, element) {
+      if (!container || !element) return 0;
+      const containerRect = container.getBoundingClientRect();
+      const elRect = element.getBoundingClientRect();
+      const relativeTop = elRect.top - containerRect.top + container.scrollTop;
+      return Math.max(0, relativeTop - 18);
+    }
+
+    let morphTimeouts = [];
+    function clearAllMorphTimeouts() {
+      clearTimeout(dissolveTimeout);
+      clearTimeout(stageTimeout);
+      clearTimeout(pillTimeout);
+      clearTimeout(scanTimeout);
+      clearTimeout(highlightTimeout);
+      morphTimeouts.forEach(t => clearTimeout(t));
+      morphTimeouts = [];
+      stopAutoScroll();
+    }
+
     function triggerPruneMorph() {
       resetUserActivity();
       isUserInteractingWithCode = false;
@@ -2422,12 +2442,7 @@ impl PaymentGateway for StripeGateway {
     }
 
     function runDissolveAnimation() {
-      clearTimeout(dissolveTimeout);
-      clearTimeout(stageTimeout);
-      clearTimeout(pillTimeout);
-      clearTimeout(scanTimeout);
-      clearTimeout(highlightTimeout);
-      stopAutoScroll();
+      clearAllMorphTimeouts();
 
       const conf = langConfig[curLang];
       renderDemo(curLang, 'raw');
@@ -2449,7 +2464,7 @@ impl PaymentGateway for StripeGateway {
 
       // ==========================================
       // PHASE 1: Pure Original Code Baseline (Step 1)
-      // Clean, natural code view with full line numbers and active bloat
+      // Context tokens start at 0 and count UP dynamically
       // ==========================================
       allCards.forEach(c => {
         c.classList.remove('bloat-highlighted');
@@ -2467,35 +2482,44 @@ impl PaymentGateway for StripeGateway {
         b.style.maxHeight = '2500px';
       });
 
-      // Show full baseline metrics in Step 1
+      // Context tokens start at 0 in Step 1
       const bridgeRaw = document.getElementById('bridgeRaw');
-      if (bridgeRaw) bridgeRaw.innerText = `${conf.rawTokens.toLocaleString()} tokens`;
+      if (bridgeRaw) bridgeRaw.innerText = '0 tokens';
       const costRaw = document.getElementById('costRaw');
-      if (costRaw) costRaw.innerText = `$${conf.rawCost.toFixed(2)}`;
+      if (costRaw) costRaw.innerText = '$0.00';
 
       const bridgeSkel = document.getElementById('bridgeSkel');
-      if (bridgeSkel) bridgeSkel.innerText = `${conf.rawTokens.toLocaleString()} tokens`;
+      if (bridgeSkel) bridgeSkel.innerText = '0 tokens';
       const costSkel = document.getElementById('costSkel');
-      if (costSkel) costSkel.innerText = `$${conf.rawCost.toFixed(2)}`;
+      if (costSkel) costSkel.innerText = '$0.00';
+
+      const costSavedTag = document.getElementById('costSavedTag');
+      if (costSavedTag) costSavedTag.classList.add('hidden');
 
       setMorphStatus('raw', 1, 'Raw Code');
 
-      // Slowly and smoothly scroll downward to demonstrate the sheer length and density of original code!
-      setTimeout(() => {
+      // Animate counting UP from 0 in Step 1
+      const rawHoldDuration = 2200;
+      const countUpDuration = 1800;
+      animateNumber('bridgeRaw', 0, conf.rawTokens, countUpDuration, v => `${Math.round(v).toLocaleString()} tokens`);
+      animateNumber('costRaw', 0, conf.rawCost, countUpDuration, v => `$${v.toFixed(2)}`);
+      animateNumber('bridgeSkel', 0, conf.rawTokens, countUpDuration, v => `${Math.round(v).toLocaleString()} tokens`);
+      animateNumber('costSkel', 0, conf.rawCost, countUpDuration, v => `$${v.toFixed(2)}`);
+
+      // Gentle preview scroll downward to showcase file depth
+      const scrollTimer = setTimeout(() => {
         if (currentMorphState !== 'raw' && currentMorphState !== 'scan') return;
         const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
-        const targetScroll = Math.min(maxScroll, Math.round(maxScroll * 0.86));
-        smoothScrollContainer(container, targetScroll, 4800);
-      }, 500);
-
-      // Hold Step 1 for 2200ms so user can read the unoptimized contract & implementation
-      const rawHoldDuration = 2200;
+        const targetScroll = Math.min(maxScroll, Math.round(maxScroll * 0.65));
+        smoothScrollContainer(container, targetScroll, 3200);
+      }, 400);
+      morphTimeouts.push(scrollTimer);
 
       // ==========================================
       // PHASE 2: Token Telemetry & Compiler Profiling (Step 2)
-      // Top compiler progress runner advances 0% -> 100% while ambient wave passes through scopes
+      // Progress runner advances 0% -> 100% while ambient wave passes through scopes
       // ==========================================
-      const scanDuration = 2800;
+      const scanDuration = 2200;
       scanTimeout = setTimeout(() => {
         setMorphStatus('scan', 2, 'Profiling');
 
@@ -2516,22 +2540,26 @@ impl PaymentGateway for StripeGateway {
           scanBeam.style.transition = `top ${scanDuration}ms cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s ease`;
           scanBeam.style.top = 'calc(100% - 60px)';
         }
-
-        // Count UP tokens (0 -> rawTokens) and cost ($0.00 -> rawCost)
-        animateNumber('bridgeRaw', 0, conf.rawTokens, scanDuration, v => `${Math.round(v).toLocaleString()} tokens`);
-        animateNumber('costRaw', 0, conf.rawCost, scanDuration, v => `$${v.toFixed(2)}`);
       }, rawHoldDuration);
+      morphTimeouts.push(scanTimeout);
 
       // ==========================================
       // PHASE 3: AST Bloat Targeting & Highlighting (Step 3)
-      // AST isolates internal implementation bloat and blooms warning cards
+      // Auto-scrolls to Section 1 so user clearly sees the isolated bloat
       // ==========================================
-      const bloatHoldDuration = 4500;
+      const bloatHoldDuration = 1100;
       highlightTimeout = setTimeout(() => {
         if (scanBeam) scanBeam.style.opacity = '0';
         if (astProgressBar) {
           astProgressBar.style.opacity = '0';
           setTimeout(() => { if (astProgressBar) astProgressBar.style.width = '0%'; }, 400);
+        }
+
+        const dissolveItems = demoBlocks[curLang].filter(b => b.type === 'dissolve');
+        if (dissolveItems.length > 0) {
+          const firstSec = document.getElementById('section-' + dissolveItems[0].id);
+          const scrollTarget = getElementScrollTop(container, firstSec);
+          smoothScrollContainer(container, scrollTarget, 550);
         }
 
         allCards.forEach(c => {
@@ -2540,82 +2568,133 @@ impl PaymentGateway for StripeGateway {
 
         setMorphStatus('targeting', 3, 'Bloat Isolated');
       }, rawHoldDuration + scanDuration);
+      morphTimeouts.push(highlightTimeout);
 
       // ==========================================
-      // PHASE 4: Strikethrough & Laser Slide-Out Deletion (Step 4)
-      // Strikethrough cut lines, cascading slide-away, mechanical fold (NO FADING)
+      // PHASE 4: Succession Bloat Removal with Auto-Scroll Tracking (Step 4)
+      // Progressively centers, strikes, slices, and folds each bloat section in succession
       // ==========================================
       stageTimeout = setTimeout(() => {
         setMorphStatus('sparkle', 4, 'Pruning');
 
-        // 1. Strike through all lines with razor red deletion line (hold for 700ms so user clearly sees the cuts)
-        const currentLines = container.querySelectorAll('.prune-line');
-        currentLines.forEach(l => l.classList.add('line-struck'));
+        const dissolveItems = demoBlocks[curLang].filter(b => b.type === 'dissolve');
+        const totalSections = dissolveItems.length;
+        const totalBloatTokens = conf.rawTokens - conf.skelTokens;
+        const totalBloatCost = conf.rawCost - conf.skelCost;
+        const totalLines = dissolveItems.reduce((acc, item) => acc + item.lineCount, 0);
 
-        // 2. Cascading horizontal slide-out (clean mechanical slice)
-        currentLines.forEach((l, idx) => {
-          setTimeout(() => {
-            l.classList.add('line-sliced');
-          }, 700 + idx * 40);
-        });
+        const sectionTargets = [];
+        let accumulatedLines = 0;
+        for (let k = 0; k < totalSections; k++) {
+          accumulatedLines += dissolveItems[k].lineCount;
+          const isLast = (k === totalSections - 1);
+          const fraction = Math.min(1, accumulatedLines / totalLines);
+          const targetTokens = isLast ? conf.skelTokens : Math.round(conf.rawTokens - totalBloatTokens * fraction);
+          const targetCost = isLast ? conf.skelCost : +(conf.rawCost - totalBloatCost * fraction).toFixed(2);
+          const targetSaved = isLast ? conf.savedCost : +(totalBloatCost * fraction).toFixed(2);
+          sectionTargets.push({ targetTokens, targetCost, targetSaved });
+        }
 
-        // 3. Count down tokens and cost simultaneously to converge with the accordion fold
-        const countdownDuration = 2400;
-        animateNumber('bridgeSkel', conf.rawTokens, conf.skelTokens, countdownDuration, v => `${Math.round(v).toLocaleString()} tokens`);
-        animateNumber('costSkel', conf.rawCost, conf.skelCost, countdownDuration, v => `$${v.toFixed(2)}`);
-        animateNumber('costSavedTag', 0, conf.savedCost, countdownDuration, v => `Save $${v.toFixed(2)}`);
+        function removeSectionsSequentially(index) {
+          if (currentMorphState !== 'sparkle' && currentMorphState !== 'targeting' && currentMorphState !== 'raw') return;
+          if (index >= totalSections) {
+            // All sections removed in succession! Smooth glide to top and line re-index
+            smoothScrollContainer(container, 0, 450);
 
-        if (typeof window.triggerDotRipple === 'function') window.triggerDotRipple();
+            const survivingLineNums = container.querySelectorAll('.code-line:not(.prune-line) .line-num');
+            survivingLineNums.forEach((numEl, idx) => {
+              numEl.style.opacity = '0.2';
+              setTimeout(() => {
+                numEl.innerText = idx + 1;
+                numEl.style.opacity = '1';
+              }, 120);
+            });
 
-        // 4. Once lines have sliced away (~1300ms), smoothly fold the empty container shut and scroll up to top
-        setTimeout(() => {
-          allBlocks.forEach(b => {
-            b.classList.remove('expanded');
-            b.classList.add('collapsing');
-            b.style.maxHeight = '0px';
-          });
-          // Smoothly scroll container back to top as implementation collapses
-          smoothScrollContainer(container, 0, 950);
-        }, 1300);
+            // PHASE 5: Seamless Handshake into Synthesized Contract
+            const finishTimer = setTimeout(() => {
+              currentMorphState = 'skel';
+              container.classList.add('synthesis-pulse');
+              setTimeout(() => container.classList.remove('synthesis-pulse'), 850);
+              setMorphStatus('synthesized', 5, 'Synthesized');
+              setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
+              container.scrollTop = 0;
+              renderSynthesizedPure(curLang);
+            }, 550);
+            morphTimeouts.push(finishTimer);
+            return;
+          }
 
-        // 5. As the bloat folds away (~1750ms), smoothly re-index line numbers of surviving code lines
-        setTimeout(() => {
-          const survivingLineNums = container.querySelectorAll('.code-line:not(.prune-line) .line-num');
-          survivingLineNums.forEach((numEl, idx) => {
-            numEl.style.opacity = '0.2';
-            setTimeout(() => {
-              numEl.innerText = idx + 1;
-              numEl.style.opacity = '1';
-            }, 140);
-          });
-        }, 1750);
+          const item = dissolveItems[index];
+          const secEl = document.getElementById('section-' + item.id);
+          const blockEl = document.getElementById('block-' + item.id);
+          const cardEl = document.getElementById('card-' + item.id);
+          const targetTokens = sectionTargets[index].targetTokens;
+          const targetCost = sectionTargets[index].targetCost;
+          const targetSaved = sectionTargets[index].targetSaved;
 
-        // 6. Seamless Handshake into Step 5: Exactly as the countdown completes at 2400ms!
-        dissolveTimeout = setTimeout(() => {
-          currentMorphState = 'skel';
+          // 1. Auto-scroll to center this bloat section in view
+          if (secEl) {
+            const scrollTarget = getElementScrollTop(container, secEl);
+            smoothScrollContainer(container, scrollTarget, 400);
+          }
 
-          // Soft synthesis wave confirming clean contract preserved
-          container.classList.add('synthesis-pulse');
-          setTimeout(() => container.classList.remove('synthesis-pulse'), 850);
+          if (cardEl) {
+            cardEl.classList.add('bloat-highlighted');
+          }
 
-          setMorphStatus('synthesized', 5, 'Synthesized');
-          setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
+          // 2. Razor red cut lines strike through
+          const lines = blockEl ? blockEl.querySelectorAll('.prune-line') : [];
+          lines.forEach(l => l.classList.add('line-struck'));
 
-          // Lock clean DOM structure seamlessly without layout shift and ensure top alignment
-          container.scrollTop = 0;
-          renderSynthesizedPure(curLang);
-        }, countdownDuration);
+          // 3. Mechanical slide-out
+          const slideTimer = setTimeout(() => {
+            lines.forEach((l, idx) => {
+              setTimeout(() => l.classList.add('line-sliced'), idx * 25);
+            });
+          }, 260);
+          morphTimeouts.push(slideTimer);
 
+          // 4. Accordion fold shut & count down tokens
+          const foldTimer = setTimeout(() => {
+            if (blockEl) {
+              blockEl.classList.remove('expanded');
+              blockEl.classList.add('collapsing');
+              blockEl.style.maxHeight = '0px';
+              spawnSparkles(blockEl, 10);
+            }
+            if (typeof window.triggerDotRipple === 'function') window.triggerDotRipple();
+
+            const prevTokens = index === 0 ? conf.rawTokens : sectionTargets[index - 1].targetTokens;
+            const prevCost = index === 0 ? conf.rawCost : sectionTargets[index - 1].targetCost;
+            const prevSaved = index === 0 ? 0 : sectionTargets[index - 1].targetSaved;
+
+            animateNumber('bridgeSkel', prevTokens, targetTokens, 450, v => `${Math.round(v).toLocaleString()} tokens`);
+            animateNumber('costSkel', prevCost, targetCost, 450, v => `$${v.toFixed(2)}`);
+
+            const costSavedTag = document.getElementById('costSavedTag');
+            if (costSavedTag) {
+              costSavedTag.classList.remove('hidden');
+              costSavedTag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight transition-all duration-200 shrink-0 bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300';
+            }
+            animateNumber('costSavedTag', prevSaved, targetSaved, 450, v => `Save $${v.toFixed(2)}`);
+
+            // 5. Advance to next bloat section
+            const nextTimer = setTimeout(() => {
+              removeSectionsSequentially(index + 1);
+            }, 600);
+            morphTimeouts.push(nextTimer);
+          }, 540);
+          morphTimeouts.push(foldTimer);
+        }
+
+        // Begin removing from Section 0
+        removeSectionsSequentially(0);
       }, rawHoldDuration + scanDuration + bloatHoldDuration);
+      morphTimeouts.push(stageTimeout);
     }
 
     function renderDemo(lang, mode = 'raw') {
-      clearTimeout(dissolveTimeout);
-      clearTimeout(stageTimeout);
-      clearTimeout(pillTimeout);
-      clearTimeout(scanTimeout);
-      clearTimeout(highlightTimeout);
-      stopAutoScroll();
+      clearAllMorphTimeouts();
 
       const scanBeam = document.getElementById('scanBeam');
       if (scanBeam) scanBeam.style.opacity = '0';
