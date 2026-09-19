@@ -13,11 +13,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <script>
-    // Initialize Theme immediately before render to avoid flash
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    } else {
+    // Initialize Theme: Default is Dark mode unless user explicitly chose light
+    if (localStorage.theme === 'light') {
       document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
     }
 
     tailwind.config = {
@@ -3110,20 +3110,6 @@ ${renderedRaw}
 
     // Initialize theme icons
     updateThemeIcons();
-
-    // Listen for OS system theme changes if user hasn't explicitly chosen
-    try {
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-        if (!localStorage.getItem('theme')) {
-          if (e.matches) {
-            document.documentElement.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
-          }
-          updateThemeIcons();
-        }
-      });
-    } catch (err) {}
 
     // ==========================================
     // Dynamic Dot Matrix Engine
