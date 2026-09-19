@@ -222,6 +222,29 @@
 
     </div>
 
+    <!-- Quickstart Link Callout -->
+    <div class="p-6 sm:p-8 bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-lg shadow-xs flex flex-col sm:flex-row items-center justify-between gap-5 text-center sm:text-left">
+      <div class="space-y-1.5">
+        <h3 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Ready to test it on your codebase?</h3>
+        <p class="text-xs sm:text-sm text-ink-secondary font-sans">Run a 5-second audit or register SiftrCode directly with your agent.</p>
+        <div class="pt-1 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+          <span class="text-[11px] font-sans text-zinc-500">Run audit:</span>
+          <div class="inline-flex items-center gap-2 bg-zinc-950 text-zinc-100 px-2.5 py-1 rounded-md font-mono text-[11px] border border-zinc-800 select-all shadow-2xs">
+            <span class="text-emerald-400 select-none">$</span>
+            <code>npx siftrcode audit</code>
+            <button onclick="copySnippet('npx siftrcode audit', this)" class="text-[9px] text-zinc-400 hover:text-white px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer">
+              COPY
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <a href="/#quickstart" class="px-5 py-2.5 bg-blue-700 hover:bg-blue-600 text-white rounded-md text-xs font-bold transition btn-press shadow-xs">
+          Run 30-Second Setup →
+        </a>
+      </div>
+    </div>
+
   </main>
 
   <!-- Footer -->
@@ -244,6 +267,18 @@
   </footer>
 
   <script>
+    function copySnippet(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const original = btn.innerText;
+        btn.innerText = 'COPIED!';
+        btn.classList.add('text-emerald-400');
+        setTimeout(() => {
+          btn.innerText = original;
+          btn.classList.remove('text-emerald-400');
+        }, 1800);
+      });
+    }
+
     function toggleTheme() {
       const isDark = document.documentElement.classList.toggle('dark');
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
