@@ -1486,7 +1486,7 @@ type Server struct {
 pub struct Config {
     pub api_key: String,
     pub timeout_ms: u64,
-}`
+}
 
 pub trait Gateway {
     fn charge(&self, customer_id: &str, amount: u64) -> Result<String, String>;
