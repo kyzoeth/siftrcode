@@ -168,12 +168,6 @@ function createMcpServerInstance() {
 
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 
-const streamableTransport = new StreamableHTTPServerTransport();
-const streamableMcpServer = createMcpServerInstance();
-streamableMcpServer.connect(streamableTransport).catch(err => {
-  console.error('Failed to connect StreamableHTTPServerTransport:', err);
-});
-
 const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const pathname = parsedUrl.pathname;
@@ -209,7 +203,10 @@ const server = http.createServer(async (req, res) => {
       req.headers.accept = (req.headers.accept ? req.headers.accept + ', ' : '') + 'application/json, text/event-stream';
     }
     try {
-      await streamableTransport.handleRequest(req, res);
+      const transport = new StreamableHTTPServerTransport();
+      const mcpServer = createMcpServerInstance();
+      await mcpServer.connect(transport);
+      await transport.handleRequest(req, res);
     } catch (err: any) {
       console.error('Streamable HTTP error:', err);
       if (!res.headersSent) {
@@ -219,6 +216,7 @@ const server = http.createServer(async (req, res) => {
     }
     return;
   }
+
 
 
 
