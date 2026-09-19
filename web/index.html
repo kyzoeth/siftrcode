@@ -2415,36 +2415,36 @@ ${highlightPrunedCode(item.rawCode, lang)}
 
   <!-- B2B Team Trial Modal -->
   <div id="trialModal" onclick="if(event.target===this) closeTrialModal()" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-zinc-950/75 backdrop-blur-sm transition-all duration-200">
-    <div class="relative w-full max-w-lg bg-white border border-zinc-200/90 rounded-lg shadow-2xl overflow-hidden p-6 sm:p-8 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+    <div class="relative w-full max-w-md bg-white border border-zinc-200/90 rounded-lg shadow-2xl overflow-hidden p-5 sm:p-6 space-y-3.5 animate-in fade-in zoom-in-95 duration-200">
       
       <!-- Close Button -->
-      <button onclick="closeTrialModal()" aria-label="Close" class="absolute top-5 right-5 text-zinc-400 hover:text-zinc-700 transition p-1.5 rounded-md hover:bg-zinc-100">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      <button onclick="closeTrialModal()" aria-label="Close" class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
 
       <!-- Modal Header -->
-      <div class="space-y-1.5 text-left">
-        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-blue-50 border border-blue-200 text-blue-900 text-[10px] font-mono font-semibold uppercase tracking-wider">
+      <div class="space-y-1 text-left pr-6">
+        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-300 text-[10px] font-mono font-semibold uppercase tracking-wider">
           <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
           14-Day Free Team Trial
         </div>
-        <h3 class="text-2xl sm:text-3xl font-normal text-zinc-900 tracking-tight font-serif">Supercharge your team's coding agents</h3>
-        <p class="text-xs sm:text-sm text-zinc-500 font-sans">
+        <h3 class="text-xl sm:text-2xl font-normal text-zinc-900 tracking-tight font-serif leading-snug">Supercharge your team's coding agents</h3>
+        <p class="text-[11px] sm:text-xs text-zinc-500 font-sans leading-relaxed">
           Eliminate 90% token waste, slash agent latency from 45s to 4s, and sync synthesized interfaces across your engineers.
         </p>
       </div>
 
       <!-- Form Container -->
-      <form id="trialForm" onsubmit="submitTrialForm(event)" class="space-y-4 text-left font-sans text-xs">
+      <form id="trialForm" onsubmit="submitTrialForm(event)" class="space-y-3 text-left font-sans text-xs">
         <div>
-          <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider">Work Email *</label>
-          <input type="email" id="trialEmail" required placeholder="alex@company.com" class="w-full px-3.5 py-2.5 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-900 font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
+          <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Work Email *</label>
+          <input type="email" id="trialEmail" required placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-900 font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider">Team Size</label>
-            <select id="trialTeamSize" class="w-full px-3 py-2.5 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-800 font-sans text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
+            <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Team Size</label>
+            <select id="trialTeamSize" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-800 font-sans text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
               <option value="1-5 devs">1–5 engineers</option>
               <option value="5-20 devs" selected>5–20 engineers</option>
               <option value="20-50 devs">20–50 engineers</option>
@@ -2453,8 +2453,8 @@ ${highlightPrunedCode(item.rawCode, lang)}
           </div>
 
           <div>
-            <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider">Primary AI Agent</label>
-            <select id="trialAgent" class="w-full px-3 py-2.5 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-800 font-sans text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
+            <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Primary AI Agent</label>
+            <select id="trialAgent" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-800 font-sans text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
               <option value="Cursor" selected>Cursor</option>
               <option value="Claude Code">Claude Code</option>
               <option value="Windsurf">Windsurf</option>
@@ -2465,42 +2465,42 @@ ${highlightPrunedCode(item.rawCode, lang)}
         </div>
 
         <div>
-          <label class="block text-zinc-700 font-semibold mb-1 text-[11px] uppercase tracking-wider">Repository URL / Stack (Optional)</label>
-          <input type="text" id="trialRepo" placeholder="github.com/company/repo" class="w-full px-3.5 py-2.5 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-900 font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
+          <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Repository URL / Stack (Optional)</label>
+          <input type="text" id="trialRepo" placeholder="github.com/company/repo" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-900 font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
         </div>
 
-        <div id="trialError" class="hidden text-[11px] text-rose-600 bg-rose-50 border border-rose-200 rounded-md p-2.5 font-sans"></div>
+        <div id="trialError" class="hidden text-[11px] text-rose-600 bg-rose-50 border border-rose-200 rounded-md p-2 font-sans"></div>
 
-        <button type="submit" id="trialSubmitBtn" class="w-full py-3 rounded-md bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs sm:text-sm transition btn-press shadow-md hover:shadow-lg active:scale-[0.99] flex items-center justify-center gap-2">
+        <button type="submit" id="trialSubmitBtn" class="w-full py-2.5 rounded-md bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs transition btn-press shadow-xs hover:shadow active:scale-[0.99] flex items-center justify-center gap-1.5">
           <span>Activate 14-Day Team Trial</span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
         </button>
 
-        <div class="pt-1 text-center">
-          <p class="text-[11px] text-zinc-400 font-sans">
+        <div class="pt-0.5 text-center">
+          <p class="text-[10px] text-zinc-400 dark:text-zinc-500 font-sans">
             No credit card required for trial • $19/seat/mo after trial • Cancel anytime
           </p>
         </div>
       </form>
 
       <!-- Success State -->
-      <div id="trialSuccess" class="hidden space-y-5 text-center py-2">
-        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mx-auto text-xl font-bold shadow-xs">
+      <div id="trialSuccess" class="hidden space-y-3.5 text-center py-1">
+        <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mx-auto text-lg font-bold shadow-xs">
           ✓
         </div>
-        <div class="space-y-1.5">
-          <h4 class="text-xl font-bold text-zinc-900">You're on the priority onboarding list!</h4>
-          <p class="text-xs text-zinc-600 max-w-sm mx-auto font-sans leading-relaxed" id="trialSuccessMsg">
+        <div class="space-y-1">
+          <h4 class="text-lg font-bold text-zinc-900 dark:text-zinc-100">You're on the priority onboarding list!</h4>
+          <p class="text-xs text-zinc-600 dark:text-zinc-400 max-w-xs mx-auto font-sans leading-relaxed" id="trialSuccessMsg">
             We've registered your team. Check your work email shortly for your trial activation key and team cache access.
           </p>
         </div>
-        <div class="p-4 bg-zinc-50 border border-zinc-200 rounded-lg text-left space-y-2 font-sans text-xs">
+        <div class="p-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-left space-y-1.5 font-sans text-xs">
           <div class="text-zinc-500 text-[10px] uppercase font-semibold">Start auditing your repo right now:</div>
-          <div class="bg-zinc-900 text-blue-400 p-2.5 rounded-md flex items-center justify-between font-mono text-xs">
+          <div class="bg-zinc-900 text-blue-400 p-2 rounded-md flex items-center justify-between font-mono text-xs">
             <code>npx siftrcode audit</code>
           </div>
         </div>
-        <button onclick="closeTrialModal()" class="w-full py-2.5 rounded-md bg-zinc-900 text-white font-medium text-xs hover:bg-zinc-800 transition">
+        <button onclick="closeTrialModal()" class="w-full py-2 rounded-md bg-zinc-900 text-white font-medium text-xs hover:bg-zinc-800 transition">
           Done
         </button>
       </div>
