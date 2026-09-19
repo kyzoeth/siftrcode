@@ -102,6 +102,44 @@
     .btn-press:active { transform: translateY(1px); }
     @keyframes ci-live-blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.25; transform: scale(0.85); } }
     .ci-live-dot { animation: ci-live-blink 2.2s ease-in-out infinite; }
+
+    /* Architecture Diagram Flow Animations */
+    @keyframes flowDashes {
+      from { stroke-dashoffset: 48; }
+      to { stroke-dashoffset: 0; }
+    }
+    .anim-flow-red {
+      stroke: #D97757;
+      stroke-dasharray: 6 4;
+      animation: flowDashes 1.4s linear infinite;
+    }
+    .anim-flow-emerald {
+      stroke: #10B981;
+      stroke-dasharray: 6 4;
+      animation: flowDashes 1.4s linear infinite;
+    }
+    .anim-flow-split {
+      stroke: #E58B6E;
+      stroke-dasharray: 6 4;
+      animation: flowDashes 1.4s linear infinite;
+    }
+    @keyframes pulseRing {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.08); opacity: 0.4; }
+    }
+    .pulse-ring {
+      animation: pulseRing 2s ease-in-out infinite;
+    }
+    .node-card {
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .node-card:hover {
+      transform: translateY(-2px);
+    }
+    .node-card.active-node {
+      border-color: #D97757 !important;
+      box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.4), 0 8px 24px -4px rgba(217, 119, 87, 0.2) !important;
+    }
   </style>
 </head>
 <body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-[#ECCBBE] selection:text-[#411A0E] dark:selection:bg-[#D97757]/30 dark:selection:text-[#FAF3F0]">
@@ -192,6 +230,278 @@
         An engineering overview of how SiftrCode dissolves 90% of token bloat while keeping 100% of exported interfaces, type signatures, and contracts intact.
       </p>
     </div>
+
+    <!-- Interactive Animated System Architecture Diagram -->
+    <section id="system-architecture" class="p-5 sm:p-7 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-xl shadow-2xs space-y-6">
+      
+      <!-- Diagram Header & Controls -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-200/70 dark:border-zinc-800/80 pb-5">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 uppercase tracking-wider">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#D97757] animate-pulse"></span>
+              Live Pipeline Architecture
+            </span>
+            <span class="hidden sm:inline-flex text-[11px] font-mono text-zinc-400 dark:text-zinc-500">
+              Zero Cloud Egress • Local Stdio IPC
+            </span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-serif text-ink tracking-tight font-normal">
+            End-to-End Context Pipeline
+          </h2>
+          <p class="text-xs text-ink-secondary">
+            Click any system component below to inspect its runtime payload, or simulate the live dataflow.
+          </p>
+        </div>
+
+        <!-- Simulation Trigger Button -->
+        <div class="flex items-center gap-2 shrink-0">
+          <button id="btnSimulateFlow" onclick="simulateArchFlow()" class="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-mono font-medium bg-[#D97757] hover:bg-[#C86241] text-white transition shadow-sm btn-press cursor-pointer">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+            </svg>
+            <span id="btnSimulateText">▶ Simulate Pipeline Flow</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Pipeline Diagram: 4 Primary Nodes with Animated Flow Arrows -->
+      <div class="relative py-1">
+        
+        <!-- Desktop/Mobile Responsive Flex Flow -->
+        <div class="flex flex-col md:flex-row items-stretch justify-between gap-1.5 md:gap-0">
+          
+          <!-- Node 1: Raw Codebase -->
+          <div id="archNode1" onclick="selectArchNode(1)" class="node-card active-node flex-1 min-w-0 p-3.5 sm:p-4 rounded-lg bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between gap-2.5 cursor-pointer select-none">
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-300/80 dark:border-rose-800/80">01. INPUT</span>
+                <span class="w-2 h-2 rounded-full bg-rose-500 shadow-2xs"></span>
+              </div>
+              <div>
+                <div class="font-serif text-base sm:text-lg text-ink font-normal leading-tight">Raw Codebase</div>
+                <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate">Local Filesystem AST</div>
+              </div>
+              <p class="text-[10.5px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                Raw source files with imperative bodies, SQL, loops, &amp; helpers.
+              </p>
+            </div>
+            <div class="pt-2 border-t border-zinc-200/60 dark:border-zinc-800/60 flex items-center justify-between font-mono text-[10px]">
+              <span class="text-zinc-400">Context:</span>
+              <span class="font-bold text-rose-600 dark:text-rose-400">125k tokens</span>
+            </div>
+          </div>
+
+          <!-- Connector 1 -> 2 (Desktop Horizontal / Mobile Vertical) -->
+          <div class="hidden md:flex items-center justify-center shrink-0 w-8 lg:w-10 px-0.5" title="Raw AST Ingestion">
+            <svg class="w-full h-8 overflow-visible" viewBox="0 0 36 24" fill="none">
+              <line x1="2" y1="12" x2="30" y2="12" class="anim-flow-red" stroke-width="2" />
+              <polygon points="28,8 34,12 28,16" fill="#D97757" />
+              <circle r="3" class="flow-particle-red">
+                <animate attributeName="cx" from="2" to="28" dur="1.4s" repeatCount="indefinite" />
+                <animate attributeName="cy" values="12;12" dur="1.4s" repeatCount="indefinite" />
+              </circle>
+            </svg>
+          </div>
+          <div class="md:hidden flex items-center justify-center h-6 w-full py-0.5">
+            <svg class="h-6 w-8 overflow-visible" viewBox="0 0 24 24" fill="none">
+              <line x1="12" y1="2" x2="12" y2="18" class="anim-flow-red" stroke-width="2" />
+              <polygon points="8,16 12,22 16,16" fill="#D97757" />
+              <circle r="3" class="flow-particle-red">
+                <animate attributeName="cy" from="2" to="18" dur="1.4s" repeatCount="indefinite" />
+                <animate attributeName="cx" values="12;12" dur="1.4s" repeatCount="indefinite" />
+              </circle>
+            </svg>
+          </div>
+
+          <!-- Node 2: SiftrCode AST Synthesizer -->
+          <div id="archNode2" onclick="selectArchNode(2)" class="node-card flex-1 min-w-0 p-3.5 sm:p-4 rounded-lg bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between gap-2.5 cursor-pointer select-none">
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/80 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/60">02. ENGINE</span>
+                <span class="w-2 h-2 rounded-full bg-[#D97757] shadow-2xs"></span>
+              </div>
+              <div>
+                <div class="font-serif text-base sm:text-lg text-ink font-normal leading-tight">AST Synthesizer</div>
+                <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate">&lt;0.15s Local CPU</div>
+              </div>
+              <p class="text-[10.5px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                Scope parser &amp; body dissolver; strips bloat with zero cloud egress.
+              </p>
+            </div>
+            <div class="pt-2 border-t border-zinc-200/60 dark:border-zinc-800/60 flex items-center justify-between font-mono text-[10px]">
+              <span class="text-zinc-400">Pruned:</span>
+              <span class="font-bold text-[#D97757] dark:text-[#F39C82]">-92.2% bloat</span>
+            </div>
+          </div>
+
+          <!-- Connector 2 -> 3 (Transition from Red to Emerald) -->
+          <div class="hidden md:flex items-center justify-center shrink-0 w-8 lg:w-10 px-0.5" title="Pruned AST Contracts">
+            <svg class="w-full h-8 overflow-visible" viewBox="0 0 36 24" fill="none">
+              <line x1="2" y1="12" x2="30" y2="12" class="anim-flow-split" stroke-width="2" />
+              <polygon points="28,8 34,12 28,16" fill="#10B981" />
+              <circle r="3" class="flow-particle-green">
+                <animate attributeName="cx" from="2" to="28" dur="1.4s" repeatCount="indefinite" />
+                <animate attributeName="cy" values="12;12" dur="1.4s" repeatCount="indefinite" />
+              </circle>
+            </svg>
+          </div>
+          <div class="md:hidden flex items-center justify-center h-6 w-full py-0.5">
+            <svg class="h-6 w-8 overflow-visible" viewBox="0 0 24 24" fill="none">
+              <line x1="12" y1="2" x2="12" y2="18" class="anim-flow-split" stroke-width="2" />
+              <polygon points="8,16 12,22 16,16" fill="#10B981" />
+              <circle r="3" class="flow-particle-green">
+                <animate attributeName="cy" from="2" to="18" dur="1.4s" repeatCount="indefinite" />
+                <animate attributeName="cx" values="12;12" dur="1.4s" repeatCount="indefinite" />
+              </circle>
+            </svg>
+          </div>
+
+          <!-- Node 3: Stdio MCP Server -->
+          <div id="archNode3" onclick="selectArchNode(3)" class="node-card flex-1 min-w-0 p-3.5 sm:p-4 rounded-lg bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between gap-2.5 cursor-pointer select-none">
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-300/80 dark:border-sky-800/80">03. TRANSPORT</span>
+                <span class="w-2 h-2 rounded-full bg-sky-500 shadow-2xs"></span>
+              </div>
+              <div>
+                <div class="font-serif text-base sm:text-lg text-ink font-normal leading-tight">Stdio MCP Server</div>
+                <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate">JSON-RPC / stdio</div>
+              </div>
+              <p class="text-[10.5px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                Zero-latency native IPC; exposes tools directly to local IDE.
+              </p>
+            </div>
+            <div class="pt-2 border-t border-zinc-200/60 dark:border-zinc-800/60 flex items-center justify-between font-mono text-[10px]">
+              <span class="text-zinc-400">Security:</span>
+              <span class="font-bold text-sky-600 dark:text-sky-400">Zero Egress</span>
+            </div>
+          </div>
+
+          <!-- Connector 3 -> 4 (Emerald Stream to Agent) -->
+          <div class="hidden md:flex items-center justify-center shrink-0 w-8 lg:w-10 px-0.5" title="Stream Distilled Context">
+            <svg class="w-full h-8 overflow-visible" viewBox="0 0 36 24" fill="none">
+              <line x1="2" y1="12" x2="30" y2="12" class="anim-flow-emerald" stroke-width="2" />
+              <polygon points="28,8 34,12 28,16" fill="#10B981" />
+              <circle r="3" class="flow-particle-green">
+                <animate attributeName="cx" from="2" to="28" dur="1.4s" repeatCount="indefinite" />
+                <animate attributeName="cy" values="12;12" dur="1.4s" repeatCount="indefinite" />
+              </circle>
+            </svg>
+          </div>
+          <div class="md:hidden flex items-center justify-center h-6 w-full py-0.5">
+            <svg class="h-6 w-8 overflow-visible" viewBox="0 0 24 24" fill="none">
+              <line x1="12" y1="2" x2="12" y2="18" class="anim-flow-emerald" stroke-width="2" />
+              <polygon points="8,16 12,22 16,16" fill="#10B981" />
+              <circle r="3" class="flow-particle-green">
+                <animate attributeName="cy" from="2" to="18" dur="1.4s" repeatCount="indefinite" />
+                <animate attributeName="cx" values="12;12" dur="1.4s" repeatCount="indefinite" />
+              </circle>
+            </svg>
+          </div>
+
+          <!-- Node 4: AI Coding Agent -->
+          <div id="archNode4" onclick="selectArchNode(4)" class="node-card flex-1 min-w-0 p-3.5 sm:p-4 rounded-lg bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between gap-2.5 cursor-pointer select-none">
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-800/80">04. AGENT</span>
+                <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-2xs"></span>
+              </div>
+              <div>
+                <div class="font-serif text-base sm:text-lg text-ink font-normal leading-tight">Coding Agent</div>
+                <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate">Claude Code &amp; Cursor</div>
+              </div>
+              <p class="text-[10.5px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                Ingests distilled type contracts with 100% parameter visibility.
+              </p>
+            </div>
+            <div class="pt-2 border-t border-zinc-200/60 dark:border-zinc-800/60 flex items-center justify-between font-mono text-[10px]">
+              <span class="text-zinc-400">Context:</span>
+              <span class="font-bold text-emerald-600 dark:text-emerald-400">9.8k tokens</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Connector 4 -> 5 Downward Arrow -->
+        <div class="flex items-center justify-center h-8 w-full py-1">
+          <svg class="h-8 w-12 overflow-visible" viewBox="0 0 32 32" fill="none">
+            <line x1="16" y1="2" x2="16" y2="22" class="anim-flow-emerald" stroke-width="2" />
+            <polygon points="11,20 16,28 21,20" fill="#10B981" />
+            <circle r="3" class="flow-particle-green">
+              <animate attributeName="cy" from="2" to="22" dur="1.4s" repeatCount="indefinite" />
+              <animate attributeName="cx" values="16;16" dur="1.4s" repeatCount="indefinite" />
+            </circle>
+          </svg>
+        </div>
+
+        <!-- Node 5: Frontier LLM Inference Banner -->
+        <div id="archNode5" onclick="selectArchNode(5)" class="node-card cursor-pointer p-4 sm:p-5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300/80 dark:border-emerald-800/70 shadow-2xs select-none">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-700/80">05. INFERENCE</span>
+                <span class="font-serif text-base sm:text-lg text-ink font-normal">Frontier LLM Provider API</span>
+                <span class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">(Claude 3.7 Sonnet / GPT-4o)</span>
+              </div>
+              <p class="text-[11px] text-zinc-600 dark:text-zinc-300 max-w-xl">
+                Downstream model processes type contracts with zero hallucination, reducing input costs by 92% and boosting turnaround by 11x.
+              </p>
+            </div>
+            <!-- Telemetry Badges -->
+            <div class="flex items-center gap-2 font-mono text-xs shrink-0 flex-wrap">
+              <div class="px-2.5 py-1 rounded bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800/80 flex flex-col items-center shadow-2xs">
+                <span class="text-[9.5px] text-zinc-400 uppercase">Input Payload</span>
+                <span class="font-bold text-emerald-600 dark:text-emerald-400 text-[11px]">9.8k tokens (-92%)</span>
+              </div>
+              <div class="px-2.5 py-1 rounded bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800/80 flex flex-col items-center shadow-2xs">
+                <span class="text-[9.5px] text-zinc-400 uppercase">Cost / Turn</span>
+                <span class="font-bold text-emerald-600 dark:text-emerald-400 text-[11px]">$0.029 (Save $0.346)</span>
+              </div>
+              <div class="px-2.5 py-1 rounded bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800/80 flex flex-col items-center shadow-2xs">
+                <span class="text-[9.5px] text-zinc-400 uppercase">Turnaround</span>
+                <span class="font-bold text-emerald-600 dark:text-emerald-400 text-[11px]">3.4s (11x speedup)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Interactive Architecture Inspector Drawer -->
+      <div class="pt-2 border-t border-zinc-200/70 dark:border-zinc-800/80 space-y-3">
+        <!-- Inspector Tabs -->
+        <div class="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar font-mono text-[11px]">
+          <button id="archTab1" onclick="selectArchNode(1)" class="px-2.5 py-1 rounded-md transition cursor-pointer shrink-0 font-medium bg-zinc-200/80 dark:bg-zinc-800 text-zinc-900 dark:text-white">01. Raw Codebase</button>
+          <button id="archTab2" onclick="selectArchNode(2)" class="px-2.5 py-1 rounded-md transition cursor-pointer shrink-0 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">02. AST Synthesizer</button>
+          <button id="archTab3" onclick="selectArchNode(3)" class="px-2.5 py-1 rounded-md transition cursor-pointer shrink-0 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">03. Stdio MCP</button>
+          <button id="archTab4" onclick="selectArchNode(4)" class="px-2.5 py-1 rounded-md transition cursor-pointer shrink-0 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">04. Coding Agent</button>
+          <button id="archTab5" onclick="selectArchNode(5)" class="px-2.5 py-1 rounded-md transition cursor-pointer shrink-0 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">05. FinOps Ledger</button>
+        </div>
+
+        <!-- Inspector Payload Body -->
+        <div class="p-4 rounded-lg bg-zinc-950 text-zinc-200 border border-zinc-800 font-mono text-xs space-y-3 shadow-inner">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-[11px] pb-2 border-b border-zinc-800/80 text-zinc-400">
+            <div class="flex items-center gap-2">
+              <span id="inspectorStepBadge" class="px-1.5 py-0.5 rounded bg-rose-950/80 text-rose-400 border border-rose-800/80 font-bold">NODE 01</span>
+              <span id="inspectorTitle" class="text-white font-semibold">Raw Source AST Ingestion</span>
+            </div>
+            <div id="inspectorTelemetry" class="text-zinc-400 text-[10.5px]">
+              Payload: 125,000 Tokens • Egress: 0 bytes • Local CPU
+            </div>
+          </div>
+
+          <!-- Code or JSON Viewport -->
+          <pre id="inspectorCode" class="overflow-x-auto p-2.5 rounded bg-zinc-900/90 text-zinc-300 text-[11px] leading-relaxed border border-zinc-800/60 no-scrollbar max-h-52 font-mono"></pre>
+
+          <!-- Component Specification / Guarantees -->
+          <div id="inspectorDesc" class="text-[11px] font-sans text-zinc-400 leading-relaxed">
+            Raw imperative source files containing full implementation bodies, database connection queries, and retry loops. Consumes 85% to 95% of LLM prompt windows with non-contract bloat.
+          </div>
+        </div>
+      </div>
+
+    </section>
 
     <!-- 5 Step Visual Pipeline -->
     <div class="space-y-12 text-xs sm:text-sm leading-relaxed font-sans text-zinc-600 dark:text-zinc-300">
@@ -590,6 +900,171 @@
         document.getElementById('fbSuccessMsg').innerText = 'Thank you! Your feedback has been recorded.';
       }
     }
+
+    // ==========================================
+    // Interactive Architecture Diagram Controller
+    // ==========================================
+    const archNodeData = {
+      1: {
+        badge: 'NODE 01',
+        badgeClass: 'bg-rose-950/80 text-rose-400 border border-rose-800/80 font-bold',
+        title: 'Raw Source AST Ingestion (High Bloat)',
+        telemetry: 'Payload: 125,000 Tokens • Egress: 0 bytes • 38s Latency',
+        code: `// Raw Source File: src/services/order.ts (Unpruned AST)
+export class OrderService {
+  private db: DatabasePool;
+  private stripe: StripeClient;
+
+  // 120 lines of database queries, transaction locks & retry loops
+  public async processCheckout(cartId: string, token: string): Promise<OrderResult> {
+    const trx = await this.db.transaction();
+    try {
+      const items = await trx.query('SELECT * FROM cart_items WHERE id = $1', [cartId]);
+      for (const item of items) { /* inventory validation, price recalculations */ }
+      const charge = await this.stripe.charges.create({ amount: total, source: token });
+      await trx.commit();
+      return { success: true, orderId: charge.id };
+    } catch (e) {
+      await trx.rollback();
+      throw e;
+    }
+  }
+}`,
+        desc: 'Raw imperative source files containing full method implementations, database queries, and retry loops. Consumes 85% to 95% of LLM prompt windows with non-contract bloat.'
+      },
+      2: {
+        badge: 'NODE 02',
+        badgeClass: 'bg-[#411A0E]/80 text-[#F39C82] border border-[#B34E2E]/60 font-bold',
+        title: 'Deterministic AST Synthesizer (<0.15s)',
+        telemetry: 'Speed: <150ms / 10k lines • Zero Network Egress • Local CPU',
+        code: `// SiftrCode AST Synthesizer (Zero-Loss Extraction)
+// 1. Constructs semantic AST representation via TS/Python compiler APIs
+// 2. Evaluates exported boundaries vs internal execution blocks
+// 3. Dissolves imperative method bodies while preserving 100% type safety
+
+[AST Compilation Telemetry]
+- Source lines analyzed:     1,420 lines
+- Types & interfaces kept:   100% (OrderResult, OrderService, processCheckout)
+- Imperative bodies pruned:  92.2% (1,308 lines collapsed)
+- Compiler latency:          112 ms (0 cloud calls)`,
+        desc: 'Executes on your local CPU in under 150ms. Traverses the abstract syntax tree, maps identifier scopes, and replaces internal imperative routines with type-safe contracts.'
+      },
+      3: {
+        badge: 'NODE 03',
+        badgeClass: 'bg-sky-950/80 text-sky-400 border border-sky-800/80 font-bold',
+        title: 'Native Stdio Model Context Protocol (MCP)',
+        telemetry: 'Protocol: JSON-RPC 2.0 • Transport: stdio • Zero Cloud Egress',
+        code: `--> {"jsonrpc":"2.0","id":1,"method":"tools/call",
+     "params":{"name":"siftr_skeleton","arguments":{"path":"src/services/order.ts"}}}
+
+<-- {"jsonrpc":"2.0","id":1,"result":{
+     "content":[{
+       "type":"text",
+       "text":"export interface OrderResult { success: boolean; orderId: string; }\nexport class OrderService {\n  public processCheckout(cartId: string, token: string): Promise<OrderResult>;\n}"
+     }],
+     "tokens": 42,
+     "reduction": "92.2%"
+    }}`,
+        desc: 'Communicates with Claude Code, Cursor, and Antigravity over standard input/output (stdio). No web sockets, no cloud proxies, and zero external network packets.'
+      },
+      4: {
+        badge: 'NODE 04',
+        badgeClass: 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/80 font-bold',
+        title: 'AI Coding Agent Context Ingestion',
+        telemetry: 'Context: 9,800 Tokens (-92.2%) • Parameter Visibility: 100%',
+        code: `// Synthesized AST Interface Ingested by Claude Code / Cursor
+// [SiftrCode Synthesized Interface] src/services/order.ts
+export interface OrderResult {
+  success: boolean;
+  orderId: string;
+}
+
+export class OrderService {
+  /** Processes customer checkout with payment token */
+  public processCheckout(cartId: string, token: string): Promise<OrderResult>;
+}
+// ⟡ [ Implementation bodies dissolved by SiftrCode • 100% types preserved ]`,
+        desc: 'Claude Code and Cursor receive crystal-clear interface contracts with complete visibility into parameter constraints, return signatures, and types. Zero hallucination risk.'
+      },
+      5: {
+        badge: 'NODE 05',
+        badgeClass: 'bg-emerald-950 text-emerald-300 border border-emerald-600 font-bold',
+        title: 'Frontier LLM Provider FinOps Payoff',
+        telemetry: 'Cost: $0.029 / turn (Save $0.346) • Response Time: 3.4s vs 38s',
+        code: `[FinOps Savings Derivation per Developer / Month]
+1. Baseline (Unpruned):  125,000 tokens × ($3.00 / 1M) = $0.375 / turn
+   50 turns/day × 22 days = $412.50 / dev / month ($4,950 / year)
+
+2. With SiftrCode AST:   9,800 tokens × ($3.00 / 1M)   = $0.029 / turn
+   50 turns/day × 22 days = $32.34 / dev / month ($388 / year)
+
+3. Net Savings:          +$380.16 / month / dev (+$4,562 / dev / year)
+   Turnaround:           11x faster (3.4s vs 38s avg agent response time)`,
+        desc: 'Massive token headroom allows the agent to ingest 10x more surrounding repository context while lowering API bills by over 90% and speeding up turnaround by 11x.'
+      }
+    };
+
+    let activeArchNode = 1;
+    function selectArchNode(index) {
+      activeArchNode = index;
+      for (let i = 1; i <= 5; i++) {
+        const node = document.getElementById('archNode' + i);
+        const tab = document.getElementById('archTab' + i);
+        if (node) {
+          if (i === index) node.classList.add('active-node');
+          else node.classList.remove('active-node');
+        }
+        if (tab) {
+          if (i === index) {
+            tab.className = 'px-2.5 py-1 rounded-md transition cursor-pointer shrink-0 font-medium bg-zinc-200/80 dark:bg-zinc-800 text-zinc-900 dark:text-white';
+          } else {
+            tab.className = 'px-2.5 py-1 rounded-md transition cursor-pointer shrink-0 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white';
+          }
+        }
+      }
+
+      const data = archNodeData[index];
+      if (!data) return;
+
+      const badge = document.getElementById('inspectorStepBadge');
+      if (badge) {
+        badge.innerText = data.badge;
+        badge.className = `px-1.5 py-0.5 rounded text-[10px] font-mono ${data.badgeClass}`;
+      }
+      const title = document.getElementById('inspectorTitle');
+      if (title) title.innerText = data.title;
+      const telemetry = document.getElementById('inspectorTelemetry');
+      if (telemetry) telemetry.innerText = data.telemetry;
+      const code = document.getElementById('inspectorCode');
+      if (code) code.innerText = data.code;
+      const desc = document.getElementById('inspectorDesc');
+      if (desc) desc.innerText = data.desc;
+    }
+
+    let isSimulatingArch = false;
+    function simulateArchFlow() {
+      if (isSimulatingArch) return;
+      isSimulatingArch = true;
+      const btn = document.getElementById('btnSimulateText');
+      if (btn) btn.innerText = 'Processing Flow...';
+
+      let step = 1;
+      selectArchNode(1);
+
+      const interval = setInterval(() => {
+        step++;
+        if (step <= 5) {
+          selectArchNode(step);
+        } else {
+          clearInterval(interval);
+          isSimulatingArch = false;
+          if (btn) btn.innerText = '↺ Re-run Simulation';
+        }
+      }, 900);
+    }
+
+    // Initialize with Node 1 on load
+    selectArchNode(1);
   </script>
 </body>
 </html>
