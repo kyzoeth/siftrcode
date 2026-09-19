@@ -429,20 +429,31 @@
     html.dark .prune-line.line-struck .prune-marker {
       color: #fb7185 !important;
     }
+    .prune-line.line-struck .line-num {
+      color: #e11d48 !important;
+      border-color: rgba(244, 63, 94, 0.35) !important;
+    }
+    html.dark .prune-line.line-struck .line-num {
+      color: #fb7185 !important;
+      border-color: rgba(244, 63, 94, 0.45) !important;
+    }
     .prune-line.line-sliced {
       transform: translateX(-104%);
       pointer-events: none;
     }
 
-
+    .line-num {
+      user-select: none;
+      -webkit-user-select: none;
+    }
 
     /* Targeted Implementation Highlight Card System */
     .targeted-prune-card {
       background: transparent;
-      border: 1px solid transparent;
-      border-left: 2px solid transparent;
-      border-radius: 4px;
-      padding: 1px 4px;
+      border: 0 solid transparent;
+      border-left: 0 solid transparent;
+      border-radius: 6px;
+      padding: 0;
       box-shadow: none;
       transition: background 0.7s cubic-bezier(0.16, 1, 0.3, 1), 
                   border-color 0.7s cubic-bezier(0.16, 1, 0.3, 1), 
@@ -453,7 +464,7 @@
       background: #fff5f5;
       border: 1px solid #fed7d7;
       border-left: 3px solid #f43f5e;
-      padding: 10px 12px;
+      padding: 8px 10px;
       box-shadow: 0 1px 4px rgba(244, 63, 94, 0.09);
     }
     html.dark .targeted-prune-card.bloat-highlighted {
@@ -740,7 +751,7 @@
             <!-- Diffuse Ambient AST Scope Wave -->
             <div id="scanBeam" class="ast-scope-wave"></div>
             <div id="sparkleOverlay" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
-            <div id="skelOutput" class="w-full h-full p-4 sm:p-5 font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-y-auto selection:bg-blue-100 selection:text-blue-900 signal-glow"></div>
+            <div id="skelOutput" class="w-full h-full p-4 sm:p-5 font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-auto selection:bg-blue-100 selection:text-blue-900 signal-glow"></div>
           </div>
 
           <!-- Terminal Footer with Consolidated Telemetry Stream -->
@@ -1421,7 +1432,7 @@ impl Gateway for StripeGateway {
       const container = document.getElementById('skelOutput');
       if (!container) return;
       const code = cleanSynthesizedCode[lang] || '';
-      container.innerHTML = `<div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed whitespace-pre">${highlightCode(code, lang)}</div>`;
+      container.innerHTML = `<div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">${renderCodeLinesWithNumbers(code, lang, 1)}</div>`;
     }
 
     let curLang = 'ts';
@@ -1438,77 +1449,103 @@ impl Gateway for StripeGateway {
 
     let currentMorphState = 'raw';
 
-    function highlightCode(code, lang) {
-      const lines = code.split('\n');
-      const highlightedLines = lines.map(line => {
-        const trimmed = line.trim();
-        if (trimmed.includes('dissolved by SiftrCode') || trimmed.includes('lines dissolved')) {
-          const cleanText = trimmed.replace(/^(\/\/|#)\s*(⟡\s*)?/, '').replace(/^\[\s*/, '').replace(/\s*\]$/, '');
-          return `<div class="my-2 py-1 px-2.5 rounded bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 font-semibold text-[11px] flex items-center gap-1.5"><span class="text-blue-600 dark:text-blue-400">⟡</span> ${escapeHtml(cleanText)}</div>`;
+    const langKeywords = {
+      ts: new Set(['export', 'class', 'interface', 'type', 'async', 'public', 'private', 'protected', 'constructor', 'return', 'import', 'from', 'const', 'let', 'extends', 'implements', 'new', 'throw', 'try', 'catch', 'null', 'undefined']),
+      py: new Set(['def', 'class', 'import', 'from', 'return', 'async', 'await', 'self', 'try', 'except', 'for', 'in', 'raise', 'None', 'True', 'False', 'pass']),
+      go: new Set(['package', 'import', 'type', 'struct', 'interface', 'func', 'return', 'var', 'const', 'select', 'case', 'chan', 'nil']),
+      rs: new Set(['pub', 'trait', 'struct', 'enum', 'impl', 'fn', 'for', 'async', 'const', 'return', 'use', 'match', 'let', 'mut', 'where', 'type', 'self', 'Result', 'Ok', 'Err'])
+    };
+
+    const typeSet = new Set(['Promise', 'User', 'UserCreateInput', 'Database', 'Logger', 'string', 'number', 'boolean', 'any', 'void', 'Dict', 'List', 'Optional', 'Union', 'Tuple', 'Any', 'str', 'int', 'bool', 'float', 'Config', 'Server', 'ServeMux', 'Context', 'error', 'String', 'u64', 'u32', 'i64', 'usize', 'Gateway', 'StripeGateway']);
+
+    function highlightSingleLine(line, lang) {
+      if (line === undefined || line === null) return '';
+      const trimmed = line.trim();
+      if (trimmed.includes('dissolved by SiftrCode') || trimmed.includes('lines dissolved')) {
+        const cleanText = trimmed.replace(/^(\/\/|#)\s*(⟡\s*)?/, '').replace(/^\[\s*/, '').replace(/\s*\]$/, '');
+        return `<div class="my-2 py-1 px-2.5 rounded bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 font-semibold text-[11px] flex items-center gap-1.5"><span class="text-blue-600 dark:text-blue-400">⟡</span> ${escapeHtml(cleanText)}</div>`;
+      }
+      if (trimmed.startsWith('// [SiftrCode') || trimmed.startsWith('# [SiftrCode')) {
+        return `<span class="text-zinc-500 dark:text-zinc-400 font-medium">${escapeHtml(line)}</span>`;
+      }
+      if (trimmed.startsWith('//') || trimmed.startsWith('#') || trimmed.startsWith('/*') || trimmed.startsWith('*') || trimmed.startsWith('"""')) {
+        return `<span class="text-zinc-400 dark:text-zinc-500 italic">${escapeHtml(line)}</span>`;
+      }
+
+      let kwColor = 'text-blue-600 dark:text-blue-400';
+      let typeColor = 'text-indigo-600 dark:text-sky-300';
+      if (lang === 'py') {
+        kwColor = 'text-emerald-700 dark:text-emerald-400';
+        typeColor = 'text-indigo-600 dark:text-sky-300';
+      } else if (lang === 'go') {
+        kwColor = 'text-cyan-700 dark:text-cyan-400';
+        typeColor = 'text-indigo-600 dark:text-sky-300';
+      } else if (lang === 'rs') {
+        kwColor = 'text-amber-700 dark:text-orange-400';
+        typeColor = 'text-indigo-600 dark:text-sky-300';
+      }
+
+      const kws = langKeywords[lang] || langKeywords.ts;
+
+      return line.replace(/(["'`].*?["'`])|([A-Za-z_][A-Za-z0-9_]*)|([<>&])|([^\s\w"'`<>&]+)/g, (match, str, id, sym) => {
+        if (str) {
+          return `<span class="text-emerald-700 dark:text-emerald-300/90">${escapeHtml(str)}</span>`;
         }
-        if (trimmed.startsWith('// [SiftrCode') || trimmed.startsWith('# [SiftrCode')) {
-          return `<span class="text-zinc-500 dark:text-zinc-400 font-medium">${escapeHtml(line)}</span>`;
-        }
-        if (trimmed.startsWith('//') || trimmed.startsWith('#') || trimmed.startsWith('/*') || trimmed.startsWith('*') || trimmed.startsWith('"""')) {
-          return `<span class="text-zinc-400 dark:text-zinc-500 italic">${escapeHtml(line)}</span>`;
-        }
-
-        let kwColor = 'text-blue-600 dark:text-blue-400';
-        let typeColor = 'text-indigo-600 dark:text-sky-300';
-        if (lang === 'py') {
-          kwColor = 'text-emerald-700 dark:text-emerald-400';
-          typeColor = 'text-indigo-600 dark:text-sky-300';
-        } else if (lang === 'go') {
-          kwColor = 'text-cyan-700 dark:text-cyan-400';
-          typeColor = 'text-indigo-600 dark:text-sky-300';
-        } else if (lang === 'rs') {
-          kwColor = 'text-amber-700 dark:text-orange-400';
-          typeColor = 'text-indigo-600 dark:text-sky-300';
-        }
-
-        const langKeywords = {
-          ts: new Set(['export', 'class', 'interface', 'type', 'async', 'public', 'private', 'protected', 'constructor', 'return', 'import', 'from', 'const', 'let', 'extends', 'implements', 'new', 'throw', 'try', 'catch', 'null', 'undefined']),
-          py: new Set(['def', 'class', 'import', 'from', 'return', 'async', 'await', 'self', 'try', 'except', 'for', 'in', 'raise', 'None', 'True', 'False', 'pass']),
-          go: new Set(['package', 'import', 'type', 'struct', 'interface', 'func', 'return', 'var', 'const', 'select', 'case', 'chan', 'nil']),
-          rs: new Set(['pub', 'trait', 'struct', 'enum', 'impl', 'fn', 'for', 'async', 'const', 'return', 'use', 'match', 'let', 'mut', 'where', 'type', 'self', 'Result', 'Ok', 'Err'])
-        };
-
-        const typeSet = new Set(['Promise', 'User', 'UserCreateInput', 'Database', 'Logger', 'string', 'number', 'boolean', 'any', 'void', 'Dict', 'List', 'Optional', 'Union', 'Tuple', 'Any', 'str', 'int', 'bool', 'float', 'Config', 'Server', 'ServeMux', 'Context', 'error', 'String', 'u64', 'u32', 'i64', 'usize', 'Gateway', 'StripeGateway']);
-
-        const kws = langKeywords[lang] || langKeywords.ts;
-
-        return line.replace(/(["'`].*?["'`])|([A-Za-z_][A-Za-z0-9_]*)|([<>&])|([^\s\w"'`<>&]+)/g, (match, str, id, sym) => {
-          if (str) {
-            return `<span class="text-emerald-700 dark:text-emerald-300/90">${escapeHtml(str)}</span>`;
+        if (id) {
+          if (kws.has(id)) {
+            return `<span class="${kwColor} font-semibold">${id}</span>`;
           }
-          if (id) {
-            if (kws.has(id)) {
-              return `<span class="${kwColor} font-semibold">${id}</span>`;
-            }
-            if (typeSet.has(id)) {
-              return `<span class="${typeColor}">${id}</span>`;
-            }
-            return id;
+          if (typeSet.has(id)) {
+            return `<span class="${typeColor}">${id}</span>`;
           }
-          if (sym) {
-            return escapeHtml(sym);
-          }
-          return escapeHtml(match);
-        });
+          return id;
+        }
+        if (sym) {
+          return escapeHtml(sym);
+        }
+        return escapeHtml(match);
       });
-
-      return highlightedLines.join('\n');
     }
 
-    function highlightPrunedCode(code, lang) {
-      const highlighted = highlightCode(code, lang);
-      const lines = highlighted.split('\n');
+    function highlightCode(code, lang) {
+      const lines = code.split('\n');
+      return lines.map(line => highlightSingleLine(line, lang)).join('\n');
+    }
+
+    function renderCodeLinesWithNumbers(codeOrLines, lang, startLine = 1) {
+      const lines = Array.isArray(codeOrLines) ? codeOrLines : codeOrLines.split('\n');
       return lines.map((line, idx) => {
-        return `<div class="prune-line flex items-baseline gap-2 py-0.5 px-1.5 rounded transition-all duration-300 relative overflow-hidden" data-line="${idx}">
-          <span class="prune-marker text-rose-600 dark:text-rose-400 select-none text-[10px] font-bold font-mono shrink-0 w-3 transition-colors">−</span>
-          <span class="prune-text font-mono text-[11px] text-zinc-700 dark:text-rose-100/90 whitespace-pre transition-all duration-300">${line}</span>
+        const lineNum = startLine + idx;
+        const highlighted = highlightSingleLine(line, lang);
+        const safeText = (highlighted && highlighted.length > 0) ? highlighted : '&nbsp;';
+        return `<div class="code-line flex items-baseline leading-relaxed py-0.5">
+          <span class="line-num select-none w-7 sm:w-8 text-right pr-2.5 sm:pr-3 mr-2 sm:mr-2.5 text-zinc-400 dark:text-zinc-600 font-mono text-[11px] sm:text-xs shrink-0 font-normal border-r border-zinc-200/80 dark:border-zinc-800/80">${lineNum}</span>
+          <div class="flex items-baseline overflow-hidden">
+            <span class="code-marker select-none shrink-0 w-3 inline-block"></span>
+            <span class="code-text font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre">${safeText}</span>
+          </div>
         </div>`;
       }).join('');
+    }
+
+    function renderPrunedLinesWithNumbers(codeOrLines, lang, startLine = 1) {
+      const lines = Array.isArray(codeOrLines) ? codeOrLines : codeOrLines.split('\n');
+      return lines.map((line, idx) => {
+        const lineNum = startLine + idx;
+        const highlighted = highlightSingleLine(line, lang);
+        const safeText = (highlighted && highlighted.length > 0) ? highlighted : '&nbsp;';
+        return `<div class="prune-line flex items-baseline leading-relaxed py-0.5 rounded transition-all duration-300 relative overflow-hidden" data-line="${idx}">
+          <span class="line-num select-none w-7 sm:w-8 text-right pr-2.5 sm:pr-3 mr-2 sm:mr-2.5 text-zinc-400 dark:text-zinc-600 font-mono text-[11px] sm:text-xs shrink-0 font-normal border-r border-zinc-200/80 dark:border-zinc-800/80">${lineNum}</span>
+          <div class="flex items-baseline overflow-hidden">
+            <span class="prune-marker text-rose-600 dark:text-rose-400 select-none text-[11px] font-bold font-mono shrink-0 w-3 text-center transition-colors">−</span>
+            <span class="prune-text font-mono text-xs text-zinc-700 dark:text-rose-100/90 whitespace-pre transition-all duration-300">${safeText}</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function highlightPrunedCode(code, lang, startLine = 1) {
+      return renderPrunedLinesWithNumbers(code, lang, startLine);
     }
 
     function setMorphStatus(mode, stepNum, text) {
@@ -1850,14 +1887,27 @@ impl Gateway for StripeGateway {
         return;
       }
 
+      let currentLine = 1;
       const blocks = demoBlocks[lang];
       const html = blocks.map(item => {
         if (item.type === 'code') {
-          return `<div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">${highlightCode(item.content, lang)}</div>`;
+          const lines = item.content.split('\n');
+          const rendered = renderCodeLinesWithNumbers(lines, lang, currentLine);
+          currentLine += lines.length;
+          return `<div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">${rendered}</div>`;
         }
+
+        const ifaceLines = item.interfaceCode.split('\n');
+        const renderedIface = renderCodeLinesWithNumbers(ifaceLines, lang, currentLine);
+        currentLine += ifaceLines.length;
+
+        const rawLines = item.rawCode.split('\n');
+        const renderedRaw = renderPrunedLinesWithNumbers(rawLines, lang, currentLine);
+        currentLine += rawLines.length;
+
         return `
 <div class="dissolve-section relative" id="section-${item.id}">
-  <div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">${highlightCode(item.interfaceCode, lang)}</div>
+  <div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">${renderedIface}</div>
   <div id="block-${item.id}" class="dissolve-block overflow-hidden my-0.5 relative" style="max-height: 520px;">
     <div id="card-${item.id}" class="targeted-prune-card rounded font-mono text-[11px] leading-relaxed relative">
       <div id="card-header-${item.id}" class="bloat-card-header flex items-center justify-between border-b text-[10px]">
@@ -1870,7 +1920,7 @@ impl Gateway for StripeGateway {
         </span>
       </div>
       <div class="space-y-0.5 overflow-x-auto no-scrollbar">
-${highlightPrunedCode(item.rawCode, lang)}
+${renderedRaw}
       </div>
     </div>
   </div>
@@ -1992,7 +2042,7 @@ ${highlightPrunedCode(item.rawCode, lang)}
       animateNumber('costSkel', prevMetrics.skelCost, skelCost, duration, v => `$${v.toFixed(2)}`);
       animateNumber('costSavedTag', prevMetrics.savedCost, savedCost, duration, v => `Save $${v.toFixed(2)}`);
 
-      document.getElementById('skelOutput').innerHTML = highlightCode(skel, curLang);
+      document.getElementById('skelOutput').innerHTML = `<div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">${renderCodeLinesWithNumbers(skel, curLang, 1)}</div>`;
 
       prevMetrics = {
         rawTokens,
