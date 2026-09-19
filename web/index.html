@@ -562,6 +562,34 @@
       box-shadow: none;
     }
 
+    /* Ambient AST Contract Reorganization Wave */
+    .ast-scope-wave.ast-reorg-wave {
+      background: linear-gradient(180deg, 
+        transparent 0%, 
+        rgba(16, 185, 129, 0.05) 20%, 
+        rgba(59, 130, 246, 0.14) 50%, 
+        rgba(16, 185, 129, 0.06) 80%, 
+        transparent 100%
+      );
+    }
+    html.dark .ast-scope-wave.ast-reorg-wave {
+      background: linear-gradient(180deg, 
+        transparent 0%, 
+        rgba(16, 185, 129, 0.08) 20%, 
+        rgba(59, 130, 246, 0.22) 50%, 
+        rgba(16, 185, 129, 0.10) 80%, 
+        transparent 100%
+      );
+    }
+
+    .line-reorg-purge {
+      transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
+      opacity: 0.28 !important;
+      text-decoration: line-through 1.5px #f43f5e !important;
+      color: #f43f5e !important;
+      transform: translateX(-8px);
+    }
+
     /* Top Compiler Pipeline Progress Runner */
     .ast-compiler-runner {
       height: 100%;
@@ -2608,36 +2636,103 @@ impl PaymentGateway for StripeGateway {
           sectionTargets.push({ targetTokens, targetCost, targetSaved });
         }
 
+        function animateASTReorganization(lang, onComplete) {
+          if (!container) { if (onComplete) onComplete(); return; }
+
+          setMorphStatus('reorganize', 4, 'Reorganizing AST');
+
+          // 1. Highlight and strike out dead-weight lines & collapsed prune wrappers
+          const deadCards = container.querySelectorAll('.targeted-prune-card, .bloat-card-header');
+          deadCards.forEach(el => {
+            el.style.transition = 'opacity 0.4s ease';
+            el.style.opacity = '0';
+          });
+
+          const deadPatterns = [
+            'bcrypt', 'jwt', 'mailer', 'private db:', 'private logger:', 'private readonly jwtSecret',
+            'import time', 'import logging', 'import hmac', 'import hashlib', 'import stripe',
+            '"log/slog"', '"sync"'
+          ];
+
+          const allLines = container.querySelectorAll('.code-line');
+          allLines.forEach(lineEl => {
+            const text = lineEl.innerText || '';
+            if (deadPatterns.some(p => text.includes(p))) {
+              lineEl.classList.add('line-reorg-purge');
+            }
+          });
+
+          // 2. Trigger the Ambient Reorganization Wave across the editor
+          const scanBeam = document.getElementById('scanBeam');
+          if (scanBeam) {
+            scanBeam.style.transition = 'none';
+            scanBeam.style.top = '-40px';
+            scanBeam.style.opacity = '1';
+            scanBeam.className = 'ast-scope-wave ast-reorg-wave';
+            void scanBeam.offsetHeight;
+            scanBeam.style.transition = 'top 1100ms cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease';
+            scanBeam.style.top = 'calc(100% - 40px)';
+          }
+
+          // 3. At 750ms, as the reorganization wave passes through, smoothly manifest the pure synthesized contract
+          const reorgTimer = setTimeout(() => {
+            if (scanBeam) {
+              scanBeam.style.opacity = '0';
+              setTimeout(() => { if (scanBeam) scanBeam.className = 'ast-scope-wave'; }, 400);
+            }
+
+            const cleanCode = cleanSynthesizedCode[lang] || '';
+            const cleanHtml = renderCodeLinesWithNumbers(cleanCode, lang, 1);
+
+            container.innerHTML = `<div id="synthesizedBlock" class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed transition-all duration-600 opacity-0 transform translate-y-1">${cleanHtml}</div>`;
+
+            // Seamless upward fade-in of the synthesized interface
+            requestAnimationFrame(() => {
+              const synBlock = document.getElementById('synthesizedBlock');
+              if (synBlock) {
+                synBlock.style.opacity = '1';
+                synBlock.style.transform = 'translateY(0)';
+              }
+            });
+
+            // 4. Cascade line numbers smoothly into place
+            const survivingLineNums = container.querySelectorAll('.line-num');
+            survivingLineNums.forEach((numEl, idx) => {
+              numEl.style.opacity = '0.3';
+              setTimeout(() => {
+                numEl.style.transition = 'opacity 0.25s ease';
+                numEl.style.opacity = '1';
+              }, idx * 25);
+            });
+
+            // 5. Handshake into Step 5
+            const finishTimer = setTimeout(() => {
+              if (onComplete) onComplete();
+            }, 650);
+            morphTimeouts.push(finishTimer);
+          }, 750);
+          morphTimeouts.push(reorgTimer);
+        }
+
         function removeSectionsSequentially(index) {
           if (currentMorphState !== 'sparkle' && currentMorphState !== 'targeting' && currentMorphState !== 'raw') return;
           if (index >= totalSections) {
-            // All sections removed in succession! Smooth glide to top and line re-index
+            // All sections removed in succession! Smooth glide to top
             const returnScrollDuration = 750;
             smoothScrollContainer(container, 0, returnScrollDuration);
 
-            const reindexTimer = setTimeout(() => {
-              const survivingLineNums = container.querySelectorAll('.code-line:not(.prune-line) .line-num');
-              survivingLineNums.forEach((numEl, idx) => {
-                numEl.style.opacity = '0.2';
-                setTimeout(() => {
-                  numEl.innerText = idx + 1;
-                  numEl.style.opacity = '1';
-                }, 160);
+            // Execute intermediate AST Reorganization Animation
+            const reorgTimer = setTimeout(() => {
+              animateASTReorganization(curLang, () => {
+                // PHASE 5: Seamless Handshake into Synthesized Contract
+                currentMorphState = 'skel';
+                container.classList.add('synthesis-pulse');
+                setTimeout(() => container.classList.remove('synthesis-pulse'), 950);
+                setMorphStatus('synthesized', 5, 'Synthesized');
+                setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
               });
-            }, returnScrollDuration * 0.4);
-            morphTimeouts.push(reindexTimer);
-
-            // PHASE 5: Seamless Handshake into Synthesized Contract
-            const finishTimer = setTimeout(() => {
-              currentMorphState = 'skel';
-              container.classList.add('synthesis-pulse');
-              setTimeout(() => container.classList.remove('synthesis-pulse'), 950);
-              setMorphStatus('synthesized', 5, 'Synthesized');
-              setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
-              container.scrollTop = 0;
-              renderSynthesizedPure(curLang);
-            }, returnScrollDuration + 600);
-            morphTimeouts.push(finishTimer);
+            }, returnScrollDuration + 200);
+            morphTimeouts.push(reorgTimer);
             return;
           }
 
