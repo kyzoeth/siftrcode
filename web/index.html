@@ -900,8 +900,8 @@
 
                 <!-- Floating Head Tally Tracker (strictly follows the moving head of the bar) -->
                 <div id="payloadHeadTracker" class="absolute top-0 bottom-0 pointer-events-none flex items-center transition-[left] duration-500 ease-out z-10" style="left: 0%;">
-                  <div id="payloadHeadTally" class="flex items-center gap-1 font-mono text-[10.5px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-2xs whitespace-nowrap transition-all duration-300 transform translate-x-1 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700">
-                    <span id="payloadTallyValue">0 tokens</span>
+                  <div id="payloadHeadTally" class="flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-2xs whitespace-nowrap transition-all duration-300 transform translate-x-1 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700">
+                    <span id="payloadTallyValue">0 tokens ($0.00)</span>
                   </div>
                 </div>
 
@@ -909,7 +909,7 @@
                 <div id="footerSavingsZone" class="absolute top-0 bottom-0 right-0 opacity-0 pointer-events-none transition-opacity duration-500 flex items-center justify-center px-2 sm:px-3 z-[5] bg-emerald-500/15 dark:bg-emerald-400/20 border-l-2 border-dashed border-emerald-500 dark:border-emerald-400" style="left: 0%;">
                   <div class="flex items-center gap-1.5 font-mono text-[10px] sm:text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-white/95 dark:bg-zinc-900/95 px-2 sm:px-2.5 py-0.5 rounded-md border border-emerald-400/80 dark:border-emerald-600/80 shadow-2xs">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span id="footerSavingsText">−0 tokens saved (−0%)</span>
+                    <span id="footerSavingsText">−0 tokens saved (Save $0.00)</span>
                   </div>
                 </div>
 
@@ -2402,6 +2402,8 @@ impl PaymentGateway for StripeGateway {
       const maxTokens = Math.max(1, rawTokens || 1);
       const pct = Math.max(0, Math.min(100, (currentTokens / maxTokens) * 100));
       const color = getPayloadColor(pct);
+      const conf = langConfig[curLang];
+      const cost = conf && maxTokens > 0 ? (currentTokens / maxTokens) * conf.rawCost : 0;
 
       if (bar) {
         if (durationMs > 0) {
@@ -2424,14 +2426,14 @@ impl PaymentGateway for StripeGateway {
 
       if (tally) {
         if (pct > 25) {
-          tally.className = 'flex items-center gap-1 font-mono text-[10.5px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-2xs whitespace-nowrap transition-all duration-300 transform -translate-x-full -ml-1 bg-zinc-950/85 text-white border border-zinc-700/80 backdrop-blur-xs';
+          tally.className = 'flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-2xs whitespace-nowrap transition-all duration-300 transform -translate-x-full -ml-1 bg-zinc-950/85 text-white border border-zinc-700/80 backdrop-blur-xs';
         } else {
-          tally.className = 'flex items-center gap-1 font-mono text-[10.5px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-2xs whitespace-nowrap transition-all duration-300 transform translate-x-1.5 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 shadow-xs';
+          tally.className = 'flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-2xs whitespace-nowrap transition-all duration-300 transform translate-x-1.5 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 shadow-xs';
         }
       }
 
       if (tallyVal) {
-        tallyVal.innerText = `${Math.round(currentTokens).toLocaleString()} tokens`;
+        tallyVal.innerText = `${Math.round(currentTokens).toLocaleString()} tokens ($${cost.toFixed(2)})`;
       }
     }
 
@@ -2467,8 +2469,8 @@ impl PaymentGateway for StripeGateway {
           costSavedTag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold tracking-tight transition-all duration-200 shrink-0 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300';
         }
 
-        const redVal = reduction != null ? reduction : conf.reduction;
         const savedCount = savedTokens != null ? savedTokens : conf.savedTokens;
+        const savedCostVal = savedCost != null ? savedCost : conf.savedCost;
         const skelPct = (conf.skelTokens / conf.rawTokens) * 100;
 
         updatePayloadBar(conf.skelTokens, conf.rawTokens, 400);
@@ -2478,7 +2480,7 @@ impl PaymentGateway for StripeGateway {
           savingsZone.style.opacity = '1';
         }
         if (savingsText) {
-          savingsText.innerText = `−${savedCount.toLocaleString()} tokens saved (−${redVal.toFixed(1)}%)`;
+          savingsText.innerText = `−${savedCount.toLocaleString()} tokens saved (Save $${savedCostVal.toFixed(2)})`;
         }
       }
     }
@@ -2744,7 +2746,10 @@ impl PaymentGateway for StripeGateway {
           0,
           conf.rawTokens,
           profileCountDuration,
-          v => `${Math.round(v).toLocaleString()} tokens`,
+          v => {
+            const cost = conf.rawTokens > 0 ? (v / conf.rawTokens) * conf.rawCost : 0;
+            return `${Math.round(v).toLocaleString()} tokens ($${cost.toFixed(2)})`;
+          },
           curr => updatePayloadBar(curr, conf.rawTokens, 0)
         );
       }, rawHoldDuration);
@@ -2960,7 +2965,10 @@ impl PaymentGateway for StripeGateway {
                   prevTokens,
                   targetTokens,
                   tokenCountdownDuration,
-                  v => `${Math.round(v).toLocaleString()} tokens`,
+                  v => {
+                    const cost = conf.rawTokens > 0 ? (v / conf.rawTokens) * conf.rawCost : 0;
+                    return `${Math.round(v).toLocaleString()} tokens ($${cost.toFixed(2)})`;
+                  },
                   curr => updatePayloadBar(curr, conf.rawTokens, 0)
                 );
 
@@ -3222,7 +3230,7 @@ ${renderedRaw}
         savingsZone.style.opacity = '1';
       }
       if (savingsText) {
-        savingsText.innerText = `−${saved.toLocaleString()} tokens saved (−${Math.round(reduction)}%)`;
+        savingsText.innerText = `−${saved.toLocaleString()} tokens saved (Save $${savedCost.toFixed(2)})`;
       }
 
       document.getElementById('skelOutput').innerHTML = `<div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">${renderCodeLinesWithNumbers(skel, curLang, 1)}</div>`;
