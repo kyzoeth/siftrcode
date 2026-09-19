@@ -692,7 +692,7 @@
             S
           </div>
           <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
-          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-200/80 font-medium">v0.1</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-200/80 font-medium">v0.1.1</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="/how-it-works" class="hover:text-ink transition">How It Works</a>
@@ -728,8 +728,34 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
         </button>
+
+        <!-- Mobile Menu Toggle Button (visible only on mobile) -->
+        <button id="mobileMenuBtn" onclick="toggleMobileMenu()" title="Toggle Navigation Menu" aria-label="Toggle navigation menu" class="md:hidden w-8 h-8 rounded-md bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
+          <svg id="mobileMenuIconOpen" class="w-4 h-4 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <svg id="mobileMenuIconClose" class="w-4 h-4 text-zinc-700 dark:text-zinc-300 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
+    </div>
+
+    <!-- Mobile Navigation Drawer / Dropdown -->
+    <div id="mobileNavMenu" class="hidden md:hidden border-t border-zinc-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md px-4 py-3 space-y-1 transition-all duration-200">
+      <a href="/how-it-works" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-blue-700 dark:hover:text-blue-400 transition">
+        <span>How It Works</span>
+        <span class="text-zinc-400 font-mono text-[10px]">→</span>
+      </a>
+      <a href="/claude" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-blue-700 dark:hover:text-blue-400 transition">
+        <span>Claude Code Integration</span>
+        <span class="text-zinc-400 font-mono text-[10px]">→</span>
+      </a>
+      <a href="/about" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-blue-700 dark:hover:text-blue-400 transition">
+        <span>About SiftrCode</span>
+        <span class="text-zinc-400 font-mono text-[10px]">→</span>
+      </a>
     </div>
   </header>
 
@@ -754,23 +780,23 @@
     <div class="max-w-4xl mx-auto space-y-3.5">
       
       <!-- Modern Flat Language Selector Bar -->
-      <div id="langSelectorDeck" class="flex items-center justify-start gap-2.5 sm:gap-3 py-1 mb-2">
-        <span class="text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-300 select-none">Demo:</span>
+      <div id="langSelectorDeck" class="flex items-center justify-start gap-2 sm:gap-3 py-1 mb-2 overflow-x-auto no-scrollbar">
+        <span class="text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-300 select-none shrink-0">Demo:</span>
         <!-- Language Selection Tabs -->
-        <div class="inline-flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 gap-0.5 shadow-2xs">
-          <button onclick="setLang('ts', true)" id="tab-ts" class="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-md text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-700/80">
+        <div class="inline-flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 gap-0.5 shadow-2xs shrink-0">
+          <button onclick="setLang('ts', true)" id="tab-ts" class="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-md text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-700/80 shrink-0">
             <svg class="w-3.5 h-3.5 shrink-0 rounded-xs" viewBox="0 0 128 128" fill="none"><rect width="128" height="128" rx="16" fill="#3178C6"/><path fill="#ffffff" d="M60.82 50.11H43.76v54.76H29.13V50.11H12.08v-12.8h48.74v12.8zm53.48 24.31c0 3.73-1.02 6.94-3.05 9.63-2.03 2.69-4.94 4.74-8.73 6.16-3.79 1.42-8.23 2.13-13.32 2.13-4.52 0-8.66-.54-12.42-1.62-3.76-1.08-6.85-2.61-9.27-4.59l5.44-11.23c2.09 1.62 4.54 2.87 7.35 3.76s5.73 1.33 8.76 1.33c3.73 0 6.44-.65 8.13-1.95 1.69-1.3 2.54-3.02 2.54-5.16 0-1.77-.66-3.23-1.98-4.38-1.32-1.15-3.66-2.27-7.02-3.36-4.52-1.47-8.08-3.09-10.68-4.86-2.6-1.77-4.49-3.86-5.67-6.27-1.18-2.41-1.77-5.26-1.77-8.55 0-3.67.97-6.88 2.91-9.63 1.94-2.75 4.72-4.85 8.34-6.3 3.62-1.45 7.96-2.18 13.02-2.18 4.07 0 7.82.48 11.25 1.44 3.43.96 6.3 2.27 8.61 3.93l-5.14 11.08c-2.09-1.42-4.39-2.52-6.9-3.3-2.51-.78-5.14-1.17-7.89-1.17-3.27 0-5.74.57-7.41 1.71-1.67 1.14-2.51 2.67-2.51 4.59 0 1.62.63 2.97 1.89 4.05 1.26 1.08 3.52 2.15 6.78 3.21 4.72 1.57 8.43 3.27 11.13 5.1 2.7 1.83 4.67 3.98 5.91 6.45 1.24 2.47 1.86 5.38 1.86 8.73z"/></svg>
             <span>TypeScript</span>
           </button>
-          <button onclick="setLang('py', true)" id="tab-py" class="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-md text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-800/40 border border-transparent">
+          <button onclick="setLang('py', true)" id="tab-py" class="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-md text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-800/40 border border-transparent shrink-0">
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 128 128" fill="none"><path fill="#387EB8" d="M63.391 12.248c-4.222.02-8.252.379-11.8 1.007-10.45 1.846-12.346 5.71-12.346 12.837v9.411h24.693v3.137H29.977c-7.176 0-13.46 4.313-15.426 12.521-2.268 9.405-2.368 15.275 0 25.096 1.755 7.311 5.947 12.519 13.124 12.519h8.491V77.494c0-8.151 7.051-15.34 15.426-15.34h24.665c6.866 0 12.346-5.654 12.346-12.548V26.093c0-6.693-5.646-11.72-12.346-12.837-4.244-.706-8.645-1.027-12.866-1.008zM50.037 19.817c2.55 0 4.634 2.117 4.634 4.721 0 2.593-2.083 4.69-4.634 4.69-2.56 0-4.633-2.097-4.633-4.69-.001-2.604 2.073-4.721 4.633-4.721z"/><path fill="#FFE052" d="M91.682 38.64v10.966c0 8.5-7.208 15.655-15.426 15.655H51.591c-6.756 0-12.346 5.783-12.346 12.549v23.515c0 6.691 5.818 10.628 12.346 12.547 7.816 2.297 15.312 2.713 24.665 0 6.216-1.801 12.346-5.423 12.346-12.547v-9.412H63.938v-3.138h37.012c7.176 0 9.852-5.005 12.348-12.519 2.578-7.735 2.467-15.174 0-25.096-1.774-7.145-5.161-12.521-12.348-12.521h-9.268zM77.809 98.187c2.561 0 4.634 2.097 4.634 4.692 0 2.602-2.074 4.719-4.634 4.719-2.55 0-4.633-2.117-4.633-4.719 0-2.595 2.083-4.692 4.633-4.692z"/></svg>
             <span>Python</span>
           </button>
-          <button onclick="setLang('go', true)" id="tab-go" class="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-md text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-800/40 border border-transparent">
+          <button onclick="setLang('go', true)" id="tab-go" class="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-md text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-800/40 border border-transparent shrink-0">
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="#00ADD8"><path d="M1.811 10.231c-.047 0-.058-.023-.035-.059l.246-.315c.023-.035.081-.058.128-.058h4.172c.046 0 .058.035.035.07l-.199.303c-.023.036-.082.07-.117.07zM.047 11.306c-.047 0-.059-.023-.035-.058l.245-.316c.023-.035.082-.058.129-.058h5.328c.047 0 .07.035.058.07l-.093.28c-.012.047-.058.07-.105.07zm2.828 1.075c-.047 0-.059-.035-.035-.07l.163-.292c.023-.035.07-.07.117-.07h2.337c.047 0 .07.035.07.082l-.023.28c0 .047-.047.082-.082.082zm12.129-2.36c-.736.187-1.239.327-1.963.514-.176.046-.187.058-.34-.117-.174-.199-.303-.327-.548-.444-.737-.362-1.45-.257-2.115.175-.795.514-1.204 1.274-1.192 2.22.011.935.654 1.706 1.577 1.835.795.105 1.46-.175 1.987-.77.105-.13.198-.27.315-.434H10.47c-.245 0-.304-.152-.222-.35.152-.362.432-.97.596-1.274a.315.315 0 01.292-.187h4.253c-.023.316-.023.631-.07.947a4.983 4.983 0 01-.958 2.29c-.841 1.11-1.94 1.8-3.33 1.986-1.145.152-2.209-.07-3.143-.77-.865-.655-1.356-1.52-1.484-2.595-.152-1.274.222-2.419.993-3.424.83-1.086 1.928-1.776 3.272-2.02 1.098-.2 2.15-.07 3.096.571.62.41 1.063.97 1.356 1.648.07.105.023.164-.117.2m3.868 6.461c-1.064-.024-2.034-.328-2.852-1.029a3.665 3.665 0 01-1.262-2.255c-.21-1.32.152-2.489.947-3.529.853-1.122 1.881-1.706 3.272-1.95 1.192-.21 2.314-.095 3.33.595.923.63 1.496 1.484 1.648 2.605.198 1.578-.257 2.863-1.344 3.962-.771.783-1.718 1.273-2.805 1.495-.315.06-.63.07-.934.106zm2.78-4.72c-.011-.153-.011-.27-.034-.387-.21-1.157-1.274-1.81-2.384-1.554-1.087.245-1.788.935-2.045 2.033-.21.912.234 1.835 1.075 2.21.643.28 1.285.244 1.905-.07.923-.48 1.425-1.228 1.484-2.233z"/></svg>
             <span>Go</span>
           </button>
-          <button onclick="setLang('rs', true)" id="tab-rs" class="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-md text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-800/40 border border-transparent">
+          <button onclick="setLang('rs', true)" id="tab-rs" class="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-md text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-800/40 border border-transparent shrink-0">
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="#CE412B"><path d="M23.8346 11.7033l-1.0073-.6236a13.7268 13.7268 0 00-.0283-.2936l.8656-.8069a.3483.3483 0 00-.1154-.578l-1.1066-.414a8.4958 8.4958 0 00-.087-.2856l.6904-.9587a.3462.3462 0 00-.2257-.5446l-1.1663-.1894a9.3574 9.3574 0 00-.1407-.2622l.49-1.0761a.3437.3437 0 00-.0274-.3361.3486.3486 0 00-.3006-.154l-1.1845.0416a6.7444 6.7444 0 00-.1873-.2268l.2723-1.153a.3472.3472 0 00-.417-.4172l-1.1532.2724a14.0183 14.0183 0 00-.2278-.1873l.0415-1.1845a.3442.3442 0 00-.49-.328l-1.076.491c-.0872-.0476-.1742-.0952-.2623-.1407l-.1903-1.1673A.3483.3483 0 0016.256.955l-.9597.6905a8.4867 8.4867 0 00-.2855-.086l-.414-1.1066a.3483.3483 0 00-.5781-.1154l-.8069.8666a9.2936 9.2936 0 00-.2936-.0284L12.2946.1683a.3462.3462 0 00-.5892 0l-.6236 1.0073a13.7383 13.7383 0 00-.2936.0284L9.9803.3374a.3462.3462 0 00-.578.1154l-.4141 1.1065c-.0962.0274-.1903.0567-.2855.086L7.744.955a.3483.3483 0 00-.5447.2258L7.009 2.348a9.3574 9.3574 0 00-.2622.1407l-1.0762-.491a.3462.3462 0 00-.49.328l.0416 1.1845a7.9826 7.9826 0 00-.2278.1873L3.8413 3.425a.3472.3472 0 00-.4171.4171l.2713 1.1531c-.0628.075-.1255.1509-.1863.2268l-1.1845-.0415a.3462.3462 0 00-.328.49l.491 1.0761a9.167 9.167 0 00-.1407.2622l-1.1662.1894a.3483.3483 0 00-.2258.5446l.6904.9587a13.303 13.303 0 00-.087.2855l-1.1065.414a.3483.3483 0 00-.1155.5781l.8656.807a9.2936 9.2936 0 00-.0283.2935l-1.0073.6236a.3442.3442 0 000 .5892l1.0073.6236c.008.0982.0182.1964.0283.2936l-.8656.8079a.3462.3462 0 00.1155.578l1.1065.4141c.0273.0962.0567.1914.087.2855l-.6904.9587a.3452.3452 0 00.2268.5447l1.1662.1893c.0456.088.0922.1751.1408.2622l-.491 1.0762a.3462.3462 0 00.328.49l1.1834-.0415c.0618.0769.1235.1528.1873.2277l-.2713 1.1541a.3462.3462 0 00.4171.4161l1.153-.2713c.075.0638.151.1255.2279.1863l-.0415 1.1845a.3442.3442 0 00.49.327l1.0761-.49c.087.0486.1741.0951.2622.1407l.1903 1.1662a.3483.3483 0 00.5447.2268l.9587-.6904a9.299 9.299 0 00.2855.087l.414 1.1066a.3452.3452 0 00.5781.1154l.8079-.8656c.0972.0111.1954.0203.2936.0294l.6236 1.0073a.3472.3472 0 00.5892 0l.6236-1.0073c.0982-.0091.1964-.0183.2936-.0294l.8069.8656a.3483.3483 0 00.578-.1154l.4141-1.1066a8.4626 8.4626 0 00.2855-.087l.9587.6904a.3452.3452 0 00.5447-.2268l.1903-1.1662c.088-.0456.1751-.0931.2622-.1407l1.0762.49a.3472.3472 0 00.49-.327l-.0415-1.1845a6.7267 6.7267 0 00.2267-.1863l1.1531.2713a.3472.3472 0 00.4171-.416l-.2713-1.1542c.0628-.0749.1255-.1508.1863-.2278l1.1845.0415a.3442.3442 0 00.328-.49l-.49-1.076c.0475-.0872.0951-.1742.1407-.2623l1.1662-.1893a.3483.3483 0 00.2258-.5447l-.6904-.9587.087-.2855 1.1066-.414a.3462.3462 0 00.1154-.5781l-.8656-.8079c.0101-.0972.0202-.1954.0283-.2936l1.0073-.6236a.3442.3442 0 000-.5892zm-6.7413 8.3551a.7138.7138 0 01.2986-1.396.714.714 0 11-.2997 1.396zm-.3422-2.3142a.649.649 0 00-.7715.5l-.3573 1.6685c-1.1035.501-2.3285.7795-3.6193.7795a8.7368 8.7368 0 01-3.6951-.814l-.3574-1.6684a.648.648 0 00-.7714-.499l-1.473.3158a8.7216 8.7216 0 01-.7613-.898h7.1676c.081 0 .1356-.0141.1356-.088v-2.536c0-.074-.0536-.0881-.1356-.0881h-2.0966v-1.6077h2.2677c.2065 0 1.1065.0587 1.394 1.2088.0901.3533.2875 1.5044.4232 1.8729.1346.413.6833 1.2381 1.2685 1.2381h3.5716a.7492.7492 0 00.1296-.0131 8.7874 8.7874 0 01-.8119.9526zM6.8369 20.024a.714.714 0 11-.2997-1.396.714.714 0 01.2997 1.396zM4.1177 8.9972a.7137.7137 0 11-1.304.5791.7137.7137 0 011.304-.579zm-.8352 1.9813l1.5347-.6824a.65.65 0 00.33-.8585l-.3158-.7147h1.2432v5.6025H3.5669a8.7753 8.7753 0 01-.2834-3.348zm6.7343-.5437V8.7836h2.9601c.153 0 1.0792.1772 1.0792.8697 0 .575-.7107.7815-1.2948.7815zm10.7574 1.4862c0 .2187-.008.4363-.0243.651h-.9c-.09 0-.1265.0586-.1265.1477v.413c0 .973-.5487 1.1846-1.0296 1.2382-.4576.0517-.9648-.1913-1.0275-.4717-.2704-1.5186-.7198-1.8436-1.4305-2.4034.8817-.5599 1.799-1.386 1.799-2.4915 0-1.1936-.819-1.9458-1.3769-2.3153-.7825-.5163-1.6491-.6195-1.883-.6195H5.4682a8.7651 8.7651 0 014.907-2.7699l1.0974 1.151a.648.648 0 00.9182.0213l1.227-1.1743a8.7753 8.7753 0 016.0044 4.2762l-.8403 1.8982a.652.652 0 00.33.8585l1.6178.7188c.0283.2875.0425.577.0425.8717zm-9.3006-9.5993a.7128.7128 0 11.984 1.0316.7137.7137 0 01-.984-1.0316zm8.3389 6.71a.7107.7107 0 01.9395-.3625.7137.7137 0 11-.9405.3635z"/></svg>
             <span>Rust</span>
           </button>
@@ -797,7 +823,7 @@
           </div>
 
           <!-- Code Viewport Body with Sparkle Particle Overlay (Fixed Height to Prevent Layout Shift) -->
-          <div class="relative overflow-hidden flex flex-col h-[460px] sm:h-[480px] bg-white dark:bg-zinc-950 shrink-0">
+          <div class="relative overflow-hidden flex flex-col h-[380px] sm:h-[480px] bg-white dark:bg-zinc-950 shrink-0">
             <!-- Modern Compiler Pipeline Progress Track -->
             <div id="astProgressTrack" class="absolute top-0 left-0 right-0 h-[2px] bg-zinc-200/40 dark:bg-zinc-800/40 z-30 pointer-events-none overflow-hidden">
               <div id="astProgressBar" class="ast-compiler-runner"></div>
@@ -805,13 +831,13 @@
             <!-- Diffuse Ambient AST Scope Wave -->
             <div id="scanBeam" class="ast-scope-wave"></div>
             <div id="sparkleOverlay" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
-            <div id="skelOutput" class="w-full h-full p-4 sm:p-5 font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-auto selection:bg-blue-100 selection:text-blue-900 signal-glow"></div>
+            <div id="skelOutput" class="w-full h-full p-3.5 sm:p-5 font-mono text-[11px] sm:text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-auto selection:bg-blue-100 selection:text-blue-900 signal-glow"></div>
           </div>
 
           <!-- Terminal Footer: Consolidated Step & Context Telemetry Banner -->
-          <div class="bg-zinc-50/95 dark:bg-zinc-900/90 px-3 sm:px-4 py-2 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2.5 shrink-0 min-h-[44px] select-none text-xs font-mono overflow-x-auto no-scrollbar">
-            <!-- Consolidated Step & Context Metrics Flow -->
-            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <div class="bg-zinc-50/95 dark:bg-zinc-900/90 px-3 sm:px-4 py-2 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2 shrink-0 min-h-[44px] select-none text-xs font-mono">
+            <!-- Consolidated Step & Context Metrics Flow (Smoothly scrollable on narrow viewports) -->
+            <div class="flex items-center gap-2 sm:gap-2.5 overflow-x-auto no-scrollbar min-w-0 pr-1 shrink">
               <span id="morphStepBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-transparent shrink-0 transition-all duration-200">
                 <span id="stepThinkingAnim" class="inline-flex items-center justify-center shrink-0 w-3 h-3 text-[#D97757] dark:text-[#F39C82]">
                   <svg class="w-3 h-3 claude-thinking-spin" viewBox="0 0 16 16" fill="currentColor">
@@ -823,7 +849,7 @@
                 <span id="stepStageText" class="font-semibold text-zinc-900 dark:text-zinc-100">Raw Code</span>
               </span>
 
-              <span class="text-zinc-300 dark:text-zinc-700 select-none">|</span>
+              <span class="text-zinc-300 dark:text-zinc-700 select-none shrink-0">|</span>
 
               <div class="flex items-center gap-1.5 sm:gap-2 font-mono shrink-0">
                 <span class="text-zinc-400 dark:text-zinc-500 font-sans text-[11px] font-medium uppercase tracking-wider select-none">Context:</span>
@@ -844,8 +870,8 @@
               <span id="costSavedTag" class="hidden px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold tracking-tight transition-all duration-200 shrink-0 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300">Save $0.00</span>
             </div>
 
-            <!-- Clean Minimal Replay Action -->
-            <button onclick="triggerPruneMorph()" title="Replay AST synthesis demo" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-sans text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition btn-press cursor-pointer shrink-0 ml-auto border border-zinc-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-800/80 shadow-2xs">
+            <!-- Clean Minimal Replay Action (Always pinned on mobile) -->
+            <button onclick="triggerPruneMorph()" title="Replay AST synthesis demo" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-sans text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition btn-press cursor-pointer shrink-0 border border-zinc-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-800/80 shadow-2xs">
               <span class="text-xs">↺</span>
               <span>Replay</span>
             </button>
@@ -882,7 +908,7 @@
         </div>
 
         <!-- Right: Model Benchmark Pricing Toggle -->
-        <div class="flex items-center gap-1.5 text-xs font-sans w-full sm:w-auto justify-end">
+        <div class="flex items-center gap-1.5 text-xs font-sans w-full sm:w-auto justify-between sm:justify-end">
           <span class="text-zinc-400 dark:text-zinc-500 text-[11px] font-semibold uppercase tracking-wider">Model:</span>
           <div class="inline-flex items-center p-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 gap-1">
             <button onclick="setModel('claude-3-7')" id="model-tab-claude" class="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80">
@@ -983,9 +1009,9 @@
 
           <!-- Bottom Footer Bar: Condensed Latency & Audit Row -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5 text-[11px] font-mono">
-            <div class="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 truncate">
+            <div class="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
               <svg class="w-3.5 h-3.5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.381z" clip-rule="evenodd"/></svg>
-              <span id="monthlySavingsNote" class="truncate">Based on 50 agent turns/day • 11x faster latency (3.4s vs 38s)</span>
+              <span id="monthlySavingsNote" class="text-wrap sm:truncate">Based on 50 agent turns/day • 11x faster latency (3.4s vs 38s)</span>
             </div>
 
             <div class="flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
@@ -3153,6 +3179,24 @@ ${renderedRaw}
       }
     }
 
+    // Mobile Navigation Menu Toggle Functionality
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobileNavMenu');
+      const iconOpen = document.getElementById('mobileMenuIconOpen');
+      const iconClose = document.getElementById('mobileMenuIconClose');
+      if (!menu) return;
+      const isHidden = menu.classList.contains('hidden');
+      if (isHidden) {
+        menu.classList.remove('hidden');
+        iconOpen?.classList.add('hidden');
+        iconClose?.classList.remove('hidden');
+      } else {
+        menu.classList.add('hidden');
+        iconOpen?.classList.remove('hidden');
+        iconClose?.classList.add('hidden');
+      }
+    }
+
     // Theme Toggle Functionality
     function toggleTheme() {
       const isDark = document.documentElement.classList.toggle('dark');
@@ -3337,7 +3381,7 @@ ${renderedRaw}
 
   <!-- B2B Team Trial Modal -->
   <div id="trialModal" onclick="if(event.target===this) closeTrialModal()" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-zinc-950/75 backdrop-blur-sm transition-all duration-200">
-    <div class="relative w-full max-w-md bg-white border border-zinc-200/90 rounded-lg shadow-2xl overflow-hidden p-5 sm:p-6 space-y-3.5 animate-in fade-in zoom-in-95 duration-200">
+    <div class="relative w-full max-w-md max-h-[92vh] overflow-y-auto bg-white border border-zinc-200/90 rounded-lg shadow-2xl p-5 sm:p-6 space-y-3.5 animate-in fade-in zoom-in-95 duration-200">
       
       <!-- Close Button -->
       <button onclick="closeTrialModal()" aria-label="Close" class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800">
@@ -3356,13 +3400,13 @@ ${renderedRaw}
       <form id="trialForm" onsubmit="submitTrialForm(event)" class="space-y-3 text-left font-sans text-xs">
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Work Email *</label>
-          <input type="email" id="trialEmail" required placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-900 font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
+          <input type="email" id="trialEmail" required placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-900 font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
         </div>
 
-        <div class="grid grid-cols-2 gap-2.5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div>
             <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Team Size</label>
-            <select id="trialTeamSize" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-800 font-sans text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
+            <select id="trialTeamSize" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-800 font-sans text-sm sm:text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
               <option value="1-5 devs">1–5 engineers</option>
               <option value="5-20 devs" selected>5–20 engineers</option>
               <option value="20-50 devs">20–50 engineers</option>
@@ -3372,7 +3416,7 @@ ${renderedRaw}
 
           <div>
             <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Primary AI Agent</label>
-            <select id="trialAgent" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-800 font-sans text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
+            <select id="trialAgent" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-800 font-sans text-sm sm:text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
               <option value="Cursor" selected>Cursor</option>
               <option value="Claude Code">Claude Code</option>
               <option value="Antigravity">Antigravity</option>
@@ -3383,12 +3427,12 @@ ${renderedRaw}
 
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Repository URL / Stack (Optional)</label>
-          <input type="text" id="trialRepo" placeholder="github.com/company/repo" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-900 font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
+          <input type="text" id="trialRepo" placeholder="github.com/company/repo" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-900 font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
         </div>
 
         <div id="trialError" class="hidden text-[11px] text-rose-600 bg-rose-50 border border-rose-200 rounded-md p-2 font-sans"></div>
 
-        <button type="submit" id="trialSubmitBtn" class="w-full py-2.5 rounded-md bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs transition btn-press shadow-xs hover:shadow active:scale-[0.99] flex items-center justify-center gap-1.5">
+        <button type="submit" id="trialSubmitBtn" class="w-full py-2.5 rounded-md bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs transition btn-press shadow-xs hover:shadow active:scale-[0.99] flex items-center justify-center gap-1.5 cursor-pointer">
           <span>Activate 14-Day Team Trial</span>
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
         </button>
@@ -3417,7 +3461,7 @@ ${renderedRaw}
             <code>npx siftrcode audit</code>
           </div>
         </div>
-        <button onclick="closeTrialModal()" class="w-full py-2 rounded-md bg-zinc-900 text-white font-medium text-xs hover:bg-zinc-800 transition">
+        <button onclick="closeTrialModal()" class="w-full py-2 rounded-md bg-zinc-900 text-white font-medium text-xs hover:bg-zinc-800 transition cursor-pointer">
           Done
         </button>
       </div>
@@ -3427,7 +3471,7 @@ ${renderedRaw}
 
   <!-- Anonymous Feedback Modal -->
   <div id="feedbackModal" onclick="if(event.target===this) closeFeedbackModal()" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-zinc-950/75 backdrop-blur-sm transition-all duration-200">
-    <div class="relative w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-lg shadow-2xl overflow-hidden p-5 sm:p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+    <div class="relative w-full max-w-md max-h-[92vh] overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-lg shadow-2xl p-5 sm:p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
       
       <!-- Close Button -->
       <button onclick="closeFeedbackModal()" aria-label="Close" class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer">
@@ -3468,12 +3512,12 @@ ${renderedRaw}
 
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Your Feedback *</label>
-          <textarea id="fbMessage" required rows="4" placeholder="What works well, what feels clunky, or what language/feature should we support next?..." class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-ink font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850 resize-none"></textarea>
+          <textarea id="fbMessage" required rows="4" placeholder="What works well, what feels clunky, or what language/feature should we support next?..." class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-ink font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850 resize-none"></textarea>
         </div>
 
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Email (Optional — only if you'd like a response)</label>
-          <input type="email" id="fbEmail" placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-ink font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850" />
+          <input type="email" id="fbEmail" placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-ink font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850" />
         </div>
 
         <div id="fbError" class="hidden text-[11px] text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-md p-2 font-sans"></div>

@@ -101,7 +101,7 @@
             S
           </div>
           <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
-          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-200/80 font-medium">v0.1</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-200/80 font-medium">v0.1.1</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="/how-it-works" class="hover:text-ink transition">How It Works</a>
@@ -134,7 +134,34 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
         </a>
+
+        <!-- Mobile Menu Toggle Button (visible only on mobile) -->
+        <button id="mobileMenuBtn" onclick="toggleMobileMenu()" title="Toggle Navigation Menu" aria-label="Toggle navigation menu" class="md:hidden w-8 h-8 rounded-md bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
+          <svg id="mobileMenuIconOpen" class="w-4 h-4 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <svg id="mobileMenuIconClose" class="w-4 h-4 text-zinc-700 dark:text-zinc-300 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
+
+    </div>
+
+    <!-- Mobile Navigation Drawer / Dropdown -->
+    <div id="mobileNavMenu" class="hidden md:hidden border-t border-zinc-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md px-4 py-3 space-y-1 transition-all duration-200">
+      <a href="/how-it-works" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-blue-700 dark:hover:text-blue-400 transition">
+        <span>How It Works</span>
+        <span class="text-zinc-400 font-mono text-[10px]">→</span>
+      </a>
+      <a href="/claude" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-blue-700 dark:hover:text-blue-400 transition">
+        <span>Claude Code Integration</span>
+        <span class="text-zinc-400 font-mono text-[10px]">→</span>
+      </a>
+      <a href="/about" class="flex items-center justify-between py-2 text-xs font-medium text-blue-700 dark:text-blue-400 font-semibold transition">
+        <span>About SiftrCode</span>
+        <span class="text-blue-500 font-mono text-[10px]">✓</span>
+      </a>
     </div>
   </header>
 
@@ -294,7 +321,7 @@
 
   <!-- Anonymous Feedback Modal -->
   <div id="feedbackModal" onclick="if(event.target===this) closeFeedbackModal()" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-zinc-950/75 backdrop-blur-sm transition-all duration-200">
-    <div class="relative w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-lg shadow-2xl overflow-hidden p-5 sm:p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+    <div class="relative w-full max-w-md max-h-[92vh] overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-lg shadow-2xl p-5 sm:p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
       
       <button onclick="closeFeedbackModal()" aria-label="Close" class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -332,12 +359,12 @@
 
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Your Feedback *</label>
-          <textarea id="fbMessage" required rows="4" placeholder="What works well, what feels clunky, or what language/feature should we support next?..." class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-ink font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850 resize-none"></textarea>
+          <textarea id="fbMessage" required rows="4" placeholder="What works well, what feels clunky, or what language/feature should we support next?..." class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-ink font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850 resize-none"></textarea>
         </div>
 
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Email (Optional — only if you'd like a response)</label>
-          <input type="email" id="fbEmail" placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-ink font-sans text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850" />
+          <input type="email" id="fbEmail" placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-ink font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850" />
         </div>
 
         <div id="fbError" class="hidden text-[11px] text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-md p-2 font-sans"></div>
@@ -384,6 +411,23 @@
           btn.classList.remove('text-emerald-400');
         }, 1800);
       });
+    }
+
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobileNavMenu');
+      const iconOpen = document.getElementById('mobileMenuIconOpen');
+      const iconClose = document.getElementById('mobileMenuIconClose');
+      if (!menu) return;
+      const isHidden = menu.classList.contains('hidden');
+      if (isHidden) {
+        menu.classList.remove('hidden');
+        iconOpen?.classList.add('hidden');
+        iconClose?.classList.remove('hidden');
+      } else {
+        menu.classList.add('hidden');
+        iconOpen?.classList.remove('hidden');
+        iconClose?.classList.add('hidden');
+      }
     }
 
     function toggleTheme() {
