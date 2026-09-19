@@ -362,6 +362,106 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Anonymous Feedback API
+  if (pathname === '/api/feedback' && req.method === 'POST') {
+    let body = '';
+    let aborted = false;
+    req.on('data', chunk => {
+      if (aborted) return;
+      body += chunk;
+      if (body.length > 64 * 1024) { // 64KB limit
+        aborted = true;
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Payload too large' }));
+        req.destroy();
+      }
+    });
+
+    req.on('end', () => {
+      if (aborted || res.headersSent) return;
+      try {
+        const payload = JSON.parse(body || '{}');
+        const message = String(payload.message || '').trim();
+        const category = String(payload.category || 'general').trim();
+        const email = String(payload.email || '').trim();
+        const page = String(payload.page || '/').trim();
+
+        if (!message || message.length < 3) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Please enter a feedback message (at least 3 characters).' }));
+          return;
+        }
+
+        const DATA_DIR = path.join(__dirname, '..', '..', 'data');
+        if (!fs.existsSync(DATA_DIR)) {
+          fs.mkdirSync(DATA_DIR, { recursive: true });
+        }
+        const FEEDBACK_FILE = path.join(DATA_DIR, 'feedback.json');
+
+        let feedbackList: any[] = [];
+        if (fs.existsSync(FEEDBACK_FILE)) {
+          try {
+            feedbackList = JSON.parse(fs.readFileSync(FEEDBACK_FILE, 'utf-8'));
+          } catch (e) {
+            feedbackList = [];
+          }
+        }
+
+        const newFeedback = {
+          id: `fb_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+          category,
+          message,
+          email: email || 'anonymous',
+          page,
+          createdAt: new Date().toISOString()
+        };
+
+        feedbackList.unshift(newFeedback);
+        fs.writeFileSync(FEEDBACK_FILE, JSON.stringify(feedbackList, null, 2), 'utf-8');
+
+        console.log(`💬 [ANONYMOUS FEEDBACK] [${category}] on ${page}: ${message.substring(0, 80)}`);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          message: 'Thank you! Your feedback has been received anonymously and shared with the engineering team.'
+        }));
+      } catch (err: any) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message || 'Failed to save feedback' }));
+      }
+    });
+    return;
+  }
+
+  // Admin Feedback View (Protected by query token or dev)
+  if (pathname === '/api/feedback' && req.method === 'GET') {
+    const adminToken = process.env.ADMIN_TOKEN || (process.env.NODE_ENV === 'production' ? null : 'siftr_admin_dev');
+    const authHeader = req.headers.authorization || '';
+    const queryToken = parsedUrl.searchParams.get('token') || '';
+    const providedToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : queryToken;
+
+    if (!adminToken || providedToken !== adminToken) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized: Admin authentication required' }));
+      return;
+    }
+
+    const DATA_DIR = path.join(__dirname, '..', '..', 'data');
+    const FEEDBACK_FILE = path.join(DATA_DIR, 'feedback.json');
+    let feedbackList = [];
+    if (fs.existsSync(FEEDBACK_FILE)) {
+      try {
+        feedbackList = JSON.parse(fs.readFileSync(FEEDBACK_FILE, 'utf-8'));
+      } catch (e) {
+        feedbackList = [];
+      }
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ count: feedbackList.length, feedback: feedbackList }));
+    return;
+  }
+
   // Serve static files from web/
   let filePath = path.join(WEB_DIR, pathname === '/' ? 'index.html' : pathname);
   
