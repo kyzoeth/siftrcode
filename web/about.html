@@ -39,11 +39,23 @@
   </script>
 
   <style>
+    html {
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+    }
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -0.015em; }
     .font-serif, h1.font-serif, h2.font-serif, h3.font-serif, .font-display { font-family: 'Instrument Serif', Georgia, serif; letter-spacing: -0.02em; }
     code, pre, .font-mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; }
     ::selection { background: #bfdbfe; color: #0f172a; }
     body, header, section, footer { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #1d4ed8; }
+    html.dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
+    html.dark ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
 
     html.dark { color-scheme: dark; }
     html.dark body { background-color: #09090b !important; color: #fafafa !important; }
@@ -67,7 +79,7 @@
     .ci-live-dot { animation: ci-live-blink 2.2s ease-in-out infinite; }
   </style>
 </head>
-<body class="bg-surface-50 text-ink font-sans antialiased selection:bg-blue-200 selection:text-blue-950">
+<body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-blue-200 selection:text-blue-950">
 
   <!-- Header Navigation -->
   <header class="border-b border-zinc-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50">
@@ -218,7 +230,7 @@
       </p>
       
       <nav class="flex flex-wrap items-center justify-center md:justify-end gap-x-5 gap-y-2 font-sans font-medium text-zinc-600 dark:text-zinc-400">
-        <a href="/about" class="text-blue-700 font-semibold transition">About us</a>
+        <a href="/about" class="text-blue-700 dark:text-blue-400 font-medium transition">About us</a>
         <a href="/how-it-works" class="hover:text-ink transition">How it works</a>
         <a href="/privacy" class="hover:text-ink transition">Privacy</a>
         <a href="/terms" class="hover:text-ink transition">Terms</a>

@@ -62,6 +62,10 @@
   </script>
 
   <style>
+    html {
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+    }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       letter-spacing: -0.015em;
@@ -326,10 +330,12 @@
     }
 
     /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #1d4ed8; }
+    html.dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
+    html.dark ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
 
     /* Continuous Glowing 90% Typography (No Box) - Ultra-subtle, slow ambient cadence */
     @keyframes continuous-text-aura {
