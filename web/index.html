@@ -705,6 +705,7 @@
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="/how-it-works" class="hover:text-ink transition">How It Works</a>
           <a href="/claude" class="hover:text-ink transition">Claude Code</a>
+          <a href="#economics" class="hover:text-ink transition">Economics</a>
         </nav>
       </div>
 
@@ -941,46 +942,26 @@
       
       <div class="text-center space-y-1">
         <h2 class="text-3xl sm:text-4xl font-normal tracking-tight text-ink font-serif">Works with Claude Code &amp; Cursor</h2>
-        <p class="text-xs sm:text-sm text-ink-secondary">Select your coding agent and LLM model to view instant setup commands and real-world token savings.</p>
+        <p class="text-xs sm:text-sm text-ink-secondary">Select your coding agent to view instant setup commands.</p>
       </div>
 
       <!-- Agent Selection Switcher Deck -->
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-1.5 rounded-lg bg-zinc-200/60 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
-        
-        <!-- Left: Agent Switcher Tabs -->
-        <div class="inline-flex items-center p-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 gap-1 w-full sm:w-auto">
-          <button onclick="setAgent('claude')" id="agent-tab-claude" class="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80">
+      <div class="flex items-center justify-center p-1 rounded-lg bg-zinc-200/60 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs max-w-xs mx-auto">
+        <div class="inline-flex items-center p-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 gap-1 w-full">
+          <button onclick="setAgent('claude')" id="agent-tab-claude" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80">
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="#D97757"><circle cx="12" cy="12" r="10" fill="#D97757" fill-opacity="0.2"/><path d="M12 4L14 10H20L15 14L17 20L12 16L7 20L9 14L4 10H10L12 4Z" fill="#D97757"/></svg>
             <span>Claude Code</span>
           </button>
-          <button onclick="setAgent('cursor')" id="agent-tab-cursor" class="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent">
+          <button onclick="setAgent('cursor')" id="agent-tab-cursor" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent">
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l-8-4 8-4 8 4-8 4zm-10 4l10 5 10-5v-2l-10 5-10-5v2zm0 4l10 5 10-5v-2l-10 5-10-5v2z"/></svg>
             <span>Cursor</span>
           </button>
         </div>
-
-        <!-- Right: Model Benchmark Pricing Toggle -->
-        <div class="flex items-center gap-1.5 text-xs font-sans w-full sm:w-auto justify-between sm:justify-end">
-          <span class="text-zinc-400 dark:text-zinc-500 text-[11px] font-semibold uppercase tracking-wider">Model:</span>
-          <div class="inline-flex items-center p-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 gap-1">
-            <button onclick="setModel('claude-3-7')" id="model-tab-claude" class="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80">
-              <span class="w-1.5 h-1.5 rounded-full bg-[#D97757]"></span>
-              <span>Claude 3.7 Sonnet</span>
-            </button>
-            <button onclick="setModel('gpt-4o')" id="model-tab-gpt4o" class="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              <span>GPT-4o</span>
-            </button>
-          </div>
-        </div>
-
       </div>
 
-      <!-- Consolidated Single Panel: Agent Integration & Token Economics -->
-      <div class="bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden text-xs font-sans divide-y divide-zinc-200/80 dark:divide-zinc-800">
-        
-        <!-- Top Half: Configuration & CLI Command -->
-        <div class="p-4 sm:p-5 space-y-3">
+      <!-- Agent Integration Panel -->
+      <div class="bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden text-xs font-sans">
+        <div class="p-5 sm:p-6 space-y-4">
           <!-- Title, Link & Clean Description -->
           <div class="space-y-1">
             <span id="agentConfigBadge" class="hidden"></span>
@@ -992,13 +973,13 @@
                 Guide →
               </a>
             </div>
-            <p id="agentConfigDesc" class="text-ink-secondary text-xs leading-relaxed font-sans">
+            <p id="agentConfigDesc" class="text-ink-secondary text-xs sm:text-sm leading-relaxed font-sans">
               Registers SiftrCode's Stdio MCP server to prune code before Claude reads it.
             </p>
           </div>
 
           <!-- Command Terminal Bar -->
-          <div class="bg-zinc-950 text-zinc-100 p-2.5 sm:p-3 rounded-lg font-mono text-xs flex items-center justify-between gap-3 border border-zinc-800 shadow-2xs select-all">
+          <div class="bg-zinc-950 text-zinc-100 p-3 rounded-lg font-mono text-xs flex items-center justify-between gap-3 border border-zinc-800 shadow-2xs select-all">
             <div class="flex items-center gap-2.5 overflow-x-auto min-w-0">
               <span class="text-emerald-400 select-none font-bold shrink-0">$</span>
               <span id="agentCommandText" class="truncate">claude mcp add siftrcode -- npx -y siftrcode mcp</span>
@@ -1008,75 +989,284 @@
             </button>
           </div>
         </div>
+      </div>
 
-        <!-- Bottom Half: Condensed Real-World Token Economics Grid -->
-        <div class="p-4 sm:p-5 bg-zinc-50/50 dark:bg-zinc-900/50 space-y-3 border-t border-zinc-200/70 dark:border-zinc-800/70">
-          
-          <!-- Header Bar: Title & Model Rates Badge -->
-          <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-1.5 shrink-0">
+    </div>
+  </section>
+
+  <!-- Dedicated Token Economics Section -->
+  <section id="economics" class="py-16 sm:py-20 px-4 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800">
+    <div class="max-w-4xl mx-auto space-y-10">
+
+      <!-- Section Header -->
+      <div class="text-center space-y-2.5 max-w-3xl mx-auto">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800/80 text-[11px] font-mono font-medium text-emerald-800 dark:text-emerald-300 shadow-2xs">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span>FinOps for AI Coding Agents</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-normal tracking-tight text-ink font-serif">Token Economics</h2>
+        <p class="text-base sm:text-lg text-ink font-medium max-w-2xl mx-auto pt-0.5">
+          The math is simple. SiftrCode can save a lot of money per developer.
+        </p>
+        <p class="text-xs sm:text-sm text-ink-secondary max-w-xl mx-auto leading-relaxed">
+          AI coding agents spend 90%+ of their token budget re-reading bloated file implementations, private utility bodies, and external runtime packages. Here is the step-by-step mathematical derivation of how AST interface distillation turns that waste into direct developer savings.
+        </p>
+      </div>
+
+      <!-- Pricing Model Switcher -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-2 rounded-xl bg-zinc-100/80 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-2xs max-w-2xl mx-auto">
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold pl-1">Pricing Model:</span>
+          <div class="inline-flex items-center p-0.5 rounded-md bg-white dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 gap-1">
+            <button onclick="setModel('claude-3-7')" id="model-tab-claude" class="flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#D97757]"></span>
+              <span>Claude 3.7 Sonnet</span>
+            </button>
+            <button onclick="setModel('gpt-4o')" id="model-tab-gpt4o" class="flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              <span class="font-bold text-ink text-[11px] uppercase tracking-wider font-mono">Token Economics</span>
-            </div>
-            <span id="modelRatesBadge" class="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 bg-white dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 px-2 py-0.5 rounded shadow-2xs truncate">
-              Claude 3.7 Sonnet: $3.00/MTok in • $15.00/MTok out
-            </span>
+              <span>GPT-4o</span>
+            </button>
           </div>
-
-          <!-- 3 Condensed Comparison Metric Cards -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            <div class="p-3 rounded-lg bg-white dark:bg-zinc-800/70 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1 shadow-2xs">
-              <div class="text-[10px] uppercase font-mono text-zinc-400 font-semibold tracking-wider flex items-center justify-between">
-                <span>Context</span>
-                <span class="text-emerald-600 dark:text-emerald-400 font-bold">-92.2% Evaporated</span>
-              </div>
-              <div class="flex items-baseline justify-between pt-0.5">
-                <span class="text-xs font-mono text-rose-500 line-through">125,000 tok</span>
-                <span class="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">9,800 tok</span>
-              </div>
-            </div>
-
-            <div class="p-3 rounded-lg bg-white dark:bg-zinc-800/70 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1 shadow-2xs">
-              <div class="text-[10px] uppercase font-mono text-zinc-400 font-semibold tracking-wider flex items-center justify-between">
-                <span>Query Cost</span>
-                <span id="costSavingsTag" class="text-[#B34E2E] dark:text-[#F39C82] font-bold">Save $0.346 / query</span>
-              </div>
-              <div class="flex items-baseline justify-between pt-0.5">
-                <span id="costComparisonRaw" class="text-xs font-mono text-rose-500 line-through">$0.375</span>
-                <span id="costComparisonSkel" class="text-sm font-mono font-bold text-[#B34E2E] dark:text-[#F39C82]">$0.029</span>
-              </div>
-            </div>
-
-            <div class="p-3 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/70 space-y-1 shadow-2xs">
-              <div class="text-[10px] uppercase font-mono text-emerald-700 dark:text-emerald-300 font-semibold tracking-wider flex items-center justify-between">
-                <span>Monthly Dev Savings</span>
-                <span id="monthlySavingsTag" class="font-bold">Save ~$4,750 / yr</span>
-              </div>
-              <div class="flex items-baseline justify-between pt-0.5">
-                <span class="text-xs font-mono text-emerald-600/70 dark:text-emerald-400/70">50 turns/day</span>
-                <span id="monthlySavingsMetric" class="text-sm font-mono font-extrabold text-emerald-700 dark:text-emerald-300">+$396<span class="text-xs font-normal text-emerald-800 dark:text-emerald-400">/dev</span></span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Bottom Footer Bar: Condensed Latency & Audit Row -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5 text-[11px] font-mono">
-            <div class="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
-              <svg class="w-3.5 h-3.5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.381z" clip-rule="evenodd"/></svg>
-              <span id="monthlySavingsNote" class="text-wrap sm:truncate">Based on 50 agent turns/day • 11x faster latency (3.4s vs 38s)</span>
-            </div>
-
-            <div class="flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
-              <span class="text-zinc-400 text-[10px] font-sans">Calculate exact waste:</span>
-              <div class="inline-flex items-center gap-1 bg-zinc-950 text-zinc-100 px-2 py-0.5 rounded border border-zinc-800 text-[10px] select-all shadow-2xs">
-                <code>npx siftrcode audit</code>
-                <button onclick="copySnippet('npx siftrcode audit', this)" class="text-[9px] font-mono text-zinc-400 hover:text-white px-1 py-0.2 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer">COPY</button>
-              </div>
-            </div>
-          </div>
-
         </div>
 
+        <span id="modelRatesBadge" class="text-[11px] font-mono text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 px-2.5 py-1 rounded-md shadow-2xs truncate">
+          Claude 3.7 Sonnet: $3.00/MTok in • $15.00/MTok out
+        </span>
+      </div>
+
+      <!-- 4-Step Mathematical Derivation -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
+
+        <!-- Step 1: The Baseline Developer Activity -->
+        <div class="p-5 rounded-xl bg-white dark:bg-zinc-900/80 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs space-y-3.5 flex flex-col justify-between">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-mono font-bold text-[10px] uppercase tracking-wider border border-zinc-200 dark:border-zinc-700">Step 01</span>
+              <span class="text-[10px] font-mono text-zinc-400">Baseline Workload</span>
+            </div>
+            <h3 class="text-sm sm:text-base font-semibold text-ink font-sans">Developer Activity Baseline</h3>
+            <p class="text-ink-secondary text-xs leading-relaxed">
+              A software engineer actively pairing with Claude Code or Cursor runs debugging, refactoring, and feature queries throughout the day.
+            </p>
+          </div>
+
+          <div class="bg-zinc-50 dark:bg-zinc-950/60 p-3 rounded-lg border border-zinc-200/70 dark:border-zinc-800/80 space-y-2 font-mono text-[11px]">
+            <div class="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+              <span>Daily agent turns:</span>
+              <span class="font-bold text-ink">50 turns / day</span>
+            </div>
+            <div class="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+              <span>Working days / month:</span>
+              <span class="font-bold text-ink">22 days / mo</span>
+            </div>
+            <div class="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+              <span>Monthly agent queries:</span>
+              <span class="font-bold text-ink">1,100 queries / mo</span>
+            </div>
+            <div class="pt-1.5 border-t border-zinc-200/60 dark:border-zinc-800/60 flex items-center justify-between text-zinc-700 dark:text-zinc-300">
+              <span>Average context per turn:</span>
+              <span class="font-bold text-rose-500">125,000 raw tokens</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Unpruned Bloat Cost -->
+        <div class="p-5 rounded-xl bg-white dark:bg-zinc-900/80 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs space-y-3.5 flex flex-col justify-between">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 rounded bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-mono font-bold text-[10px] uppercase tracking-wider border border-rose-200 dark:border-rose-900/60">Step 02</span>
+              <span class="text-[10px] font-mono text-rose-500 font-semibold">Without SiftrCode</span>
+            </div>
+            <h3 class="text-sm sm:text-base font-semibold text-ink font-sans">The Unpruned Bloat Tax</h3>
+            <p class="text-ink-secondary text-xs leading-relaxed">
+              Without AST distillation, the agent reads full file implementations—re-ingesting private bodies, loops, SQL queries, and unused imports.
+            </p>
+          </div>
+
+          <div class="bg-rose-50/40 dark:bg-rose-950/20 p-3 rounded-lg border border-rose-200/60 dark:border-rose-900/40 space-y-2 font-mono text-[11px]">
+            <div class="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans italic">
+              125,000 tokens &times; (<span id="derivRateInLabel">$3.00</span> / 1M) = <span id="derivFormulaRaw" class="font-bold text-rose-600 dark:text-rose-400 font-mono">$0.375</span> / turn
+            </div>
+            <div class="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+              <span>Cost per query turn:</span>
+              <span id="costComparisonRaw" class="font-bold text-rose-600 dark:text-rose-400">$0.375</span>
+            </div>
+            <div class="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+              <span>Daily cost (50 turns):</span>
+              <span id="derivRawCostDay" class="font-semibold text-zinc-800 dark:text-zinc-200">$18.75 / day</span>
+            </div>
+            <div class="pt-1.5 border-t border-rose-200/60 dark:border-rose-900/40 flex items-center justify-between text-rose-700 dark:text-rose-300">
+              <span>Monthly spend per dev:</span>
+              <span id="derivRawCostMo" class="font-bold text-sm">$412.50 / mo</span>
+            </div>
+            <div class="flex items-center justify-between text-rose-600/80 dark:text-rose-400/80 text-[10px]">
+              <span>Annual unpruned cost:</span>
+              <span id="derivRawCostYr" class="font-semibold">$4,950 / yr</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Synthesized SiftrCode Interface -->
+        <div class="p-5 rounded-xl bg-white dark:bg-zinc-900/80 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs space-y-3.5 flex flex-col justify-between">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-mono font-bold text-[10px] uppercase tracking-wider border border-emerald-200 dark:border-emerald-900/60">Step 03</span>
+              <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">With SiftrCode</span>
+            </div>
+            <h3 class="text-sm sm:text-base font-semibold text-ink font-sans">Synthesized AST Interface</h3>
+            <p class="text-ink-secondary text-xs leading-relaxed">
+              SiftrCode strips internal function bodies before prompt construction. 100% of types, signatures, and contracts remain intact.
+            </p>
+          </div>
+
+          <div class="bg-emerald-50/40 dark:bg-emerald-950/20 p-3 rounded-lg border border-emerald-200/60 dark:border-emerald-900/40 space-y-2 font-mono text-[11px]">
+            <div class="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans italic">
+              9,800 tokens &times; (<span id="derivRateInLabelSkel">$3.00</span> / 1M) = <span id="derivFormulaSkel" class="font-bold text-emerald-600 dark:text-emerald-400 font-mono">$0.029</span> / turn
+            </div>
+            <div class="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+              <span>Cost per query turn:</span>
+              <span id="costComparisonSkel" class="font-bold text-emerald-600 dark:text-emerald-400">$0.029</span>
+            </div>
+            <div class="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+              <span>Daily cost (50 turns):</span>
+              <span id="derivSkelCostDay" class="font-semibold text-zinc-800 dark:text-zinc-200">$1.47 / day</span>
+            </div>
+            <div class="pt-1.5 border-t border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between text-emerald-700 dark:text-emerald-300">
+              <span>Monthly spend per dev:</span>
+              <span id="derivSkelCostMo" class="font-bold text-sm">$32.34 / mo</span>
+            </div>
+            <div class="flex items-center justify-between text-emerald-600/80 dark:text-emerald-400/80 text-[10px]">
+              <span>Annual synthesized cost:</span>
+              <span id="derivSkelCostYr" class="font-semibold">$388 / yr</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: The Net Savings Result -->
+        <div class="p-5 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border-2 border-emerald-300 dark:border-emerald-800/80 shadow-2xs space-y-3.5 flex flex-col justify-between">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 rounded bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100 font-mono font-bold text-[10px] uppercase tracking-wider">Step 04</span>
+              <span class="text-[10px] font-mono text-emerald-700 dark:text-emerald-300 font-bold">The Bottom Line</span>
+            </div>
+            <h3 class="text-sm sm:text-base font-bold text-emerald-950 dark:text-emerald-100 font-sans">Final Developer Savings</h3>
+            <p class="text-emerald-900/80 dark:text-emerald-200/80 text-xs leading-relaxed">
+              By eliminating 92.2% of unneeded payload weight, you pocket immediate token savings and slash agent turnaround latency.
+            </p>
+          </div>
+
+          <div class="bg-white/90 dark:bg-zinc-900/90 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800/70 space-y-2 font-mono text-[11px]">
+            <div class="flex items-center justify-between">
+              <span class="text-zinc-500 dark:text-zinc-400">Savings per turn:</span>
+              <span id="costSavingsTag" class="font-bold text-emerald-700 dark:text-emerald-300">Save $0.346 / query</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-zinc-500 dark:text-zinc-400">Net monthly savings:</span>
+              <span id="monthlySavingsMetric" class="font-extrabold text-sm text-emerald-700 dark:text-emerald-300">+$396<span class="text-xs font-normal">/dev</span></span>
+            </div>
+            <div class="pt-1.5 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+              <span class="text-zinc-600 dark:text-zinc-300 font-sans font-medium">Net annual savings:</span>
+              <span id="monthlySavingsTag" class="font-extrabold text-emerald-700 dark:text-emerald-300">Save ~$4,750 / yr</span>
+            </div>
+            <div class="flex items-center gap-1.5 pt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+              <svg class="w-3.5 h-3.5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.381z" clip-rule="evenodd"/></svg>
+              <span id="monthlySavingsNote" class="truncate">Based on 50 agent turns/day • 11x faster latency (3.4s vs 38s)</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Team Savings Scale Table -->
+      <div class="bg-zinc-50/70 dark:bg-zinc-900/60 border border-zinc-200/90 dark:border-zinc-800 rounded-xl p-5 sm:p-6 space-y-4 shadow-2xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-200/80 dark:border-zinc-800 pb-3">
+          <div>
+            <h4 class="font-serif text-base sm:text-lg font-normal text-ink">Annual Team Savings at Scale</h4>
+            <p class="text-xs text-ink-secondary">How SiftrCode's AST interface pruning compounds across team sizes.</p>
+          </div>
+          <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-semibold border border-emerald-300/80 dark:border-emerald-800/80 self-start sm:self-auto shadow-2xs">
+            Over 20x ROI vs $19/mo Pro
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs font-sans">
+            <thead>
+              <tr class="border-b border-zinc-200 dark:border-zinc-800 text-[10px] font-mono uppercase tracking-wider text-zinc-400">
+                <th class="py-2.5 pr-4 font-semibold">Team Size</th>
+                <th class="py-2.5 px-4 font-semibold">Monthly Unpruned Spend</th>
+                <th class="py-2.5 px-4 font-semibold">Monthly with SiftrCode</th>
+                <th class="py-2.5 px-4 font-semibold text-emerald-600 dark:text-emerald-400">Annual Net Savings</th>
+                <th class="py-2.5 pl-4 font-semibold text-right">Developer Hours Saved</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-200/60 dark:divide-zinc-800/60 font-mono text-zinc-700 dark:text-zinc-300">
+              <tr class="hover:bg-white dark:hover:bg-zinc-800/40 transition">
+                <td class="py-3 pr-4 font-sans font-semibold text-ink flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-zinc-400"></span> 1 Developer
+                </td>
+                <td class="py-3 px-4 text-rose-500" id="teamSpendRaw1">$412.50 / mo</td>
+                <td class="py-3 px-4 text-zinc-500 dark:text-zinc-400" id="teamSpendSkel1">$32.34 / mo</td>
+                <td class="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400" id="teamSave1">+$4,750 / yr</td>
+                <td class="py-3 pl-4 text-right font-sans text-zinc-500">~110 hrs / yr</td>
+              </tr>
+              <tr class="hover:bg-white dark:hover:bg-zinc-800/40 transition">
+                <td class="py-3 pr-4 font-sans font-semibold text-ink flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-[#D97757]"></span> 5 Developers
+                </td>
+                <td class="py-3 px-4 text-rose-500" id="teamSpendRaw5">$2,062.50 / mo</td>
+                <td class="py-3 px-4 text-zinc-500 dark:text-zinc-400" id="teamSpendSkel5">$161.70 / mo</td>
+                <td class="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400" id="teamSave5">+$23,750 / yr</td>
+                <td class="py-3 pl-4 text-right font-sans text-zinc-500">~550 hrs / yr</td>
+              </tr>
+              <tr class="hover:bg-white dark:hover:bg-zinc-800/40 transition bg-emerald-50/30 dark:bg-emerald-950/20">
+                <td class="py-3 pr-4 font-sans font-semibold text-ink flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 10 Developers
+                </td>
+                <td class="py-3 px-4 text-rose-500" id="teamSpendRaw10">$4,125.00 / mo</td>
+                <td class="py-3 px-4 text-zinc-500 dark:text-zinc-400" id="teamSpendSkel10">$323.40 / mo</td>
+                <td class="py-3 px-4 font-extrabold text-emerald-600 dark:text-emerald-400" id="teamSave10">+$47,500 / yr</td>
+                <td class="py-3 pl-4 text-right font-sans text-zinc-500">~1,100 hrs / yr</td>
+              </tr>
+              <tr class="hover:bg-white dark:hover:bg-zinc-800/40 transition">
+                <td class="py-3 pr-4 font-sans font-semibold text-ink flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span> 25 Developers
+                </td>
+                <td class="py-3 px-4 text-rose-500" id="teamSpendRaw25">$10,312.50 / mo</td>
+                <td class="py-3 px-4 text-zinc-500 dark:text-zinc-400" id="teamSpendSkel25">$808.50 / mo</td>
+                <td class="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400" id="teamSave25">+$118,750 / yr</td>
+                <td class="py-3 pl-4 text-right font-sans text-zinc-500">~2,750 hrs / yr</td>
+              </tr>
+              <tr class="hover:bg-white dark:hover:bg-zinc-800/40 transition">
+                <td class="py-3 pr-4 font-sans font-semibold text-ink flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-purple-500"></span> 50 Developers
+                </td>
+                <td class="py-3 px-4 text-rose-500" id="teamSpendRaw50">$20,625.00 / mo</td>
+                <td class="py-3 px-4 text-zinc-500 dark:text-zinc-400" id="teamSpendSkel50">$1,617.00 / mo</td>
+                <td class="py-3 px-4 font-extrabold text-emerald-600 dark:text-emerald-400" id="teamSave50">+$237,500 / yr</td>
+                <td class="py-3 pl-4 text-right font-sans text-zinc-500">~5,500 hrs / yr</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Audit Callout Bar -->
+      <div class="p-4 sm:p-5 rounded-xl bg-zinc-950 text-zinc-100 border border-zinc-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="space-y-1 text-center md:text-left">
+          <div class="flex items-center justify-center md:justify-start gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span class="font-mono text-xs font-semibold text-zinc-200 uppercase tracking-wider">Audit Your Codebase In 3 Seconds</span>
+          </div>
+          <p class="text-xs text-zinc-400 font-sans">Run a zero-cost local audit to see exact token bloat, dead weight, and projected dollar savings in your repository.</p>
+        </div>
+        <div class="flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg font-mono text-xs select-all shrink-0">
+          <span class="text-emerald-400 font-bold select-none">$</span>
+          <code>npx siftrcode audit</code>
+          <button onclick="copySnippet('npx siftrcode audit', this)" class="text-[10px] font-mono text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer ml-1 font-medium">
+            COPY
+          </button>
+        </div>
       </div>
 
     </div>
@@ -1194,6 +1384,7 @@
         <a href="/about" class="hover:text-ink transition">About us</a>
         <a href="/how-it-works" class="hover:text-ink transition">How it works</a>
         <a href="/claude" class="hover:text-ink transition">Claude Code</a>
+        <a href="#economics" class="hover:text-ink transition">Token Economics</a>
         <a href="/privacy" class="hover:text-ink transition">Privacy</a>
         <a href="/terms" class="hover:text-ink transition">Terms</a>
         <a href="https://github.com/kyzoeth/siftrcode" target="_blank" rel="noopener noreferrer" class="hover:text-ink transition">GitHub</a>
@@ -3212,21 +3403,49 @@ ${renderedRaw}
     const modelRates = {
       'claude-3-7': {
         badge: 'Claude 3.7 Sonnet: $3.00/MTok in • $15.00/MTok out',
-        rawCost: '$0.375',
-        skelCost: '$0.029',
+        rateInLabel: '$3.00',
+        rawCostTurn: '$0.375',
+        skelCostTurn: '$0.029',
+        rawCostDay: '$18.75 / day',
+        skelCostDay: '$1.47 / day',
+        rawCostMo: '$412.50 / mo',
+        skelCostMo: '$32.34 / mo',
+        rawCostYr: '$4,950 / yr',
+        skelCostYr: '$388 / yr',
         savingsTag: 'Save $0.346 / query',
         monthlySavings: '+$396',
         yearlySavings: 'Save ~$4,750 / yr',
-        monthlyNote: 'Based on 50 agent turns/day • 11x faster latency (3.4s vs 38s)'
+        monthlyNote: 'Based on 50 agent turns/day • 11x faster latency (3.4s vs 38s)',
+        team: {
+          raw1: '$412.50 / mo', skel1: '$32.34 / mo', save1: '+$4,750 / yr',
+          raw5: '$2,062.50 / mo', skel5: '$161.70 / mo', save5: '+$23,750 / yr',
+          raw10: '$4,125.00 / mo', skel10: '$323.40 / mo', save10: '+$47,500 / yr',
+          raw25: '$10,312.50 / mo', skel25: '$808.50 / mo', save25: '+$118,750 / yr',
+          raw50: '$20,625.00 / mo', skel50: '$1,617.00 / mo', save50: '+$237,500 / yr'
+        }
       },
       'gpt-4o': {
         badge: 'GPT-4o: $2.50/MTok in • $10.00/MTok out',
-        rawCost: '$0.312',
-        skelCost: '$0.025',
+        rateInLabel: '$2.50',
+        rawCostTurn: '$0.312',
+        skelCostTurn: '$0.025',
+        rawCostDay: '$15.62 / day',
+        skelCostDay: '$1.23 / day',
+        rawCostMo: '$343.75 / mo',
+        skelCostMo: '$26.95 / mo',
+        rawCostYr: '$4,125 / yr',
+        skelCostYr: '$323 / yr',
         savingsTag: 'Save $0.287 / query',
         monthlySavings: '+$330',
         yearlySavings: 'Save ~$3,960 / yr',
-        monthlyNote: 'Based on 50 agent turns/day • 8x faster latency (2.9s vs 24s)'
+        monthlyNote: 'Based on 50 agent turns/day • 8x faster latency (2.9s vs 24s)',
+        team: {
+          raw1: '$343.75 / mo', skel1: '$26.95 / mo', save1: '+$3,960 / yr',
+          raw5: '$1,718.75 / mo', skel5: '$134.75 / mo', save5: '+$19,800 / yr',
+          raw10: '$3,437.50 / mo', skel10: '$269.50 / mo', save10: '+$39,600 / yr',
+          raw25: '$8,593.75 / mo', skel25: '$673.75 / mo', save25: '+$99,000 / yr',
+          raw50: '$17,187.50 / mo', skel50: '$1,347.50 / mo', save50: '+$198,000 / yr'
+        }
       }
     };
 
@@ -3242,9 +3461,9 @@ ${renderedRaw}
         const tab = document.getElementById(`agent-tab-${k}`);
         if (!tab) return;
         if (k === agentKey) {
-          tab.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80';
+          tab.className = 'flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80';
         } else {
-          tab.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent';
+          tab.className = 'flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent';
         }
       });
 
@@ -3274,26 +3493,59 @@ ${renderedRaw}
       const tabGpt = document.getElementById('model-tab-gpt4o');
       const isClaude = modelKey === 'claude-3-7';
 
-      const activeClass = 'flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80';
-      const inactiveClass = 'flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent';
+      const activeClass = 'flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-600/80';
+      const inactiveClass = 'flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-700/40 border border-transparent';
 
       if (tabClaude) tabClaude.className = isClaude ? activeClass : inactiveClass;
       if (tabGpt) tabGpt.className = isClaude ? inactiveClass : activeClass;
 
-      const ratesBadge = document.getElementById('modelRatesBadge');
-      if (ratesBadge) ratesBadge.innerText = m.badge;
-      const rawCostEl = document.getElementById('costComparisonRaw');
-      if (rawCostEl) rawCostEl.innerText = m.rawCost;
-      const skelCostEl = document.getElementById('costComparisonSkel');
-      if (skelCostEl) skelCostEl.innerText = m.skelCost;
-      const savingsTagEl = document.getElementById('costSavingsTag');
-      if (savingsTagEl) savingsTagEl.innerText = m.savingsTag;
+      const setTxt = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val !== undefined) el.innerText = val;
+      };
+
+      setTxt('modelRatesBadge', m.badge);
+      setTxt('derivRateInLabel', m.rateInLabel);
+      setTxt('derivRateInLabelSkel', m.rateInLabel);
+      setTxt('derivFormulaRaw', m.rawCostTurn);
+      setTxt('derivFormulaSkel', m.skelCostTurn);
+      setTxt('costComparisonRaw', m.rawCostTurn);
+      setTxt('costComparisonSkel', m.skelCostTurn);
+      setTxt('derivRawCostDay', m.rawCostDay);
+      setTxt('derivSkelCostDay', m.skelCostDay);
+      setTxt('derivRawCostMo', m.rawCostMo);
+      setTxt('derivSkelCostMo', m.skelCostMo);
+      setTxt('derivRawCostYr', m.rawCostYr);
+      setTxt('derivSkelCostYr', m.skelCostYr);
+
+      setTxt('costSavingsTag', m.savingsTag);
+      setTxt('monthlySavingsTag', m.yearlySavings);
+      setTxt('monthlySavingsNote', m.monthlyNote);
+
       const monthlyMetricEl = document.getElementById('monthlySavingsMetric');
       if (monthlyMetricEl) monthlyMetricEl.innerHTML = `${m.monthlySavings}<span class="text-xs font-normal">/dev</span>`;
-      const yearlyTagEl = document.getElementById('monthlySavingsTag');
-      if (yearlyTagEl && m.yearlySavings) yearlyTagEl.innerText = m.yearlySavings;
-      const monthlyNoteEl = document.getElementById('monthlySavingsNote');
-      if (monthlyNoteEl) monthlyNoteEl.innerText = m.monthlyNote;
+
+      if (m.team) {
+        setTxt('teamSpendRaw1', m.team.raw1);
+        setTxt('teamSpendSkel1', m.team.skel1);
+        setTxt('teamSave1', m.team.save1);
+
+        setTxt('teamSpendRaw5', m.team.raw5);
+        setTxt('teamSpendSkel5', m.team.skel5);
+        setTxt('teamSave5', m.team.save5);
+
+        setTxt('teamSpendRaw10', m.team.raw10);
+        setTxt('teamSpendSkel10', m.team.skel10);
+        setTxt('teamSave10', m.team.save10);
+
+        setTxt('teamSpendRaw25', m.team.raw25);
+        setTxt('teamSpendSkel25', m.team.skel25);
+        setTxt('teamSave25', m.team.save25);
+
+        setTxt('teamSpendRaw50', m.team.raw50);
+        setTxt('teamSpendSkel50', m.team.skel50);
+        setTxt('teamSave50', m.team.save50);
+      }
     }
 
     const langs = ['ts', 'py', 'go', 'rs'];
