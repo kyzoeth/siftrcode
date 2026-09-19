@@ -869,49 +869,47 @@
       <div class="bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden text-xs font-sans divide-y divide-zinc-200/80 dark:divide-zinc-800">
         
         <!-- Top Half: Configuration & CLI Command -->
-        <div class="p-5 sm:p-6 lg:p-7">
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-            
-            <!-- Left Info (6 cols on lg) -->
-            <div class="lg:col-span-6 space-y-2.5">
+        <div class="p-5 sm:p-6 space-y-4">
+          <!-- Top Row: Badge, Title & Guide Link -->
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+            <div class="space-y-1.5 max-w-xl">
               <div class="flex items-center gap-2">
                 <span id="agentConfigBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 font-semibold uppercase tracking-wider">
                   CLAUDE CODE SETUP
                 </span>
                 <span class="text-[11px] text-zinc-400 font-mono">10s config</span>
               </div>
-              
-              <h3 id="agentConfigTitle" class="text-base sm:text-lg font-bold text-ink tracking-tight">Connect SiftrCode to Claude Code CLI</h3>
+              <h3 id="agentConfigTitle" class="text-lg sm:text-xl font-normal text-ink font-serif tracking-tight">Connect SiftrCode to Claude Code CLI</h3>
               <p id="agentConfigDesc" class="text-ink-secondary text-xs leading-relaxed">
                 Registers SiftrCode's Stdio MCP server with Claude Code. Claude automatically invokes <code class="font-mono text-zinc-800 dark:text-zinc-200">siftr_skeleton</code> to prune code before reading.
               </p>
-
-              <div class="pt-1 flex items-center gap-2 text-[11px] text-zinc-500">
-                <span id="agentRuleHint" class="truncate mr-1">Supports <code class="font-mono">/siftr</code> slash command &amp; <code class="font-mono">.mcp.json</code></span>
-                <span class="text-zinc-300 dark:text-zinc-700">•</span>
-                <a id="agentGuideLink" href="/claude" class="text-blue-700 dark:text-blue-400 font-semibold hover:underline shrink-0">
-                  Guide →
-                </a>
-              </div>
             </div>
 
-            <!-- Right Terminal Command Block (6 cols on lg) -->
-            <div class="lg:col-span-6 space-y-2">
-              <div class="flex items-center justify-between text-[11px] font-mono text-zinc-500">
-                <span>Terminal MCP Registration:</span>
-                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">1-STEP TERMINAL</span>
-              </div>
-              <div class="bg-zinc-950 text-zinc-100 p-3.5 rounded-lg font-mono text-xs flex items-center justify-between gap-3 border border-zinc-800 shadow-2xs select-all">
-                <div class="flex items-center gap-2 overflow-x-auto">
-                  <span class="text-emerald-400 select-none">$</span>
-                  <span id="agentCommandText" class="truncate">claude mcp add siftrcode -- npx -y siftrcode mcp</span>
-                </div>
-                <button id="agentCommandCopyBtn" onclick="copyAgentCommand(this)" class="text-[10px] font-mono text-zinc-400 hover:text-white px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer shrink-0">
-                  COPY
-                </button>
-              </div>
+            <!-- Hint & Guide Pill on the Right -->
+            <div class="flex items-center gap-2 self-start text-[11px] font-mono text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 rounded-md border border-zinc-200/80 dark:border-zinc-700/80 shadow-2xs shrink-0">
+              <span id="agentRuleHint" class="truncate">Supports <code class="font-mono">/siftr</code> slash command &amp; <code class="font-mono">.mcp.json</code></span>
+              <span class="text-zinc-300 dark:text-zinc-600">•</span>
+              <a id="agentGuideLink" href="/claude" class="text-blue-700 dark:text-blue-400 font-semibold hover:underline shrink-0">
+                Guide →
+              </a>
             </div>
+          </div>
 
+          <!-- Command Terminal Bar -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[11px] font-mono text-zinc-400 dark:text-zinc-500">
+              <span>Terminal MCP Registration:</span>
+              <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">1-STEP TERMINAL</span>
+            </div>
+            <div class="bg-zinc-950 text-zinc-100 p-3 sm:p-3.5 rounded-lg font-mono text-xs flex items-center justify-between gap-3 border border-zinc-800 shadow-2xs select-all">
+              <div class="flex items-center gap-2.5 overflow-x-auto min-w-0">
+                <span class="text-emerald-400 select-none font-bold shrink-0">$</span>
+                <span id="agentCommandText" class="truncate">claude mcp add siftrcode -- npx -y siftrcode mcp</span>
+              </div>
+              <button id="agentCommandCopyBtn" onclick="copyAgentCommand(this)" class="text-[10px] font-mono text-zinc-400 hover:text-white px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer shrink-0 font-medium">
+                COPY
+              </button>
+            </div>
           </div>
         </div>
 
