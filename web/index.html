@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SiftrCode — AST Context Pruner for AI Coding Agents</title>
-  <meta name="description" content="SiftrCode compiles codebases into lightweight AST interface skeletons before LLM inference. Slashing Claude Code & Cursor token waste by 85–98%.">
+  <title>SiftrCode — Zero-Loss Codebase Pruner for AI Coding Agents</title>
+  <meta name="description" content="SiftrCode synthesizes codebases into zero-loss interface skeletons before LLM inference. Slashing Claude Code & Cursor token waste by 85–98%.">
   
   <link rel="canonical" href="https://siftrcode.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -125,102 +125,95 @@
     }
 
 
-    /* AST Skeleton Signal Glow */
-    @keyframes ast-signal-breathe {
-      0%, 100% {
-        opacity: 0.95;
-      }
-      50% {
-        opacity: 1;
-        filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.35));
-      }
-    }
-
-    .ast-signal-glow {
-      animation: ast-signal-breathe 5s ease-in-out infinite;
-    }
-
-    /* Context Memory Profiler Animations */
-    @keyframes scanner-beam {
-      0% { transform: translateX(-150%); }
-      55%, 100% { transform: translateX(350%); }
-    }
-
-    .scanner-beam {
-      position: relative;
-      overflow: hidden;
-    }
-
-    .scanner-beam::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      width: 45%;
-      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.45) 50%, transparent 100%);
-      animation: scanner-beam 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    }
-
-    /* Headroom Buffer Continuous Flow */
-    @keyframes headroom-flow {
-      0% { background-position: 0 0; }
-      100% { background-position: 160px 0; }
-    }
-
-    .headroom-active-pattern {
-      background-image: repeating-linear-gradient(
-        -45deg,
-        rgba(16, 185, 129, 0.08),
-        rgba(16, 185, 129, 0.08) 6px,
-        transparent 6px,
-        transparent 12px
-      );
-      background-size: 24px 24px;
-      animation: headroom-flow 10s linear infinite;
-    }
-
-    /* Sluggish Clogged Pulse for Lane 1 */
-    @keyframes congestion-glow {
+    /* Synthesized Signal Glow */
+    @keyframes signal-breathe {
       0%, 100% { opacity: 0.95; }
-      50% { opacity: 0.75; }
+      50% { opacity: 1; filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.4)); }
     }
 
-    .choked-bar {
-      animation: congestion-glow 2.2s ease-in-out infinite;
+    .signal-glow {
+      animation: signal-breathe 5s ease-in-out infinite;
     }
 
-    /* Spring physics for memory bar transitions */
-    .profiler-bar {
-      transition: width 0.75s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    /* Central Compiler Laser Conduit Beam */
-    @keyframes laser-sweep {
+    /* Token Evaporation / Vanishing Smoke Animation */
+    @keyframes vapor-rise-1 {
       0% {
-        left: -30%;
+        transform: translateY(28px) translateX(-4px) scale(0.95);
         opacity: 0;
+        filter: blur(0px);
       }
       20% {
-        opacity: 1;
+        opacity: 0.85;
       }
-      80% {
-        opacity: 1;
+      65% {
+        opacity: 0.55;
+        filter: blur(1.5px);
       }
       100% {
-        left: 110%;
+        transform: translateY(-42px) translateX(6px) scale(0.6);
         opacity: 0;
+        filter: blur(6px);
       }
     }
 
-    .compiler-laser-beam {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 70px;
-      background: linear-gradient(90deg, transparent, #f59e0b, #fbbf24, transparent);
-      border-radius: 9999px;
-      animation: laser-sweep 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    @keyframes vapor-rise-2 {
+      0% {
+        transform: translateY(36px) translateX(6px) scale(0.95);
+        opacity: 0;
+        filter: blur(0px);
+      }
+      25% {
+        opacity: 0.9;
+      }
+      60% {
+        opacity: 0.5;
+        filter: blur(2px);
+      }
+      100% {
+        transform: translateY(-48px) translateX(-8px) scale(0.55);
+        opacity: 0;
+        filter: blur(7px);
+      }
+    }
+
+    @keyframes vapor-rise-3 {
+      0% {
+        transform: translateY(22px) translateX(-8px) scale(0.95);
+        opacity: 0;
+        filter: blur(0px);
+      }
+      30% {
+        opacity: 0.8;
+      }
+      70% {
+        opacity: 0.4;
+        filter: blur(2px);
+      }
+      100% {
+        transform: translateY(-54px) translateX(10px) scale(0.5);
+        opacity: 0;
+        filter: blur(8px);
+      }
+    }
+
+    .vapor-token-1 {
+      animation: vapor-rise-1 3.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+    .vapor-token-2 {
+      animation: vapor-rise-2 4.1s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+      animation-delay: 1.1s;
+    }
+    .vapor-token-3 {
+      animation: vapor-rise-3 4.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+      animation-delay: 2.2s;
+    }
+    .vapor-token-4 {
+      animation: vapor-rise-1 3.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+      animation-delay: 1.7s;
+    }
+    .vapor-token-5 {
+      animation: vapor-rise-2 4.5s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+      animation-delay: 2.8s;
     }
   </style>
 </head>
@@ -274,7 +267,7 @@
 
       <!-- Subtitle -->
       <p class="text-sm sm:text-base text-zinc-500 sm:whitespace-nowrap max-w-none mx-auto font-normal -mt-2">
-        Our proprietary AST compiler strips function bodies into zero-loss skeletons before inference.
+        Our proprietary synthesis engine strips implementation bloat into zero-loss interfaces before inference.
       </p>
 
       <!-- Instant CLI Bar -->
@@ -298,115 +291,110 @@
 
   <!-- Interactive Dual-Viewport Workbench (Centered Product Experience) -->
   <section id="workbench" class="py-12 px-4 relative z-10">
-    <div class="max-w-6xl mx-auto space-y-4">
+    <div class="max-w-6xl mx-auto space-y-6">
       
-      <!-- Workbench Controls & Tabs -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-zinc-200 p-3 rounded-xl shadow-sm">
+      <!-- Minimalist, Breathable Header Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-zinc-200/70 font-mono text-xs">
         <div class="flex items-center gap-2">
-          <span class="text-xs font-mono text-zinc-500 font-medium mr-1">LANG:</span>
-          <div class="flex items-center gap-1 font-mono text-xs">
-            <button onclick="setLang('ts', true)" id="tab-ts" class="px-2.5 py-1 rounded-md bg-zinc-900 text-white font-medium shadow-sm">TypeScript</button>
-            <button onclick="setLang('py', true)" id="tab-py" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink transition">Python</button>
-            <button onclick="setLang('go', true)" id="tab-go" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink transition">Go</button>
-            <button onclick="setLang('rs', true)" id="tab-rs" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink transition">Rust</button>
+          <span class="text-zinc-400 text-[11px] font-medium uppercase tracking-wider mr-1">LANG:</span>
+          <div class="inline-flex p-1 rounded-xl bg-zinc-100/80 border border-zinc-200/70">
+            <button onclick="setLang('ts', true)" id="tab-ts" class="px-3 py-1 rounded-lg bg-white text-zinc-950 font-medium shadow-xs transition">TypeScript</button>
+            <button onclick="setLang('py', true)" id="tab-py" class="px-3 py-1 rounded-lg text-zinc-500 hover:text-zinc-950 transition">Python</button>
+            <button onclick="setLang('go', true)" id="tab-go" class="px-3 py-1 rounded-lg text-zinc-500 hover:text-zinc-950 transition">Go</button>
+            <button onclick="setLang('rs', true)" id="tab-rs" class="px-3 py-1 rounded-lg text-zinc-500 hover:text-zinc-950 transition">Rust</button>
           </div>
         </div>
 
-        <div class="flex items-center gap-3 font-mono text-xs">
-          <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-100 text-zinc-600 border border-zinc-200 text-[11px]">
-            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-            <span>TOKEN PRUNING PIPELINE ACTIVE</span>
+        <div class="flex items-center gap-3 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="text-zinc-400 text-[11px]">Context Mass:</span>
+            <span class="text-rose-500 font-semibold" id="bridgeRaw">1,420 tokens</span>
+            <span class="text-zinc-300">➔</span>
+            <span class="text-amber-500 font-bold" id="bridgeSkel">112 tokens</span>
           </div>
-          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-medium">
-            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-            <span id="reductionTag">-92.1% Waste Stripped</span>
-          </div>
+          <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-semibold text-[11px]" id="bridgeReductionTag">
+            -92.1% Evaporated
+          </span>
         </div>
       </div>
 
-      <!-- Concept 3: The Integrated Compiler Bridge -->
-      <div class="bg-white border border-zinc-200/90 rounded-xl p-3 shadow-xs font-mono text-xs flex flex-col sm:flex-row items-center justify-between gap-3 relative overflow-hidden">
-        <!-- Left Source Telemetry -->
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-          <span class="text-zinc-500 font-medium">Raw Source:</span>
-          <span class="text-rose-600 font-bold" id="bridgeRaw">~1,420 tokens</span>
-        </div>
-
-        <!-- Central Laser Conduit & AST Pass Badge -->
-        <div class="flex-1 max-w-sm mx-4 relative w-full sm:w-auto h-7 flex items-center justify-center">
-          <div class="w-full h-0.5 bg-zinc-200 relative overflow-hidden rounded-full">
-            <div class="compiler-laser-beam"></div>
-          </div>
-          <div class="absolute px-3.5 py-1 bg-amber-500 text-zinc-950 rounded-full font-bold text-[11px] tracking-tight flex items-center gap-1.5 shadow-sm transform hover:scale-105 transition">
-            <span class="animate-pulse">⚡</span>
-            <span>AST ZERO-LOSS PASS:</span>
-            <span id="bridgeReductionTag" class="font-extrabold">-92.1%</span>
-          </div>
-        </div>
-
-        <!-- Right Agent Telemetry -->
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-          <span class="text-zinc-500 font-medium">Agent Ingestion:</span>
-          <span class="text-amber-600 font-bold" id="bridgeSkel">~112 tokens</span>
-          <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]" id="bridgeHeadroom">+92.1% Buffer</span>
-        </div>
-      </div>
-
-      <!-- Dual-Pane Viewport with Central Transform Bridge Node -->
-      <div class="relative">
+      <!-- Spacious Dual Viewport with Central Vanishing Token Chamber -->
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr,80px,1fr] gap-4 items-center">
         
-        <!-- Central Floating Bridge Chip (Desktop) -->
-        <div class="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-          <div class="bg-zinc-950 text-white border-2 border-amber-400/90 rounded-xl px-4 py-2.5 shadow-2xl flex flex-col items-center font-mono text-center backdrop-blur-md pointer-events-auto hover:scale-105 transition-transform duration-200">
-            <div class="flex items-center gap-1.5 text-[10px] text-amber-400 font-bold">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
-              <span>AST COMPILER</span>
-            </div>
-            <div class="text-base font-black text-amber-400 tracking-tight" id="centerReduction">-92.1%</div>
-            <div class="text-[9px] text-zinc-400 font-medium whitespace-nowrap" id="centerSaved">~1,308 saved</div>
+        <!-- Left: Full Implementation Source -->
+        <div class="bg-white border border-zinc-200/90 rounded-2xl overflow-hidden shadow-xs flex flex-col transition hover:border-zinc-300">
+          <div class="bg-zinc-50/80 px-4 py-2.5 border-b border-zinc-100 flex items-center justify-between text-xs font-mono">
+            <span class="text-zinc-600 font-medium flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+              RAW IMPLEMENTATION (DEFAULT INGESTION)
+            </span>
+            <span class="text-rose-600 font-semibold text-[11px]" id="rawTokenCount">~1,420 tokens</span>
+          </div>
+          <textarea id="rawInput" oninput="onInputChanged()" spellcheck="false" class="w-full h-84 p-4 font-mono text-xs text-zinc-800 leading-relaxed border-0 focus:outline-none resize-none font-normal bg-transparent"></textarea>
+          <div class="bg-zinc-50/50 px-4 py-2 border-t border-zinc-100 text-[11px] font-mono text-zinc-400 flex items-center justify-between">
+            <span>Edit code to test live evaporation</span>
+            <span class="text-rose-500/80 font-medium">Contains function bodies &amp; loops</span>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          
-          <!-- Left: Full Implementation Source -->
-          <div class="bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
-            <div class="bg-zinc-50/80 px-4 py-2 border-b border-zinc-200 flex items-center justify-between text-xs font-mono">
-              <span class="text-zinc-600 font-medium flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                RAW SOURCE (AGENTS INGEST THIS BY DEFAULT)
-              </span>
-              <span class="text-rose-600 font-bold" id="rawTokenCount">~1,420 tokens</span>
+        <!-- Center: Token Evaporation & Vanishing Chamber (Desktop) -->
+        <div class="hidden lg:flex flex-col items-center justify-center relative w-full h-84 my-auto select-none pointer-events-none">
+          <!-- Vertical Luminous Guide -->
+          <div class="w-px h-64 bg-gradient-to-b from-transparent via-amber-300/60 to-transparent relative flex items-center justify-center">
+            
+            <!-- Central Synthesis Glyph -->
+            <div class="w-7 h-7 rounded-full bg-white border border-amber-300 shadow-sm flex items-center justify-center text-amber-600 text-xs font-serif z-10 animate-pulse" title="Zero-Loss Synthesis">
+              ⟡
             </div>
-            <textarea id="rawInput" oninput="onInputChanged()" spellcheck="false" class="w-full h-80 p-4 font-mono text-xs text-zinc-800 leading-relaxed border-0 focus:outline-none resize-none font-normal bg-white"></textarea>
-            <div class="bg-zinc-50/50 px-4 py-1.5 border-t border-zinc-100 text-[11px] font-mono text-zinc-400">
-              Edit or paste any code above to test live
-            </div>
-          </div>
 
-          <!-- Right: AST Pruned Interface Skeleton -->
-          <div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg flex flex-col text-white relative">
-            <div class="bg-zinc-950 px-4 py-2 border-b border-zinc-800 flex items-center justify-between text-xs font-mono">
-              <span class="text-amber-400 font-medium flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-amber-400 signal-ping"></span>
-                SIFTRCODE AST SKELETON (FED TO AGENT)
-              </span>
-              <span class="text-amber-400 font-bold" id="skelTokenCount">~112 tokens (-92.1%)</span>
-            </div>
-            <div class="relative flex-1 overflow-hidden">
-              <pre id="skelOutput" class="w-full h-80 p-4 font-mono text-xs text-amber-200/95 leading-relaxed overflow-auto whitespace-pre-wrap selection:bg-amber-400 selection:text-zinc-950 ast-signal-glow"></pre>
-            </div>
-            <div class="bg-zinc-950 px-4 py-2 border-t border-zinc-800 text-[11px] font-mono text-zinc-400 flex items-center justify-between">
-              <span class="text-amber-400 flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5 text-amber-400 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                100% Types, Interfaces &amp; Docstrings Preserved
-              </span>
-              <span id="savedTokensCount" class="text-amber-400 font-semibold">Saved ~1,308 tokens</span>
-            </div>
-          </div>
+            <!-- Evaporating Code Tokens (Dissolving into thin vapor) -->
+            <span class="vapor-token-1 absolute text-[10px] font-mono text-amber-800 bg-amber-50/95 border border-amber-200/80 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
+              await db.query()
+            </span>
+            <span class="vapor-token-2 absolute text-[10px] font-mono text-amber-800 bg-amber-50/95 border border-amber-200/80 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
+              for (let i = 0; ...)
+            </span>
+            <span class="vapor-token-3 absolute text-[10px] font-mono text-amber-800 bg-amber-50/95 border border-amber-200/80 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
+              return res.json()
+            </span>
+            <span class="vapor-token-4 absolute text-[10px] font-mono text-amber-800 bg-amber-50/95 border border-amber-200/80 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
+              try { ... }
+            </span>
+            <span class="vapor-token-5 absolute text-[10px] font-mono text-amber-800 bg-amber-50/95 border border-amber-200/80 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
+              throw new Error()
+            </span>
 
+          </div>
+          <div class="text-[9px] font-mono uppercase tracking-widest text-zinc-400 mt-2">
+            VAPORIZED
+          </div>
+        </div>
+
+        <!-- Mobile Evaporation Divider -->
+        <div class="flex lg:hidden items-center justify-center gap-2 py-2 text-xs font-mono text-amber-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+          <span>Implementation bodies dissolve into zero-loss interface ↓</span>
+        </div>
+
+        <!-- Right: Synthesized Context (Fed to Agent) -->
+        <div class="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden shadow-lg flex flex-col text-white relative transition hover:border-zinc-700">
+          <div class="bg-zinc-900/90 px-4 py-2.5 border-b border-zinc-800/90 flex items-center justify-between text-xs font-mono">
+            <span class="text-amber-400 font-medium flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 signal-ping"></span>
+              SYNTHESIZED CONTEXT (FED TO AGENT)
+            </span>
+            <span class="text-amber-400 font-bold text-[11px]" id="skelTokenCount">~112 tokens (-92.1%)</span>
+          </div>
+          <div class="relative flex-1 overflow-hidden">
+            <pre id="skelOutput" class="w-full h-84 p-4 font-mono text-xs text-amber-100/90 leading-relaxed overflow-auto whitespace-pre-wrap selection:bg-amber-400 selection:text-zinc-950 signal-glow"></pre>
+          </div>
+          <div class="bg-zinc-900/60 px-4 py-2 border-t border-zinc-800/80 text-[11px] font-mono text-zinc-400 flex items-center justify-between">
+            <span class="text-emerald-400 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-emerald-400 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              100% Types &amp; Signatures Preserved
+            </span>
+            <span id="savedTokensCount" class="text-amber-400 font-medium">Saved ~1,308 tokens</span>
+          </div>
         </div>
 
       </div>
@@ -518,7 +506,7 @@
             npx siftrcode audit
           </div>
           <p class="text-[11px] text-ink-secondary font-sans">
-            Instantly scans your directory AST and calculates monthly token waste.
+            Instantly scans your directory and calculates monthly token waste.
           </p>
         </div>
 
@@ -559,7 +547,7 @@
             <h3 class="text-lg font-bold text-ink font-sans">Community CLI</h3>
             <div class="text-2xl font-bold text-ink">$0 <span class="text-xs font-normal text-zinc-500">Free forever (MIT)</span></div>
             <ul class="space-y-2 text-zinc-600 text-[11px] border-t border-zinc-200 pt-3">
-              <li>✔ Local AST Pruning (TS, Py, Go, Rust)</li>
+              <li>✔ Local Zero-Loss Pruning (TS, Py, Go, Rust)</li>
               <li>✔ Codebase Auditor (`siftrcode audit`)</li>
               <li>✔ Context Packer (`siftrcode pack`)</li>
               <li>✔ Stdio MCP Server integration</li>
@@ -580,7 +568,7 @@
             <ul class="space-y-2 text-zinc-700 text-[11px] border-t border-amber-200 pt-3">
               <li>✔ Everything in Community CLI</li>
               <li>✔ TypeSafe Jev Cloud Relevance Gate</li>
-              <li>✔ Team Cross-Repo AST Cache</li>
+              <li>✔ Team Cross-Repo Context Cache</li>
               <li>✔ CI/CD Pull Request Context Auditor</li>
             </ul>
           </div>
@@ -748,7 +736,7 @@ impl Gateway for StripeGateway {
       } catch (e) {}
 
       // Fallback
-      let skel = `// [SiftrCode Skeleton] service.${curLang} (AST Interface)\n`;
+      let skel = `// [SiftrCode Synthesized Interface] service.${curLang}\n`;
       const lines = code.split('\n');
       const filtered = lines.filter(l => {
         const t = l.trim();
@@ -757,7 +745,7 @@ impl Gateway for StripeGateway {
                t.startsWith('func') || t.startsWith('class') || t.startsWith('def') ||
                t.startsWith('/**') || t.startsWith('*') || t.startsWith('//');
       });
-      skel += filtered.join('\n') + '\n\n// ✨ Implementation bodies pruned by SiftrCode';
+      skel += filtered.join('\n') + '\n\n// ⟡ [ Implementation bodies dissolved by SiftrCode • 100% types preserved ]';
       const skelTokens = Math.ceil(skel.length / 4);
       updateUI(skel, rawTokens, skelTokens);
     }
@@ -800,8 +788,7 @@ impl Gateway for StripeGateway {
       const reduction = Math.max(0, ((rawTokens - skelTokens) / rawTokens) * 100);
       const saved = Math.max(0, rawTokens - skelTokens);
 
-      // 200k Context Window Allocation Telemetry
-      // Scaled to a realistic 38-file multi-file agent task:
+      // Context mass calculations
       const contextWindow = 200000;
       const multiFileMultiplier = 38;
       const sessionRawTokens = Math.min(contextWindow * 0.94, rawTokens * multiFileMultiplier);
@@ -809,23 +796,17 @@ impl Gateway for StripeGateway {
 
       const rawPct = Math.max(18, Math.min(92, ((sessionRawTokens / contextWindow) * 100)));
       const skelPct = Math.max(2.4, Math.min(18, ((sessionSkelTokens / contextWindow) * 100)));
-      const freeHeadroom = Math.max(0, 100 - skelPct);
       const latencySecs = Math.max(18, Math.round((sessionRawTokens / 3200) * 1.1));
 
-      // Animated Odometer Tickers (Concept 3: Integrated Compiler Bridge)
-      const duration = 600;
+      // Animated Odometer Tickers (Spacious Evaporation Conduit)
+      const duration = 550;
       animateNumber('rawTokenCount', prevMetrics.rawTokens, rawTokens, duration, v => `~${Math.round(v).toLocaleString()} tokens`);
       animateNumber('skelTokenCount', prevMetrics.skelTokens, skelTokens, duration, v => `~${Math.round(v).toLocaleString()} tokens (-${reduction.toFixed(1)}%)`);
-      animateNumber('reductionTag', prevMetrics.reduction, reduction, duration, v => `-${v.toFixed(1)}% Waste Stripped`);
       animateNumber('savedTokensCount', prevMetrics.savedTokens, saved, duration, v => `Saved ~${Math.round(v).toLocaleString()} tokens`);
 
-      animateNumber('bridgeRaw', prevMetrics.rawTokens, rawTokens, duration, v => `~${Math.round(v).toLocaleString()} tokens`);
-      animateNumber('bridgeSkel', prevMetrics.skelTokens, skelTokens, duration, v => `~${Math.round(v).toLocaleString()} tokens`);
-      animateNumber('bridgeReductionTag', prevMetrics.reduction, reduction, duration, v => `-${v.toFixed(1)}%`);
-      animateNumber('bridgeHeadroom', prevMetrics.reduction, reduction, duration, v => `+${v.toFixed(1)}% Buffer`);
-
-      animateNumber('centerReduction', prevMetrics.reduction, reduction, duration, v => `-${v.toFixed(1)}%`);
-      animateNumber('centerSaved', prevMetrics.savedTokens, saved, duration, v => `~${Math.round(v).toLocaleString()} saved`);
+      animateNumber('bridgeRaw', prevMetrics.rawTokens, rawTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
+      animateNumber('bridgeSkel', prevMetrics.skelTokens, skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
+      animateNumber('bridgeReductionTag', prevMetrics.reduction, reduction, duration, v => `-${v.toFixed(1)}% Evaporated`);
 
       document.getElementById('skelOutput').innerText = skel;
 
@@ -974,7 +955,7 @@ impl Gateway for StripeGateway {
         </div>
         <h3 class="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight">Supercharge your team's coding agents</h3>
         <p class="text-xs sm:text-sm text-zinc-500 font-sans">
-          Eliminate 90% token waste, slash agent latency from 45s to 4s, and sync AST skeletons across your engineers.
+          Eliminate 90% token waste, slash agent latency from 45s to 4s, and sync synthesized interfaces across your engineers.
         </p>
       </div>
 
