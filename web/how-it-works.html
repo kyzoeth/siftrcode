@@ -124,11 +124,11 @@
     <div class="space-y-3 border-b border-zinc-200/80 pb-8 text-center sm:text-left">
       <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-900 text-[10px] font-mono font-semibold uppercase tracking-wider">
         <svg class="w-3 h-3 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-        TECHNICAL ARCHITECTURE &amp; SPECIFICATION
+        SYSTEM ARCHITECTURE &amp; GUARANTEES
       </div>
       <h1 class="text-4xl sm:text-5xl font-normal text-ink font-serif tracking-tight">How SiftrCode Works</h1>
       <p class="text-xs sm:text-sm text-ink-secondary max-w-2xl">
-        An engineering breakdown of how SiftrCode dissolves 90% of token bloat while keeping 100% of exported interfaces, type signatures, and contracts intact.
+        An engineering overview of how SiftrCode dissolves 90% of token bloat while keeping 100% of exported interfaces, type signatures, and contracts intact.
       </p>
     </div>
 
@@ -162,14 +162,14 @@
           </div>
           <div>
             <h2 class="text-base font-bold text-ink">Deterministic AST Synthesis Engine (&lt;0.15s)</h2>
-            <span class="text-[11px] font-mono text-zinc-400">Zero-Regex Deterministic Syntax Graphs</span>
+            <span class="text-[11px] font-mono text-zinc-400">High-Precision Semantic Syntax Analysis</span>
           </div>
         </div>
         <p>
-          Naive code strippers rely on loose regular expressions or basic line truncation, which inevitably corrupts multi-line templates, nested callbacks, inline types, and complex generics. SiftrCode uses a proprietary <strong>Deterministic AST Synthesis Engine</strong> engineered specifically for high-precision LLM context optimization.
+          Naive code strippers rely on loose regular expressions or basic line truncation, which inevitably corrupts multi-line templates, nested callbacks, inline types, and complex generics. SiftrCode uses a proprietary <strong>Deterministic AST Synthesis Engine</strong> engineered specifically for zero-hallucination agent context optimization.
         </p>
         <p>
-          In under 150 milliseconds per 10,000 lines of code, SiftrCode constructs a complete semantic syntax tree representing every identifier, interface, generic constraint, type alias, class hierarchy, and docstring.
+          Executing in under 150 milliseconds per 10,000 lines of code entirely on your local CPU, SiftrCode constructs a complete semantic representation of your codebase — mapping identifiers, exported interfaces, generic parameters, type aliases, and module hierarchies without external network egress.
         </p>
       </section>
 
@@ -180,36 +180,36 @@
             03
           </div>
           <div>
-            <h2 class="text-base font-bold text-ink">Imperative Body Dissolution &amp; Fold</h2>
-            <span class="text-[11px] font-mono text-zinc-400">Language-Specific AST Skeletonization Rules</span>
+            <h2 class="text-base font-bold text-ink">Semantic Surface Extraction &amp; Body Dissolution</h2>
+            <span class="text-[11px] font-mono text-zinc-400">Strict Polyglot Contract Preservation</span>
           </div>
         </div>
         <p>
-          Once the syntax tree is built, SiftrCode's language dispatchers selectively prune the internal body nodes while leaving the syntactic declarations completely intact:
+          SiftrCode evaluates the full syntactic scope of each module, isolating boundary declarations from non-contract execution logic. Imperative routines, database mutations, and internal algorithms are dissolved while preserving 100% of the type contracts, parameter definitions, and structural documentation required by downstream agents:
         </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 font-mono text-xs">
           <div class="p-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-1">
             <div class="text-blue-600 dark:text-blue-400 font-bold">TypeScript / JavaScript</div>
             <p class="text-[11px] text-zinc-500 font-sans">
-              Replaces function and method statements with semicolon declarations (<code class="font-mono">function add(a: number): number;</code>). Preserves exported types, interfaces, classes, and generics.
+              Guarantees full interface fidelity across complex generic constraints, ambient definitions, exported class layouts, and public method signatures without leaking internal imperative routines.
             </p>
           </div>
           <div class="p-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-1">
-            <div class="text-emerald-600 dark:text-emerald-400 font-bold">Python 3 (PEP 484)</div>
+            <div class="text-emerald-600 dark:text-emerald-400 font-bold">Python 3 (PEP 484 / 526)</div>
             <p class="text-[11px] text-zinc-500 font-sans">
-              Replaces loop/logic blocks with the standard Python ellipsis (<code class="font-mono">...</code>). Retains docstrings, type annotations, return types, and class attributes.
+              Maintains full structural compliance across class hierarchies, docstrings, typing annotations, and callable signatures while eliminating imperative control flows.
             </p>
           </div>
           <div class="p-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-1">
             <div class="text-cyan-600 dark:text-cyan-400 font-bold">Go</div>
             <p class="text-[11px] text-zinc-500 font-sans">
-              Extracts interface signatures, struct definitions, public method receivers, and package comments while collapsing function implementation bodies.
+              Preserves package boundary contracts, struct layouts, interface definitions, and receiver method signatures while omitting private execution logic.
             </p>
           </div>
           <div class="p-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-1">
             <div class="text-rose-600 dark:text-rose-400 font-bold">Rust</div>
             <p class="text-[11px] text-zinc-500 font-sans">
-              Preserves traits, public struct fields, enum variants, lifetime parameters, and <code class="font-mono">pub fn</code> signatures while dissolving logic blocks into trait-like declarations.
+              Retains complete trait bounds, lifetime declarations, public struct fields, and function signatures while stripping internal block operations.
             </p>
           </div>
         </div>
