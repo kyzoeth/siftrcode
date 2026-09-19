@@ -376,90 +376,108 @@
   </section>
 
   <!-- Consolidated Benchmarks & Performance Metrics -->
-  <section id="benchmarks" class="py-12 px-4 bg-white border-y border-zinc-200">
-    <div class="max-w-5xl mx-auto space-y-6">
+  <section id="benchmarks" class="py-7 px-4 bg-white border-y border-zinc-200">
+    <div class="max-w-5xl mx-auto space-y-3.5">
       
       <!-- Consolidated Header with Aggregate Metrics -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-200/80 pb-5">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-200/80 pb-3">
         <div>
-          <h2 class="text-2xl font-bold tracking-tight text-ink">Verified Production Benchmarks</h2>
-          <p class="text-xs sm:text-sm text-ink-secondary mt-0.5">Exact figures scanned directly from public GitHub repositories.</p>
+          <div class="flex items-center gap-2">
+            <h2 class="text-base sm:text-lg font-bold tracking-tight text-ink">Verified Production Benchmarks</h2>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-medium">Public GitHub Audits</span>
+          </div>
+          <p class="text-xs text-ink-secondary mt-0.5">Exact figures scanned directly from public repositories.</p>
         </div>
 
         <!-- Macro Metrics -->
-        <div class="inline-flex items-center divide-x divide-zinc-200 bg-surface-50 border border-zinc-200 rounded-lg px-1 py-1 shadow-sm text-xs font-mono self-start md:self-auto">
-          <div class="px-3 py-1 flex items-center gap-1.5">
+        <div class="inline-flex items-center divide-x divide-zinc-200 bg-surface-50 border border-zinc-200 rounded-lg px-1 py-1 shadow-2xs text-xs font-mono self-start md:self-auto">
+          <div class="px-2.5 py-0.5 flex items-center gap-1.5">
             <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
             <span class="text-zinc-400">Reduction:</span>
             <span class="font-bold text-amber-600">-85% to -98%</span>
           </div>
-          <div class="px-3 py-1 flex items-center gap-1.5">
+          <div class="px-2.5 py-0.5 flex items-center gap-1.5">
             <span class="text-zinc-400">Latency:</span>
             <span class="font-bold text-ink">4.2x Faster</span>
           </div>
-          <div class="px-3 py-1 flex items-center gap-1.5">
+          <div class="px-2.5 py-0.5 flex items-center gap-1.5">
             <span class="text-zinc-400">Parsing:</span>
             <span class="font-bold text-ink">&lt;0.15s</span>
           </div>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
         
         <!-- Express -->
-        <div class="p-5 bg-surface-50 border border-zinc-200 rounded-xl space-y-3 glow-card">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-ink font-sans text-sm">expressjs/express</span>
-            <span class="inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded bg-zinc-200/60 text-zinc-700">
+        <div class="p-3.5 bg-surface-50 border border-zinc-200 rounded-xl space-y-2 glow-card hover:border-zinc-300 transition">
+          <div class="flex items-center justify-between gap-1.5">
+            <span class="font-bold text-ink font-sans text-xs truncate">expressjs/express</span>
+            <span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-zinc-200/60 text-zinc-700 shrink-0">
               <svg class="w-3 h-3 shrink-0 rounded-xs" viewBox="0 0 128 128" fill="none"><rect width="128" height="128" rx="16" fill="#F7DF1E"/><path fill="#000000" d="M30 40h15v45c0 10-5 15-15 15-4 0-8-1-10-3l3-10c2 1 4 2 7 2 4 0 5-2 5-6V40zm35 0h15c10 0 16 5 16 13 0 6-3 10-8 12 7 2 10 7 10 14 0 9-7 16-18 16H65V40zm14 20c3 0 5-1 5-4s-2-4-5-4h-4v8h4zm2 23c3 0 5-1 5-4s-2-4-5-4h-6v8h6z"/></svg>
               <span>JavaScript</span>
             </span>
           </div>
-          <div class="space-y-1 text-[11px] text-zinc-600">
-            <div class="flex justify-between"><span>Raw Code:</span> <span class="text-rose-600 font-bold">175,353 tokens</span></div>
-            <div class="flex justify-between"><span>SiftrCode:</span> <span class="text-amber-600 font-bold">2,357 tokens</span></div>
+          <div class="flex items-center justify-between text-[11px] text-zinc-600 pt-2 border-t border-zinc-200/70">
+            <div class="flex items-center gap-1.5">
+              <span class="text-rose-500 font-semibold line-through">175,353</span>
+              <span class="text-zinc-300">➔</span>
+              <span class="text-amber-600 font-bold">2,357</span>
+              <span class="text-[10px] text-zinc-400">tokens</span>
+            </div>
+            <span class="font-extrabold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded text-[11px]">-98.7%</span>
           </div>
-          <div class="pt-2 border-t border-zinc-200 flex items-baseline justify-between">
-            <span class="text-2xl font-extrabold text-amber-600">-98.7%</span>
-            <span class="text-[11px] text-zinc-500">0.15s pack</span>
+          <div class="flex items-center justify-between text-[10px] text-zinc-400">
+            <span>Pack Latency</span>
+            <span class="font-semibold text-zinc-600">0.15s pack</span>
           </div>
         </div>
 
         <!-- FastAPI -->
-        <div class="p-5 bg-surface-50 border border-zinc-200 rounded-xl space-y-3 glow-card">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-ink font-sans text-sm">tiangolo/fastapi</span>
-            <span class="inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded bg-zinc-200/60 text-zinc-700">
+        <div class="p-3.5 bg-surface-50 border border-zinc-200 rounded-xl space-y-2 glow-card hover:border-zinc-300 transition">
+          <div class="flex items-center justify-between gap-1.5">
+            <span class="font-bold text-ink font-sans text-xs truncate">tiangolo/fastapi</span>
+            <span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-zinc-200/60 text-zinc-700 shrink-0">
               <svg class="w-3 h-3 shrink-0" viewBox="0 0 128 128" fill="none"><path fill="#387EB8" d="M63.391 12.248c-4.222.02-8.252.379-11.8 1.007-10.45 1.846-12.346 5.71-12.346 12.837v9.411h24.693v3.137H29.977c-7.176 0-13.46 4.313-15.426 12.521-2.268 9.405-2.368 15.275 0 25.096 1.755 7.311 5.947 12.519 13.124 12.519h8.491V77.494c0-8.151 7.051-15.34 15.426-15.34h24.665c6.866 0 12.346-5.654 12.346-12.548V26.093c0-6.693-5.646-11.72-12.346-12.837-4.244-.706-8.645-1.027-12.866-1.008zM50.037 19.817c2.55 0 4.634 2.117 4.634 4.721 0 2.593-2.083 4.69-4.634 4.69-2.56 0-4.633-2.097-4.633-4.69-.001-2.604 2.073-4.721 4.633-4.721z"/><path fill="#FFE052" d="M91.682 38.64v10.966c0 8.5-7.208 15.655-15.426 15.655H51.591c-6.756 0-12.346 5.783-12.346 12.549v23.515c0 6.691 5.818 10.628 12.346 12.547 7.816 2.297 15.312 2.713 24.665 0 6.216-1.801 12.346-5.423 12.346-12.547v-9.412H63.938v-3.138h37.012c7.176 0 9.852-5.005 12.348-12.519 2.578-7.735 2.467-15.174 0-25.096-1.774-7.145-5.161-12.521-12.348-12.521h-9.268zM77.809 98.187c2.561 0 4.634 2.097 4.634 4.692 0 2.602-2.074 4.719-4.634 4.719-2.55 0-4.633-2.117-4.633-4.719 0-2.595 2.083-4.692 4.633-4.692z"/></svg>
               <span>Python</span>
             </span>
           </div>
-          <div class="space-y-1 text-[11px] text-zinc-600">
-            <div class="flex justify-between"><span>Raw Code:</span> <span class="text-rose-600 font-bold">3,498,358 tokens</span></div>
-            <div class="flex justify-between"><span>SiftrCode:</span> <span class="text-amber-600 font-bold">720,715 tokens</span></div>
+          <div class="flex items-center justify-between text-[11px] text-zinc-600 pt-2 border-t border-zinc-200/70">
+            <div class="flex items-center gap-1.5">
+              <span class="text-rose-500 font-semibold line-through">3,498,358</span>
+              <span class="text-zinc-300">➔</span>
+              <span class="text-amber-600 font-bold">720,715</span>
+              <span class="text-[10px] text-zinc-400">tokens</span>
+            </div>
+            <span class="font-extrabold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded text-[11px]">-79.4%</span>
           </div>
-          <div class="pt-2 border-t border-zinc-200 flex items-baseline justify-between">
-            <span class="text-2xl font-extrabold text-amber-600">-79.4%</span>
-            <span class="text-[11px] text-zinc-500">2.7M saved</span>
+          <div class="flex items-center justify-between text-[10px] text-zinc-400">
+            <span>Net Reduction</span>
+            <span class="font-semibold text-zinc-600">2.7M saved</span>
           </div>
         </div>
 
         <!-- SiftrCode -->
-        <div class="p-5 bg-surface-50 border border-zinc-200 rounded-xl space-y-3 glow-card">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-ink font-sans text-sm">siftrcode/siftrcode</span>
-            <span class="inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded bg-zinc-200/60 text-zinc-700">
+        <div class="p-3.5 bg-surface-50 border border-zinc-200 rounded-xl space-y-2 glow-card hover:border-zinc-300 transition">
+          <div class="flex items-center justify-between gap-1.5">
+            <span class="font-bold text-ink font-sans text-xs truncate">siftrcode/siftrcode</span>
+            <span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-zinc-200/60 text-zinc-700 shrink-0">
               <svg class="w-3 h-3 shrink-0 rounded-xs" viewBox="0 0 128 128" fill="none"><rect width="128" height="128" rx="16" fill="#3178C6"/><path fill="#ffffff" d="M60.82 50.11H43.76v54.76H29.13V50.11H12.08v-12.8h48.74v12.8zm53.48 24.31c0 3.73-1.02 6.94-3.05 9.63-2.03 2.69-4.94 4.74-8.73 6.16-3.79 1.42-8.23 2.13-13.32 2.13-4.52 0-8.66-.54-12.42-1.62-3.76-1.08-6.85-2.61-9.27-4.59l5.44-11.23c2.09 1.62 4.54 2.87 7.35 3.76s5.73 1.33 8.76 1.33c3.73 0 6.44-.65 8.13-1.95 1.69-1.3 2.54-3.02 2.54-5.16 0-1.77-.66-3.23-1.98-4.38-1.32-1.15-3.66-2.27-7.02-3.36-4.52-1.47-8.08-3.09-10.68-4.86-2.6-1.77-4.49-3.86-5.67-6.27-1.18-2.41-1.77-5.26-1.77-8.55 0-3.67.97-6.88 2.91-9.63 1.94-2.75 4.72-4.85 8.34-6.3 3.62-1.45 7.96-2.18 13.02-2.18 4.07 0 7.82.48 11.25 1.44 3.43.96 6.3 2.27 8.61 3.93l-5.14 11.08c-2.09-1.42-4.39-2.52-6.9-3.3-2.51-.78-5.14-1.17-7.89-1.17-3.27 0-5.74.57-7.41 1.71-1.67 1.14-2.51 2.67-2.51 4.59 0 1.62.63 2.97 1.89 4.05 1.26 1.08 3.52 2.15 6.78 3.21 4.72 1.57 8.43 3.27 11.13 5.1 2.7 1.83 4.67 3.98 5.91 6.45 1.24 2.47 1.86 5.38 1.86 8.73z"/></svg>
               <span>TypeScript</span>
             </span>
           </div>
-          <div class="space-y-1 text-[11px] text-zinc-600">
-            <div class="flex justify-between"><span>Raw Code:</span> <span class="text-rose-600 font-bold">15,931 tokens</span></div>
-            <div class="flex justify-between"><span>SiftrCode:</span> <span class="text-amber-600 font-bold">817 tokens</span></div>
+          <div class="flex items-center justify-between text-[11px] text-zinc-600 pt-2 border-t border-zinc-200/70">
+            <div class="flex items-center gap-1.5">
+              <span class="text-rose-500 font-semibold line-through">15,931</span>
+              <span class="text-zinc-300">➔</span>
+              <span class="text-amber-600 font-bold">817</span>
+              <span class="text-[10px] text-zinc-400">tokens</span>
+            </div>
+            <span class="font-extrabold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded text-[11px]">-94.9%</span>
           </div>
-          <div class="pt-2 border-t border-zinc-200 flex items-baseline justify-between">
-            <span class="text-2xl font-extrabold text-amber-600">-94.9%</span>
-            <span class="text-[11px] text-zinc-500">0.13s pack</span>
+          <div class="flex items-center justify-between text-[10px] text-zinc-400">
+            <span>Pack Latency</span>
+            <span class="font-semibold text-zinc-600">0.13s pack</span>
           </div>
         </div>
 
