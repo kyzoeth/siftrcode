@@ -139,6 +139,61 @@
     .ast-signal-glow {
       animation: ast-signal-breathe 5s ease-in-out infinite;
     }
+
+    /* Context Memory Profiler Animations */
+    @keyframes scanner-beam {
+      0% { transform: translateX(-150%); }
+      55%, 100% { transform: translateX(350%); }
+    }
+
+    .scanner-beam {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scanner-beam::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 45%;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.45) 50%, transparent 100%);
+      animation: scanner-beam 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    /* Headroom Buffer Continuous Flow */
+    @keyframes headroom-flow {
+      0% { background-position: 0 0; }
+      100% { background-position: 160px 0; }
+    }
+
+    .headroom-active-pattern {
+      background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(16, 185, 129, 0.08),
+        rgba(16, 185, 129, 0.08) 6px,
+        transparent 6px,
+        transparent 12px
+      );
+      background-size: 24px 24px;
+      animation: headroom-flow 10s linear infinite;
+    }
+
+    /* Sluggish Clogged Pulse for Lane 1 */
+    @keyframes congestion-glow {
+      0%, 100% { opacity: 0.95; }
+      50% { opacity: 0.75; }
+    }
+
+    .choked-bar {
+      animation: congestion-glow 2.2s ease-in-out infinite;
+    }
+
+    /* Spring physics for memory bar transitions */
+    .profiler-bar {
+      transition: width 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+    }
   </style>
 </head>
 <body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-amber-400 selection:text-zinc-950">
@@ -242,18 +297,24 @@
       </div>
 
       <!-- 200k Token Context Window Memory Visualizer -->
-      <div class="bg-white border border-zinc-200/90 rounded-2xl p-4 sm:p-5 shadow-xs font-mono text-xs space-y-3.5">
+      <div class="bg-white border border-zinc-200/90 rounded-2xl p-4 sm:p-5 shadow-xs font-mono text-xs space-y-4">
         
         <!-- Header / Telemetry Bar -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] pb-2 border-b border-zinc-100">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] pb-2.5 border-b border-zinc-100">
+          <div class="flex items-center gap-2.5">
+            <span class="relative flex h-2.5 w-2.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+            </span>
             <span class="font-bold text-zinc-900 tracking-tight font-sans text-xs">200,000 Token Context Window Profiler</span>
-            <span class="hidden md:inline text-zinc-400 font-mono text-[10px]">• Claude Code / Cursor / Windsurf</span>
+            <span class="hidden md:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 font-mono text-[10px] font-medium border border-zinc-200/70">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Claude Code / Cursor / Windsurf Context Bus</span>
+            </span>
           </div>
           <div class="flex items-center gap-2 text-[11px] font-mono">
-            <span class="text-zinc-400">File Footprint:</span>
-            <span class="text-zinc-500 line-through" id="gaugeRaw">1,420 tokens</span>
+            <span class="text-zinc-400">Footprint:</span>
+            <span class="text-zinc-500 line-through font-medium" id="gaugeRaw">1,420 tokens</span>
             <span class="text-zinc-300">➔</span>
             <span class="text-amber-600 font-bold" id="gaugeSkel">112 tokens</span>
             <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-[10px]" id="headroomPill">+92.1% Headroom</span>
@@ -261,21 +322,28 @@
         </div>
 
         <!-- Dual-Lane Context Memory Comparison -->
-        <div class="space-y-3.5 font-sans">
+        <div class="space-y-4 font-sans">
           
           <!-- Lane 1: Default Ingestion (Raw Codebase) -->
           <div class="space-y-1.5">
             <div class="flex items-center justify-between text-[11px]">
               <span class="flex items-center gap-1.5 font-medium text-zinc-700">
-                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
                 <span>Without SiftrCode (Raw Codebase)</span>
               </span>
-              <span class="font-mono text-[10px] text-rose-600 font-semibold" id="laneRawLabel">
-                71.0% Context Choked (Method Bodies &amp; Loops) • Latency ~42s ⚠️
+              <span class="font-mono text-[10px] text-rose-600 font-semibold flex items-center gap-1" id="laneRawLabel">
+                <span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                <span id="laneRawPct">71.0%</span> Context Choked (Method Bodies &amp; Loops) • Latency <span id="laneRawLatency">~42s</span> ⚠️
               </span>
             </div>
-            <div class="w-full h-2.5 bg-rose-50/70 rounded-full overflow-hidden flex p-0.5 border border-rose-200/60">
-              <div id="laneRawBar" class="h-full bg-rose-500 rounded-full transition-all duration-500 shadow-xs" style="width: 71%;"></div>
+            <!-- Lane 1 Bar Track -->
+            <div class="w-full h-3.5 sm:h-4 bg-rose-50/80 rounded-full overflow-hidden flex p-0.5 border border-rose-200/80 relative">
+              <div id="laneRawBar" class="h-full bg-gradient-to-r from-rose-500 via-rose-500 to-rose-600 rounded-full profiler-bar scanner-beam choked-bar shadow-sm" style="width: 71%;"></div>
+              <div class="flex-1 flex items-center justify-end px-2.5 pointer-events-none overflow-hidden">
+                <span class="text-[9px] font-mono text-rose-500 font-semibold tracking-wider flex items-center gap-1 opacity-80 whitespace-nowrap">
+                  <span class="hidden sm:inline">PROMPT CACHE CONGESTION</span>
+                </span>
+              </div>
             </div>
           </div>
 
@@ -283,25 +351,37 @@
           <div class="space-y-1.5">
             <div class="flex items-center justify-between text-[11px]">
               <span class="flex items-center gap-1.5 font-medium text-zinc-900">
-                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
                 <span class="font-semibold text-amber-900">With SiftrCode AST Skeleton</span>
               </span>
-              <span class="font-mono text-[10px] text-emerald-600 font-semibold" id="laneSkelLabel">
-                5.6% Allocated • 94.4% Buffer Free for Agent Reasoning ✅
+              <span class="font-mono text-[10px] text-emerald-600 font-semibold flex items-center gap-1" id="laneSkelLabel">
+                <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span id="laneSkelPct">5.6%</span> Allocated • <span id="laneFreePct">94.4%</span> Buffer Free for Agent Reasoning &amp; Multi-Turn Tools ✅
               </span>
             </div>
-            <div class="w-full h-2.5 bg-emerald-50/70 rounded-full overflow-hidden flex p-0.5 border border-emerald-200/60">
-              <div id="laneSkelBar" class="h-full bg-amber-500 rounded-full transition-all duration-500 shadow-xs" style="width: 5.6%;"></div>
+            <!-- Lane 2 Bar Track with continuous streaming buffer pattern -->
+            <div class="w-full h-3.5 sm:h-4 bg-emerald-50/80 rounded-full overflow-hidden flex p-0.5 border border-emerald-200/80 headroom-active-pattern relative">
+              <div id="laneSkelBar" class="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full profiler-bar scanner-beam shadow-sm" style="width: 5.6%;"></div>
+              <div class="flex-1 flex items-center justify-end px-2.5 pointer-events-none overflow-hidden">
+                <span class="text-[9px] font-mono text-emerald-700 font-semibold tracking-wider flex items-center gap-1.5 opacity-90 whitespace-nowrap">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span class="hidden sm:inline">HIGH-SPEED REASONING BUFFER:</span>
+                  <span id="bufferFreeBadge" class="bg-emerald-100/90 text-emerald-800 px-1.5 py-0.5 rounded font-bold">94.4% FREE</span>
+                </span>
+              </div>
             </div>
           </div>
 
           <!-- Token Window Scale Ruler (0k to 200k) -->
-          <div class="flex justify-between items-center text-[9px] font-mono text-zinc-400 pt-1 px-1 border-t border-zinc-100">
+          <div class="flex justify-between items-center text-[9px] font-mono text-zinc-400 pt-1.5 px-1 border-t border-zinc-100">
             <span>0</span>
             <span>50,000</span>
             <span>100,000</span>
             <span>150,000</span>
-            <span class="font-semibold text-zinc-600">200,000 Token Limit</span>
+            <span class="font-semibold text-zinc-700 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+              200,000 Token Limit
+            </span>
           </div>
 
         </div>
@@ -701,15 +781,43 @@ impl Gateway for StripeGateway {
       updateUI(skel, rawTokens, skelTokens);
     }
 
-    function updateUI(skel, rawTokens, skelTokens) {
-      const reduction = Math.max(0, ((rawTokens - skelTokens) / rawTokens) * 100).toFixed(1);
-      const saved = Math.max(0, rawTokens - skelTokens);
+    // Animated Metric Interpolation System
+    let prevMetrics = {
+      rawTokens: 0,
+      skelTokens: 0,
+      rawPct: 0,
+      skelPct: 0,
+      reduction: 0,
+      latencySecs: 0,
+      savedTokens: 0
+    };
 
-      document.getElementById('rawTokenCount').innerText = `~${rawTokens.toLocaleString()} tokens`;
-      document.getElementById('skelTokenCount').innerText = `~${skelTokens.toLocaleString()} tokens (-${reduction}%)`;
-      document.getElementById('reductionTag').innerText = `-${reduction}% Waste Stripped`;
-      document.getElementById('savedTokensCount').innerText = `Saved ~${saved.toLocaleString()} tokens`;
-      document.getElementById('skelOutput').innerText = skel;
+    function animateNumber(elementId, startVal, endVal, durationMs, formatter) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      if (Math.abs(startVal - endVal) < 0.05) {
+        el.innerText = formatter(endVal);
+        return;
+      }
+      const startTime = performance.now();
+      function tick(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / durationMs);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        const current = startVal + (endVal - startVal) * ease;
+        el.innerText = formatter(current);
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          el.innerText = formatter(endVal);
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    function updateUI(skel, rawTokens, skelTokens) {
+      const reduction = Math.max(0, ((rawTokens - skelTokens) / rawTokens) * 100);
+      const saved = Math.max(0, rawTokens - skelTokens);
 
       // 200k Context Window Allocation Telemetry
       // Scaled to a realistic 38-file multi-file agent task:
@@ -718,26 +826,46 @@ impl Gateway for StripeGateway {
       const sessionRawTokens = Math.min(contextWindow * 0.94, rawTokens * multiFileMultiplier);
       const sessionSkelTokens = Math.min(sessionRawTokens, skelTokens * multiFileMultiplier);
 
-      const rawPct = Math.max(18, Math.min(92, ((sessionRawTokens / contextWindow) * 100))).toFixed(1);
-      const skelPct = Math.max(2.4, Math.min(18, ((sessionSkelTokens / contextWindow) * 100))).toFixed(1);
-      const freeHeadroom = (100 - parseFloat(skelPct)).toFixed(1);
+      const rawPct = Math.max(18, Math.min(92, ((sessionRawTokens / contextWindow) * 100)));
+      const skelPct = Math.max(2.4, Math.min(18, ((sessionSkelTokens / contextWindow) * 100)));
+      const freeHeadroom = Math.max(0, 100 - skelPct);
       const latencySecs = Math.max(18, Math.round((sessionRawTokens / 3200) * 1.1));
 
+      // Animated Odometer Tickers (Smooth Eased Count-up)
+      const duration = 650;
+      animateNumber('rawTokenCount', prevMetrics.rawTokens, rawTokens, duration, v => `~${Math.round(v).toLocaleString()} tokens`);
+      animateNumber('skelTokenCount', prevMetrics.skelTokens, skelTokens, duration, v => `~${Math.round(v).toLocaleString()} tokens (-${reduction.toFixed(1)}%)`);
+      animateNumber('reductionTag', prevMetrics.reduction, reduction, duration, v => `-${v.toFixed(1)}% Waste Stripped`);
+      animateNumber('savedTokensCount', prevMetrics.savedTokens, saved, duration, v => `Saved ~${Math.round(v).toLocaleString()} tokens`);
+
+      animateNumber('gaugeRaw', prevMetrics.rawTokens, rawTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
+      animateNumber('gaugeSkel', prevMetrics.skelTokens, skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
+      animateNumber('headroomPill', prevMetrics.reduction, reduction, duration, v => `+${v.toFixed(1)}% Headroom`);
+
+      animateNumber('laneRawPct', prevMetrics.rawPct, rawPct, duration, v => `${v.toFixed(1)}%`);
+      animateNumber('laneRawLatency', prevMetrics.latencySecs, latencySecs, duration, v => `~${Math.round(v)}s`);
+      animateNumber('laneSkelPct', prevMetrics.skelPct, skelPct, duration, v => `${v.toFixed(1)}%`);
+      animateNumber('laneFreePct', 100 - prevMetrics.skelPct, freeHeadroom, duration, v => `${v.toFixed(1)}%`);
+      animateNumber('bufferFreeBadge', 100 - prevMetrics.skelPct, freeHeadroom, duration, v => `${v.toFixed(1)}% FREE`);
+
+      // Update Bar Widths with Spring Transitions
       const laneRawBar = document.getElementById('laneRawBar');
       const laneSkelBar = document.getElementById('laneSkelBar');
-      const laneRawLabel = document.getElementById('laneRawLabel');
-      const laneSkelLabel = document.getElementById('laneSkelLabel');
-      const headroomPill = document.getElementById('headroomPill');
-      const gaugeRaw = document.getElementById('gaugeRaw');
-      const gaugeSkel = document.getElementById('gaugeSkel');
+      if (laneRawBar) laneRawBar.style.width = `${rawPct.toFixed(1)}%`;
+      if (laneSkelBar) laneSkelBar.style.width = `${skelPct.toFixed(1)}%`;
 
-      if (laneRawBar) laneRawBar.style.width = `${rawPct}%`;
-      if (laneSkelBar) laneSkelBar.style.width = `${skelPct}%`;
-      if (laneRawLabel) laneRawLabel.innerText = `${rawPct}% Context Choked (Method Bodies & Loops) • Latency ~${latencySecs}s ⚠️`;
-      if (laneSkelLabel) laneSkelLabel.innerText = `${skelPct}% Allocated • ${freeHeadroom}% Buffer Free for Agent Reasoning & Code Gen ✅`;
-      if (headroomPill) headroomPill.innerText = `+${reduction}% Headroom`;
-      if (gaugeRaw) gaugeRaw.innerText = `${rawTokens.toLocaleString()} tokens`;
-      if (gaugeSkel) gaugeSkel.innerText = `${skelTokens.toLocaleString()} tokens`;
+      document.getElementById('skelOutput').innerText = skel;
+
+      // Persist metrics for smooth continuous tweening
+      prevMetrics = {
+        rawTokens,
+        skelTokens,
+        rawPct,
+        skelPct,
+        reduction,
+        latencySecs,
+        savedTokens: saved
+      };
     }
 
 
@@ -786,9 +914,16 @@ impl Gateway for StripeGateway {
       }, 5500);
     }
 
-    // Init
-    setLang('ts');
-    startAutoTour();
+    // Init with spring slide-in entrance
+    const rBar = document.getElementById('laneRawBar');
+    const sBar = document.getElementById('laneSkelBar');
+    if (rBar) rBar.style.width = '0%';
+    if (sBar) sBar.style.width = '0%';
+
+    setTimeout(() => {
+      setLang('ts');
+      startAutoTour();
+    }, 180);
 
     // B2B Team Trial Modal Handlers
     function openTrialModal() {
