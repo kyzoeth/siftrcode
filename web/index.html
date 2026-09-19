@@ -98,17 +98,17 @@
     ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
 
-    /* Continuous Glowing 90% Typography (No Box) - Slower, ambient cadence */
+    /* Continuous Glowing 90% Typography (No Box) - Ultra-subtle, slow ambient cadence */
     @keyframes continuous-text-aura {
       0%, 100% {
-        filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.3));
+        filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.16));
       }
       50% {
-        filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.65)) drop-shadow(0 0 3px rgba(251, 191, 36, 0.45));
+        filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.3));
       }
     }
 
-    /* Slow, Luxurious Continuous Shimmer across 90% */
+    /* Slow, Delicate Continuous Shimmer across 90% */
     @keyframes pct-shimmer-sweep {
       0% { background-position: 200% center; }
       100% { background-position: -200% center; }
@@ -116,11 +116,11 @@
 
     .hero-glow-text {
       display: inline-block;
-      background: linear-gradient(90deg, #b45309 0%, #d97706 25%, #f59e0b 45%, #fef08a 50%, #f59e0b 55%, #d97706 75%, #b45309 100%);
+      background: linear-gradient(90deg, #d97706 0%, #f59e0b 35%, #fcd34d 50%, #f59e0b 65%, #d97706 100%);
       background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      animation: pct-shimmer-sweep 8s linear infinite, continuous-text-aura 7s ease-in-out infinite;
+      animation: pct-shimmer-sweep 14s linear infinite, continuous-text-aura 10s ease-in-out infinite;
       font-weight: 800;
     }
 
