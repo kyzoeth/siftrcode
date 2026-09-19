@@ -166,15 +166,22 @@ function createMcpServerInstance() {
   return mcpServer;
 }
 
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 
-const server = http.createServer((req, res) => {
+const streamableTransport = new StreamableHTTPServerTransport();
+const streamableMcpServer = createMcpServerInstance();
+streamableMcpServer.connect(streamableTransport).catch(err => {
+  console.error('Failed to connect StreamableHTTPServerTransport:', err);
+});
+
+const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const pathname = parsedUrl.pathname;
 
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Mcp-Session-Id, Accept');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -196,40 +203,23 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Live MCP SSE Transport Stream
-  if ((pathname === '/mcp' || pathname === '/sse') && req.method === 'GET') {
-    const transport = new SSEServerTransport('/mcp/messages', res);
-    const mcpServer = createMcpServerInstance();
-    activeTransports.set(transport.sessionId, transport);
-
-    req.on('close', () => {
-      activeTransports.delete(transport.sessionId);
-    });
-
-    mcpServer.connect(transport).catch(err => {
-      console.error('MCP Server connect error:', err);
-    });
-    return;
-  }
-
-  // MCP Post Message Endpoint
-  if (pathname === '/mcp/messages' && req.method === 'POST') {
-    const sessionId = parsedUrl.searchParams.get('sessionId');
-    if (!sessionId || !activeTransports.has(sessionId)) {
-      res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Session not found or expired' }));
-      return;
+  // Live MCP Streamable HTTP & SSE Transport (Glama & Smithery native)
+  if (pathname === '/mcp' || pathname === '/sse' || pathname === '/mcp/messages') {
+    if (!req.headers.accept || !req.headers.accept.includes('text/event-stream')) {
+      req.headers.accept = (req.headers.accept ? req.headers.accept + ', ' : '') + 'application/json, text/event-stream';
     }
-    const transport = activeTransports.get(sessionId)!;
-    transport.handlePostMessage(req, res).catch(err => {
-      console.error('MCP handlePostMessage error:', err);
+    try {
+      await streamableTransport.handleRequest(req, res);
+    } catch (err: any) {
+      console.error('Streamable HTTP error:', err);
       if (!res.headersSent) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: err.message }));
       }
-    });
+    }
     return;
   }
+
 
 
   // Live AST Skeleton API
