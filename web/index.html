@@ -418,6 +418,22 @@
       border-color: rgba(197, 155, 39, 0.5);
       background-color: rgba(197, 155, 39, 0.15);
     }
+
+    @keyframes scanline-sweep {
+      0% { top: 0%; opacity: 0.9; }
+      100% { top: 100%; opacity: 0; }
+    }
+    .ast-scanline {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #c59b27, #fef08a, #c59b27, transparent);
+      box-shadow: 0 0 12px #c59b27, 0 0 24px #eab308;
+      pointer-events: none;
+      z-index: 20;
+      animation: scanline-sweep 0.8s ease-out forwards;
+    }
   </style>
 </head>
 <body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-amber-400 selection:text-zinc-950">
@@ -496,7 +512,7 @@
 
       <!-- Single Clear Hero Call to Action -->
       <div class="pt-2 flex items-center justify-center">
-        <a href="#workbench" class="px-5 py-2.5 bg-ink hover:bg-zinc-800 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow-sm hover:shadow active:scale-[0.99] btn-press flex items-center gap-1.5">
+        <a href="#workbench" onclick="replayDissolve()" class="px-5 py-2.5 bg-ink hover:bg-zinc-800 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow-sm hover:shadow active:scale-[0.99] btn-press flex items-center gap-1.5">
           <span>Try Live Demo</span>
           <span class="text-zinc-400">↓</span>
         </a>
@@ -543,9 +559,9 @@
       <!-- Minimalist, Breathable Header Bar with Language Selector & Context Mass -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-zinc-200/70 font-mono text-xs">
         <div class="flex flex-wrap items-center gap-3">
-          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[10px] font-mono font-semibold shadow-2xs">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ci-live-dot shrink-0"></span>
-            <span>LIVE AST SYNTHESIS</span>
+          <div id="demoStatusPill" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[10px] font-mono font-semibold shadow-2xs transition-all duration-300">
+            <span id="demoStatusDot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 ci-live-dot shrink-0"></span>
+            <span id="demoStatusText">LIVE AST SYNTHESIS</span>
           </div>
           <div class="flex items-center gap-1.5">
             <span class="text-zinc-400 text-[11px] font-medium uppercase tracking-wider mr-0.5">LANG:</span>
@@ -628,7 +644,10 @@
           </div>
           <textarea id="rawInput" oninput="onInputChanged()" spellcheck="false" class="w-full flex-1 p-4 font-mono text-xs text-zinc-800 leading-relaxed border-0 focus:outline-none resize-none font-normal bg-transparent overflow-y-auto min-h-0"></textarea>
           <div class="bg-zinc-50/50 px-4 py-2 border-t border-zinc-100 text-[11px] font-mono text-zinc-400 flex items-center justify-between shrink-0">
-            <span>Edit code to test real-time synthesis</span>
+            <div class="flex items-center gap-2">
+              <span>Edit code to test real-time synthesis</span>
+              <button type="button" onclick="resetDemoSample()" class="text-amber-600 hover:text-amber-700 underline decoration-amber-500/40 text-[10px] font-medium transition cursor-pointer">Reset sample</button>
+            </div>
             <span class="text-rose-500 font-semibold flex items-center gap-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
               <span id="rawCostFoot">Burn: $55.20 / 10k calls</span>
@@ -1584,6 +1603,25 @@ impl Gateway for StripeGateway {`
       return highlightedLines.join('\n');
     }
 
+    function setCompilerStatus(text, type = 'ready') {
+      const pill = document.getElementById('demoStatusPill');
+      const dot = document.getElementById('demoStatusDot');
+      const label = document.getElementById('demoStatusText');
+      if (!label) return;
+      label.innerText = text;
+      if (!pill) return;
+      if (type === 'compiling') {
+        pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-300 text-amber-800 text-[10px] font-mono font-semibold shadow-2xs transition-all duration-300';
+        if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping shrink-0';
+      } else if (type === 'success') {
+        pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[10px] font-mono font-semibold shadow-2xs transition-all duration-300';
+        if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500 ci-live-dot shrink-0';
+      } else {
+        pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-700 text-[10px] font-mono font-semibold shadow-2xs transition-all duration-300';
+        if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-zinc-400 shrink-0';
+      }
+    }
+
     function renderDemo(lang, shouldAnimate = true) {
       clearTimeout(dissolveTimeout);
       const blocks = demoBlocks[lang];
@@ -1620,9 +1658,24 @@ ${escapeHtml(item.rawCode)}
 
       container.innerHTML = html;
 
-      const duration = 1200;
+      const duration = 750;
       if (shouldAnimate) {
-        // Initial raw numbers
+        setCompilerStatus('SCANNING AST NODES...', 'compiling');
+
+        // Laser scanline effect
+        const parent = container.parentElement;
+        if (parent) {
+          const oldScan = parent.querySelector('.ast-scanline');
+          if (oldScan && oldScan.parentNode) oldScan.parentNode.removeChild(oldScan);
+          const scan = document.createElement('div');
+          scan.className = 'ast-scanline';
+          parent.appendChild(scan);
+          setTimeout(() => {
+            if (scan && scan.parentNode) scan.parentNode.removeChild(scan);
+          }, 850);
+        }
+
+        // Initial numbers
         document.getElementById('rawTokenCount').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
         document.getElementById('rawCostFoot').innerText = `Burn: $${conf.rawCost.toFixed(2)} / 10k calls`;
         document.getElementById('bridgeRaw').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
@@ -1633,10 +1686,12 @@ ${escapeHtml(item.rawCode)}
         document.getElementById('costSkel').innerText = `$${conf.rawCost.toFixed(2)}`;
         document.getElementById('bridgeReductionTag').innerText = `0% Evaporated`;
         document.getElementById('costSavedTag').innerText = `Save $0.00`;
-        document.getElementById('savedTokensCount').innerText = `Calculating...`;
+        document.getElementById('savedTokensCount').innerText = `Synthesizing...`;
 
-        // Generous 1.4s reading pause before dissolution smoothly begins
+        // Crisp 450ms beat then fold
         dissolveTimeout = setTimeout(() => {
+          setCompilerStatus('DISSOLVING BODIES & PRUNING...', 'compiling');
+
           const allBlocks = container.querySelectorAll('.dissolve-block');
           allBlocks.forEach(b => {
             b.classList.add('collapsing');
@@ -1648,15 +1703,19 @@ ${escapeHtml(item.rawCode)}
             btn.innerText = 'inspect';
           });
 
-          // Animate tokens and dollars down smoothly over 1200ms
           animateNumber('skelTokenCount', conf.rawTokens, conf.skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens (-${Math.round(conf.reduction)}%)`);
           animateNumber('bridgeSkel', conf.rawTokens, conf.skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
           animateNumber('costSkel', conf.rawCost, conf.skelCost, duration, v => `$${v.toFixed(2)}`);
           animateNumber('costSavedTag', 0, conf.savedCost, duration, v => `Save $${v.toFixed(2)}`);
           animateNumber('bridgeReductionTag', 0, conf.reduction, duration, v => `-${v.toFixed(1)}% Evaporated`);
           animateNumber('savedTokensCount', 0, conf.savedTokens, duration, v => `Saved ${Math.round(v).toLocaleString()} tokens (Save $${conf.savedCost.toFixed(2)}/10k)`);
-        }, 1400);
+
+          setTimeout(() => {
+            setCompilerStatus(`✓ 100% TYPES PRESERVED (-${Math.round(conf.reduction)}% TOKENS)`, 'success');
+          }, duration);
+        }, 450);
       } else {
+        setCompilerStatus('LIVE AST SYNTHESIS', 'success');
         document.getElementById('rawTokenCount').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
         document.getElementById('rawCostFoot').innerText = `Burn: $${conf.rawCost.toFixed(2)} / 10k calls`;
         document.getElementById('skelTokenCount').innerText = `${conf.skelTokens.toLocaleString()} tokens (-${Math.round(conf.reduction)}%)`;
@@ -1684,6 +1743,7 @@ ${escapeHtml(item.rawCode)}
     }
 
     function toggleDissolve(id) {
+      resetUserActivity();
       const block = document.getElementById('block-' + id);
       const btn = document.getElementById('btn-' + id);
       if (!block || !btn) return;
@@ -1692,8 +1752,8 @@ ${escapeHtml(item.rawCode)}
       if (isCollapsed) {
         block.classList.remove('collapsing');
         block.classList.add('expanded');
-        block.style.maxHeight = '280px';
-        block.style.opacity = '0.9';
+        block.style.maxHeight = '360px';
+        block.style.opacity = '0.95';
         block.style.filter = 'none';
         btn.innerText = 'fold';
       } else {
@@ -1706,7 +1766,14 @@ ${escapeHtml(item.rawCode)}
     }
 
     function replayDissolve() {
-      userInteracted = true;
+      resetUserActivity();
+      renderDemo(curLang, true);
+    }
+
+    function resetDemoSample() {
+      resetUserActivity();
+      const raw = document.getElementById('rawInput');
+      if (raw) raw.value = samples[curLang];
       renderDemo(curLang, true);
     }
 
@@ -1725,6 +1792,8 @@ ${escapeHtml(item.rawCode)}
         if (res.ok) {
           const data = await res.json();
           updateUI(data.skeletonContent, rawTokens, data.skeletonTokensEstimate);
+          const redPct = rawTokens > 0 ? Math.max(0, ((rawTokens - data.skeletonTokensEstimate) / rawTokens) * 100) : 0;
+          setCompilerStatus(`✓ AST SYNTHESIZED (-${Math.round(redPct)}% TOKENS)`, 'success');
           return;
         }
       } catch (e) {}
@@ -1742,6 +1811,8 @@ ${escapeHtml(item.rawCode)}
       skel += filtered.join('\n') + '\n\n// ⟡ [ Implementation bodies dissolved by SiftrCode • 100% types preserved ]';
       const skelTokens = Math.ceil(skel.length / 4);
       updateUI(skel, rawTokens, skelTokens);
+      const redPct = rawTokens > 0 ? Math.max(0, ((rawTokens - skelTokens) / rawTokens) * 100) : 0;
+      setCompilerStatus(`✓ AST SYNTHESIZED (-${Math.round(redPct)}% TOKENS)`, 'success');
     }
 
     // Animated Metric Interpolation System
@@ -1842,10 +1913,15 @@ ${escapeHtml(item.rawCode)}
 
     const langs = ['ts', 'py', 'go', 'rs'];
     let langIndex = 0;
-    let userInteracted = false;
+    let lastActivityTime = Date.now();
+    let autoTourInterval = null;
+
+    function resetUserActivity() {
+      lastActivityTime = Date.now();
+    }
 
     function setLang(lang, fromUser = false) {
-      if (fromUser) userInteracted = true;
+      if (fromUser) resetUserActivity();
       curLang = lang;
       langIndex = langs.indexOf(lang);
       const conf = langConfig[lang];
@@ -1853,6 +1929,7 @@ ${escapeHtml(item.rawCode)}
       // 1. Update Tabs
       langs.forEach(l => {
         const el = document.getElementById('tab-' + l);
+        if (!el) return;
         const cfg = langConfig[l];
         if (l === lang) {
           el.className = `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition ${cfg.tabActiveClass}`;
@@ -1890,28 +1967,60 @@ ${escapeHtml(item.rawCode)}
       }
 
       // 4. Update Source Code & Trigger Dissolution Fold
-      document.getElementById('rawInput').value = samples[lang];
+      const rawInput = document.getElementById('rawInput');
+      if (rawInput) rawInput.value = samples[lang];
       renderDemo(lang, true);
     }
 
     function onInputChanged() {
-      userInteracted = true;
+      resetUserActivity();
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(renderAST, 100);
+      setCompilerStatus('SYNTHESIZING AST...', 'compiling');
+      debounceTimer = setTimeout(renderAST, 120);
     }
 
+    // Smart Auto-Tour: cycles every 7s when user is idle and not typing
     function startAutoTour() {
-      setInterval(() => {
-        if (!userInteracted) {
+      if (autoTourInterval) clearInterval(autoTourInterval);
+      autoTourInterval = setInterval(() => {
+        const isFocused = document.activeElement === document.getElementById('rawInput');
+        const idleDuration = Date.now() - lastActivityTime;
+        if (!isFocused && idleDuration >= 6500) {
           langIndex = (langIndex + 1) % langs.length;
           setLang(langs[langIndex], false);
         }
-      }, 12000);
+      }, 6500);
     }
 
-    // Init Concept 3 Workbench with Option A Inline Code Dissolution
+    // Attach activity listeners to pause tour during interaction
+    const rawBox = document.getElementById('rawInput');
+    if (rawBox) {
+      rawBox.addEventListener('focus', resetUserActivity);
+      rawBox.addEventListener('input', resetUserActivity);
+    }
+    const wbBox = document.getElementById('workbench');
+    if (wbBox) {
+      wbBox.addEventListener('mousemove', resetUserActivity);
+      wbBox.addEventListener('touchstart', resetUserActivity);
+    }
+
+    // Init Concept 3 Workbench
     setLang('ts');
     startAutoTour();
+
+    // IntersectionObserver: trigger real-time dissolution when user scrolls into view
+    let hasAnimatedOnScroll = false;
+    try {
+      const scrollObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting && !hasAnimatedOnScroll) {
+            hasAnimatedOnScroll = true;
+            replayDissolve();
+          }
+        });
+      }, { threshold: 0.25 });
+      if (wbBox) scrollObserver.observe(wbBox);
+    } catch (e) {}
 
     // B2B Team Trial Modal Handlers
     function openTrialModal() {
