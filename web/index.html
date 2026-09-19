@@ -33,11 +33,50 @@
               tertiary: '#a1a1aa'
             },
             signal: {
-              yellow: '#f59e0b',
-              gold: '#eab308',
-              amber: '#d97706',
-              softBg: '#fffbeb',
+              yellow: '#c59b27',
+              gold: '#d1a84b',
+              amber: '#aa801e',
+              softBg: '#fbf8ee',
               crimson: '#e11d48'
+            },
+            amber: {
+              50: '#fbf8ee',
+              100: '#f5edd3',
+              200: '#ebdaa9',
+              300: '#dec278',
+              400: '#d1a84b',
+              500: '#c59b27',
+              600: '#aa801e',
+              700: '#88621b',
+              800: '#714f1c',
+              900: '#5e411b',
+              950: '#36230b',
+            },
+            yellow: {
+              50: '#fbf8ee',
+              100: '#f5edd3',
+              200: '#ebdaa9',
+              300: '#dec278',
+              400: '#d1a84b',
+              500: '#c59b27',
+              600: '#aa801e',
+              700: '#88621b',
+              800: '#714f1c',
+              900: '#5e411b',
+              950: '#36230b',
+            },
+            gold: {
+              50: '#fbf8ee',
+              100: '#f5edd3',
+              200: '#ebdaa9',
+              300: '#dec278',
+              400: '#d1a84b',
+              500: '#c59b27',
+              600: '#aa801e',
+              700: '#88621b',
+              800: '#714f1c',
+              900: '#5e411b',
+              950: '#36230b',
             }
           }
         }
@@ -46,7 +85,7 @@
   </script>
 
   <style>
-    ::selection { background: #fbbf24; color: #18181b; }
+    ::selection { background: #dec278; color: #18181b; }
 
     /* Luminous Grid Pattern */
     .bg-grid {
@@ -79,8 +118,8 @@
       transition: border-color 0.25s ease, box-shadow 0.25s ease;
     }
     .glow-card:hover {
-      border-color: #f59e0b;
-      box-shadow: 0 12px 32px -10px rgba(245, 158, 11, 0.18);
+      border-color: #c59b27;
+      box-shadow: 0 12px 32px -10px rgba(197, 155, 39, 0.22);
     }
 
     /* Token Diff Pulse */
@@ -96,15 +135,15 @@
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+    ::-webkit-scrollbar-thumb:hover { background: #c59b27; }
 
     /* Continuous Glowing 90% Typography (No Box) - Ultra-subtle, slow ambient cadence */
     @keyframes continuous-text-aura {
       0%, 100% {
-        filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.16));
+        filter: drop-shadow(0 0 6px rgba(197, 155, 39, 0.16));
       }
       50% {
-        filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.3));
+        filter: drop-shadow(0 0 12px rgba(197, 155, 39, 0.32));
       }
     }
 
@@ -116,7 +155,7 @@
 
     .hero-glow-text {
       display: inline-block;
-      background: linear-gradient(90deg, #d97706 0%, #f59e0b 35%, #fcd34d 50%, #f59e0b 65%, #d97706 100%);
+      background: linear-gradient(90deg, #aa801e 0%, #c59b27 35%, #dec278 50%, #c59b27 65%, #aa801e 100%);
       background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -128,7 +167,7 @@
     /* Synthesized Signal Glow */
     @keyframes signal-breathe {
       0%, 100% { opacity: 0.95; }
-      50% { opacity: 1; filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.4)); }
+      50% { opacity: 1; filter: drop-shadow(0 0 6px rgba(197, 155, 39, 0.4)); }
     }
 
     .signal-glow {
@@ -161,8 +200,8 @@
       transition: all 0.4s ease;
     }
     .dissolve-pill:hover {
-      border-color: rgba(245, 158, 11, 0.5);
-      background-color: rgba(245, 158, 11, 0.15);
+      border-color: rgba(197, 155, 39, 0.5);
+      background-color: rgba(197, 155, 39, 0.15);
     }
   </style>
 </head>
@@ -170,8 +209,8 @@
 
   <!-- Background Ambient Lights -->
   <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
-    <div class="ambient-glow w-[600px] h-[600px] bg-amber-200/40 -top-40 -left-20"></div>
-    <div class="ambient-glow w-[500px] h-[500px] bg-yellow-200/35 top-96 -right-20" style="animation-delay: -5s;"></div>
+    <div class="ambient-glow w-[600px] h-[600px] bg-amber-200/30 -top-40 -left-20"></div>
+    <div class="ambient-glow w-[500px] h-[500px] bg-amber-100/25 top-96 -right-20" style="animation-delay: -5s;"></div>
   </div>
 
   <!-- Header Navigation -->
