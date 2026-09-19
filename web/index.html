@@ -110,7 +110,7 @@
     }
     html.dark .bg-dot-matrix {
       background-size: 32px 32px;
-      background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px) !important;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1.2px, transparent 1.2px) !important;
     }
     html.dark .ambient-glow {
       opacity: 0.16;
@@ -258,7 +258,7 @@
     /* Dot Matrix Pattern Fallback */
     .bg-dot-matrix {
       background-size: 32px 32px;
-      background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+      background-image: radial-gradient(rgba(24, 24, 27, 0.09) 1.2px, transparent 1.2px);
     }
 
     /* Ambient Floating Auras */
@@ -2312,9 +2312,9 @@ ${highlightPrunedCode(item.rawCode, lang)}
           x: e.clientX,
           y: e.clientY,
           radius: 0,
-          maxRadius: Math.max(width, height) * 0.35,
-          speed: 8,
-          strength: 0.4
+          maxRadius: Math.max(width, height) * 0.4,
+          speed: 10,
+          strength: 0.65
         });
       }, { passive: true });
 
@@ -2323,9 +2323,9 @@ ${highlightPrunedCode(item.rawCode, lang)}
           x: x !== undefined ? x : width / 2,
           y: y !== undefined ? y : height * 0.35,
           radius: 0,
-          maxRadius: Math.max(width, height) * 0.35,
-          speed: 8,
-          strength: 0.35
+          maxRadius: Math.max(width, height) * 0.4,
+          speed: 10,
+          strength: 0.55
         });
       };
 
@@ -2365,8 +2365,8 @@ ${highlightPrunedCode(item.rawCode, lang)}
         ctx.clearRect(0, 0, width, height);
 
         const isDark = document.documentElement.classList.contains('dark');
-        const baseDotRadius = 0.8;
-        const mouseRadius = 140;
+        const baseDotRadius = 1.05;
+        const mouseRadius = 170;
         const timeSeconds = now * 0.001;
 
         const cols = Math.ceil(width / spacing) + 1;
@@ -2378,8 +2378,8 @@ ${highlightPrunedCode(item.rawCode, lang)}
             const y = r * spacing;
 
             // 1. Slow, organic breathing harmonic wave
-            const wave1 = Math.sin(x * 0.005 + y * 0.004 - timeSeconds * 0.35);
-            const wave2 = Math.cos(x * 0.003 - y * 0.005 + timeSeconds * 0.25);
+            const wave1 = Math.sin(x * 0.005 + y * 0.004 - timeSeconds * 0.45);
+            const wave2 = Math.cos(x * 0.003 - y * 0.005 + timeSeconds * 0.35);
             const ambientFactor = (wave1 + wave2 + 2) * 0.25;
 
             // 2. Interactive mouse proximity
@@ -2402,34 +2402,34 @@ ${highlightPrunedCode(item.rawCode, lang)}
               const rdy = y - rip.y;
               const rdist = Math.sqrt(rdx * rdx + rdy * rdy);
               const distToWave = Math.abs(rdist - rip.radius);
-              if (distToWave < 60) {
-                const ripNorm = 1 - distToWave / 60;
+              if (distToWave < 65) {
+                const ripNorm = 1 - distToWave / 65;
                 rippleFactor = Math.max(rippleFactor, ripNorm * rip.strength);
               }
             }
 
             // Soft vertical vignette: gentle tapering down towards bottom
-            const vFade = Math.max(0.2, 1 - (y / (height * 1.4)));
-            const excitation = Math.min(1.0, mouseFactor * 0.7 + rippleFactor * 0.65 + ambientFactor * 0.1) * vFade;
-            const radius = baseDotRadius + excitation * 0.55;
+            const vFade = Math.max(0.4, 1 - (y / (height * 1.8)));
+            const excitation = Math.min(1.0, mouseFactor * 0.95 + rippleFactor * 0.85 + ambientFactor * 0.18) * vFade;
+            const radius = baseDotRadius + excitation * 0.85;
 
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
 
             if (isDark) {
-              if (excitation > 0.18) {
-                const glowAlpha = Math.min(0.28, 0.06 + excitation * 0.22);
+              if (excitation > 0.15) {
+                const glowAlpha = Math.min(0.65, 0.15 + excitation * 0.50);
                 ctx.fillStyle = `rgba(147, 197, 253, ${glowAlpha})`;
               } else {
-                const baseAlpha = (0.035 + ambientFactor * 0.025) * vFade;
+                const baseAlpha = (0.085 + ambientFactor * 0.045) * vFade;
                 ctx.fillStyle = `rgba(255, 255, 255, ${baseAlpha})`;
               }
             } else {
-              if (excitation > 0.18) {
-                const glowAlpha = Math.min(0.22, 0.05 + excitation * 0.17);
+              if (excitation > 0.15) {
+                const glowAlpha = Math.min(0.58, 0.12 + excitation * 0.46);
                 ctx.fillStyle = `rgba(37, 99, 235, ${glowAlpha})`;
               } else {
-                const baseAlpha = (0.045 + ambientFactor * 0.03) * vFade;
+                const baseAlpha = (0.095 + ambientFactor * 0.055) * vFade;
                 ctx.fillStyle = `rgba(82, 82, 91, ${baseAlpha})`;
               }
             }
