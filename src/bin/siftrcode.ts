@@ -7,6 +7,7 @@ import { skeletonizeFile } from '../skeleton/dispatcher';
 import { packRepository } from '../core/packer';
 import { auditRepository } from '../core/auditor';
 import { runMcpServer } from '../mcp/server';
+import { runInstaller } from '../core/installer';
 
 const program = new Command();
 
@@ -14,6 +15,33 @@ program
   .name('siftrcode')
   .description('AST-powered codebase skeletonizer and context pruner for AI coding agents')
   .version('0.1.0');
+
+// COMMAND: INIT
+program
+  .command('init')
+  .description('Automatically detects and configures SiftrCode MCP in Claude Code, Cursor, and Windsurf')
+  .action(() => {
+    console.log(chalk.bold.green('🚀 [SiftrCode Init]'), 'Auto-configuring AI agent MCP settings...\n');
+    const result = runInstaller();
+
+    if (result.configsUpdated.length > 0) {
+      console.log(chalk.bold.white('✔ Successfully configured SiftrCode MCP in:'));
+      for (const conf of result.configsUpdated) {
+        console.log(chalk.green(`   • ${conf}`));
+      }
+    } else {
+      console.log(chalk.yellow('ℹ No default agent config directories found, created workspace .cursor/mcp.json'));
+    }
+
+    if (result.rulesCreated.length > 0) {
+      console.log('\n' + chalk.bold.white('✔ Created agent optimization rule:'));
+      for (const rule of result.rulesCreated) {
+        console.log(chalk.cyan(`   • ${rule}`));
+      }
+    }
+
+    console.log(chalk.gray('\nRestart your editor (Claude Desktop, Cursor, Windsurf) to activate SiftrCode tools.'));
+  });
 
 // COMMAND: PACK
 program
