@@ -721,7 +721,28 @@
               </div>
             </div>
 
-            <!-- Right: Consolidated Context Metrics Stream & Synthesis Trigger -->
+            <!-- Right: Dynamic System Step Pill Explaining AST Actions -->
+            <div id="morphStatusPill" class="inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700/80 text-[11px] font-mono shadow-2xs shrink-0 select-none transition-all duration-300">
+              <span id="morphStatusDot" class="w-1.5 h-1.5 rounded-full bg-zinc-400 shrink-0"></span>
+              <span id="morphStatusText" class="text-zinc-700 dark:text-zinc-300 font-medium">Step 1: Original Code • Implementation Bloat Active</span>
+            </div>
+          </div>
+
+          <!-- Code Viewport Body with Sparkle Particle Overlay -->
+          <div class="relative flex-1 overflow-hidden flex flex-col min-h-[300px] max-h-[480px] bg-white dark:bg-zinc-950">
+            <div id="scanBeam" class="scan-beam"></div>
+            <div id="sparkleOverlay" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
+            <div id="skelOutput" class="w-full h-full p-4 sm:p-5 font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-y-auto selection:bg-blue-100 selection:text-blue-900 signal-glow"></div>
+          </div>
+
+          <!-- Terminal Footer -->
+          <div class="bg-zinc-50/90 dark:bg-zinc-900/70 px-4 py-2 border-t border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-500 dark:text-zinc-400 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 shrink-0">
+            <span class="text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 font-sans font-medium">
+              <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 inline shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <span>100% Types, Interfaces &amp; Signatures Preserved</span>
+            </span>
+
+            <!-- Relocated Context Token Pill & Synthesis Trigger -->
             <button onclick="triggerPruneMorph()" title="Click to trigger AST synthesis & prune bloat" class="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-md bg-white dark:bg-zinc-800/90 border border-zinc-200/90 dark:border-zinc-700/80 font-sans text-xs shadow-2xs whitespace-nowrap hover:border-blue-400 dark:hover:border-blue-500 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition btn-press cursor-pointer shrink-0">
               <span class="text-zinc-400 dark:text-zinc-500 text-[10px] sm:text-[11px] uppercase font-semibold">Context:</span>
               
@@ -739,24 +760,6 @@
 
               <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-600 text-white font-mono font-bold tracking-wide whitespace-nowrap shrink-0 ml-0.5" id="costSavedTag">Save $51.06</span>
             </button>
-          </div>
-
-          <!-- Code Viewport Body with Sparkle Particle Overlay -->
-          <div class="relative flex-1 overflow-hidden flex flex-col min-h-[300px] max-h-[480px] bg-white dark:bg-zinc-950">
-            <div id="scanBeam" class="scan-beam"></div>
-            <div id="sparkleOverlay" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
-            <div id="skelOutput" class="w-full h-full p-4 sm:p-5 font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-y-auto selection:bg-blue-100 selection:text-blue-900 signal-glow"></div>
-          </div>
-
-          <!-- Terminal Footer -->
-          <div class="bg-zinc-50/90 dark:bg-zinc-900/70 px-4 py-2 border-t border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-500 dark:text-zinc-400 flex items-center justify-between shrink-0">
-            <span class="text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 font-sans font-medium">
-              <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 inline shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              <span>100% Types, Interfaces &amp; Signatures Preserved</span>
-            </span>
-            <span id="savedTokensCount" class="font-mono text-emerald-800 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800/80 px-2.5 py-0.5 rounded shadow-2xs">
-              Original Code (1,840 tokens)
-            </span>
           </div>
 
         </div>
@@ -1370,16 +1373,19 @@ impl Gateway for StripeGateway {`
       label.innerText = text;
 
       if (mode === 'raw') {
-        pill.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded text-[11px] font-mono font-medium transition-all duration-300 bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700/80 text-zinc-700 dark:text-zinc-300 shadow-2xs';
+        pill.className = 'inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-all duration-300 bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700/80 text-zinc-700 dark:text-zinc-300 shadow-2xs';
         dot.className = 'w-1.5 h-1.5 rounded-full bg-zinc-400 shrink-0';
+      } else if (mode === 'scan') {
+        pill.className = 'inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-all duration-300 bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-700 text-blue-800 dark:text-blue-300 shadow-2xs';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shrink-0';
       } else if (mode === 'targeting') {
-        pill.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded text-[11px] font-mono font-medium transition-all duration-300 bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-300 shadow-2xs';
+        pill.className = 'inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-all duration-300 bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-300 shadow-2xs';
         dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0';
-      } else if (mode === 'sparkle') {
-        pill.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded text-[11px] font-mono font-medium transition-all duration-300 bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-600 text-blue-800 dark:text-blue-200 shadow-2xs';
-        dot.className = 'w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-ping shrink-0';
+      } else if (mode === 'sparkle' || mode === 'pruning') {
+        pill.className = 'inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-all duration-300 bg-purple-50 dark:bg-purple-950/70 border border-purple-200 dark:border-purple-600 text-purple-800 dark:text-purple-200 shadow-2xs';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-purple-600 dark:bg-purple-400 animate-ping shrink-0';
       } else if (mode === 'synthesized') {
-        pill.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded text-[11px] font-mono font-medium transition-all duration-300 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 shadow-2xs';
+        pill.className = 'inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-all duration-300 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 shadow-2xs';
         dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0';
       }
     }
@@ -1404,15 +1410,6 @@ impl Gateway for StripeGateway {`
       if (costSkel) costSkel.innerText = `$${conf.skelCost.toFixed(2)}`;
       const costSavedTag = document.getElementById('costSavedTag');
       if (costSavedTag) costSavedTag.innerText = `Save $${conf.savedCost.toFixed(2)}`;
-      
-      const savedTokensCount = document.getElementById('savedTokensCount');
-      if (savedTokensCount) {
-        if (isRawMode) {
-          savedTokensCount.innerText = `Original Code (${conf.rawTokens.toLocaleString()} tokens)`;
-        } else {
-          savedTokensCount.innerText = `Saved ~${conf.savedTokens.toLocaleString()} tokens (Save $${conf.savedCost.toFixed(2)}/10k)`;
-        }
-      }
     }
 
     function setMorphMode(mode) {
@@ -1459,7 +1456,7 @@ impl Gateway for StripeGateway {`
           p.style.maxHeight = '0px';
         });
 
-        setMorphStatus('raw', `Original Source (${conf.rawTokens.toLocaleString()} tokens)`);
+        setMorphStatus('raw', `Step 1: Original Code • Implementation Bloat Active (${conf.rawTokens.toLocaleString()} tokens)`);
         setMetricsInstant(conf.rawTokens, conf.rawCost, 0, 0, 0);
       } else {
         if (btnRaw) btnRaw.className = 'px-2 py-0.5 rounded text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition';
@@ -1485,7 +1482,7 @@ impl Gateway for StripeGateway {`
           btn.innerText = 'inspect';
         });
 
-        setMorphStatus('synthesized', `✓ Synthesized Contract (-${Math.round(conf.reduction)}% Tokens)`);
+        setMorphStatus('synthesized', `Step 5: 100% Contract Preserved • Clean Interface Generated (-${Math.round(conf.reduction)}%)`);
         setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
       }
     }
@@ -1584,7 +1581,7 @@ impl Gateway for StripeGateway {`
       const costSavedTag = document.getElementById('costSavedTag');
       if (costSavedTag) costSavedTag.innerText = 'Scanning...';
 
-      setMorphStatus('raw', `Scanning telemetry: counting tokens...`);
+      setMorphStatus('scan', 'Step 2: AST Telemetry • Scanning Code & Token Density...');
 
       // ==========================================
       // PHASE 2: Token Telemetry & Cost Tally (0ms - 2000ms)
@@ -1605,11 +1602,6 @@ impl Gateway for StripeGateway {`
       animateNumber('bridgeRaw', 0, conf.rawTokens, scanDuration, v => `${Math.round(v).toLocaleString()} tokens`);
       animateNumber('costRaw', 0, conf.rawCost, scanDuration, v => `$${v.toFixed(2)}`);
 
-      const savedTokensCount = document.getElementById('savedTokensCount');
-      if (savedTokensCount) {
-        animateNumber('savedTokensCount', 0, conf.rawTokens, scanDuration, v => `Original Code (${Math.round(v).toLocaleString()} tokens)`);
-      }
-
       // ==========================================
       // PHASE 3: AST Bloat Targeting & Highlighting (2000ms - 5200ms)
       // AST isolates internal implementation bloat and blooms warning cards
@@ -1624,7 +1616,7 @@ impl Gateway for StripeGateway {`
         });
 
         if (costSavedTag) costSavedTag.innerText = 'Bloat Isolated';
-        setMorphStatus('targeting', `🔍 AST isolated ${(conf.rawTokens - conf.skelTokens).toLocaleString()} tokens of bloat`);
+        setMorphStatus('targeting', `Step 3: AST Analysis • Redundant Implementation Isolated`);
       }, scanDuration);
 
       // ==========================================
@@ -1632,7 +1624,7 @@ impl Gateway for StripeGateway {`
       // Strikethrough cut lines, cascading slide-away, mechanical fold (NO FADING)
       // ==========================================
       stageTimeout = setTimeout(() => {
-        setMorphStatus('sparkle', '✂️ Slicing bloat lines from AST contract...');
+        setMorphStatus('sparkle', 'Step 4: Synthesizing Interface • Slicing Bloat Lines...');
 
         // 1. Strike through all lines with razor red deletion line
         const currentLines = container.querySelectorAll('.prune-line');
@@ -1650,10 +1642,6 @@ impl Gateway for StripeGateway {`
         animateNumber('bridgeSkel', conf.rawTokens, conf.skelTokens, countdownDuration, v => `${Math.round(v).toLocaleString()} tokens`);
         animateNumber('costSkel', conf.rawCost, conf.skelCost, countdownDuration, v => `$${v.toFixed(2)}`);
         animateNumber('costSavedTag', 0, conf.savedCost, countdownDuration, v => `Save $${v.toFixed(2)}`);
-
-        if (savedTokensCount) {
-          animateNumber('savedTokensCount', 0, conf.savedTokens, countdownDuration, v => `Saved ~${Math.round(v).toLocaleString()} tokens (Save $${((v * 10000 * 3.0) / 1000000).toFixed(2)}/10k)`);
-        }
 
         if (typeof window.triggerDotRipple === 'function') window.triggerDotRipple();
 
@@ -1678,7 +1666,7 @@ impl Gateway for StripeGateway {`
         dissolveTimeout = setTimeout(() => {
           currentMorphState = 'skel';
           allCards.forEach(c => c.classList.remove('bloat-highlighted'));
-          setMorphStatus('synthesized', `✓ Synthesized Contract (-${Math.round(conf.reduction)}% Tokens)`);
+          setMorphStatus('synthesized', `Step 5: 100% Contract Preserved • Clean Interface Generated (-${Math.round(conf.reduction)}%)`);
           setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
         }, countdownDuration + 200);
 
@@ -1749,10 +1737,10 @@ ${highlightPrunedCode(item.rawCode, lang)}
       container.innerHTML = html;
 
       if (isRaw) {
-        setMorphStatus('raw', `Original Code (${conf.rawTokens.toLocaleString()} tokens)`);
+        setMorphStatus('raw', `Step 1: Original Code • Implementation Bloat Active (${conf.rawTokens.toLocaleString()} tokens)`);
         setMetricsInstant(conf.rawTokens, conf.rawCost, 0, 0, 0);
       } else {
-        setMorphStatus('synthesized', `✓ Synthesized Contract (-${Math.round(conf.reduction)}% Tokens)`);
+        setMorphStatus('synthesized', `Step 5: 100% Contract Preserved • Clean Interface Generated (-${Math.round(conf.reduction)}%)`);
         setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
       }
     }
@@ -1885,7 +1873,6 @@ ${highlightPrunedCode(item.rawCode, lang)}
       animateNumber('rawTokenCount', prevMetrics.rawTokens, rawTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
       animateNumber('rawCostFoot', prevMetrics.rawCost, rawCost, duration, v => `Burn: $${v.toFixed(2)} / 10k calls`);
       animateNumber('skelTokenCount', prevMetrics.skelTokens, skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens (-${Math.round(reduction)}%)`);
-      animateNumber('savedTokensCount', prevMetrics.savedTokens, saved, duration, v => `Saved ${Math.round(v).toLocaleString()} tokens (Save $${((v * 10000 * 3.0) / 1000000).toFixed(2)}/10k)`);
 
       animateNumber('bridgeRaw', prevMetrics.rawTokens, rawTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
       animateNumber('costRaw', prevMetrics.rawCost, rawCost, duration, v => `$${v.toFixed(2)}`);
