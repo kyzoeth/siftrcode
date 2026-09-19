@@ -141,6 +141,35 @@
       animation: pulse-signal 2.5s infinite ease-in-out;
     }
 
+    /* CheaperInference Inspired Micro-Interactions & Live Status */
+    @keyframes ci-live-blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(0.85); }
+    }
+    .ci-live-dot {
+      animation: ci-live-blink 2.2s ease-in-out infinite;
+    }
+
+    @keyframes ci-cursor-blink {
+      0%, 48% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    .ci-terminal-cursor {
+      display: inline-block;
+      width: 7px;
+      height: 13px;
+      vertical-align: -1px;
+      background-color: #dec278;
+      animation: ci-cursor-blink 1.05s infinite;
+    }
+
+    .btn-press {
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .btn-press:active {
+      transform: translateY(1px);
+    }
+
     /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -236,23 +265,24 @@
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="#workbench" class="hover:text-ink transition">Demo</a>
+          <a href="#security" class="hover:text-ink transition">Data Boundaries</a>
           <a href="#benchmarks" class="hover:text-ink transition">Benchmarks</a>
           <a href="#quickstart" class="hover:text-ink transition">Quickstart</a>
         </nav>
       </div>
 
       <div class="flex items-center gap-2 sm:gap-2.5">
-        <a href="mailto:info@siftrcode.com" title="Contact Us" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-zinc-50 hover:bg-zinc-100 text-zinc-700 hover:text-ink text-xs border border-zinc-200 transition flex items-center gap-1.5 font-medium shadow-2xs">
+        <a href="mailto:info@siftrcode.com" title="Contact Us" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-zinc-50 hover:bg-zinc-100 text-zinc-700 hover:text-ink text-xs border border-zinc-200 transition btn-press flex items-center gap-1.5 font-medium shadow-2xs">
           <svg class="w-3.5 h-3.5 text-zinc-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
           </svg>
           <span class="hidden sm:inline">Contact Us</span>
         </a>
-        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-ink font-mono text-xs border border-zinc-200 transition flex items-center gap-1.5 font-medium">
+        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-ink font-mono text-xs border border-zinc-200 transition btn-press flex items-center gap-1.5 font-medium">
           <svg class="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
           GitHub
         </a>
-        <button onclick="openTrialModal()" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-medium text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5">
+        <button onclick="openTrialModal()" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-medium text-xs shadow-sm transition cursor-pointer btn-press flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5 text-zinc-950 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
@@ -278,10 +308,41 @@
 
       <!-- Single Clear Hero Call to Action -->
       <div class="pt-2 flex items-center justify-center">
-        <a href="#workbench" class="px-5 py-2.5 bg-ink hover:bg-zinc-800 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow-sm hover:shadow active:scale-[0.99] flex items-center gap-1.5">
+        <a href="#workbench" class="px-5 py-2.5 bg-ink hover:bg-zinc-800 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow-sm hover:shadow active:scale-[0.99] btn-press flex items-center gap-1.5">
           <span>Try Live Demo</span>
           <span class="text-zinc-400">↓</span>
         </a>
+      </div>
+
+      <!-- CheaperInference-style Proof & Guarantee Row -->
+      <div class="pt-3 flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 text-xs text-zinc-500 font-sans">
+        <div class="flex items-center gap-1.5 hover:text-zinc-800 transition">
+          <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          <span class="font-medium text-zinc-700">100% Type-Safe Contracts</span>
+        </div>
+        <span class="hidden sm:inline text-zinc-300">•</span>
+        <div class="flex items-center gap-1.5 hover:text-zinc-800 transition">
+          <svg class="w-3.5 h-3.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          <span class="font-medium text-zinc-700">&lt;0.15s AST Synthesis</span>
+        </div>
+        <span class="hidden sm:inline text-zinc-300">•</span>
+        <div class="flex items-center gap-1.5 hover:text-zinc-800 transition">
+          <svg class="w-3.5 h-3.5 text-zinc-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          <span class="font-medium text-zinc-700">Zero-Telemetry (Local CPU)</span>
+        </div>
+        <span class="hidden sm:inline text-zinc-300">•</span>
+        <div class="flex items-center gap-1.5 hover:text-zinc-800 transition">
+          <svg class="w-3.5 h-3.5 text-zinc-500 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          <span class="font-medium text-zinc-700">MIT Open Source</span>
+        </div>
       </div>
 
     </div>
@@ -293,33 +354,39 @@
       
       <!-- Minimalist, Breathable Header Bar with Language Selector & Context Mass -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-zinc-200/70 font-mono text-xs">
-        <div class="flex items-center gap-2">
-          <span class="text-zinc-400 text-[11px] font-medium uppercase tracking-wider mr-1">LANG:</span>
-          <div class="inline-flex p-1 rounded-xl bg-zinc-100/90 border border-zinc-200/80 gap-1">
-            <button onclick="setLang('ts', true)" id="tab-ts" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition">
-              <span class="w-4 h-4 rounded bg-white/95 flex items-center justify-center p-0.5 shadow-2xs shrink-0 ring-1 ring-black/5">
-                <svg class="w-3.5 h-3.5 shrink-0 rounded-xs" viewBox="0 0 128 128" fill="none"><rect width="128" height="128" rx="16" fill="#3178C6"/><path fill="#ffffff" d="M60.82 50.11H43.76v54.76H29.13V50.11H12.08v-12.8h48.74v12.8zm53.48 24.31c0 3.73-1.02 6.94-3.05 9.63-2.03 2.69-4.94 4.74-8.73 6.16-3.79 1.42-8.23 2.13-13.32 2.13-4.52 0-8.66-.54-12.42-1.62-3.76-1.08-6.85-2.61-9.27-4.59l5.44-11.23c2.09 1.62 4.54 2.87 7.35 3.76s5.73 1.33 8.76 1.33c3.73 0 6.44-.65 8.13-1.95 1.69-1.3 2.54-3.02 2.54-5.16 0-1.77-.66-3.23-1.98-4.38-1.32-1.15-3.66-2.27-7.02-3.36-4.52-1.47-8.08-3.09-10.68-4.86-2.6-1.77-4.49-3.86-5.67-6.27-1.18-2.41-1.77-5.26-1.77-8.55 0-3.67.97-6.88 2.91-9.63 1.94-2.75 4.72-4.85 8.34-6.3 3.62-1.45 7.96-2.18 13.02-2.18 4.07 0 7.82.48 11.25 1.44 3.43.96 6.3 2.27 8.61 3.93l-5.14 11.08c-2.09-1.42-4.39-2.52-6.9-3.3-2.51-.78-5.14-1.17-7.89-1.17-3.27 0-5.74.57-7.41 1.71-1.67 1.14-2.51 2.67-2.51 4.59 0 1.62.63 2.97 1.89 4.05 1.26 1.08 3.52 2.15 6.78 3.21 4.72 1.57 8.43 3.27 11.13 5.1 2.7 1.83 4.67 3.98 5.91 6.45 1.24 2.47 1.86 5.38 1.86 8.73z"/></svg>
-              </span>
-              <span>TypeScript</span>
-            </button>
-            <button onclick="setLang('py', true)" id="tab-py" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition">
-              <span class="w-4 h-4 rounded bg-white/95 flex items-center justify-center p-0.5 shadow-2xs shrink-0 ring-1 ring-black/5">
-                <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 128 128" fill="none"><path fill="#387EB8" d="M63.391 12.248c-4.222.02-8.252.379-11.8 1.007-10.45 1.846-12.346 5.71-12.346 12.837v9.411h24.693v3.137H29.977c-7.176 0-13.46 4.313-15.426 12.521-2.268 9.405-2.368 15.275 0 25.096 1.755 7.311 5.947 12.519 13.124 12.519h8.491V77.494c0-8.151 7.051-15.34 15.426-15.34h24.665c6.866 0 12.346-5.654 12.346-12.548V26.093c0-6.693-5.646-11.72-12.346-12.837-4.244-.706-8.645-1.027-12.866-1.008zM50.037 19.817c2.55 0 4.634 2.117 4.634 4.721 0 2.593-2.083 4.69-4.634 4.69-2.56 0-4.633-2.097-4.633-4.69-.001-2.604 2.073-4.721 4.633-4.721z"/><path fill="#FFE052" d="M91.682 38.64v10.966c0 8.5-7.208 15.655-15.426 15.655H51.591c-6.756 0-12.346 5.783-12.346 12.549v23.515c0 6.691 5.818 10.628 12.346 12.547 7.816 2.297 15.312 2.713 24.665 0 6.216-1.801 12.346-5.423 12.346-12.547v-9.412H63.938v-3.138h37.012c7.176 0 9.852-5.005 12.348-12.519 2.578-7.735 2.467-15.174 0-25.096-1.774-7.145-5.161-12.521-12.348-12.521h-9.268zM77.809 98.187c2.561 0 4.634 2.097 4.634 4.692 0 2.602-2.074 4.719-4.634 4.719-2.55 0-4.633-2.117-4.633-4.719 0-2.595 2.083-4.692 4.633-4.692z"/></svg>
-              </span>
-              <span>Python</span>
-            </button>
-            <button onclick="setLang('go', true)" id="tab-go" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition">
-              <span class="w-4 h-4 rounded bg-white/95 flex items-center justify-center p-0.5 shadow-2xs shrink-0 ring-1 ring-black/5">
-                <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="#00ADD8"><path d="M1.811 10.231c-.047 0-.058-.023-.035-.059l.246-.315c.023-.035.081-.058.128-.058h4.172c.046 0 .058.035.035.07l-.199.303c-.023.036-.082.07-.117.07zM.047 11.306c-.047 0-.059-.023-.035-.058l.245-.316c.023-.035.082-.058.129-.058h5.328c.047 0 .07.035.058.07l-.093.28c-.012.047-.058.07-.105.07zm2.828 1.075c-.047 0-.059-.035-.035-.07l.163-.292c.023-.035.07-.07.117-.07h2.337c.047 0 .07.035.07.082l-.023.28c0 .047-.047.082-.082.082zm12.129-2.36c-.736.187-1.239.327-1.963.514-.176.046-.187.058-.34-.117-.174-.199-.303-.327-.548-.444-.737-.362-1.45-.257-2.115.175-.795.514-1.204 1.274-1.192 2.22.011.935.654 1.706 1.577 1.835.795.105 1.46-.175 1.987-.77.105-.13.198-.27.315-.434H10.47c-.245 0-.304-.152-.222-.35.152-.362.432-.97.596-1.274a.315.315 0 01.292-.187h4.253c-.023.316-.023.631-.07.947a4.983 4.983 0 01-.958 2.29c-.841 1.11-1.94 1.8-3.33 1.986-1.145.152-2.209-.07-3.143-.77-.865-.655-1.356-1.52-1.484-2.595-.152-1.274.222-2.419.993-3.424.83-1.086 1.928-1.776 3.272-2.02 1.098-.2 2.15-.07 3.096.571.62.41 1.063.97 1.356 1.648.07.105.023.164-.117.2m3.868 6.461c-1.064-.024-2.034-.328-2.852-1.029a3.665 3.665 0 01-1.262-2.255c-.21-1.32.152-2.489.947-3.529.853-1.122 1.881-1.706 3.272-1.95 1.192-.21 2.314-.095 3.33.595.923.63 1.496 1.484 1.648 2.605.198 1.578-.257 2.863-1.344 3.962-.771.783-1.718 1.273-2.805 1.495-.315.06-.63.07-.934.106zm2.78-4.72c-.011-.153-.011-.27-.034-.387-.21-1.157-1.274-1.81-2.384-1.554-1.087.245-1.788.935-2.045 2.033-.21.912.234 1.835 1.075 2.21.643.28 1.285.244 1.905-.07.923-.48 1.425-1.228 1.484-2.233z"/></svg>
-              </span>
-              <span>Go</span>
-            </button>
-            <button onclick="setLang('rs', true)" id="tab-rs" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition">
-              <span class="w-4 h-4 rounded bg-white/95 flex items-center justify-center p-0.5 shadow-2xs shrink-0 ring-1 ring-black/5">
-                <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="#CE412B"><path d="M23.8346 11.7033l-1.0073-.6236a13.7268 13.7268 0 00-.0283-.2936l.8656-.8069a.3483.3483 0 00-.1154-.578l-1.1066-.414a8.4958 8.4958 0 00-.087-.2856l.6904-.9587a.3462.3462 0 00-.2257-.5446l-1.1663-.1894a9.3574 9.3574 0 00-.1407-.2622l.49-1.0761a.3437.3437 0 00-.0274-.3361.3486.3486 0 00-.3006-.154l-1.1845.0416a6.7444 6.7444 0 00-.1873-.2268l.2723-1.153a.3472.3472 0 00-.417-.4172l-1.1532.2724a14.0183 14.0183 0 00-.2278-.1873l.0415-1.1845a.3442.3442 0 00-.49-.328l-1.076.491c-.0872-.0476-.1742-.0952-.2623-.1407l-.1903-1.1673A.3483.3483 0 0016.256.955l-.9597.6905a8.4867 8.4867 0 00-.2855-.086l-.414-1.1066a.3483.3483 0 00-.5781-.1154l-.8069.8666a9.2936 9.2936 0 00-.2936-.0284L12.2946.1683a.3462.3462 0 00-.5892 0l-.6236 1.0073a13.7383 13.7383 0 00-.2936.0284L9.9803.3374a.3462.3462 0 00-.578.1154l-.4141 1.1065c-.0962.0274-.1903.0567-.2855.086L7.744.955a.3483.3483 0 00-.5447.2258L7.009 2.348a9.3574 9.3574 0 00-.2622.1407l-1.0762-.491a.3462.3462 0 00-.49.328l.0416 1.1845a7.9826 7.9826 0 00-.2278.1873L3.8413 3.425a.3472.3472 0 00-.4171.4171l.2713 1.1531c-.0628.075-.1255.1509-.1863.2268l-1.1845-.0415a.3462.3462 0 00-.328.49l.491 1.0761a9.167 9.167 0 00-.1407.2622l-1.1662.1894a.3483.3483 0 00-.2258.5446l.6904.9587a13.303 13.303 0 00-.087.2855l-1.1065.414a.3483.3483 0 00-.1155.5781l.8656.807a9.2936 9.2936 0 00-.0283.2935l-1.0073.6236a.3442.3442 0 000 .5892l1.0073.6236c.008.0982.0182.1964.0283.2936l-.8656.8079a.3462.3462 0 00.1155.578l1.1065.4141c.0273.0962.0567.1914.087.2855l-.6904.9587a.3452.3452 0 00.2268.5447l1.1662.1893c.0456.088.0922.1751.1408.2622l-.491 1.0762a.3462.3462 0 00.328.49l1.1834-.0415c.0618.0769.1235.1528.1873.2277l-.2713 1.1541a.3462.3462 0 00.4171.4161l1.153-.2713c.075.0638.151.1255.2279.1863l-.0415 1.1845a.3442.3442 0 00.49.327l1.0761-.49c.087.0486.1741.0951.2622.1407l.1903 1.1662a.3483.3483 0 00.5447.2268l.9587-.6904a9.299 9.299 0 00.2855.087l.414 1.1066a.3452.3452 0 00.5781.1154l.8079-.8656c.0972.0111.1954.0203.2936.0294l.6236 1.0073a.3472.3472 0 00.5892 0l.6236-1.0073c.0982-.0091.1964-.0183.2936-.0294l.8069.8656a.3483.3483 0 00.578-.1154l.4141-1.1066a8.4626 8.4626 0 00.2855-.087l.9587.6904a.3452.3452 0 00.5447-.2268l.1903-1.1662c.088-.0456.1751-.0931.2622-.1407l1.0762.49a.3472.3472 0 00.49-.327l-.0415-1.1845a6.7267 6.7267 0 00.2267-.1863l1.1531.2713a.3472.3472 0 00.4171-.416l-.2713-1.1542c.0628-.0749.1255-.1508.1863-.2278l1.1845.0415a.3442.3442 0 00.328-.49l-.49-1.076c.0475-.0872.0951-.1742.1407-.2623l1.1662-.1893a.3483.3483 0 00.2258-.5447l-.6904-.9587.087-.2855 1.1066-.414a.3462.3462 0 00.1154-.5781l-.8656-.8079c.0101-.0972.0202-.1954.0283-.2936l1.0073-.6236a.3442.3442 0 000-.5892zm-6.7413 8.3551a.7138.7138 0 01.2986-1.396.714.714 0 11-.2997 1.396zm-.3422-2.3142a.649.649 0 00-.7715.5l-.3573 1.6685c-1.1035.501-2.3285.7795-3.6193.7795a8.7368 8.7368 0 01-3.6951-.814l-.3574-1.6684a.648.648 0 00-.7714-.499l-1.473.3158a8.7216 8.7216 0 01-.7613-.898h7.1676c.081 0 .1356-.0141.1356-.088v-2.536c0-.074-.0536-.0881-.1356-.0881h-2.0966v-1.6077h2.2677c.2065 0 1.1065.0587 1.394 1.2088.0901.3533.2875 1.5044.4232 1.8729.1346.413.6833 1.2381 1.2685 1.2381h3.5716a.7492.7492 0 00.1296-.0131 8.7874 8.7874 0 01-.8119.9526zM6.8369 20.024a.714.714 0 11-.2997-1.396.714.714 0 01.2997 1.396zM4.1177 8.9972a.7137.7137 0 11-1.304.5791.7137.7137 0 011.304-.579zm-.8352 1.9813l1.5347-.6824a.65.65 0 00.33-.8585l-.3158-.7147h1.2432v5.6025H3.5669a8.7753 8.7753 0 01-.2834-3.348zm6.7343-.5437V8.7836h2.9601c.153 0 1.0792.1772 1.0792.8697 0 .575-.7107.7815-1.2948.7815zm10.7574 1.4862c0 .2187-.008.4363-.0243.651h-.9c-.09 0-.1265.0586-.1265.1477v.413c0 .973-.5487 1.1846-1.0296 1.2382-.4576.0517-.9648-.1913-1.0275-.4717-.2704-1.5186-.7198-1.8436-1.4305-2.4034.8817-.5599 1.799-1.386 1.799-2.4915 0-1.1936-.819-1.9458-1.3769-2.3153-.7825-.5163-1.6491-.6195-1.883-.6195H5.4682a8.7651 8.7651 0 014.907-2.7699l1.0974 1.151a.648.648 0 00.9182.0213l1.227-1.1743a8.7753 8.7753 0 016.0044 4.2762l-.8403 1.8982a.652.652 0 00.33.8585l1.6178.7188c.0283.2875.0425.577.0425.8717zm-9.3006-9.5993a.7128.7128 0 11.984 1.0316.7137.7137 0 01-.984-1.0316zm8.3389 6.71a.7107.7107 0 01.9395-.3625.7137.7137 0 11-.9405.3635z"/></svg>
-              </span>
-              <span>Rust</span>
-            </button>
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[10px] font-mono font-semibold shadow-2xs">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ci-live-dot shrink-0"></span>
+            <span>LIVE AST SYNTHESIS</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-zinc-400 text-[11px] font-medium uppercase tracking-wider mr-0.5">LANG:</span>
+            <div class="inline-flex p-1 rounded-xl bg-zinc-100/90 border border-zinc-200/80 gap-1">
+              <button onclick="setLang('ts', true)" id="tab-ts" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition btn-press">
+                <span class="w-4 h-4 rounded bg-white/95 flex items-center justify-center p-0.5 shadow-2xs shrink-0 ring-1 ring-black/5">
+                  <svg class="w-3.5 h-3.5 shrink-0 rounded-xs" viewBox="0 0 128 128" fill="none"><rect width="128" height="128" rx="16" fill="#3178C6"/><path fill="#ffffff" d="M60.82 50.11H43.76v54.76H29.13V50.11H12.08v-12.8h48.74v12.8zm53.48 24.31c0 3.73-1.02 6.94-3.05 9.63-2.03 2.69-4.94 4.74-8.73 6.16-3.79 1.42-8.23 2.13-13.32 2.13-4.52 0-8.66-.54-12.42-1.62-3.76-1.08-6.85-2.61-9.27-4.59l5.44-11.23c2.09 1.62 4.54 2.87 7.35 3.76s5.73 1.33 8.76 1.33c3.73 0 6.44-.65 8.13-1.95 1.69-1.3 2.54-3.02 2.54-5.16 0-1.77-.66-3.23-1.98-4.38-1.32-1.15-3.66-2.27-7.02-3.36-4.52-1.47-8.08-3.09-10.68-4.86-2.6-1.77-4.49-3.86-5.67-6.27-1.18-2.41-1.77-5.26-1.77-8.55 0-3.67.97-6.88 2.91-9.63 1.94-2.75 4.72-4.85 8.34-6.3 3.62-1.45 7.96-2.18 13.02-2.18 4.07 0 7.82.48 11.25 1.44 3.43.96 6.3 2.27 8.61 3.93l-5.14 11.08c-2.09-1.42-4.39-2.52-6.9-3.3-2.51-.78-5.14-1.17-7.89-1.17-3.27 0-5.74.57-7.41 1.71-1.67 1.14-2.51 2.67-2.51 4.59 0 1.62.63 2.97 1.89 4.05 1.26 1.08 3.52 2.15 6.78 3.21 4.72 1.57 8.43 3.27 11.13 5.1 2.7 1.83 4.67 3.98 5.91 6.45 1.24 2.47 1.86 5.38 1.86 8.73z"/></svg>
+                </span>
+                <span>TypeScript</span>
+              </button>
+              <button onclick="setLang('py', true)" id="tab-py" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition btn-press">
+                <span class="w-4 h-4 rounded bg-white/95 flex items-center justify-center p-0.5 shadow-2xs shrink-0 ring-1 ring-black/5">
+                  <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 128 128" fill="none"><path fill="#387EB8" d="M63.391 12.248c-4.222.02-8.252.379-11.8 1.007-10.45 1.846-12.346 5.71-12.346 12.837v9.411h24.693v3.137H29.977c-7.176 0-13.46 4.313-15.426 12.521-2.268 9.405-2.368 15.275 0 25.096 1.755 7.311 5.947 12.519 13.124 12.519h8.491V77.494c0-8.151 7.051-15.34 15.426-15.34h24.665c6.866 0 12.346-5.654 12.346-12.548V26.093c0-6.693-5.646-11.72-12.346-12.837-4.244-.706-8.645-1.027-12.866-1.008zM50.037 19.817c2.55 0 4.634 2.117 4.634 4.721 0 2.593-2.083 4.69-4.634 4.69-2.56 0-4.633-2.097-4.633-4.69-.001-2.604 2.073-4.721 4.633-4.721z"/><path fill="#FFE052" d="M91.682 38.64v10.966c0 8.5-7.208 15.655-15.426 15.655H51.591c-6.756 0-12.346 5.783-12.346 12.549v23.515c0 6.691 5.818 10.628 12.346 12.547 7.816 2.297 15.312 2.713 24.665 0 6.216-1.801 12.346-5.423 12.346-12.547v-9.412H63.938v-3.138h37.012c7.176 0 9.852-5.005 12.348-12.519 2.578-7.735 2.467-15.174 0-25.096-1.774-7.145-5.161-12.521-12.348-12.521h-9.268zM77.809 98.187c2.561 0 4.634 2.097 4.634 4.692 0 2.602-2.074 4.719-4.634 4.719-2.55 0-4.633-2.117-4.633-4.719 0-2.595 2.083-4.692 4.633-4.692z"/></svg>
+                </span>
+                <span>Python</span>
+              </button>
+              <button onclick="setLang('go', true)" id="tab-go" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition btn-press">
+                <span class="w-4 h-4 rounded bg-white/95 flex items-center justify-center p-0.5 shadow-2xs shrink-0 ring-1 ring-black/5">
+                  <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="#00ADD8"><path d="M1.811 10.231c-.047 0-.058-.023-.035-.059l.246-.315c.023-.035.081-.058.128-.058h4.172c.046 0 .058.035.035.07l-.199.303c-.023.036-.082.07-.117.07zM.047 11.306c-.047 0-.059-.023-.035-.058l.245-.316c.023-.035.082-.058.129-.058h5.328c.047 0 .07.035.058.07l-.093.28c-.012.047-.058.07-.105.07zm2.828 1.075c-.047 0-.059-.035-.035-.07l.163-.292c.023-.035.07-.07.117-.07h2.337c.047 0 .07.035.07.082l-.023.28c0 .047-.047.082-.082.082zm12.129-2.36c-.736.187-1.239.327-1.963.514-.176.046-.187.058-.34-.117-.174-.199-.303-.327-.548-.444-.737-.362-1.45-.257-2.115.175-.795.514-1.204 1.274-1.192 2.22.011.935.654 1.706 1.577 1.835.795.105 1.46-.175 1.987-.77.105-.13.198-.27.315-.434H10.47c-.245 0-.304-.152-.222-.35.152-.362.432-.97.596-1.274a.315.315 0 01.292-.187h4.253c-.023.316-.023.631-.07.947a4.983 4.983 0 01-.958 2.29c-.841 1.11-1.94 1.8-3.33 1.986-1.145.152-2.209-.07-3.143-.77-.865-.655-1.356-1.52-1.484-2.595-.152-1.274.222-2.419.993-3.424.83-1.086 1.928-1.776 3.272-2.02 1.098-.2 2.15-.07 3.096.571.62.41 1.063.97 1.356 1.648.07.105.023.164-.117.2m3.868 6.461c-1.064-.024-2.034-.328-2.852-1.029a3.665 3.665 0 01-1.262-2.255c-.21-1.32.152-2.489.947-3.529.853-1.122 1.881-1.706 3.272-1.95 1.192-.21 2.314-.095 3.33.595.923.63 1.496 1.484 1.648 2.605.198 1.578-.257 2.863-1.344 3.962-.771.783-1.718 1.273-2.805 1.495-.315.06-.63.07-.934.106zm2.78-4.72c-.011-.153-.011-.27-.034-.387-.21-1.157-1.274-1.81-2.384-1.554-1.087.245-1.788.935-2.045 2.033-.21.912.234 1.835 1.075 2.21.643.28 1.285.244 1.905-.07.923-.48 1.425-1.228 1.484-2.233z"/></svg>
+                </span>
+                <span>Go</span>
+              </button>
+              <button onclick="setLang('rs', true)" id="tab-rs" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition btn-press">
+                <span class="w-4 h-4 rounded bg-white/95 flex items-center justify-center p-0.5 shadow-2xs shrink-0 ring-1 ring-black/5">
+                  <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="#CE412B"><path d="M23.8346 11.7033l-1.0073-.6236a13.7268 13.7268 0 00-.0283-.2936l.8656-.8069a.3483.3483 0 00-.1154-.578l-1.1066-.414a8.4958 8.4958 0 00-.087-.2856l.6904-.9587a.3462.3462 0 00-.2257-.5446l-1.1663-.1894a9.3574 9.3574 0 00-.1407-.2622l.49-1.0761a.3437.3437 0 00-.0274-.3361.3486.3486 0 00-.3006-.154l-1.1845.0416a6.7444 6.7444 0 00-.1873-.2268l.2723-1.153a.3472.3472 0 00-.417-.4172l-1.1532.2724a14.0183 14.0183 0 00-.2278-.1873l.0415-1.1845a.3442.3442 0 00-.49-.328l-1.076.491c-.0872-.0476-.1742-.0952-.2623-.1407l-.1903-1.1673A.3483.3483 0 0016.256.955l-.9597.6905a8.4867 8.4867 0 00-.2855-.086l-.414-1.1066a.3483.3483 0 00-.5781-.1154l-.8069.8666a9.2936 9.2936 0 00-.2936-.0284L12.2946.1683a.3462.3462 0 00-.5892 0l-.6236 1.0073a13.7383 13.7383 0 00-.2936.0284L9.9803.3374a.3462.3462 0 00-.578.1154l-.4141 1.1065c-.0962.0274-.1903.0567-.2855.086L7.744.955a.3483.3483 0 00-.5447.2258L7.009 2.348a9.3574 9.3574 0 00-.2622.1407l-1.0762-.491a.3462.3462 0 00-.49.328l.0416 1.1845a7.9826 7.9826 0 00-.2278.1873L3.8413 3.425a.3472.3472 0 00-.4171.4171l.2713 1.1531c-.0628.075-.1255.1509-.1863.2268l-1.1845-.0415a.3462.3462 0 00-.328.49l.491 1.0761a9.167 9.167 0 00-.1407.2622l-1.1662.1894a.3483.3483 0 00-.2258.5446l.6904.9587a13.303 13.303 0 00-.087.2855l-1.1065.414a.3483.3483 0 00-.1155.5781l.8656.807a9.2936 9.2936 0 00-.0283.2935l-1.0073.6236a.3442.3442 0 000 .5892l1.0073.6236c.008.0982.0182.1964.0283.2936l-.8656.8079a.3462.3462 0 00.1155.578l1.1065.4141c.0273.0962.0567.1914.087.2855l-.6904.9587a.3452.3452 0 00.2268.5447l1.1662.1893c.0456.088.0922.1751.1408.2622l-.491 1.0762a.3462.3462 0 00.328.49l1.1834-.0415c.0618.0769.1235.1528.1873.2277l-.2713 1.1541a.3462.3462 0 00.4171.4161l1.153-.2713c.075.0638.151.1255.2279.1863l-.0415 1.1845a.3442.3442 0 00.49.327l1.0761-.49c.087.0486.1741.0951.2622.1407l.1903 1.1662a.3483.3483 0 00.5447.2268l.9587-.6904a9.299 9.299 0 00.2855.087l.414 1.1066a.3452.3452 0 00.5781.1154l.8079-.8656c.0972.0111.1954.0203.2936.0294l.6236 1.0073a.3472.3472 0 00.5892 0l.6236-1.0073c.0982-.0091.1964-.0183.2936-.0294l.8069.8656a.3483.3483 0 00.578-.1154l.4141-1.1066a8.4626 8.4626 0 00.2855-.087l.9587.6904a.3452.3452 0 00.5447-.2268l.1903-1.1662c.088-.0456.1751-.0931.2622-.1407l1.0762.49a.3472.3472 0 00.49-.327l-.0415-1.1845a6.7267 6.7267 0 00.2267-.1863l1.1531.2713a.3472.3472 0 00.4171-.416l-.2713-1.1542c.0628-.0749.1255-.1508.1863-.2278l1.1845.0415a.3442.3442 0 00.328-.49l-.49-1.076c.0475-.0872.0951-.1742.1407-.2623l1.1662-.1893a.3483.3483 0 00.2258-.5447l-.6904-.9587.087-.2855 1.1066-.414a.3462.3462 0 00.1154-.5781l-.8656-.8079c.0101-.0972.0202-.1954.0283-.2936l1.0073-.6236a.3442.3442 0 000-.5892zm-6.7413 8.3551a.7138.7138 0 01.2986-1.396.714.714 0 11-.2997 1.396zm-.3422-2.3142a.649.649 0 00-.7715.5l-.3573 1.6685c-1.1035.501-2.3285.7795-3.6193.7795a8.7368 8.7368 0 01-3.6951-.814l-.3574-1.6684a.648.648 0 00-.7714-.499l-1.473.3158a8.7216 8.7216 0 01-.7613-.898h7.1676c.081 0 .1356-.0141.1356-.088v-2.536c0-.074-.0536-.0881-.1356-.0881h-2.0966v-1.6077h2.2677c.2065 0 1.1065.0587 1.394 1.2088.0901.3533.2875 1.5044.4232 1.8729.1346.413.6833 1.2381 1.2685 1.2381h3.5716a.7492.7492 0 00.1296-.0131 8.7874 8.7874 0 01-.8119.9526zM6.8369 20.024a.714.714 0 11-.2997-1.396.714.714 0 01.2997 1.396zM4.1177 8.9972a.7137.7137 0 11-1.304.5791.7137.7137 0 011.304-.579zm-.8352 1.9813l1.5347-.6824a.65.65 0 00.33-.8585l-.3158-.7147h1.2432v5.6025H3.5669a8.7753 8.7753 0 01-.2834-3.348zm6.7343-.5437V8.7836h2.9601c.153 0 1.0792.1772 1.0792.8697 0 .575-.7107.7815-1.2948.7815zm10.7574 1.4862c0 .2187-.008.4363-.0243.651h-.9c-.09 0-.1265.0586-.1265.1477v.413c0 .973-.5487 1.1846-1.0296 1.2382-.4576.0517-.9648-.1913-1.0275-.4717-.2704-1.5186-.7198-1.8436-1.4305-2.4034.8817-.5599 1.799-1.386 1.799-2.4915 0-1.1936-.819-1.9458-1.3769-2.3153-.7825-.5163-1.6491-.6195-1.883-.6195H5.4682a8.7651 8.7651 0 014.907-2.7699l1.0974 1.151a.648.648 0 00.9182.0213l1.227-1.1743a8.7753 8.7753 0 016.0044 4.2762l-.8403 1.8982a.652.652 0 00.33.8585l1.6178.7188c.0283.2875.0425.577.0425.8717zm-9.3006-9.5993a.7128.7128 0 11.984 1.0316.7137.7137 0 01-.984-1.0316zm8.3389 6.71a.7107.7107 0 01.9395-.3625.7137.7137 0 11-.9405.3635z"/></svg>
+                </span>
+                <span>Rust</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -389,7 +456,7 @@
               <span id="skelFileBadge" class="font-semibold text-xs px-2 py-0.5 rounded border text-blue-300 bg-blue-950/70 border-blue-800/80">src/services/user_service.ts.siftr</span>
             </div>
             <div class="flex items-center gap-3">
-              <button onclick="replayDissolve()" title="Re-trigger inline code dissolution animation" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800/90 hover:bg-zinc-700 text-zinc-300 hover:text-white text-[11px] font-mono transition border border-zinc-700/80 cursor-pointer shadow-2xs group">
+              <button onclick="replayDissolve()" title="Re-trigger inline code dissolution animation" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800/90 hover:bg-zinc-700 text-zinc-300 hover:text-white text-[11px] font-mono transition btn-press border border-zinc-700/80 cursor-pointer shadow-2xs group">
                 <svg class="w-3 h-3 text-amber-400 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 <span>Replay Dissolve</span>
               </button>
@@ -408,6 +475,177 @@
               Saved ~1,702 tokens (Save $51.06/10k)
             </span>
           </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Architecture & Data Boundaries Section (Inspired by CheaperInference Security & Live Telemetry Terminal) -->
+  <section id="security" class="py-14 px-4 bg-zinc-50 border-t border-zinc-200/80">
+    <div class="max-w-5xl mx-auto space-y-9">
+      
+      <!-- Section Header -->
+      <div class="text-center space-y-2 max-w-2xl mx-auto">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-200/70 border border-zinc-300 text-zinc-800 text-[10px] font-mono font-semibold uppercase tracking-wider shadow-2xs">
+          <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          <span>LOCAL DATA BOUNDARIES &amp; PRIVACY</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-ink font-display">
+          Your code never leaves your workstation
+        </h2>
+        <p class="text-xs sm:text-sm text-ink-secondary">
+          SiftrCode operates 100% locally via Tree-sitter AST parsing. No external network egress, no code telemetry, zero cloud dependencies.
+        </p>
+      </div>
+
+      <!-- Fact Bar: 4 Horizontal Spec Pills (CheaperInference Pattern) -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 font-mono text-xs">
+        <div class="p-3 bg-white border border-zinc-200/90 rounded-xl flex items-center gap-2.5 shadow-2xs">
+          <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <div>
+            <div class="font-bold text-zinc-800 text-[11px]">0 Bytes Egress</div>
+            <div class="text-[10px] text-zinc-400 font-sans">No cloud calls</div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-white border border-zinc-200/90 rounded-xl flex items-center gap-2.5 shadow-2xs">
+          <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <div>
+            <div class="font-bold text-zinc-800 text-[11px]">&lt;0.15s Synthesis</div>
+            <div class="text-[10px] text-zinc-400 font-sans">Local Tree-sitter AST</div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-white border border-zinc-200/90 rounded-xl flex items-center gap-2.5 shadow-2xs">
+          <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+          <div>
+            <div class="font-bold text-zinc-800 text-[11px]">Universal Stdio MCP</div>
+            <div class="text-[10px] text-zinc-400 font-sans">Claude, Cursor, Windsurf</div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-white border border-zinc-200/90 rounded-xl flex items-center gap-2.5 shadow-2xs">
+          <div class="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <div>
+            <div class="font-bold text-zinc-800 text-[11px]">100% Contract Fidelity</div>
+            <div class="text-[10px] text-zinc-400 font-sans">Zero hallucination risk</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Visual: Terminal Telemetry Log + 3 Security Assurance Pillars -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        
+        <!-- Left 7 cols: Terminal Log (CheaperInference request.log inspired) -->
+        <div class="lg:col-span-7 bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl text-zinc-300 font-mono text-xs">
+          <!-- Terminal Title Bar -->
+          <div class="bg-zinc-900/90 px-4 py-3 border-b border-zinc-800 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-zinc-700"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-zinc-700"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-zinc-700"></span>
+              </div>
+              <span class="text-[11px] text-zinc-400 ml-2 font-medium">siftr.audit.log — local_daemon [pid: 89421]</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-[10px] text-emerald-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ci-live-dot"></span>
+              <span>AUDIT ACTIVE</span>
+            </div>
+          </div>
+
+          <!-- Terminal Content Stream -->
+          <div class="p-5 space-y-2.5 text-[11px] leading-relaxed select-all">
+            <div class="text-zinc-500"># SiftrCode Ingest Audit — Local Runtime Verification</div>
+            
+            <div class="flex items-start gap-2">
+              <span class="text-amber-400 shrink-0">›</span>
+              <div><span class="text-zinc-400">target_scope:</span> <span class="text-white">./src/**/*.ts</span> <span class="text-zinc-500">(128 source files)</span></div>
+            </div>
+
+            <div class="flex items-start gap-2">
+              <span class="text-amber-400 shrink-0">›</span>
+              <div><span class="text-zinc-400">ast.parse(local):</span> <span class="text-emerald-400 font-semibold">status: complete</span> <span class="text-zinc-500">(0.14s elapsed via Tree-sitter)</span></div>
+            </div>
+
+            <div class="flex items-start gap-2">
+              <span class="text-amber-400 shrink-0">›</span>
+              <div><span class="text-zinc-400">symbols_indexed:</span> <span class="text-blue-300">7,420 signatures</span> <span class="text-zinc-500">[functions, classes, interfaces]</span></div>
+            </div>
+
+            <div class="flex items-start gap-2">
+              <span class="text-amber-400 shrink-0">›</span>
+              <div><span class="text-zinc-400">body_pruning:</span> <span class="text-amber-400 font-semibold">-92.5% bloat dissolved</span> <span class="text-zinc-500">(implementation details omitted)</span></div>
+            </div>
+
+            <div class="flex items-start gap-2">
+              <span class="text-emerald-400 shrink-0">✔</span>
+              <div><span class="text-zinc-400">network_egress:</span> <span class="text-emerald-400 font-bold bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/80">0 bytes</span> <span class="text-zinc-400">[100% offline — zero cloud upload]</span></div>
+            </div>
+
+            <div class="flex items-start gap-2">
+              <span class="text-emerald-400 shrink-0">✔</span>
+              <div><span class="text-zinc-400">contract_hash:</span> <span class="text-zinc-300">sha256:4f8e...</span> <span class="text-emerald-400">[100% type preservation verified]</span></div>
+            </div>
+
+            <div class="flex items-start gap-2 pt-1 border-t border-zinc-800/80">
+              <span class="text-amber-400 shrink-0">›</span>
+              <div><span class="text-zinc-400">agent_bridge:</span> <span class="text-white">stdio://pipe/mcp-context-stream</span> <span class="ci-terminal-cursor"></span></div>
+            </div>
+          </div>
+
+          <!-- Terminal Footer -->
+          <div class="bg-zinc-900/40 px-4 py-2 border-t border-zinc-800/80 text-[10px] text-zinc-500 flex items-center justify-between">
+            <span>Verified: tree-sitter-typescript-v0.20.8</span>
+            <span class="text-zinc-400 font-sans">Encrypted memory • Non-persistent AST cache</span>
+          </div>
+        </div>
+
+        <!-- Right 5 cols: 3 Assurance Cards -->
+        <div class="lg:col-span-5 space-y-3.5">
+          
+          <div class="p-4 bg-white border border-zinc-200/90 rounded-xl shadow-2xs space-y-1.5 hover:border-zinc-300 transition">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <h3 class="font-bold text-xs text-ink font-display uppercase tracking-wide">100% Local CPU Execution</h3>
+            </div>
+            <p class="text-xs text-zinc-600 font-sans leading-relaxed">
+              Every parse, token count, and skeleton synthesis runs directly on your machine's CPU via native C/Wasm Tree-sitter bindings. No code is transmitted to any cloud API.
+            </p>
+          </div>
+
+          <div class="p-4 bg-white border border-zinc-200/90 rounded-xl shadow-2xs space-y-1.5 hover:border-zinc-300 transition">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+              <h3 class="font-bold text-xs text-ink font-display uppercase tracking-wide">Zero-Loss Interface Guarantees</h3>
+            </div>
+            <p class="text-xs text-zinc-600 font-sans leading-relaxed">
+              Coding agents need exact signatures, generics, and exported interfaces to write correct code. SiftrCode dissolves the internal bodies while keeping 100% of the contracts agents rely on.
+            </p>
+          </div>
+
+          <div class="p-4 bg-white border border-zinc-200/90 rounded-xl shadow-2xs space-y-1.5 hover:border-zinc-300 transition">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+              <h3 class="font-bold text-xs text-ink font-display uppercase tracking-wide">Standard Stdio MCP Protocol</h3>
+            </div>
+            <p class="text-xs text-zinc-600 font-sans leading-relaxed">
+              No proprietary background daemons or closed network proxies. SiftrCode integrates through the open Model Context Protocol (MCP) using standard Unix pipes.
+            </p>
+          </div>
+
         </div>
 
       </div>
@@ -544,7 +782,7 @@
           </div>
           <div class="bg-zinc-900 text-zinc-200 p-3 rounded-lg font-mono text-[11px] select-all flex items-center justify-between">
             <span>npx siftrcode audit</span>
-            <button onclick="copyText('npx siftrcode audit', this)" class="text-[10px] font-mono text-zinc-400 hover:text-amber-400 transition px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">COPY</button>
+            <button onclick="copyText('npx siftrcode audit', this)" class="text-[10px] font-mono text-zinc-400 hover:text-amber-400 transition btn-press px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">COPY</button>
           </div>
           <p class="text-[11px] text-ink-secondary font-sans">
             Instantly scans your directory and calculates monthly token waste.
@@ -559,7 +797,7 @@
           </div>
           <div class="bg-zinc-900 text-zinc-200 p-3 rounded-lg font-mono text-[11px] select-all flex items-center justify-between">
             <span>npx siftrcode init</span>
-            <button onclick="copyText('npx siftrcode init', this)" class="text-[10px] font-mono text-zinc-400 hover:text-amber-400 transition px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">COPY</button>
+            <button onclick="copyText('npx siftrcode init', this)" class="text-[10px] font-mono text-zinc-400 hover:text-amber-400 transition btn-press px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">COPY</button>
           </div>
           <p class="text-[11px] text-ink-secondary font-sans">
             Automatically configures Claude Desktop, Cursor, and Windsurf MCP settings.
@@ -617,7 +855,7 @@
           </div>
 
           <div class="pt-6">
-            <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="w-full h-10 flex items-center justify-center rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white font-bold transition text-xs shadow-2xs">
+            <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="w-full h-10 flex items-center justify-center rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white font-bold transition btn-press text-xs shadow-2xs">
               GitHub Repository →
             </a>
           </div>
@@ -658,7 +896,7 @@
           </div>
 
           <div class="pt-6">
-            <button onclick="openTrialModal()" class="w-full h-10 flex items-center justify-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold transition text-xs shadow-sm active:scale-[0.98] cursor-pointer">
+            <button onclick="openTrialModal()" class="w-full h-10 flex items-center justify-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold transition btn-press text-xs shadow-sm cursor-pointer">
               <svg class="w-3.5 h-3.5 text-zinc-950 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
@@ -1584,7 +1822,7 @@ ${escapeHtml(item.rawCode)}
 
         <div id="trialError" class="hidden text-[11px] text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2.5 font-sans"></div>
 
-        <button type="submit" id="trialSubmitBtn" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs sm:text-sm transition shadow-md hover:shadow-lg active:scale-[0.99] flex items-center justify-center gap-2">
+        <button type="submit" id="trialSubmitBtn" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs sm:text-sm transition btn-press shadow-md hover:shadow-lg active:scale-[0.99] flex items-center justify-center gap-2">
           <span>Activate 14-Day Team Trial</span>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
         </button>
