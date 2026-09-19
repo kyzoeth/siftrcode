@@ -810,14 +810,15 @@
           <div class="bg-zinc-50/95 dark:bg-zinc-900/90 px-3 sm:px-4 py-2 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2.5 shrink-0 min-h-[44px] select-none text-xs font-mono overflow-x-auto no-scrollbar">
             <!-- Consolidated Step & Context Metrics Flow -->
             <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
-              <span id="morphStepBadge" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-transparent shrink-0 transition-all duration-200">
+              <span id="morphStepBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-transparent shrink-0 transition-all duration-200">
                 <span id="stepThinkingAnim" class="inline-flex items-center justify-center shrink-0 w-3 h-3 text-[#D97757] dark:text-[#F39C82]">
                   <svg class="w-3 h-3 claude-thinking-spin" viewBox="0 0 16 16" fill="currentColor">
                     <circle cx="8" cy="8" r="2.2"/>
                     <path d="M8 0.5a1 1 0 0 1 1 1v2.5a1 1 0 0 1-2 0V1.5a1 1 0 0 1 1-1Zm0 11a1 1 0 0 1 1 1V15a1 1 0 0 1-2 0v-2.5a1 1 0 0 1 1-1ZM0.5 8a1 1 0 0 1 1-1h2.5a1 1 0 0 1 0 2H1.5a1 1 0 0 1-1-1Zm11 0a1 1 0 0 1 1-1H15a1 1 0 0 1 0 2h-2.5a1 1 0 0 1-1-1ZM2.5 2.5a1 1 0 0 1 1.41 0l1.8 1.8a1 1 0 0 1-1.41 1.41l-1.8-1.8a1 1 0 0 1 0-1.41Zm7.8 7.8a1 1 0 0 1 1.41 0l1.8 1.8a1 1 0 0 1-1.41 1.41l-1.8-1.8a1 1 0 0 1 0-1.41Zm1.8-7.8a1 1 0 0 1 0 1.41l-1.8 1.8a1 1 0 1 1-1.41-1.41l1.8-1.8a1 1 0 0 1 1.41 0ZM4.3 10.3a1 1 0 0 1 0 1.41l-1.8 1.8a1 1 0 0 1-1.41-1.41l1.8-1.8a1 1 0 0 1 1.41 0Z"/>
                   </svg>
                 </span>
-                <span id="stepBadgeText">Step 1</span>
+                <span id="stepBadgeText" class="text-zinc-500 dark:text-zinc-400">Step 1:</span>
+                <span id="stepStageText" class="font-semibold text-zinc-900 dark:text-zinc-100">Raw Code</span>
               </span>
 
               <span class="text-zinc-300 dark:text-zinc-700 select-none">|</span>
@@ -838,7 +839,7 @@
                 </div>
               </div>
 
-              <span id="costSavedTag" class="px-2.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight transition-all duration-200 shrink-0 bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300">Raw Code</span>
+              <span id="costSavedTag" class="hidden px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold tracking-tight transition-all duration-200 shrink-0 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300">Save $0.00</span>
             </div>
 
             <!-- Clean Minimal Replay Action -->
@@ -2168,12 +2169,26 @@ impl PaymentGateway for StripeGateway {
         stepNum = mode === 'raw' ? 1 : (mode === 'scan' ? 2 : (mode === 'targeting' ? 3 : (mode === 'sparkle' || mode === 'pruning' ? 4 : 5)));
       }
 
+      const stageLabels = {
+        1: 'Raw Code',
+        2: 'Profiling',
+        3: 'Bloat Isolated',
+        4: 'Pruning',
+        5: 'Synthesized'
+      };
+      const stageText = text || stageLabels[stepNum] || (mode === 'synthesized' ? 'Synthesized' : 'Processing');
+
       const stepText = document.getElementById('stepBadgeText');
       if (stepText && stepNum) {
-        stepText.innerText = `Step ${stepNum}`;
+        stepText.innerText = `Step ${stepNum}:`;
       } else {
         const legacyBadge = document.getElementById('morphStepBadge');
         if (legacyBadge && stepNum) legacyBadge.innerText = `Step ${stepNum}`;
+      }
+
+      const stageEl = document.getElementById('stepStageText');
+      if (stageEl) {
+        stageEl.innerText = stageText;
       }
 
       const animContainer = document.getElementById('stepThinkingAnim');
@@ -2184,7 +2199,7 @@ impl PaymentGateway for StripeGateway {
           animContainer.className = 'inline-flex items-center justify-center shrink-0 w-3 h-3 text-emerald-600 dark:text-emerald-400';
           animContainer.innerHTML = `<svg class="w-3 h-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5L6.5 11.5L12.5 4.5"/></svg>`;
           if (badge) {
-            badge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-700/80 shrink-0 transition-all duration-200 shadow-2xs';
+            badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-700/80 shrink-0 transition-all duration-200 shadow-2xs';
             badge.title = 'SiftrCode AST synthesis complete';
           }
         } else {
@@ -2192,7 +2207,7 @@ impl PaymentGateway for StripeGateway {
           animContainer.className = 'inline-flex items-center justify-center shrink-0 w-3 h-3 text-[#D97757] dark:text-[#F39C82]';
           animContainer.innerHTML = `<svg class="w-3 h-3 claude-thinking-spin" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="2.2"/><path d="M8 0.5a1 1 0 0 1 1 1v2.5a1 1 0 0 1-2 0V1.5a1 1 0 0 1 1-1Zm0 11a1 1 0 0 1 1 1V15a1 1 0 0 1-2 0v-2.5a1 1 0 0 1 1-1ZM0.5 8a1 1 0 0 1 1-1h2.5a1 1 0 0 1 0 2H1.5a1 1 0 0 1-1-1Zm11 0a1 1 0 0 1 1-1H15a1 1 0 0 1 0 2h-2.5a1 1 0 0 1-1-1ZM2.5 2.5a1 1 0 0 1 1.41 0l1.8 1.8a1 1 0 0 1-1.41 1.41l-1.8-1.8a1 1 0 0 1 0-1.41Zm7.8 7.8a1 1 0 0 1 1.41 0l1.8 1.8a1 1 0 0 1-1.41 1.41l-1.8-1.8a1 1 0 0 1 0-1.41Zm1.8-7.8a1 1 0 0 1 0 1.41l-1.8 1.8a1 1 0 1 1-1.41-1.41l1.8-1.8a1 1 0 0 1 1.41 0ZM4.3 10.3a1 1 0 0 1 0 1.41l-1.8 1.8a1 1 0 0 1-1.41-1.41l1.8-1.8a1 1 0 0 1 1.41 0Z"/></svg>`;
           if (badge) {
-            badge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-transparent shrink-0 transition-all duration-200';
+            badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-transparent shrink-0 transition-all duration-200';
             badge.title = 'SiftrCode engine thinking & processing AST...';
           }
         }
@@ -2200,22 +2215,16 @@ impl PaymentGateway for StripeGateway {
 
       const tag = document.getElementById('costSavedTag');
       if (tag) {
-        if (mode === 'raw') {
-          tag.innerText = 'Raw Code';
-          tag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight transition-all duration-200 shrink-0 bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300';
-        } else if (mode === 'scan') {
-          tag.innerText = 'Profiling';
-          tag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight transition-all duration-200 shrink-0 bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300';
-        } else if (mode === 'targeting') {
-          tag.innerText = 'Bloat Isolated';
-          tag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight transition-all duration-200 shrink-0 bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300';
-        } else if (mode === 'sparkle' || mode === 'pruning') {
-          tag.innerText = 'Pruning';
-          tag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight transition-all duration-200 shrink-0 bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300';
-        } else if (mode === 'synthesized') {
+        if (mode === 'synthesized' || stepNum === 5) {
           const conf = langConfig[curLang];
           tag.innerText = `Save $${conf.savedCost.toFixed(2)}`;
           tag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold tracking-tight transition-all duration-200 shrink-0 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300';
+          tag.classList.remove('hidden');
+        } else if (mode === 'sparkle' || mode === 'pruning' || stepNum === 4) {
+          tag.classList.remove('hidden');
+          tag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight transition-all duration-200 shrink-0 bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300';
+        } else {
+          tag.classList.add('hidden');
         }
       }
     }
@@ -2243,13 +2252,13 @@ impl PaymentGateway for StripeGateway {
         if (bridgeSkel) bridgeSkel.innerText = `${conf.rawTokens.toLocaleString()} tokens`;
         if (costSkel) costSkel.innerText = `$${conf.rawCost.toFixed(2)}`;
         if (costSavedTag) {
-          costSavedTag.innerText = 'Raw Code';
-          costSavedTag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight transition-all duration-200 shrink-0 bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300';
+          costSavedTag.classList.add('hidden');
         }
       } else {
         if (bridgeSkel) bridgeSkel.innerText = `${conf.skelTokens.toLocaleString()} tokens`;
         if (costSkel) costSkel.innerText = `$${conf.skelCost.toFixed(2)}`;
         if (costSavedTag) {
+          costSavedTag.classList.remove('hidden');
           costSavedTag.innerText = `Save $${conf.savedCost.toFixed(2)}`;
           costSavedTag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold tracking-tight transition-all duration-200 shrink-0 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300';
         }
@@ -2435,12 +2444,6 @@ impl PaymentGateway for StripeGateway {
       const costSkel = document.getElementById('costSkel');
       if (costSkel) costSkel.innerText = `$${conf.rawCost.toFixed(2)}`;
 
-      const costSavedTag = document.getElementById('costSavedTag');
-      if (costSavedTag) {
-        costSavedTag.innerText = 'Raw Code';
-        costSavedTag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight transition-all duration-200 shrink-0 bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300';
-      }
-
       setMorphStatus('raw', 1, 'Raw Code');
 
       // Slowly and smoothly scroll downward to demonstrate the sheer length and density of original code!
@@ -2461,10 +2464,6 @@ impl PaymentGateway for StripeGateway {
       const scanDuration = 2800;
       scanTimeout = setTimeout(() => {
         setMorphStatus('scan', 2, 'Profiling');
-        if (costSavedTag) {
-          costSavedTag.innerText = 'Profiling';
-          costSavedTag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight transition-all duration-200 shrink-0 bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300';
-        }
 
         if (astProgressBar) {
           astProgressBar.style.transition = 'none';
@@ -2505,10 +2504,6 @@ impl PaymentGateway for StripeGateway {
           c.classList.add('bloat-highlighted');
         });
 
-        if (costSavedTag) {
-          costSavedTag.innerText = 'Bloat Isolated';
-          costSavedTag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight transition-all duration-200 shrink-0 bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300';
-        }
         setMorphStatus('targeting', 3, 'Bloat Isolated');
       }, rawHoldDuration + scanDuration);
 
