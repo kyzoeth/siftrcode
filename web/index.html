@@ -9,7 +9,7 @@
   <link rel="canonical" href="https://siftrcode.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
 
   <script>
@@ -17,7 +17,8 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            display: ['"Space Grotesk"', '"Plus Jakarta Sans"', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'monospace'],
           },
           colors: {
@@ -85,6 +86,15 @@
   </script>
 
   <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      letter-spacing: -0.011em;
+    }
+    h1, h2, h3, .font-display {
+      font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+      letter-spacing: -0.025em;
+    }
+
     ::selection { background: #dec278; color: #18181b; }
 
     /* Luminous Grid Pattern */
@@ -221,7 +231,7 @@
           <div class="w-6 h-6 rounded-md bg-amber-500 flex items-center justify-center text-zinc-950 font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
             S
           </div>
-          <span>SiftrCode</span>
+          <span class="font-display font-bold text-base tracking-tight">SiftrCode</span>
           <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80 font-medium">v0.1</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
@@ -257,7 +267,7 @@
   <section class="relative pt-16 pb-12 md:pt-24 md:pb-16 px-4 bg-grid">
     <div class="max-w-4xl mx-auto text-center space-y-6 relative z-10">
       
-      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-ink sm:whitespace-nowrap max-w-none mx-auto leading-tight">
+      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-ink font-display sm:whitespace-nowrap max-w-none mx-auto leading-tight">
         Cut agent token waste by <span class="hero-glow-text">90%</span>
       </h1>
 
@@ -413,7 +423,7 @@
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-200/80 pb-3">
         <div>
           <div class="flex items-center gap-2">
-            <h2 class="text-base sm:text-lg font-bold tracking-tight text-ink">Verified Production Benchmarks</h2>
+            <h2 class="text-base sm:text-lg font-bold tracking-tight text-ink font-display">Verified Production Benchmarks</h2>
             <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-medium">Public GitHub Audits</span>
           </div>
           <p class="text-xs text-ink-secondary mt-0.5">Exact figures scanned directly from public repositories.</p>
@@ -520,7 +530,7 @@
     <div class="max-w-4xl mx-auto space-y-8">
       
       <div class="text-center space-y-1">
-        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-ink">30-Second Setup</h2>
+        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-ink font-display">30-Second Setup</h2>
         <p class="text-xs sm:text-sm text-ink-secondary">Works with Claude Code, Cursor, Windsurf, and Antigravity.</p>
       </div>
 
@@ -566,7 +576,7 @@
     <div class="max-w-4xl mx-auto space-y-8">
       
       <div class="text-center space-y-1">
-        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-ink">Simple Licensing</h2>
+        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-ink font-display">Simple Licensing</h2>
         <p class="text-xs sm:text-sm text-ink-secondary">Free open-source CLI for individuals. Paid caching for teams.</p>
       </div>
 
@@ -578,7 +588,7 @@
           <div class="space-y-4">
             <div>
               <div class="text-[10px] text-zinc-500 uppercase font-semibold tracking-wider">INDIVIDUAL DEVELOPERS</div>
-              <h3 class="text-xl font-bold text-ink font-sans mt-0.5">Community CLI</h3>
+              <h3 class="text-xl font-bold text-ink font-display mt-0.5">Community CLI</h3>
             </div>
 
             <div class="flex items-baseline gap-1.5 font-mono">
@@ -619,7 +629,7 @@
           <div class="space-y-4">
             <div>
               <div class="text-[10px] text-amber-800 uppercase font-semibold tracking-wider">FOR STARTUPS &amp; TEAMS</div>
-              <h3 class="text-xl font-bold text-ink font-sans mt-0.5">SiftrCode Pro</h3>
+              <h3 class="text-xl font-bold text-ink font-display mt-0.5">SiftrCode Pro</h3>
             </div>
 
             <div class="flex items-baseline gap-1.5 font-mono">
@@ -1531,7 +1541,7 @@ ${escapeHtml(item.rawCode)}
           <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
           14-Day Free Team Trial
         </div>
-        <h3 class="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight">Supercharge your team's coding agents</h3>
+        <h3 class="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight font-display">Supercharge your team's coding agents</h3>
         <p class="text-xs sm:text-sm text-zinc-500 font-sans">
           Eliminate 90% token waste, slash agent latency from 45s to 4s, and sync synthesized interfaces across your engineers.
         </p>
