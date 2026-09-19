@@ -693,23 +693,23 @@
           
           <!-- Terminal Header Bar with Consolidated Metrics Stream -->
           <div class="bg-zinc-50 dark:bg-zinc-900/95 px-3 sm:px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs font-sans shrink-0 select-none gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
-            <!-- Left: macOS Traffic Lights & Active File Badge -->
+            <!-- Left: macOS Traffic Lights & Subtle File Name -->
             <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
               <div class="flex items-center gap-1.5 shrink-0">
-                <span class="w-3 h-3 rounded-full bg-[#ff5f56] inline-block border border-[#e0443e]"></span>
-                <span class="w-3 h-3 rounded-full bg-[#ffbd2e] inline-block border border-[#dea123]"></span>
-                <span class="w-3 h-3 rounded-full bg-[#27c93f] inline-block border border-[#1aab29]"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-[#ff5f56] inline-block border border-[#e0443e]/80"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-[#ffbd2e] inline-block border border-[#dea123]/80"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-[#27c93f] inline-block border border-[#1aab29]/80"></span>
               </div>
-              <div class="flex items-center gap-2 pl-2 border-l border-zinc-200 dark:border-zinc-800 shrink-0">
-                <span id="skelPingDot" class="w-2 h-2 rounded-full bg-blue-500 signal-ping"></span>
-                <span id="skelFileBadge" class="font-semibold text-xs px-2 py-0.5 rounded border text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-300 dark:bg-blue-950/70 dark:border-blue-800/80 font-mono">user_service.ts</span>
+              <div class="flex items-center pl-2.5 border-l border-zinc-200 dark:border-zinc-800 shrink-0">
+                <span id="skelFileBadge" class="text-xs font-mono text-zinc-400 dark:text-zinc-500 font-normal">user_service.ts</span>
               </div>
             </div>
 
-            <!-- Right: Dynamic System Step Pill Explaining AST Actions -->
-            <div id="morphStatusPill" class="inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700/80 text-[11px] font-mono shadow-2xs shrink-0 select-none transition-all duration-300">
-              <span id="morphStatusDot" class="w-1.5 h-1.5 rounded-full bg-zinc-400 shrink-0"></span>
-              <span id="morphStatusText" class="text-zinc-700 dark:text-zinc-300 font-medium">Step 1: Original Code • Implementation Bloat Active</span>
+            <!-- Right: Prominent Dynamic System Step Pill Explaining AST Actions -->
+            <div id="morphStatusPill" class="inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-1.5 rounded-md bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-300 dark:border-zinc-700 text-xs sm:text-[13px] font-mono shadow-xs shrink-0 select-none transition-all duration-300">
+              <span id="morphStepBadge" class="px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold tracking-wider uppercase bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900 shrink-0">STEP 1</span>
+              <span id="morphStatusDot" class="w-2 h-2 rounded-full bg-zinc-400 shrink-0"></span>
+              <span id="morphStatusText" class="text-zinc-900 dark:text-zinc-100 font-semibold tracking-tight">Original Code • Full Implementation Bloat</span>
             </div>
           </div>
 
@@ -1214,8 +1214,7 @@ impl Gateway for StripeGateway {
       ts: [
         {
           type: 'code',
-          content: `// [SiftrCode Synthesized Interface] user_service.ts
-import { Database, User } from './db';
+          content: `import { Database, User } from './db';
 
 export class UserService {
   constructor(private db: Database) {}`
@@ -1249,8 +1248,7 @@ export class UserService {
       py: [
         {
           type: 'code',
-          content: `# [SiftrCode Synthesized Interface] stripe_gateway.py
-from typing import Optional, Dict
+          content: `from typing import Optional, Dict
 import stripe
 
 class StripeGateway:
@@ -1281,8 +1279,7 @@ class StripeGateway:
       go: [
         {
           type: 'code',
-          content: `// [SiftrCode Synthesized Interface] router.go
-package server
+          content: `package server
 
 import (
     "context"
@@ -1316,8 +1313,7 @@ type Server struct {
       rs: [
         {
           type: 'code',
-          content: `// [SiftrCode Synthesized Interface] gateway.rs
-pub struct Config {
+          content: `pub struct Config {
     pub api_key: String,
     pub timeout_ms: u64,
 }
@@ -1347,6 +1343,70 @@ impl Gateway for StripeGateway {`
         }
       ]
     };
+
+    const cleanSynthesizedCode = {
+      ts: `import { Database, User } from './db';
+
+export class UserService {
+  constructor(private db: Database) {}
+
+  /** Finds user by unique primary key */
+  public async getUser(id: string): Promise<User | null>;
+
+  /** Creates user record with hashing & transaction guarantees */
+  public async createUser(email: string): Promise<User>;
+}`,
+      py: `from typing import Optional, Dict
+import stripe
+
+class StripeGateway:
+    """Manages payment gateway processing."""
+
+    def __init__(self, api_key: str):
+        ...
+
+    def charge(self, customer_id: str, amount: int) -> Dict[str, any]:
+        """Executes payment charge with automatic retries."""
+        ...`,
+      go: `package server
+
+import (
+    "context"
+    "net/http"
+)
+
+type Server struct {
+    Port int
+    Mux  *http.ServeMux
+}
+
+func NewServer(port int) *Server
+
+func (s *Server) Start(ctx context.Context) error`,
+      rs: `pub struct Config {
+    pub api_key: String,
+    pub timeout_ms: u64,
+}
+
+pub trait Gateway {
+    fn charge(&self, customer_id: &str, amount: u64) -> Result<String, String>;
+}
+
+pub struct StripeGateway {
+    config: Config,
+}
+
+impl Gateway for StripeGateway {
+    pub fn charge(&self, customer_id: &str, amount: u64) -> Result<String, String>;
+}`
+    };
+
+    function renderSynthesizedPure(lang) {
+      const container = document.getElementById('skelOutput');
+      if (!container) return;
+      const code = cleanSynthesizedCode[lang] || '';
+      container.innerHTML = `<div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed whitespace-pre">${highlightCode(code, lang)}</div>`;
+    }
 
     let curLang = 'ts';
     let debounceTimer = null;
@@ -1435,35 +1495,49 @@ impl Gateway for StripeGateway {`
       }).join('');
     }
 
-    function setMorphStatus(mode, text) {
+    function setMorphStatus(mode, stepNum, text) {
+      if (typeof stepNum === 'string' && !text) {
+        text = stepNum;
+        stepNum = mode === 'raw' ? 1 : (mode === 'scan' ? 2 : (mode === 'targeting' ? 3 : (mode === 'sparkle' || mode === 'pruning' ? 4 : 5)));
+      }
+      text = (text || '').replace(/^Step\s*\d+:\s*/i, '');
+
       const pill = document.getElementById('morphStatusPill');
+      const badge = document.getElementById('morphStepBadge');
       const dot = document.getElementById('morphStatusDot');
       const label = document.getElementById('morphStatusText');
       if (!pill || !dot || !label) return;
 
+      if (badge && stepNum) badge.innerText = `STEP ${stepNum}`;
       label.innerText = text;
 
       if (mode === 'raw') {
-        pill.className = 'inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-all duration-300 bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700/80 text-zinc-700 dark:text-zinc-300 shadow-2xs';
-        dot.className = 'w-1.5 h-1.5 rounded-full bg-zinc-400 shrink-0';
+        pill.className = 'inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-1.5 rounded-md text-xs sm:text-[13px] font-mono transition-all duration-300 bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-xs';
+        if (badge) badge.className = 'px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold tracking-wider uppercase bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900 shrink-0';
+        dot.className = 'w-2 h-2 rounded-full bg-zinc-400 shrink-0';
       } else if (mode === 'scan') {
-        pill.className = 'inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-all duration-300 bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-700 text-blue-800 dark:text-blue-300 shadow-2xs';
-        dot.className = 'w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shrink-0';
+        pill.className = 'inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-1.5 rounded-md text-xs sm:text-[13px] font-mono transition-all duration-300 bg-blue-50 dark:bg-blue-950/80 border border-blue-400/80 dark:border-blue-700 text-blue-950 dark:text-blue-100 shadow-xs ring-1 ring-blue-500/20';
+        if (badge) badge.className = 'px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold tracking-wider uppercase bg-blue-600 text-white shrink-0';
+        dot.className = 'w-2 h-2 rounded-full bg-blue-500 animate-ping shrink-0';
       } else if (mode === 'targeting') {
-        pill.className = 'inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-all duration-300 bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-300 shadow-2xs';
-        dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0';
+        pill.className = 'inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-1.5 rounded-md text-xs sm:text-[13px] font-mono transition-all duration-300 bg-amber-50 dark:bg-amber-950/80 border border-amber-400/80 dark:border-amber-700 text-amber-950 dark:text-amber-100 shadow-xs ring-1 ring-amber-500/20';
+        if (badge) badge.className = 'px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold tracking-wider uppercase bg-amber-600 text-white shrink-0';
+        dot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0';
       } else if (mode === 'sparkle' || mode === 'pruning') {
-        pill.className = 'inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-all duration-300 bg-purple-50 dark:bg-purple-950/70 border border-purple-200 dark:border-purple-600 text-purple-800 dark:text-purple-200 shadow-2xs';
-        dot.className = 'w-1.5 h-1.5 rounded-full bg-purple-600 dark:bg-purple-400 animate-ping shrink-0';
+        pill.className = 'inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-1.5 rounded-md text-xs sm:text-[13px] font-mono transition-all duration-300 bg-purple-50 dark:bg-purple-950/80 border border-purple-400/80 dark:border-purple-600 text-purple-950 dark:text-purple-100 shadow-xs ring-1 ring-purple-500/20';
+        if (badge) badge.className = 'px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold tracking-wider uppercase bg-purple-600 text-white shrink-0';
+        dot.className = 'w-2 h-2 rounded-full bg-purple-500 animate-ping shrink-0';
       } else if (mode === 'synthesized') {
-        pill.className = 'inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-all duration-300 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 shadow-2xs';
-        dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0';
+        pill.className = 'inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-1.5 rounded-md text-xs sm:text-[13px] font-mono transition-all duration-300 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-400/80 dark:border-emerald-700 text-emerald-950 dark:text-emerald-100 shadow-xs ring-1 ring-emerald-500/20';
+        if (badge) badge.className = 'px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold tracking-wider uppercase bg-emerald-600 text-white shrink-0';
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-500 shrink-0';
       }
     }
 
     function setCompilerStatus(text, type = 'ready') {
       const mode = type === 'compiling' ? 'targeting' : (type === 'success' ? 'synthesized' : 'raw');
-      setMorphStatus(mode, text);
+      const step = type === 'compiling' ? 3 : (type === 'success' ? 5 : 1);
+      setMorphStatus(mode, step, text);
     }
 
     function setMetricsInstant(skelTokens, skelCost, savedCost, savedTokens, reduction = null) {
@@ -1519,54 +1593,14 @@ impl Gateway for StripeGateway {`
         if (btnSkel) btnSkel.className = 'px-2 py-0.5 rounded text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition';
         if (btnPrune) btnPrune.innerText = '✨ Prune Bloat';
 
-        const allBlocks = container.querySelectorAll('.dissolve-block');
-        allBlocks.forEach(b => {
-          b.classList.remove('collapsing');
-          b.classList.add('expanded');
-          b.style.maxHeight = '520px';
-          b.style.opacity = '1';
-          b.style.filter = 'none';
-        });
-
-        const allCards = container.querySelectorAll('.targeted-prune-card');
-        allCards.forEach(c => {
-          c.classList.remove('bloat-highlighted');
-          c.classList.remove('shimmer-active');
-        });
-
-        const allPills = container.querySelectorAll('.dissolve-pill');
-        allPills.forEach(p => {
-          p.style.opacity = '0';
-          p.style.maxHeight = '0px';
-        });
-
-        setMorphStatus('raw', `Step 1: Original Code • Implementation Bloat Active (${conf.rawTokens.toLocaleString()} tokens)`);
-        setMetricsInstant(conf.rawTokens, conf.rawCost, 0, 0, 0);
+        renderDemo(curLang, 'raw');
       } else {
         if (btnRaw) btnRaw.className = 'px-2 py-0.5 rounded text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition';
         if (btnSkel) btnSkel.className = 'px-2 py-0.5 rounded bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white font-medium shadow-2xs transition';
         if (btnPrune) btnPrune.innerText = '↺ Replay';
 
-        const allBlocks = container.querySelectorAll('.dissolve-block');
-        allBlocks.forEach(b => {
-          b.classList.remove('expanded');
-          b.classList.add('collapsing');
-          b.style.maxHeight = '0px';
-          b.style.opacity = '0';
-        });
-
-        const allPills = container.querySelectorAll('.dissolve-pill');
-        allPills.forEach(p => {
-          p.style.opacity = '1';
-          p.style.maxHeight = '48px';
-        });
-
-        const allBtns = container.querySelectorAll('[id^="btn-"]');
-        allBtns.forEach(btn => {
-          btn.innerText = 'inspect';
-        });
-
-        setMorphStatus('synthesized', `Step 5: 100% Contract Preserved • Clean Interface Generated (-${Math.round(conf.reduction)}%)`);
+        renderSynthesizedPure(curLang);
+        setMorphStatus('synthesized', 5, `100% Contract Preserved • Clean Interface Generated (-${Math.round(conf.reduction)}%)`);
         setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
       }
     }
@@ -1613,18 +1647,14 @@ impl Gateway for StripeGateway {`
       clearTimeout(highlightTimeout);
 
       const conf = langConfig[curLang];
+      renderDemo(curLang, 'raw');
       const container = document.getElementById('skelOutput');
       if (!container) return;
 
       const scanBeam = document.getElementById('scanBeam');
       const allBlocks = container.querySelectorAll('.dissolve-block');
-      const allPills = container.querySelectorAll('.dissolve-pill');
       const allCards = container.querySelectorAll('.targeted-prune-card');
       const allLines = container.querySelectorAll('.prune-line');
-      const allBtns = container.querySelectorAll('[id^="btn-"]');
-
-      // Reset inspect buttons
-      allBtns.forEach(btn => btn.innerText = 'inspect');
 
       // ==========================================
       // PHASE 1: Pure Original Code Baseline
@@ -1646,11 +1676,6 @@ impl Gateway for StripeGateway {`
         b.style.maxHeight = '520px';
       });
 
-      allPills.forEach(p => {
-        p.style.opacity = '0';
-        p.style.maxHeight = '0px';
-      });
-
       // Reset telemetry counters to 0
       const bridgeRaw = document.getElementById('bridgeRaw');
       if (bridgeRaw) bridgeRaw.innerText = '0 tokens';
@@ -1668,7 +1693,7 @@ impl Gateway for StripeGateway {`
         costSavedTag.className = 'text-[10px] px-1.5 py-0.5 rounded bg-blue-600 text-white font-mono font-bold tracking-wide whitespace-nowrap shrink-0 ml-0.5';
       }
 
-      setMorphStatus('scan', 'Step 2: AST Telemetry • Scanning Code & Token Density...');
+      setMorphStatus('scan', 2, 'AST Telemetry • Scanning Code & Token Density...');
 
       // ==========================================
       // PHASE 2: Token Telemetry & Cost Tally (0ms - 2000ms)
@@ -1679,7 +1704,6 @@ impl Gateway for StripeGateway {`
         scanBeam.style.transition = 'none';
         scanBeam.style.top = '0%';
         scanBeam.style.opacity = '1';
-        // Force reflow
         void scanBeam.offsetHeight;
         scanBeam.style.transition = `top ${scanDuration}ms cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease`;
         scanBeam.style.top = '96%';
@@ -1692,7 +1716,6 @@ impl Gateway for StripeGateway {`
       // ==========================================
       // PHASE 3: AST Bloat Targeting & Highlighting (2000ms - 5200ms)
       // AST isolates internal implementation bloat and blooms warning cards
-      // Pacing hold: 3.2s so visitor can comfortably read the targeted lines!
       // ==========================================
       const bloatHoldDuration = 3200;
       highlightTimeout = setTimeout(() => {
@@ -1706,7 +1729,7 @@ impl Gateway for StripeGateway {`
           costSavedTag.innerText = 'Bloat Isolated';
           costSavedTag.className = 'text-[10px] px-1.5 py-0.5 rounded bg-amber-600 text-white font-mono font-bold tracking-wide whitespace-nowrap shrink-0 ml-0.5';
         }
-        setMorphStatus('targeting', `Step 3: AST Analysis • Redundant Implementation Isolated`);
+        setMorphStatus('targeting', 3, 'AST Analysis • Redundant Implementation Isolated');
       }, scanDuration);
 
       // ==========================================
@@ -1714,7 +1737,7 @@ impl Gateway for StripeGateway {`
       // Strikethrough cut lines, cascading slide-away, mechanical fold (NO FADING)
       // ==========================================
       stageTimeout = setTimeout(() => {
-        setMorphStatus('sparkle', 'Step 4: Synthesizing Interface • Slicing Bloat Lines...');
+        setMorphStatus('sparkle', 4, 'Synthesizing Interface • Slicing Bloat Lines...');
 
         // 1. Strike through all lines with razor red deletion line
         const currentLines = container.querySelectorAll('.prune-line');
@@ -1747,19 +1770,11 @@ impl Gateway for StripeGateway {`
           });
         }, 1300);
 
-        // 5. Reveal final synthesized interface contract pill
-        pillTimeout = setTimeout(() => {
-          allPills.forEach(p => {
-            p.style.maxHeight = '48px';
-            p.style.opacity = '1';
-          });
-        }, 1900);
-
-        // 6. Complete transition
+        // 5. Complete transition - Step 5: Final code with NO extra annotations!
         dissolveTimeout = setTimeout(() => {
           currentMorphState = 'skel';
-          allCards.forEach(c => c.classList.remove('bloat-highlighted'));
-          setMorphStatus('synthesized', `Step 5: 100% Contract Preserved • Clean Interface Generated (-${Math.round(conf.reduction)}%)`);
+          renderSynthesizedPure(curLang);
+          setMorphStatus('synthesized', 5, `100% Contract Preserved • Clean Interface Generated (-${Math.round(conf.reduction)}%)`);
           setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
         }, countdownDuration + 200);
 
@@ -1774,7 +1789,6 @@ impl Gateway for StripeGateway {`
       clearTimeout(highlightTimeout);
       const scanBeam = document.getElementById('scanBeam');
       if (scanBeam) scanBeam.style.opacity = '0';
-      const blocks = demoBlocks[lang];
       const conf = langConfig[lang];
       const container = document.getElementById('skelOutput');
       if (!container) return;
@@ -1789,14 +1803,22 @@ impl Gateway for StripeGateway {`
       if (btnSkel) btnSkel.className = isRaw ? 'px-2 py-0.5 rounded text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition' : 'px-2 py-0.5 rounded bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white font-medium shadow-2xs transition';
       if (btnPrune) btnPrune.innerText = isRaw ? '✨ Prune Bloat' : '↺ Replay';
 
+      if (!isRaw) {
+        renderSynthesizedPure(lang);
+        setMorphStatus('synthesized', 5, `100% Contract Preserved • Clean Interface Generated (-${Math.round(conf.reduction)}%)`);
+        setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
+        return;
+      }
+
+      const blocks = demoBlocks[lang];
       const html = blocks.map(item => {
         if (item.type === 'code') {
-          return `<div class="font-mono text-xs text-zinc-800 dark:text-zinc-200">${highlightCode(item.content, lang)}</div>`;
+          return `<div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">${highlightCode(item.content, lang)}</div>`;
         }
         return `
-<div class="dissolve-section my-2 relative" id="section-${item.id}">
-  <div class="font-mono text-xs text-zinc-800 dark:text-zinc-200">${highlightCode(item.interfaceCode, lang)}</div>
-  <div id="block-${item.id}" class="dissolve-block overflow-hidden my-1 relative" style="max-height: ${isRaw ? '520px' : '0px'};">
+<div class="dissolve-section relative" id="section-${item.id}">
+  <div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">${highlightCode(item.interfaceCode, lang)}</div>
+  <div id="block-${item.id}" class="dissolve-block overflow-hidden my-0.5 relative" style="max-height: 520px;">
     <div id="card-${item.id}" class="targeted-prune-card rounded font-mono text-[11px] leading-relaxed relative">
       <div id="card-header-${item.id}" class="bloat-card-header flex items-center justify-between border-b text-[10px]">
         <span class="flex items-center gap-1.5 font-bold tracking-wide uppercase text-rose-700 dark:text-rose-300">
@@ -1812,59 +1834,16 @@ ${highlightPrunedCode(item.rawCode, lang)}
       </div>
     </div>
   </div>
-  <div id="pill-${item.id}" class="dissolve-pill flex items-center justify-between px-3 py-1.5 rounded text-blue-900 dark:text-blue-300 font-mono text-[11px] select-none my-1.5" style="max-height: ${isRaw ? '0px' : '48px'}; opacity: ${isRaw ? '0' : '1'}; overflow: hidden;">
-    <div class="flex items-center gap-2 flex-wrap">
-      <span class="text-blue-600 dark:text-blue-400 font-bold">⟡</span>
-      <span class="font-semibold text-blue-900 dark:text-blue-200">${item.lineCount} lines dissolved</span>
-      <span class="text-emerald-800 dark:text-emerald-400 font-semibold bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800/80 px-1.5 py-0.5 rounded text-[10px]">${item.costSaved}</span>
-      <span class="text-zinc-400 dark:text-zinc-600">•</span>
-      <span class="text-zinc-600 dark:text-zinc-400 text-[10px]">100% types preserved</span>
-    </div>
-    <button onclick="toggleDissolve('${item.id}')" id="btn-${item.id}" class="text-[11px] font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 underline decoration-blue-400/40 transition cursor-pointer px-1.5 py-0.5 rounded hover:bg-blue-100 dark:hover:bg-blue-400/10">
-      inspect
-    </button>
-  </div>
 </div>`;
       }).join('');
 
       container.innerHTML = html;
-
-      if (isRaw) {
-        setMorphStatus('raw', `Step 1: Original Code • Implementation Bloat Active (${conf.rawTokens.toLocaleString()} tokens)`);
-        setMetricsInstant(conf.rawTokens, conf.rawCost, 0, 0, 0);
-      } else {
-        setMorphStatus('synthesized', `Step 5: 100% Contract Preserved • Clean Interface Generated (-${Math.round(conf.reduction)}%)`);
-        setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
-      }
+      setMorphStatus('raw', 1, `Original Code • Implementation Bloat Active (${conf.rawTokens.toLocaleString()} tokens)`);
+      setMetricsInstant(conf.rawTokens, conf.rawCost, 0, 0, 0);
     }
 
     function toggleDissolve(id) {
       resetUserActivity();
-      const block = document.getElementById('block-' + id);
-      const btn = document.getElementById('btn-' + id);
-      const card = document.getElementById('card-' + id);
-      if (!block || !btn) return;
-
-      const isCollapsed = block.classList.contains('collapsing') || block.style.maxHeight === '0px' || !block.style.maxHeight;
-      if (isCollapsed) {
-        if (card) {
-          card.classList.add('bloat-highlighted');
-          const lines = card.querySelectorAll('.prune-line');
-          lines.forEach(l => {
-            l.classList.remove('line-struck');
-            l.classList.remove('line-sliced');
-          });
-        }
-        block.classList.remove('collapsing');
-        block.classList.add('expanded');
-        block.style.maxHeight = '480px';
-        btn.innerText = 'fold';
-      } else {
-        block.classList.remove('expanded');
-        block.classList.add('collapsing');
-        block.style.maxHeight = '0px';
-        btn.innerText = 'inspect';
-      }
     }
 
     function replayDissolve() {
@@ -2186,13 +2165,8 @@ ${highlightPrunedCode(item.rawCode, lang)}
 
       const skelBadge = document.getElementById('skelFileBadge');
       if (skelBadge) {
-        skelBadge.innerHTML = `<span class="inline-flex items-center gap-1.5">${conf.icon} <span>${conf.skelBadge}</span></span>`;
-        skelBadge.className = `font-semibold text-xs px-2 py-0.5 rounded border transition-colors ${conf.badgeStyle}`;
-      }
-
-      const skelPing = document.getElementById('skelPingDot');
-      if (skelPing) {
-        skelPing.className = `w-2 h-2 rounded-full signal-ping transition-colors ${conf.pingColor}`;
+        skelBadge.innerText = conf.skelBadge;
+        skelBadge.className = 'text-xs font-mono text-zinc-400 dark:text-zinc-500 font-normal';
       }
 
       // 4. Update Source Code
