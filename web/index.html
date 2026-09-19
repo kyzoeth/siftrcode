@@ -848,7 +848,7 @@
           </div>
 
           <!-- Code Viewport Body with Sparkle Particle Overlay -->
-          <div class="relative flex-1 overflow-hidden flex flex-col min-h-[280px] max-h-[460px] bg-white dark:bg-zinc-950">
+          <div class="relative flex-1 overflow-hidden flex flex-col min-h-[300px] max-h-[480px] bg-white dark:bg-zinc-950">
             <div id="scanBeam" class="scan-beam"></div>
             <div id="sparkleOverlay" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
             <div id="skelOutput" class="w-full h-full p-4 sm:p-5 font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-y-auto selection:bg-blue-100 selection:text-blue-900 signal-glow"></div>
@@ -1247,45 +1247,31 @@ impl Gateway for StripeGateway {
         {
           type: 'code',
           content: `// [SiftrCode Synthesized Interface] user_service.ts
-import { Database } from './database';
-import { User, UserCreateInput } from '../types';
+import { Database, User } from './db';
 
 export class UserService {
-  private db: Database;
-  private logger: Logger;
-
-  constructor(db: Database);`
+  constructor(private db: Database) {}`
         },
         {
           type: 'dissolve',
           id: 'ts-1',
-          lineCount: 8,
-          costSaved: 'Save ~$0.54/1k calls',
-          rawCode: `    this.logger.debug(\`Fetching user \${id}\`);
-    const sql = "SELECT id, email FROM users WHERE id = $1 LIMIT 1";
-    const result = await this.db.query(sql, [id]);
-    if (!result.rows.length) return null;
-    return result.rows[0];`,
-          interfaceCode: `  /** Finds a user by their unique primary ID */
-  public async getUserById(id: string): Promise<User | null>;`
+          lineCount: 28,
+          costSaved: 'Save ~$0.84/1k calls',
+          rawCode: `    const sql = "SELECT * FROM users WHERE id = $1 LIMIT 1";
+    const res = await this.db.query(sql, [id]);
+    return res.rows[0] ?? null;`,
+          interfaceCode: `  /** Finds user by unique primary key */
+  public async getUser(id: string): Promise<User | null>;`
         },
         {
           type: 'dissolve',
           id: 'ts-2',
-          lineCount: 12,
-          costSaved: 'Save ~$0.72/1k calls',
-          rawCode: `    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        return await this.db.transaction(async (tx) => {
-          return await tx.insert(data);
-        });
-      } catch (err) {
-        this.logger.error("Transaction failed, retrying...");
-      }
-    }
-    throw new Error("Unable to create user after retries");`,
-          interfaceCode: `  /** Creates a user with retries and hashing */
-  public async createUser(data: UserCreateInput): Promise<User>;`
+          lineCount: 42,
+          costSaved: 'Save ~$1.26/1k calls',
+          rawCode: `    // 40 lines of bcrypt hashing, payload validation & transactions...
+    return await this.db.insert("users", { email });`,
+          interfaceCode: `  /** Creates user record with hashing & transaction guarantees */
+  public async createUser(email: string): Promise<User>;`
         },
         {
           type: 'code',
@@ -1296,48 +1282,31 @@ export class UserService {
         {
           type: 'code',
           content: `# [SiftrCode Synthesized Interface] stripe_gateway.py
-from typing import Optional, List, Dict
+from typing import Optional, Dict
 import stripe
 
 class StripeGateway:
-    """Manages credit card and subscription payments."""`
+    """Manages payment gateway processing."""`
         },
         {
           type: 'dissolve',
           id: 'py-1',
-          lineCount: 4,
-          costSaved: 'Save ~$0.27/1k calls',
+          lineCount: 24,
+          costSaved: 'Save ~$0.72/1k calls',
           rawCode: `        self.client = stripe.Client(api_key)
-        self.secret = webhook_secret
         self._verify_credentials()`,
-          interfaceCode: `    def __init__(self, api_key: str, webhook_secret: str):
+          interfaceCode: `    def __init__(self, api_key: str):
         ...`
         },
         {
           type: 'dissolve',
           id: 'py-2',
-          lineCount: 11,
-          costSaved: 'Save ~$0.78/1k calls',
-          rawCode: `        for retry in range(3):
-            try:
-                charge = self.client.charges.create(customer=customer_id, amount=amount_cents)
-                return {"status": "success", "charge_id": charge.id}
-            except stripe.error.CardError as e:
-                return {"status": "declined", "error": str(e)}
-        return {"status": "timeout"}`,
-          interfaceCode: `    def charge_customer(self, customer_id: str, amount_cents: int) -> Dict[str, any]:
-        """Executes one-time payment charge."""
-        ...`
-        },
-        {
-          type: 'dissolve',
-          id: 'py-3',
-          lineCount: 3,
-          costSaved: 'Save ~$0.21/1k calls',
-          rawCode: `        # 30 lines of state machine transition...
-        return True`,
-          interfaceCode: `    def cancel_subscription(self, sub_id: str) -> bool:
-        """Cancels active recurring subscription."""
+          lineCount: 52,
+          costSaved: 'Save ~$1.56/1k calls',
+          rawCode: `        # 50 lines of retry loops, exponential backoff & fraud telemetry...
+        return self.client.charges.create(customer=customer_id, amount=amount)`,
+          interfaceCode: `    def charge(self, customer_id: str, amount: int) -> Dict[str, any]:
+        """Executes payment charge with automatic retries."""
         ...`
         }
       ],
@@ -1352,33 +1321,27 @@ import (
     "net/http"
 )
 
-type Config struct {
-    Port int
-    DBUrl string
-}
-
 type Server struct {
-    cfg Config
-    mux *http.ServeMux
+    Port int
+    Mux  *http.ServeMux
 }`
         },
         {
           type: 'dissolve',
           id: 'go-1',
-          lineCount: 5,
-          costSaved: 'Save ~$0.45/1k calls',
-          rawCode: `    // 40 lines of pool initialization and route setup...
-    mux := http.NewServeMux()
-    return &Server{cfg: cfg, mux: mux}`,
-          interfaceCode: `func NewServer(cfg Config) *Server`
+          lineCount: 38,
+          costSaved: 'Save ~$1.14/1k calls',
+          rawCode: `    // 35 lines of pool init, middleware chaining & routes...
+    return &Server{Port: port, Mux: http.NewServeMux()}`,
+          interfaceCode: `func NewServer(port int) *Server`
         },
         {
           type: 'dissolve',
           id: 'go-2',
-          lineCount: 4,
-          costSaved: 'Save ~$0.36/1k calls',
-          rawCode: `    // 30 lines of graceful shutdown handling...
-    return http.ListenAndServe(":8080", s.mux)`,
+          lineCount: 44,
+          costSaved: 'Save ~$1.32/1k calls',
+          rawCode: `    // 40 lines of context timeouts & graceful teardown...
+    return http.ListenAndServe(":8080", s.Mux)`,
           interfaceCode: `func (s *Server) Start(ctx context.Context) error`
         }
       ],
@@ -1404,9 +1367,9 @@ impl Gateway for StripeGateway {`
         {
           type: 'dissolve',
           id: 'rs-1',
-          lineCount: 6,
-          costSaved: 'Save ~$0.51/1k calls',
-          rawCode: `        // 50 lines of TLS handshakes and error mappings...
+          lineCount: 56,
+          costSaved: 'Save ~$1.68/1k calls',
+          rawCode: `        // 50 lines of TLS handshakes, retries and error mappings...
         Ok(format!("ch_{}", customer_id))`,
           interfaceCode: `    pub fn charge(&self, customer_id: &str, amount: u64) -> Result<String, String>;`
         },
@@ -1856,9 +1819,9 @@ impl Gateway for StripeGateway {`
           return `<div class="font-mono text-xs text-zinc-800 dark:text-zinc-200">${highlightCode(item.content, lang)}</div>`;
         }
         return `
-<div class="dissolve-section my-3 relative" id="section-${item.id}">
+<div class="dissolve-section my-2 relative" id="section-${item.id}">
   <div class="font-mono text-xs text-zinc-800 dark:text-zinc-200">${highlightCode(item.interfaceCode, lang)}</div>
-  <div id="block-${item.id}" class="dissolve-block overflow-hidden my-1.5 relative" style="max-height: ${isRaw ? '520px' : '0px'};">
+  <div id="block-${item.id}" class="dissolve-block overflow-hidden my-1 relative" style="max-height: ${isRaw ? '520px' : '0px'};">
     <div id="card-${item.id}" class="targeted-prune-card rounded font-mono text-[11px] leading-relaxed relative">
       <div id="card-header-${item.id}" class="bloat-card-header flex items-center justify-between border-b text-[10px]">
         <span class="flex items-center gap-1.5 font-bold tracking-wide uppercase text-rose-700 dark:text-rose-300">
