@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Us — SiftrCode</title>
+  <meta name="description" content="About SiftrCode. We are building the local-first AST compiler layer for autonomous AI coding agents.">
+  
+  <link rel="canonical" href="https://siftrcode.com/about">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            display: ['"Space Grotesk"', '"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            surface: { 50: '#fafafa', 100: '#f4f4f6', 200: '#e5e7eb', 300: '#d1d5db' },
+            ink: { DEFAULT: '#09090b', secondary: '#52525b', tertiary: '#a1a1aa' }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -0.011em; }
+    h1, h2, h3, .font-display { font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.025em; }
+    ::selection { background: #dec278; color: #18181b; }
+    body, header, section, footer { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
+
+    html.dark { color-scheme: dark; }
+    html.dark body { background-color: #09090b !important; color: #fafafa !important; }
+    html.dark header { background-color: rgba(9, 9, 11, 0.85) !important; border-color: rgba(39, 39, 42, 0.8) !important; }
+    html.dark .text-ink { color: #fafafa !important; }
+    html.dark .text-ink-secondary { color: #a1a1aa !important; }
+    html.dark .bg-surface-50 { background-color: #09090b !important; }
+    html.dark .bg-white { background-color: #121215 !important; }
+    html.dark .border-zinc-200 { border-color: #27272a !important; }
+    html.dark .border-zinc-100 { border-color: #1c1c20 !important; }
+    html.dark .bg-zinc-50 { background-color: #141418 !important; }
+    html.dark .bg-zinc-100 { background-color: #18181c !important; }
+    html.dark .text-zinc-800 { color: #f4f4f5 !important; }
+    html.dark .text-zinc-700 { color: #e4e4e7 !important; }
+    html.dark .text-zinc-600 { color: #d4d4d8 !important; }
+    html.dark .text-zinc-500 { color: #a1a1aa !important; }
+    html.dark footer { background-color: #09090b !important; border-color: #27272a !important; }
+    .btn-press:active { transform: translateY(1px); }
+    @keyframes ci-live-blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.25; transform: scale(0.85); } }
+    .ci-live-dot { animation: ci-live-blink 2.2s ease-in-out infinite; }
+  </style>
+</head>
+<body class="bg-surface-50 text-ink font-sans antialiased selection:bg-amber-400 selection:text-zinc-950">
+
+  <!-- Header Navigation -->
+  <header class="border-b border-zinc-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-6">
+        <a href="/" class="flex items-center gap-2.5 font-bold tracking-tight text-ink text-sm group">
+          <div class="w-6 h-6 rounded-md bg-amber-500 flex items-center justify-center text-zinc-950 font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
+            S
+          </div>
+          <span class="font-display font-bold text-base tracking-tight">SiftrCode</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80 font-medium">v0.1</span>
+        </a>
+        <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
+          <a href="/#workbench" class="hover:text-ink transition">Demo</a>
+          <a href="/#security" class="hover:text-ink transition">Data Boundaries</a>
+          <a href="/#benchmarks" class="hover:text-ink transition">Benchmarks</a>
+          <a href="/#quickstart" class="hover:text-ink transition">Quickstart</a>
+        </nav>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-2.5">
+        <a href="mailto:info@siftrcode.com" title="Contact Us" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-zinc-50 hover:bg-zinc-100 text-zinc-700 hover:text-ink text-xs border border-zinc-200 transition btn-press flex items-center gap-1.5 font-medium shadow-2xs">
+          <svg class="w-3.5 h-3.5 text-zinc-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          <span class="hidden sm:inline">Contact Us</span>
+        </a>
+        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-ink font-mono text-xs border border-zinc-200 transition btn-press flex items-center gap-1.5 font-medium">
+          <svg class="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </a>
+
+        <!-- Light / Dark Theme Switch Button -->
+        <button id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light / Dark Theme" aria-label="Toggle theme" class="w-8 h-8 rounded-lg bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
+          <svg id="themeSunIcon" class="w-4 h-4 text-amber-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg id="themeMoonIcon" class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+
+        <a href="/#quickstart" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-medium text-xs shadow-sm transition cursor-pointer btn-press flex items-center gap-1.5">
+          <span>Get Started</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- About Main Content -->
+  <main class="max-w-4xl mx-auto px-4 py-16 sm:py-20 space-y-12">
+    
+    <!-- Title Area -->
+    <div class="space-y-3 border-b border-zinc-200/80 pb-8">
+      <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-mono font-semibold uppercase tracking-wider">
+        THE SIFTRCODE MISSION
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-ink font-display tracking-tight">About SiftrCode</h1>
+      <p class="text-xs sm:text-sm text-ink-secondary max-w-2xl">
+        We are building the compiler layer between software repositories and autonomous AI coding agents.
+      </p>
+    </div>
+
+    <!-- Story & Core Philosophy -->
+    <div class="space-y-10 text-xs sm:text-sm leading-relaxed font-sans text-zinc-600 dark:text-zinc-300">
+      
+      <section class="space-y-3">
+        <h2 class="text-xl font-bold text-ink font-display">The Missing Layer in the Agent Stack</h2>
+        <p>
+          Over the past two years, AI coding agents like Claude Code, Cursor, Windsurf, Devin, and Antigravity transformed how engineers build software. However, as teams began deploying agents on real-world production codebases, they hit a fundamental economic and cognitive wall: <strong>token saturation</strong>.
+        </p>
+        <p>
+          Feeding entire monorepos and thousands of source files into LLM context windows causes severe latency spikes, runaway API costs ($100s per day per engineer), and frequent hallucinations due to "lost-in-the-middle" attention dilution.
+        </p>
+        <p>
+          Compilers figured out decades ago that when linking software modules, you don't need the implementation logic of every dependent file — you only need the header signatures, interface symbols, and type contracts. <strong>SiftrCode brings this exact compiler principle to the AI agent era.</strong>
+        </p>
+      </section>
+
+      <!-- 3 Pillars Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+        <div class="p-5 bg-white border border-zinc-200/90 rounded-xl space-y-2 shadow-2xs">
+          <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">
+            🔒
+          </div>
+          <h3 class="font-bold text-ink font-display text-sm">100% Local-First</h3>
+          <p class="text-xs text-zinc-500 font-sans">
+            Your intellectual property stays on your machine. All AST transformations execute on local CPU with 0 bytes of network socket transmission.
+          </p>
+        </div>
+
+        <div class="p-5 bg-white border border-zinc-200/90 rounded-xl space-y-2 shadow-2xs">
+          <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
+            ⚡
+          </div>
+          <h3 class="font-bold text-ink font-display text-sm">Sub-150ms Speed</h3>
+          <p class="text-xs text-zinc-500 font-sans">
+            Engineered in Node.js and native Tree-sitter bindings to pack 100,000 lines of code into clean interface skeletons in milliseconds.
+          </p>
+        </div>
+
+        <div class="p-5 bg-white border border-zinc-200/90 rounded-xl space-y-2 shadow-2xs">
+          <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+            🌐
+          </div>
+          <h3 class="font-bold text-ink font-display text-sm">Open Source Rooted</h3>
+          <p class="text-xs text-zinc-500 font-sans">
+            Distributed under the permissive MIT License for individual engineers worldwide, backed by transparent public audits.
+          </p>
+        </div>
+      </div>
+
+      <section class="space-y-3 pt-4">
+        <h2 class="text-xl font-bold text-ink font-display">Open Source + Team Infrastructure</h2>
+        <p>
+          We believe standard developer tooling must remain open, auditable, and freely accessible. The SiftrCode CLI (<code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100">npx siftrcode</code>) is free forever for developers working on open source or individual commercial projects.
+        </p>
+        <p>
+          For fast-scaling engineering teams and enterprises, we provide <strong>SiftrCode Pro</strong>: a synchronized context cache that deduplicates AST graphs across engineering seats, enforces architectural boundaries, and runs pull-request context audits in CI/CD.
+        </p>
+      </section>
+
+      <section class="space-y-3 pt-4">
+        <h2 class="text-xl font-bold text-ink font-display">Get in Touch</h2>
+        <p>
+          We love pair-programming with engineering teams who are pushing coding agents to their limits. Whether you're benchmarking a 2M-token monorepo or building custom MCP agent loops, we're here to help:
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs pt-1">
+          <div class="p-4 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
+            <div class="text-[10px] text-zinc-400 font-sans uppercase font-semibold">General Inquiries &amp; Team Pilots:</div>
+            <a href="mailto:info@siftrcode.com" class="text-amber-600 dark:text-amber-400 font-bold hover:underline">info@siftrcode.com</a>
+          </div>
+          <div class="p-4 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
+            <div class="text-[10px] text-zinc-400 font-sans uppercase font-semibold">Open Source Contributions &amp; Issues:</div>
+            <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="text-ink dark:text-white font-bold hover:underline">github.com/kyzoeth/siftrcode</a>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-8 px-4 border-t border-zinc-200 bg-surface-50 font-mono text-xs text-zinc-500">
+    <div class="max-w-6xl mx-auto space-y-5 text-[11px]">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4 pb-4 border-b border-zinc-200/60 dark:border-zinc-800/60">
+        <div class="flex items-center gap-2.5">
+          <div class="w-5 h-5 rounded bg-amber-500 flex items-center justify-center text-zinc-950 font-mono font-bold text-[10px]">
+            S
+          </div>
+          <span class="font-bold text-ink text-xs font-display">SiftrCode</span>
+          <span class="text-zinc-300 dark:text-zinc-700">•</span>
+          <span class="text-zinc-500 font-sans">AST Codebase Pruner for AI Coding Agents</span>
+        </div>
+        
+        <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-sans font-medium text-zinc-600 dark:text-zinc-400">
+          <a href="/about" class="text-amber-600 font-semibold transition">About us</a>
+          <a href="/how-it-works" class="hover:text-ink transition">How it works</a>
+          <a href="/privacy" class="hover:text-ink transition">Privacy</a>
+          <a href="/terms" class="hover:text-ink transition">Terms</a>
+          <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="hover:text-ink transition">GitHub</a>
+          <a href="mailto:info@siftrcode.com" class="hover:text-ink transition">Contact</a>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-2.5 text-zinc-400 font-sans text-[11px]">
+        <div>
+          © 2026 SiftrCode. Released under the MIT Open Source License.
+        </div>
+        <div class="flex items-center gap-2 font-mono text-[10px]">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ci-live-dot"></span>
+          <span>100% Local CPU Execution • 0 Network Egress</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      updateThemeIcons();
+    }
+    function updateThemeIcons() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const sun = document.getElementById('themeSunIcon');
+      const moon = document.getElementById('themeMoonIcon');
+      if (sun && moon) {
+        if (isDark) { sun.classList.remove('hidden'); moon.classList.add('hidden'); }
+        else { sun.classList.add('hidden'); moon.classList.remove('hidden'); }
+      }
+    }
+    updateThemeIcons();
+  </script>
+</body>
+</html>

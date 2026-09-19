@@ -1099,20 +1099,36 @@
   </section>
 
   <!-- Footer -->
-  <footer class="py-4 px-4 border-t border-zinc-200 bg-surface-50 font-mono text-xs text-zinc-500">
-    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 text-[11px]">
-      <div class="flex items-center gap-2">
-        <span class="font-bold text-ink">SiftrCode</span>
-        <span class="text-zinc-300">•</span>
-        <span class="text-zinc-500">MIT License</span>
+  <footer class="py-8 px-4 border-t border-zinc-200 bg-surface-50 font-mono text-xs text-zinc-500">
+    <div class="max-w-6xl mx-auto space-y-5 text-[11px]">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4 pb-4 border-b border-zinc-200/60 dark:border-zinc-800/60">
+        <div class="flex items-center gap-2.5">
+          <div class="w-5 h-5 rounded bg-amber-500 flex items-center justify-center text-zinc-950 font-mono font-bold text-[10px]">
+            S
+          </div>
+          <span class="font-bold text-ink text-xs font-display">SiftrCode</span>
+          <span class="text-zinc-300 dark:text-zinc-700">•</span>
+          <span class="text-zinc-500 font-sans">AST Codebase Pruner for AI Coding Agents</span>
+        </div>
+        
+        <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-sans font-medium text-zinc-600 dark:text-zinc-400">
+          <a href="/about" class="hover:text-ink transition">About us</a>
+          <a href="/how-it-works" class="hover:text-ink transition">How it works</a>
+          <a href="/privacy" class="hover:text-ink transition">Privacy</a>
+          <a href="/terms" class="hover:text-ink transition">Terms</a>
+          <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="hover:text-ink transition">GitHub</a>
+          <a href="mailto:info@siftrcode.com" class="hover:text-ink transition">Contact</a>
+        </div>
       </div>
-      <div class="text-zinc-400 font-sans">
-        © 2026 SiftrCode. All rights reserved.
-      </div>
-      <div class="flex items-center gap-3">
-        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="text-zinc-500 hover:text-ink transition">GitHub</a>
-        <span class="text-zinc-300">•</span>
-        <a href="mailto:info@siftrcode.com" class="text-zinc-500 hover:text-ink transition">Contact</a>
+
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-2.5 text-zinc-400 font-sans text-[11px]">
+        <div>
+          © 2026 SiftrCode. Released under the MIT Open Source License.
+        </div>
+        <div class="flex items-center gap-2 font-mono text-[10px]">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ci-live-dot"></span>
+          <span>100% Local CPU Execution • 0 Network Egress</span>
+        </div>
       </div>
     </div>
   </footer>

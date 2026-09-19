@@ -358,6 +358,11 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Support clean extensionless URLs: e.g. /privacy -> web/privacy.html
+  if (!fs.existsSync(filePath) && fs.existsSync(filePath + '.html')) {
+    filePath = filePath + '.html';
+  }
+
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
     const ext = path.extname(filePath).toLowerCase();
     const mimeTypes: Record<string, string> = {
