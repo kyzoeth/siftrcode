@@ -2509,14 +2509,7 @@ impl PaymentGateway for StripeGateway {
       if (costSavedTag) costSavedTag.classList.add('hidden');
 
       setMorphStatus('raw', 1, 'Raw Code');
-
-      // Animate counting UP from 0 in Step 1
       const rawHoldDuration = 2200;
-      const countUpDuration = 1800;
-      animateNumber('bridgeRaw', 0, conf.rawTokens, countUpDuration, v => `${Math.round(v).toLocaleString()} tokens`);
-      animateNumber('costRaw', 0, conf.rawCost, countUpDuration, v => `$${v.toFixed(2)}`);
-      animateNumber('bridgeSkel', 0, conf.rawTokens, countUpDuration, v => `${Math.round(v).toLocaleString()} tokens`);
-      animateNumber('costSkel', 0, conf.rawCost, countUpDuration, v => `$${v.toFixed(2)}`);
 
       // Gentle preview scroll downward to showcase file depth
       const scrollTimer = setTimeout(() => {
@@ -2530,6 +2523,7 @@ impl PaymentGateway for StripeGateway {
       // ==========================================
       // PHASE 2: Token Telemetry & Compiler Profiling (Step 2)
       // Progress runner advances 0% -> 100% while ambient wave passes through scopes
+      // Context token count starts counting during profiling step
       // ==========================================
       const scanDuration = 2200;
       scanTimeout = setTimeout(() => {
@@ -2552,6 +2546,13 @@ impl PaymentGateway for StripeGateway {
           scanBeam.style.transition = `top ${scanDuration}ms cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s ease`;
           scanBeam.style.top = 'calc(100% - 60px)';
         }
+
+        // Context token count starts counting during profiling step
+        const profileCountDuration = scanDuration - 200;
+        animateNumber('bridgeRaw', 0, conf.rawTokens, profileCountDuration, v => `${Math.round(v).toLocaleString()} tokens`);
+        animateNumber('costRaw', 0, conf.rawCost, profileCountDuration, v => `$${v.toFixed(2)}`);
+        animateNumber('bridgeSkel', 0, conf.rawTokens, profileCountDuration, v => `${Math.round(v).toLocaleString()} tokens`);
+        animateNumber('costSkel', 0, conf.rawCost, profileCountDuration, v => `$${v.toFixed(2)}`);
       }, rawHoldDuration);
       morphTimeouts.push(scanTimeout);
 
