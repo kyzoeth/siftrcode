@@ -742,7 +742,7 @@
 
   <!-- Quickstart & Agent Integration Suite -->
   <section id="quickstart" class="py-14 px-4 bg-surface-50 border-t border-zinc-200 dark:border-zinc-800">
-    <div class="max-w-4xl mx-auto space-y-8">
+    <div class="max-w-5xl mx-auto space-y-6">
       
       <div class="text-center space-y-1">
         <h2 class="text-3xl sm:text-4xl font-normal tracking-tight text-ink font-serif">Works with Claude Code &amp; Cursor</h2>
@@ -782,11 +782,11 @@
       </div>
 
       <!-- Agent Integration Panel & Real Token Savings Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 text-xs font-sans">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 text-xs font-sans items-stretch">
         
         <!-- Left: Configuration Box (5 cols) -->
-        <div class="lg:col-span-5 p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm flex flex-col justify-between min-h-[290px] sm:min-h-[285px] lg:h-[285px]">
-          <div class="space-y-3">
+        <div class="lg:col-span-5 p-5 sm:p-6 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm flex flex-col justify-between min-h-[350px]">
+          <div class="space-y-3.5">
             <div class="flex items-center justify-between h-5">
               <span id="agentConfigBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 font-semibold uppercase tracking-wider">
                 CLAUDE CODE SETUP
@@ -807,7 +807,7 @@
             </div>
           </div>
 
-          <div class="pt-2.5 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-[11px] h-7 mt-auto">
+          <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-[11px] h-7 mt-auto">
             <span id="agentRuleHint" class="text-zinc-500 truncate mr-2">Supports <code class="font-mono">/siftr</code> slash command &amp; <code class="font-mono">.mcp.json</code></span>
             <a id="agentGuideLink" href="/claude" class="text-blue-700 dark:text-blue-400 font-semibold hover:underline shrink-0">
               Guide →
@@ -816,47 +816,61 @@
         </div>
 
         <!-- Right: Real Token & Dollar Savings Comparison Grid (7 cols) -->
-        <div class="lg:col-span-7 p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm flex flex-col justify-between min-h-[320px] sm:min-h-[285px] lg:h-[285px]">
+        <div class="lg:col-span-7 p-5 sm:p-6 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm flex flex-col justify-between min-h-[350px] gap-3.5">
           
-          <div class="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-2.5 h-7">
-            <div class="flex items-center gap-2 min-w-0">
+          <!-- Header Bar: Full untruncated title & model pricing -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3 gap-2 shrink-0">
+            <div class="flex items-center gap-2 shrink-0">
               <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-              <span class="font-bold text-ink text-xs uppercase tracking-wider font-mono truncate">Real-World Token Economics</span>
+              <span class="font-bold text-ink text-xs uppercase tracking-wider font-mono">Real-World Token Economics</span>
             </div>
-            <span id="modelRatesBadge" class="text-[10px] font-mono text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded shrink-0">
+            <span id="modelRatesBadge" class="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/90 px-2.5 py-1 rounded shrink-0">
               Claude 3.7 Sonnet: $3.00/MTok in • $15.00/MTok out
             </span>
           </div>
 
           <!-- Comparison Metrics Row -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 my-auto">
-            <div class="p-3 rounded-md bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/70 dark:border-zinc-700/70 space-y-1 flex flex-col justify-between">
-              <div class="text-[10px] uppercase font-mono text-zinc-400">Context Reduction</div>
-              <div class="text-base sm:text-lg font-mono font-bold text-rose-500 line-through">125,000 tok</div>
-              <div class="text-base sm:text-lg font-mono font-bold text-emerald-600 dark:text-emerald-400">9,800 tok</div>
-              <div class="text-[10px] text-emerald-600 font-bold font-mono">-92.2% Evaporated</div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-auto">
+            <div class="p-3 sm:p-3.5 rounded-md bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/70 dark:border-zinc-700/70 flex flex-col justify-between gap-1.5">
+              <div class="text-[10px] uppercase font-mono text-zinc-400 font-semibold tracking-wider">Context Reduction</div>
+              <div class="space-y-0.5 my-1">
+                <div class="text-xs font-mono text-rose-500 line-through">125,000 tok</div>
+                <div class="text-base sm:text-lg font-mono font-bold text-emerald-600 dark:text-emerald-400">9,800 tok</div>
+              </div>
+              <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold font-mono">-92.2% Evaporated</div>
             </div>
 
-            <div class="p-3 rounded-md bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/70 dark:border-zinc-700/70 space-y-1 flex flex-col justify-between">
-              <div class="text-[10px] uppercase font-mono text-zinc-400">Query API Cost</div>
-              <div id="costComparisonRaw" class="text-base sm:text-lg font-mono font-bold text-rose-500 line-through">$0.375</div>
-              <div id="costComparisonSkel" class="text-base sm:text-lg font-mono font-bold text-blue-700 dark:text-blue-400">$0.029</div>
+            <div class="p-3 sm:p-3.5 rounded-md bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/70 dark:border-zinc-700/70 flex flex-col justify-between gap-1.5">
+              <div class="text-[10px] uppercase font-mono text-zinc-400 font-semibold tracking-wider">Query API Cost</div>
+              <div class="space-y-0.5 my-1">
+                <div id="costComparisonRaw" class="text-xs font-mono text-rose-500 line-through">$0.375</div>
+                <div id="costComparisonSkel" class="text-base sm:text-lg font-mono font-bold text-blue-700 dark:text-blue-400">$0.029</div>
+              </div>
               <div id="costSavingsTag" class="text-[10px] text-blue-700 dark:text-blue-400 font-bold font-mono">Save $0.346 / query</div>
             </div>
 
-            <div class="col-span-2 sm:col-span-1 p-3 rounded-md bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/70 space-y-1 flex flex-col justify-between">
-              <div class="text-[10px] uppercase font-mono text-emerald-700 dark:text-emerald-300 font-semibold">Monthly Dev Savings</div>
-              <div id="monthlySavingsMetric" class="text-xl sm:text-2xl font-mono font-extrabold text-emerald-700 dark:text-emerald-300">+$396<span class="text-xs font-normal">/dev</span></div>
-              <div id="monthlySavingsNote" class="text-[10px] text-emerald-800 dark:text-emerald-400 leading-tight min-h-[2.25rem] flex items-start">Based on 50 agent turns/day • 11x faster latency (3.4s vs 38s)</div>
+            <div class="p-3 sm:p-3.5 rounded-md bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/70 flex flex-col justify-between gap-1.5">
+              <div class="text-[10px] uppercase font-mono text-emerald-700 dark:text-emerald-300 font-semibold tracking-wider">Monthly Dev Savings</div>
+              <div class="space-y-0.5 my-1">
+                <div class="text-xs font-mono text-emerald-600/70 dark:text-emerald-400/70">50 turns / day</div>
+                <div id="monthlySavingsMetric" class="text-base sm:text-lg font-mono font-extrabold text-emerald-700 dark:text-emerald-300">+$396<span class="text-xs font-normal text-emerald-800 dark:text-emerald-400">/dev</span></div>
+              </div>
+              <div id="monthlySavingsTag" class="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold font-mono">Save ~$4,750 / yr</div>
             </div>
           </div>
 
+          <!-- Latency & Turn Note Banner -->
+          <div class="flex items-center gap-2 px-3 py-2 rounded-md bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-700/70 text-zinc-600 dark:text-zinc-300 shrink-0">
+            <svg class="w-3.5 h-3.5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.381z" clip-rule="evenodd"/></svg>
+            <span id="monthlySavingsNote" class="text-[11px] font-mono">Based on 50 agent turns/day • 11x faster latency (3.4s vs 38s)</span>
+          </div>
+
           <!-- Bottom Audit Callout -->
-          <div class="mt-auto bg-zinc-50 dark:bg-zinc-800/40 p-3 rounded-md border border-zinc-200/70 dark:border-zinc-700/70 flex items-center justify-between gap-2 h-11">
-            <span class="text-[11px] text-ink-secondary truncate mr-1">Calculate exact waste on your own codebase:</span>
+          <div class="mt-auto bg-zinc-100/70 dark:bg-zinc-800/60 px-3.5 py-2.5 rounded-md border border-zinc-200/80 dark:border-zinc-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
+            <span class="text-[11px] text-ink font-medium">Calculate exact waste on your own codebase:</span>
             <div class="flex items-center gap-1.5 font-mono text-[11px] select-all shrink-0">
-              <code class="bg-zinc-900 text-zinc-100 px-2 py-0.5 rounded">npx siftrcode audit</code>
-              <button onclick="copySnippet('npx siftrcode audit', this)" class="text-[10px] text-zinc-500 hover:text-ink px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 transition cursor-pointer">COPY</button>
+              <code class="bg-zinc-900 text-zinc-100 px-2.5 py-0.5 rounded border border-zinc-800">npx siftrcode audit</code>
+              <button onclick="copySnippet('npx siftrcode audit', this)" class="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 hover:text-ink dark:hover:text-white px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 transition cursor-pointer">COPY</button>
             </div>
           </div>
 
@@ -2002,6 +2016,7 @@ ${highlightPrunedCode(item.rawCode, lang)}
         skelCost: '$0.029',
         savingsTag: 'Save $0.346 / query',
         monthlySavings: '+$396',
+        yearlySavings: 'Save ~$4,750 / yr',
         monthlyNote: 'Based on 50 agent turns/day • 11x faster latency (3.4s vs 38s)'
       },
       'gpt-4o': {
@@ -2010,6 +2025,7 @@ ${highlightPrunedCode(item.rawCode, lang)}
         skelCost: '$0.025',
         savingsTag: 'Save $0.287 / query',
         monthlySavings: '+$330',
+        yearlySavings: 'Save ~$3,960 / yr',
         monthlyNote: 'Based on 50 agent turns/day • 8x faster latency (2.9s vs 24s)'
       }
     };
@@ -2074,6 +2090,8 @@ ${highlightPrunedCode(item.rawCode, lang)}
       if (savingsTagEl) savingsTagEl.innerText = m.savingsTag;
       const monthlyMetricEl = document.getElementById('monthlySavingsMetric');
       if (monthlyMetricEl) monthlyMetricEl.innerHTML = `${m.monthlySavings}<span class="text-xs font-normal">/dev</span>`;
+      const yearlyTagEl = document.getElementById('monthlySavingsTag');
+      if (yearlyTagEl && m.yearlySavings) yearlyTagEl.innerText = m.yearlySavings;
       const monthlyNoteEl = document.getElementById('monthlySavingsNote');
       if (monthlyNoteEl) monthlyNoteEl.innerText = m.monthlyNote;
     }
