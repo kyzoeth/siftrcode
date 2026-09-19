@@ -210,23 +210,6 @@
         </a>
       </div>
 
-      <!-- Compressed Metric Strip -->
-      <div class="pt-2 inline-flex items-center divide-x divide-zinc-200 bg-white border border-zinc-200 rounded-full px-1 py-1 shadow-sm text-xs font-mono">
-        <div class="px-3 py-0.5 flex items-center gap-1.5">
-          <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-          <span class="text-zinc-400">Reduction:</span>
-          <span class="font-bold text-amber-600">-85% to -98%</span>
-        </div>
-        <div class="px-3 py-0.5 flex items-center gap-1.5">
-          <span class="text-zinc-400">Latency:</span>
-          <span class="font-bold text-ink">4.2x Faster</span>
-        </div>
-        <div class="px-3 py-0.5 flex items-center gap-1.5">
-          <span class="text-zinc-400">Parsing:</span>
-          <span class="font-bold text-ink">&lt;0.15s</span>
-        </div>
-      </div>
-
     </div>
   </section>
 
@@ -299,12 +282,33 @@
     </div>
   </section>
 
-  <!-- 3 Hard Benchmarks (Compact & Verified) -->
+  <!-- Consolidated Benchmarks & Performance Metrics -->
   <section id="benchmarks" class="py-12 px-4 bg-white border-y border-zinc-200">
     <div class="max-w-5xl mx-auto space-y-6">
-      <div class="text-center space-y-1">
-        <h2 class="text-2xl font-bold tracking-tight text-ink">Verified Production Benchmarks</h2>
-        <p class="text-xs sm:text-sm text-ink-secondary">Exact figures scanned directly from public GitHub repositories.</p>
+      
+      <!-- Consolidated Header with Aggregate Metrics -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-200/80 pb-5">
+        <div>
+          <h2 class="text-2xl font-bold tracking-tight text-ink">Verified Production Benchmarks</h2>
+          <p class="text-xs sm:text-sm text-ink-secondary mt-0.5">Exact figures scanned directly from public GitHub repositories.</p>
+        </div>
+
+        <!-- Macro Metrics -->
+        <div class="inline-flex items-center divide-x divide-zinc-200 bg-surface-50 border border-zinc-200 rounded-lg px-1 py-1 shadow-sm text-xs font-mono self-start md:self-auto">
+          <div class="px-3 py-1 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+            <span class="text-zinc-400">Reduction:</span>
+            <span class="font-bold text-amber-600">-85% to -98%</span>
+          </div>
+          <div class="px-3 py-1 flex items-center gap-1.5">
+            <span class="text-zinc-400">Latency:</span>
+            <span class="font-bold text-ink">4.2x Faster</span>
+          </div>
+          <div class="px-3 py-1 flex items-center gap-1.5">
+            <span class="text-zinc-400">Parsing:</span>
+            <span class="font-bold text-ink">&lt;0.15s</span>
+          </div>
+        </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
