@@ -108,10 +108,9 @@
       background-color: rgba(9, 9, 11, 0.85) !important;
       border-color: rgba(39, 39, 42, 0.8) !important;
     }
-    html.dark .bg-grid {
-      background-image: 
-        linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px) !important;
+    html.dark .bg-dot-matrix {
+      background-size: 32px 32px;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1.2px, transparent 1.2px) !important;
     }
     html.dark .ambient-glow {
       opacity: 0.16;
@@ -256,12 +255,10 @@
       color: #fafafa !important;
     }
 
-    /* Luminous Grid Pattern */
-    .bg-grid {
-      background-size: 40px 40px;
-      background-image: 
-        linear-gradient(to right, rgba(0, 0, 0, 0.035) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+    /* Dot Matrix Pattern Fallback */
+    .bg-dot-matrix {
+      background-size: 32px 32px;
+      background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1.2px, transparent 1.2px);
     }
 
     /* Ambient Floating Auras */
@@ -499,6 +496,9 @@
 </head>
 <body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-blue-200 selection:text-blue-950">
 
+  <!-- Dynamic Interactive Dot Matrix Background Canvas -->
+  <canvas id="dotMatrixCanvas" class="fixed inset-0 pointer-events-none z-0 w-full h-full"></canvas>
+
   <!-- Background Ambient Lights -->
   <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
     <div class="ambient-glow w-[600px] h-[600px] bg-blue-200/25 -top-40 -left-20"></div>
@@ -557,25 +557,17 @@
   </header>
 
   <!-- Hero Section -->
-  <section class="relative pt-16 pb-12 md:pt-24 md:pb-16 px-4 bg-grid">
-    <div class="max-w-4xl mx-auto text-center space-y-6 relative z-10">
+  <section class="relative pt-16 pb-8 md:pt-22 md:pb-10 px-4">
+    <div class="max-w-4xl mx-auto text-center space-y-5 relative z-10">
       
       <h1 class="text-4xl sm:text-6xl lg:text-7xl font-normal tracking-tight text-ink font-serif sm:whitespace-nowrap max-w-none mx-auto leading-[1.08]">
         Cut agent token waste by <span class="italic hero-glow-text">90%</span>
       </h1>
 
       <!-- Subtitle -->
-      <p class="text-sm sm:text-base text-zinc-500 sm:whitespace-nowrap max-w-none mx-auto font-normal -mt-2">
+      <p class="text-sm sm:text-base text-zinc-500 sm:whitespace-nowrap max-w-none mx-auto font-normal -mt-1">
         Our proprietary synthesis engine strips implementation bloat into clean interfaces before inference.
       </p>
-
-      <!-- Single Clear Hero Call to Action -->
-      <div class="pt-2 flex items-center justify-center">
-        <a href="#workbench" onclick="triggerPruneMorph()" class="px-5 py-2.5 bg-ink hover:bg-zinc-800 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow-sm hover:shadow active:scale-[0.99] btn-press flex items-center gap-1.5">
-          <span>Try Live Demo</span>
-          <span class="text-zinc-400">↓</span>
-        </a>
-      </div>
 
     </div>
   </section>
@@ -1470,6 +1462,7 @@ impl Gateway for StripeGateway {`
 
     function triggerPruneMorph() {
       resetUserActivity();
+      if (typeof window.triggerDotRipple === 'function') window.triggerDotRipple();
       runDissolveAnimation();
     }
 
@@ -1804,7 +1797,10 @@ ${highlightPrunedCode(item.rawCode, lang)}
     }
 
     function setLang(lang, fromUser = false) {
-      if (fromUser) resetUserActivity();
+      if (fromUser) {
+        resetUserActivity();
+        if (typeof window.triggerDotRipple === 'function') window.triggerDotRipple();
+      }
       curLang = lang;
       langIndex = langs.indexOf(lang);
       const conf = langConfig[lang];
@@ -1980,6 +1976,194 @@ ${highlightPrunedCode(item.rawCode, lang)}
         }
       });
     } catch (err) {}
+
+    // ==========================================
+    // Dynamic Dot Matrix Engine
+    // High-performance canvas-based matrix with
+    // interactive cursor waves, ambient harmonic motion,
+    // and click ripples.
+    // ==========================================
+    (function initDynamicDotMatrix() {
+      const canvas = document.getElementById('dotMatrixCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      let width = 0;
+      let height = 0;
+      let dpr = 1;
+      const spacing = 32;
+      let mouseX = -9999;
+      let mouseY = -9999;
+      let targetMouseX = -9999;
+      let targetMouseY = -9999;
+      let mouseActive = false;
+      let lastMouseMoveTime = 0;
+      let animFrameId = null;
+
+      const ripples = [];
+
+      function resize() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      window.addEventListener('resize', resize, { passive: true });
+      resize();
+
+      window.addEventListener('mousemove', (e) => {
+        targetMouseX = e.clientX;
+        targetMouseY = e.clientY;
+        mouseActive = true;
+        lastMouseMoveTime = performance.now();
+      }, { passive: true });
+
+      window.addEventListener('mouseleave', () => {
+        mouseActive = false;
+      }, { passive: true });
+
+      window.addEventListener('pointerdown', (e) => {
+        ripples.push({
+          x: e.clientX,
+          y: e.clientY,
+          radius: 0,
+          maxRadius: Math.max(width, height) * 0.45,
+          speed: 14,
+          strength: 1.0
+        });
+      }, { passive: true });
+
+      window.triggerDotRipple = function(x, y) {
+        ripples.push({
+          x: x !== undefined ? x : width / 2,
+          y: y !== undefined ? y : height * 0.35,
+          radius: 0,
+          maxRadius: Math.max(width, height) * 0.45,
+          speed: 12,
+          strength: 0.9
+        });
+      };
+
+      let lastTime = performance.now();
+
+      function render(now) {
+        if (document.hidden) {
+          animFrameId = requestAnimationFrame(render);
+          return;
+        }
+
+        const dt = Math.min((now - lastTime) / 1000, 0.1);
+        lastTime = now;
+
+        // Smooth mouse position interpolation
+        if (mouseActive) {
+          mouseX += (targetMouseX - mouseX) * 0.2;
+          mouseY += (targetMouseY - mouseY) * 0.2;
+          if (now - lastMouseMoveTime > 2500) {
+            mouseActive = false;
+          }
+        } else {
+          mouseX += (-9999 - mouseX) * 0.05;
+          mouseY += (-9999 - mouseY) * 0.05;
+        }
+
+        // Update active ripples
+        for (let i = ripples.length - 1; i >= 0; i--) {
+          const r = ripples[i];
+          r.radius += r.speed;
+          r.strength *= 0.965;
+          if (r.radius > r.maxRadius || r.strength < 0.02) {
+            ripples.splice(i, 1);
+          }
+        }
+
+        ctx.clearRect(0, 0, width, height);
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const baseDotRadius = 1.05;
+        const mouseRadius = 160;
+        const timeSeconds = now * 0.001;
+
+        const cols = Math.ceil(width / spacing) + 1;
+        const rows = Math.ceil(height / spacing) + 1;
+
+        for (let c = 0; c < cols; c++) {
+          const x = c * spacing;
+          for (let r = 0; r < rows; r++) {
+            const y = r * spacing;
+
+            // 1. Ambient autonomous harmonic wave
+            const wave1 = Math.sin(x * 0.007 + y * 0.005 - timeSeconds * 1.1);
+            const wave2 = Math.cos(x * 0.004 - y * 0.007 + timeSeconds * 0.7);
+            const ambientFactor = (wave1 + wave2 + 2) * 0.25;
+
+            // 2. Interactive mouse proximity
+            let mouseFactor = 0;
+            if (mouseActive || mouseX > -1000) {
+              const dx = x - mouseX;
+              const dy = y - mouseY;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < mouseRadius) {
+                const norm = 1 - dist / mouseRadius;
+                mouseFactor = norm * norm * (3 - 2 * norm);
+              }
+            }
+
+            // 3. Interactive ripple proximity
+            let rippleFactor = 0;
+            for (let i = 0; i < ripples.length; i++) {
+              const rip = ripples[i];
+              const rdx = x - rip.x;
+              const rdy = y - rip.y;
+              const rdist = Math.sqrt(rdx * rdx + rdy * rdy);
+              const distToWave = Math.abs(rdist - rip.radius);
+              if (distToWave < 60) {
+                const ripNorm = 1 - distToWave / 60;
+                rippleFactor = Math.max(rippleFactor, ripNorm * rip.strength);
+              }
+            }
+
+            // Soft vertical vignette: maximum at top hero, gentle tapering down
+            const vFade = Math.max(0.35, 1 - (y / (height * 1.3)));
+            const excitation = Math.min(1.0, mouseFactor * 1.3 + rippleFactor * 1.5 + ambientFactor * 0.2) * vFade;
+            const radius = baseDotRadius + excitation * 1.7;
+
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+
+            if (isDark) {
+              if (excitation > 0.15) {
+                const glowAlpha = Math.min(0.9, 0.2 + excitation * 0.7);
+                ctx.fillStyle = `rgba(96, 165, 250, ${glowAlpha})`;
+              } else {
+                const baseAlpha = (0.08 + ambientFactor * 0.08) * vFade;
+                ctx.fillStyle = `rgba(255, 255, 255, ${baseAlpha})`;
+              }
+            } else {
+              if (excitation > 0.15) {
+                const glowAlpha = Math.min(0.85, 0.25 + excitation * 0.65);
+                ctx.fillStyle = `rgba(37, 99, 235, ${glowAlpha})`;
+              } else {
+                const baseAlpha = (0.11 + ambientFactor * 0.09) * vFade;
+                ctx.fillStyle = `rgba(113, 113, 122, ${baseAlpha})`;
+              }
+            }
+
+            ctx.fill();
+          }
+        }
+
+        animFrameId = requestAnimationFrame(render);
+      }
+
+      animFrameId = requestAnimationFrame(render);
+    })();
   </script>
 
   <!-- B2B Team Trial Modal -->
