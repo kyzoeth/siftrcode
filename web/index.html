@@ -379,19 +379,19 @@
     /* Inline Code Dissolution & Accordion Collapse */
     .dissolve-block {
       overflow: hidden;
-      transition: max-height 1.6s cubic-bezier(0.4, 0, 0.2, 1), 
-                  opacity 1.4s ease, 
-                  filter 1.4s ease, 
-                  transform 1.4s ease, 
-                  margin 1.4s ease, 
-                  padding 1.4s ease;
+      transition: max-height 2.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                  opacity 1.8s ease, 
+                  filter 1.8s ease, 
+                  transform 1.8s ease, 
+                  margin 1.8s ease, 
+                  padding 1.8s ease;
       transform-origin: top center;
     }
     .dissolve-block.collapsing {
       max-height: 0px !important;
       opacity: 0 !important;
-      filter: blur(2.5px) !important;
-      transform: scale(0.97) translateY(-6px) !important;
+      filter: blur(3px) !important;
+      transform: scale(0.98) translateY(-4px) !important;
       pointer-events: none !important;
       margin-top: 0 !important;
       margin-bottom: 0 !important;
@@ -422,28 +422,61 @@
     }
 
     .dissolve-pill {
-      transition: all 0.3s ease;
+      transition: all 0.4s ease;
     }
     .dissolve-pill:hover {
       border-color: rgba(37, 99, 235, 0.5);
       background-color: rgba(37, 99, 235, 0.15);
     }
 
-    @keyframes scanline-sweep {
-      0% { top: 0%; opacity: 0.95; }
-      50% { opacity: 1; }
-      100% { top: 100%; opacity: 0; }
+    /* Sparkle Particle Dissolution System */
+    @keyframes sparkle-drift {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, 0, 0) scale(0.2) rotate(0deg);
+      }
+      20% {
+        opacity: 1;
+        transform: translate3d(calc(var(--drift-x, 0px) * 0.3), -10px, 0) scale(1.2) rotate(45deg);
+      }
+      70% {
+        opacity: 0.95;
+        transform: translate3d(var(--drift-x, 0px), -28px, 0) scale(0.9) rotate(90deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(calc(var(--drift-x, 0px) * 1.3), -48px, 0) scale(0.2) rotate(140deg);
+      }
     }
-    .ast-scanline {
+
+    .sparkle-particle {
       position: absolute;
-      left: 0;
-      right: 0;
-      height: 2.5px;
-      background: linear-gradient(90deg, transparent, #2563eb, #60a5fa, #f43f5e, #2563eb, transparent);
-      box-shadow: 0 0 14px #2563eb, 0 0 28px #f43f5e;
       pointer-events: none;
-      z-index: 20;
-      animation: scanline-sweep 1.6s ease-in-out forwards;
+      user-select: none;
+      z-index: 40;
+      line-height: 1;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      animation: sparkle-drift var(--sparkle-duration, 1.8s) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+
+    @keyframes shimmer-aurora {
+      0% {
+        box-shadow: 0 0 8px rgba(244, 63, 94, 0.2), inset 0 0 8px rgba(244, 63, 94, 0.1);
+        border-color: rgba(244, 63, 94, 0.35);
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(168, 85, 247, 0.4), inset 0 0 16px rgba(244, 63, 94, 0.2);
+        border-color: rgba(168, 85, 247, 0.6);
+      }
+      100% {
+        box-shadow: 0 0 8px rgba(244, 63, 94, 0.2), inset 0 0 8px rgba(244, 63, 94, 0.1);
+        border-color: rgba(244, 63, 94, 0.35);
+      }
+    }
+
+    .shimmer-active {
+      animation: shimmer-aurora 1.8s ease-in-out infinite alternate !important;
     }
   </style>
 </head>
@@ -600,60 +633,64 @@
         </span>
       </div>
 
-      <!-- Spacious Dual Viewport: Raw Implementation vs. Synthesized Context -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
-        
-        <!-- Left: Full Implementation Source (Raw Ingestion) -->
-        <div class="bg-white border border-zinc-200/90 rounded-2xl overflow-hidden shadow-xs flex flex-col transition hover:border-zinc-300 h-[490px]">
-          <div class="bg-zinc-50/80 px-4 py-2.5 border-b border-zinc-100 flex items-center justify-between text-xs font-mono shrink-0">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-              <span id="rawFileBadge" class="font-semibold text-zinc-800 bg-white px-2 py-0.5 rounded border border-zinc-200">user_service.ts</span>
-            </div>
-            <span class="text-rose-600 font-semibold text-[11px]" id="rawTokenCount">1,840 tokens</span>
-          </div>
-          <textarea id="rawInput" oninput="onInputChanged()" spellcheck="false" class="w-full flex-1 p-4 font-mono text-xs text-zinc-800 leading-relaxed border-0 focus:outline-none resize-none font-normal bg-transparent overflow-y-auto min-h-0"></textarea>
-          <div class="bg-zinc-50/50 px-4 py-2 border-t border-zinc-100 text-[11px] font-mono text-zinc-400 flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-2">
-              <span>Edit code to test real-time synthesis</span>
-              <button type="button" onclick="resetDemoSample()" class="text-blue-700 hover:text-blue-800 underline decoration-blue-500/40 text-[10px] font-medium transition cursor-pointer">Reset sample</button>
-            </div>
-            <span class="text-rose-500 font-semibold flex items-center gap-1.5">
-              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-              <span id="rawCostFoot">Burn: $55.20 / 10k calls</span>
-            </span>
-          </div>
-        </div>
-
-        <!-- Right: Synthesized Context (Fed to Agent) with Inline Dissolution & Fold -->
-        <div class="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden shadow-lg flex flex-col text-white relative transition hover:border-zinc-700 h-[490px]">
-          <div class="bg-zinc-900/90 px-4 py-2.5 border-b border-zinc-800/90 flex items-center justify-between text-xs font-mono shrink-0">
-            <div class="flex items-center gap-2">
-              <span id="skelPingDot" class="w-2 h-2 rounded-full bg-blue-400 signal-ping"></span>
-              <span id="skelFileBadge" class="font-semibold text-xs px-2 py-0.5 rounded border text-blue-300 bg-blue-950/70 border-blue-800/80">user_service.ts</span>
-            </div>
+      <!-- Focused Single-Panel Terminal: In-Place AST Morphing & Sparkle Dissolution -->
+      <div class="max-w-4xl mx-auto w-full">
+        <div class="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col text-white relative transition hover:border-zinc-700 min-h-[520px]">
+          
+          <!-- Terminal Header Bar -->
+          <div class="bg-zinc-900/95 px-4 py-3 border-b border-zinc-800 flex items-center justify-between text-xs font-mono shrink-0 select-none">
+            <!-- Left: macOS Traffic Lights & Active File Badge -->
             <div class="flex items-center gap-3">
-              <button onclick="replayDissolve()" title="Replay code dissolution animation" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800/90 hover:bg-zinc-700 text-zinc-300 hover:text-white text-[11px] font-mono transition btn-press border border-zinc-700/80 cursor-pointer shadow-2xs group">
-                <svg class="w-3 h-3 text-blue-400 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                <span>Replay</span>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="w-3 h-3 rounded-full bg-rose-500/80 inline-block border border-rose-600/40"></span>
+                <span class="w-3 h-3 rounded-full bg-amber-500/80 inline-block border border-amber-600/40"></span>
+                <span class="w-3 h-3 rounded-full bg-emerald-500/80 inline-block border border-emerald-600/40"></span>
+              </div>
+              <div class="flex items-center gap-2 pl-2 border-l border-zinc-800 shrink-0">
+                <span id="skelPingDot" class="w-2 h-2 rounded-full bg-blue-400 signal-ping"></span>
+                <span id="skelFileBadge" class="font-semibold text-xs px-2.5 py-0.5 rounded border text-blue-300 bg-blue-950/70 border-blue-800/80 font-mono">user_service.ts</span>
+              </div>
+            </div>
+
+            <!-- Center: Dynamic Morph Stage Status Badge -->
+            <div class="hidden sm:flex items-center">
+              <span id="morphStatusPill" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-medium transition-all duration-300 bg-zinc-800/90 border border-zinc-700/80 text-zinc-300 shadow-2xs">
+                <span id="morphStatusDot" class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                <span id="morphStatusText">Original Source</span>
+              </span>
+            </div>
+
+            <!-- Right: Replay Action & Mode Toggle -->
+            <div class="flex items-center gap-2.5">
+              <button onclick="replayDissolve()" title="Replay code morph animation" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white text-[11px] font-mono transition btn-press border border-zinc-700 cursor-pointer shadow-2xs group">
+                <svg class="w-3.5 h-3.5 text-blue-400 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>Replay Morph</span>
               </button>
-              <span class="font-bold text-[11px] text-blue-300" id="skelTokenCount">138 tokens (-92%)</span>
+              <div class="inline-flex p-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] font-mono">
+                <button id="btnModeRaw" onclick="setMorphMode('raw')" class="px-2 py-0.5 rounded text-zinc-400 hover:text-zinc-200 transition">Raw</button>
+                <button id="btnModeSkel" onclick="setMorphMode('skel')" class="px-2 py-0.5 rounded bg-blue-600 text-white font-medium transition">Synthesized</button>
+              </div>
             </div>
           </div>
-          <div class="relative flex-1 overflow-hidden flex flex-col min-h-0">
-            <div id="skelOutput" class="w-full h-full p-4 font-mono text-xs text-zinc-200 leading-relaxed overflow-y-auto selection:bg-blue-200 selection:text-blue-950 signal-glow"></div>
+
+          <!-- Code Viewport Body with Sparkle Particle Overlay -->
+          <div class="relative flex-1 overflow-hidden flex flex-col min-h-[480px]">
+            <div id="sparkleOverlay" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
+            <div id="skelOutput" class="w-full h-full p-5 font-mono text-xs text-zinc-200 leading-relaxed overflow-y-auto selection:bg-blue-200 selection:text-blue-950 signal-glow"></div>
           </div>
-          <div class="bg-zinc-900/60 px-4 py-2 border-t border-zinc-800/80 text-[11px] font-mono text-zinc-400 flex items-center justify-between shrink-0">
+
+          <!-- Terminal Footer -->
+          <div class="bg-zinc-900/70 px-4 py-2.5 border-t border-zinc-800 text-[11px] font-mono text-zinc-400 flex items-center justify-between shrink-0">
             <span class="text-emerald-400 flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5 text-emerald-400 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              100% Types &amp; Signatures Preserved
+              <svg class="w-3.5 h-3.5 text-emerald-400 inline shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <span>100% Types, Interfaces &amp; Signatures Preserved</span>
             </span>
             <span id="savedTokensCount" class="text-emerald-400 font-bold bg-emerald-950/70 border border-emerald-800/80 px-2.5 py-0.5 rounded shadow-2xs">
               Saved ~1,702 tokens (Save $51.06/10k)
             </span>
           </div>
-        </div>
 
+        </div>
       </div>
 
     </div>
@@ -1396,48 +1433,177 @@ impl Gateway for StripeGateway {`
       }).join('');
     }
 
-    function setCompilerStatus(text, type = 'ready') {
-      const pill = document.getElementById('demoStatusPill');
-      if (!pill) return;
-      const dot = document.getElementById('demoStatusDot');
-      const label = document.getElementById('demoStatusText');
-      if (!label) return;
+    function setMorphStatus(mode, text) {
+      const pill = document.getElementById('morphStatusPill');
+      const dot = document.getElementById('morphStatusDot');
+      const label = document.getElementById('morphStatusText');
+      if (!pill || !dot || !label) return;
+
       label.innerText = text;
-      if (type === 'compiling') {
-        pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-300 text-blue-800 text-[10px] font-mono font-semibold shadow-2xs transition-all duration-300';
-        if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping shrink-0';
-      } else if (type === 'success') {
-        pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[10px] font-mono font-semibold shadow-2xs transition-all duration-300';
-        if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500 ci-live-dot shrink-0';
-      } else {
-        pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-700 text-[10px] font-mono font-semibold shadow-2xs transition-all duration-300';
-        if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-zinc-400 shrink-0';
+
+      if (mode === 'raw') {
+        pill.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-medium transition-all duration-300 bg-zinc-800/90 border border-zinc-700/80 text-zinc-300 shadow-2xs';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0';
+      } else if (mode === 'targeting') {
+        pill.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-medium transition-all duration-300 bg-amber-950/70 border border-amber-700/80 text-amber-300 shadow-2xs';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0';
+      } else if (mode === 'sparkle') {
+        pill.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-medium transition-all duration-300 bg-blue-950/70 border border-blue-600/80 text-blue-200 shadow-2xs';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping shrink-0';
+      } else if (mode === 'synthesized') {
+        pill.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-medium transition-all duration-300 bg-emerald-950/70 border border-emerald-800/80 text-emerald-300 shadow-2xs';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0';
       }
     }
 
+    function setCompilerStatus(text, type = 'ready') {
+      const mode = type === 'compiling' ? 'targeting' : (type === 'success' ? 'synthesized' : 'raw');
+      setMorphStatus(mode, text);
+    }
+
+    function setMetricsInstant(skelTokens, skelCost, savedCost, savedTokens, reduction = null) {
+      const conf = langConfig[curLang];
+      const red = reduction !== null ? reduction : (conf.rawTokens > 0 ? ((conf.rawTokens - skelTokens) / conf.rawTokens) * 100 : 0);
+
+      const bridgeRaw = document.getElementById('bridgeRaw');
+      if (bridgeRaw) bridgeRaw.innerText = `${conf.rawTokens.toLocaleString()} tokens`;
+      const costRaw = document.getElementById('costRaw');
+      if (costRaw) costRaw.innerText = `$${conf.rawCost.toFixed(2)}`;
+
+      const skelTokenCount = document.getElementById('skelTokenCount');
+      if (skelTokenCount) skelTokenCount.innerText = red > 0 ? `${skelTokens.toLocaleString()} tokens (-${Math.round(red)}%)` : `${skelTokens.toLocaleString()} tokens`;
+      const bridgeSkel = document.getElementById('bridgeSkel');
+      if (bridgeSkel) bridgeSkel.innerText = `${skelTokens.toLocaleString()} tokens`;
+      const costSkel = document.getElementById('costSkel');
+      if (costSkel) costSkel.innerText = `$${skelCost.toFixed(2)}`;
+      const costSavedTag = document.getElementById('costSavedTag');
+      if (costSavedTag) costSavedTag.innerText = `Save $${savedCost.toFixed(2)}`;
+      const savedTokensCount = document.getElementById('savedTokensCount');
+      if (savedTokensCount) savedTokensCount.innerText = savedTokens > 0 ? `Saved ${savedTokens.toLocaleString()} tokens (Save $${savedCost.toFixed(2)}/10k)` : `Raw Ingestion (0% saved)`;
+    }
+
+    function setMorphMode(mode) {
+      resetUserActivity();
+      clearTimeout(dissolveTimeout);
+      clearTimeout(stageTimeout);
+      const conf = langConfig[curLang];
+      const container = document.getElementById('skelOutput');
+      if (!container) return;
+
+      const btnRaw = document.getElementById('btnModeRaw');
+      const btnSkel = document.getElementById('btnModeSkel');
+
+      if (mode === 'raw') {
+        if (btnRaw) btnRaw.className = 'px-2 py-0.5 rounded bg-blue-600 text-white font-medium transition';
+        if (btnSkel) btnSkel.className = 'px-2 py-0.5 rounded text-zinc-400 hover:text-zinc-200 transition';
+
+        const allBlocks = container.querySelectorAll('.dissolve-block');
+        allBlocks.forEach(b => {
+          b.classList.remove('collapsing');
+          b.classList.add('expanded');
+          b.style.maxHeight = '520px';
+          b.style.opacity = '1';
+          b.style.filter = 'none';
+        });
+
+        const allCards = container.querySelectorAll('.targeted-prune-card');
+        allCards.forEach(c => c.classList.remove('shimmer-active'));
+
+        const allPills = container.querySelectorAll('.dissolve-pill');
+        allPills.forEach(p => {
+          p.style.opacity = '0';
+          p.style.maxHeight = '0px';
+        });
+
+        setMorphStatus('raw', `Original Source (${conf.rawTokens.toLocaleString()} tokens)`);
+        setMetricsInstant(conf.rawTokens, conf.rawCost, 0, 0, 0);
+      } else {
+        if (btnRaw) btnRaw.className = 'px-2 py-0.5 rounded text-zinc-400 hover:text-zinc-200 transition';
+        if (btnSkel) btnSkel.className = 'px-2 py-0.5 rounded bg-blue-600 text-white font-medium transition';
+
+        const allBlocks = container.querySelectorAll('.dissolve-block');
+        allBlocks.forEach(b => {
+          b.classList.remove('expanded');
+          b.classList.add('collapsing');
+          b.style.maxHeight = '0px';
+          b.style.opacity = '0';
+        });
+
+        const allPills = container.querySelectorAll('.dissolve-pill');
+        allPills.forEach(p => {
+          p.style.opacity = '1';
+          p.style.maxHeight = '48px';
+        });
+
+        const allBtns = container.querySelectorAll('[id^="btn-"]');
+        allBtns.forEach(btn => {
+          btn.innerText = 'inspect';
+        });
+
+        setMorphStatus('synthesized', `✓ Synthesized Contract (-${Math.round(conf.reduction)}% Tokens)`);
+        setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
+      }
+    }
+
+    function spawnSparkles(parentEl, count = 16) {
+      if (!parentEl) return;
+      const glyphs = ['✦', '✧', '⋆', '✨', '•'];
+      const colors = ['#60a5fa', '#a78bfa', '#38bdf8', '#fbbf24', '#f472b6', '#34d399'];
+
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement('span');
+        p.className = 'sparkle-particle';
+        p.innerText = glyphs[Math.floor(Math.random() * glyphs.length)];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        p.style.color = color;
+        p.style.fontSize = `${Math.floor(Math.random() * 8 + 11)}px`;
+        p.style.left = `${Math.random() * 88 + 6}%`;
+        p.style.top = `${Math.random() * 75 + 10}%`;
+        const driftX = (Math.random() * 40 - 20).toFixed(1);
+        p.style.setProperty('--drift-x', `${driftX}px`);
+        const duration = (Math.random() * 0.8 + 1.4).toFixed(2);
+        p.style.setProperty('--sparkle-duration', `${duration}s`);
+        const delay = Math.floor(Math.random() * 500);
+        p.style.animationDelay = `${delay}ms`;
+
+        parentEl.appendChild(p);
+        setTimeout(() => {
+          if (p.parentNode) p.parentNode.removeChild(p);
+        }, 2600);
+      }
+    }
+
+    let stageTimeout = null;
+
     function renderDemo(lang, shouldAnimate = true) {
       clearTimeout(dissolveTimeout);
+      clearTimeout(stageTimeout);
       const blocks = demoBlocks[lang];
       const conf = langConfig[lang];
       const container = document.getElementById('skelOutput');
       if (!container) return;
+
+      const btnRaw = document.getElementById('btnModeRaw');
+      const btnSkel = document.getElementById('btnModeSkel');
+      if (btnRaw) btnRaw.className = 'px-2 py-0.5 rounded text-zinc-400 hover:text-zinc-200 transition';
+      if (btnSkel) btnSkel.className = 'px-2 py-0.5 rounded bg-blue-600 text-white font-medium transition';
 
       const html = blocks.map(item => {
         if (item.type === 'code') {
           return `<div>${highlightCode(item.content, lang)}</div>`;
         }
         return `
-<div class="dissolve-section my-2" id="section-${item.id}">
+<div class="dissolve-section my-3 relative" id="section-${item.id}">
   <div class="font-mono text-xs text-zinc-200">${highlightCode(item.interfaceCode, lang)}</div>
-  <div id="block-${item.id}" class="dissolve-block overflow-hidden my-1.5" style="max-height: ${shouldAnimate ? '280px' : '0px'}; opacity: ${shouldAnimate ? '1' : '0'};">
-    <div class="targeted-prune-card rounded-lg p-2.5 my-1 font-mono text-[11px] leading-relaxed">
-      <div class="flex items-center justify-between pb-1.5 mb-1.5 border-b border-rose-500/25 text-[10px]">
+  <div id="block-${item.id}" class="dissolve-block overflow-hidden my-1.5 relative" style="max-height: ${shouldAnimate ? '320px' : '0px'}; opacity: ${shouldAnimate ? '1' : '0'};">
+    <div id="card-${item.id}" class="targeted-prune-card rounded-lg p-3 my-1 font-mono text-[11px] leading-relaxed relative">
+      <div class="flex items-center justify-between pb-1.5 mb-2 border-b border-rose-500/25 text-[10px]">
         <span class="flex items-center gap-1.5 font-bold tracking-wide uppercase text-rose-300">
-          <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-          <span>Targeted Implementation (${item.lineCount} lines)</span>
+          <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0"></span>
+          <span id="label-${item.id}">Implementation details (${item.lineCount} lines)</span>
         </span>
         <span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-200 font-semibold border border-rose-500/30">
-          Will be dissolved &bull; 0% types lost
+          Stripped before LLM &bull; 0% types lost
         </span>
       </div>
       <div class="space-y-0.5 overflow-x-auto no-scrollbar">
@@ -1445,7 +1611,7 @@ ${highlightPrunedCode(item.rawCode, lang)}
       </div>
     </div>
   </div>
-  <div class="dissolve-pill flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/25 text-blue-300 font-mono text-[11px] select-none my-1 transition hover:border-blue-400/50">
+  <div id="pill-${item.id}" class="dissolve-pill flex items-center justify-between px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/25 text-blue-300 font-mono text-[11px] select-none my-1.5 transition-all duration-500" style="max-height: ${shouldAnimate ? '0px' : '48px'}; opacity: ${shouldAnimate ? '0' : '1'}; overflow: hidden;">
     <div class="flex items-center gap-2 flex-wrap">
       <span class="text-blue-400 font-bold">⟡</span>
       <span class="font-semibold text-blue-200">${item.lineCount} lines dissolved</span>
@@ -1454,7 +1620,7 @@ ${highlightPrunedCode(item.rawCode, lang)}
       <span class="text-zinc-400 text-[10px]">100% types preserved</span>
     </div>
     <button onclick="toggleDissolve('${item.id}')" id="btn-${item.id}" class="text-[11px] font-semibold text-blue-400 hover:text-blue-200 underline decoration-blue-400/40 transition cursor-pointer px-1.5 py-0.5 rounded hover:bg-blue-400/10">
-      ${shouldAnimate ? 'dissolving...' : 'inspect'}
+      inspect
     </button>
   </div>
 </div>`;
@@ -1462,64 +1628,68 @@ ${highlightPrunedCode(item.rawCode, lang)}
 
       container.innerHTML = html;
 
-      // Slower, easier-to-follow pacing: 1.6s smooth dissolution duration
-      const duration = 1600;
       if (shouldAnimate) {
-        // Laser scanline effect matching 1.6s sweep
-        const parent = container.parentElement;
-        if (parent) {
-          const oldScan = parent.querySelector('.ast-scanline');
-          if (oldScan && oldScan.parentNode) oldScan.parentNode.removeChild(oldScan);
-          const scan = document.createElement('div');
-          scan.className = 'ast-scanline';
-          parent.appendChild(scan);
-          setTimeout(() => {
-            if (scan && scan.parentNode) scan.parentNode.removeChild(scan);
-          }, 1800);
-        }
+        // Stage 1: Raw Presentation (0 to 2000ms)
+        setMorphStatus('raw', `Original Source (${conf.rawTokens.toLocaleString()} tokens)`);
+        setMetricsInstant(conf.rawTokens, conf.rawCost, 0, 0, 0);
+        const savedTag = document.getElementById('savedTokensCount');
+        if (savedTag) savedTag.innerText = 'Analyzing AST contracts...';
 
-        // Initial numbers before dissolution
-        document.getElementById('rawTokenCount').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
-        document.getElementById('rawCostFoot').innerText = `Burn: $${conf.rawCost.toFixed(2)} / 10k calls`;
-        document.getElementById('bridgeRaw').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
-        document.getElementById('costRaw').innerText = `$${conf.rawCost.toFixed(2)}`;
+        // Stage 2: Target Isolation & Comprehension (2000ms to 3400ms, 1400ms duration)
+        stageTimeout = setTimeout(() => {
+          setMorphStatus('targeting', 'Isolating Implementation Bloat...');
+          const cards = container.querySelectorAll('.targeted-prune-card');
+          cards.forEach(card => card.classList.add('shimmer-active'));
 
-        document.getElementById('skelTokenCount').innerText = `${conf.rawTokens.toLocaleString()} tokens (0%)`;
-        document.getElementById('bridgeSkel').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
-        document.getElementById('costSkel').innerText = `$${conf.rawCost.toFixed(2)}`;
-        document.getElementById('costSavedTag').innerText = `Save $0.00`;
-        document.getElementById('savedTokensCount').innerText = `Synthesizing...`;
+          // Stage 3: Sparkle Particle Dissolution & Live Odometer (3400ms to 5800ms, 2400ms duration)
+          dissolveTimeout = setTimeout(() => {
+            setMorphStatus('sparkle', '✨ Dissolving Bloat with AST...');
 
-        // Generous 1.7s inspection beat so visitors can easily read and follow the highlighted affected code
-        dissolveTimeout = setTimeout(() => {
-          const allBlocks = container.querySelectorAll('.dissolve-block');
-          allBlocks.forEach(b => {
-            b.classList.add('collapsing');
-            b.style.maxHeight = '0px';
-            b.style.opacity = '0';
-          });
-          const allBtns = container.querySelectorAll('[id^="btn-"]');
-          allBtns.forEach(btn => {
-            btn.innerText = 'inspect';
-          });
+            // Spawn ambient sparkling particles directly from the targeted cards!
+            cards.forEach(card => {
+              spawnSparkles(card, 16);
+            });
+            setTimeout(() => {
+              cards.forEach(card => {
+                spawnSparkles(card, 10);
+              });
+            }, 450);
 
-          // Silky smooth 1.6s numeric odometer interpolation in perfect sync with collapse
-          animateNumber('skelTokenCount', conf.rawTokens, conf.skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens (-${Math.round(conf.reduction)}%)`);
-          animateNumber('bridgeSkel', conf.rawTokens, conf.skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
-          animateNumber('costSkel', conf.rawCost, conf.skelCost, duration, v => `$${v.toFixed(2)}`);
-          animateNumber('costSavedTag', 0, conf.savedCost, duration, v => `Save $${v.toFixed(2)}`);
-          animateNumber('savedTokensCount', 0, conf.savedTokens, duration, v => `Saved ${Math.round(v).toLocaleString()} tokens (Save $${conf.savedCost.toFixed(2)}/10k)`);
-        }, 1700);
+            // Collapse implementation blocks smoothly
+            const allBlocks = container.querySelectorAll('.dissolve-block');
+            allBlocks.forEach(b => {
+              b.classList.add('collapsing');
+              b.style.maxHeight = '0px';
+              b.style.opacity = '0';
+            });
+
+            // Reveal synthesized contract pills
+            const allPills = container.querySelectorAll('.dissolve-pill');
+            allPills.forEach(p => {
+              p.style.maxHeight = '48px';
+              p.style.opacity = '1';
+            });
+
+            const duration = 2400;
+            animateNumber('skelTokenCount', conf.rawTokens, conf.skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens (-${Math.round(conf.reduction)}%)`);
+            animateNumber('bridgeSkel', conf.rawTokens, conf.skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
+            animateNumber('costSkel', conf.rawCost, conf.skelCost, duration, v => `$${v.toFixed(2)}`);
+            animateNumber('costSavedTag', 0, conf.savedCost, duration, v => `Save $${v.toFixed(2)}`);
+            animateNumber('savedTokensCount', 0, conf.savedTokens, duration, v => `Saved ${Math.round(v).toLocaleString()} tokens (Save $${conf.savedCost.toFixed(2)}/10k)`);
+
+            // Stage 4: Contract Crystallization & Lock (t=5800ms+)
+            setTimeout(() => {
+              setMorphStatus('synthesized', `✓ Synthesized Contract (-${Math.round(conf.reduction)}% Tokens)`);
+              cards.forEach(card => card.classList.remove('shimmer-active'));
+            }, duration);
+
+          }, 1400);
+
+        }, 2000);
+
       } else {
-        document.getElementById('rawTokenCount').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
-        document.getElementById('rawCostFoot').innerText = `Burn: $${conf.rawCost.toFixed(2)} / 10k calls`;
-        document.getElementById('skelTokenCount').innerText = `${conf.skelTokens.toLocaleString()} tokens (-${Math.round(conf.reduction)}%)`;
-        document.getElementById('savedTokensCount').innerText = `Saved ${conf.savedTokens.toLocaleString()} tokens (Save $${conf.savedCost.toFixed(2)}/10k)`;
-        document.getElementById('bridgeRaw').innerText = `${conf.rawTokens.toLocaleString()} tokens`;
-        document.getElementById('costRaw').innerText = `$${conf.rawCost.toFixed(2)}`;
-        document.getElementById('bridgeSkel').innerText = `${conf.skelTokens.toLocaleString()} tokens`;
-        document.getElementById('costSkel').innerText = `$${conf.skelCost.toFixed(2)}`;
-        document.getElementById('costSavedTag').innerText = `Save $${conf.savedCost.toFixed(2)}`;
+        setMorphStatus('synthesized', `✓ Synthesized Contract (-${Math.round(conf.reduction)}% Tokens)`);
+        setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
       }
 
       prevMetrics = {
@@ -1542,7 +1712,7 @@ ${highlightPrunedCode(item.rawCode, lang)}
       const btn = document.getElementById('btn-' + id);
       if (!block || !btn) return;
 
-      const isCollapsed = block.classList.contains('collapsing') || block.style.maxHeight === '0px' || !block.style.maxHeight;
+      const isCollapsed = block.classList.contains('collapsing') || block.style.maxHeight === '0px' || !block.style.maxHeight || block.style.opacity === '0';
       if (isCollapsed) {
         block.classList.remove('collapsing');
         block.classList.add('expanded');
