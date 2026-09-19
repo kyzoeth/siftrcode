@@ -98,17 +98,17 @@
     ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
 
-    /* Continuous Glowing 90% Typography (No Box) */
+    /* Continuous Glowing 90% Typography (No Box) - Slower, ambient cadence */
     @keyframes continuous-text-aura {
       0%, 100% {
-        filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4));
+        filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.3));
       }
       50% {
-        filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.8)) drop-shadow(0 0 4px rgba(251, 191, 36, 0.6));
+        filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.65)) drop-shadow(0 0 3px rgba(251, 191, 36, 0.45));
       }
     }
 
-    /* Continuous Shimmer Sweep across 90% */
+    /* Slow, Luxurious Continuous Shimmer across 90% */
     @keyframes pct-shimmer-sweep {
       0% { background-position: 200% center; }
       100% { background-position: -200% center; }
@@ -116,32 +116,45 @@
 
     .hero-glow-text {
       display: inline-block;
-      background: linear-gradient(90deg, #b45309 0%, #d97706 20%, #f59e0b 40%, #fde047 50%, #f59e0b 60%, #d97706 80%, #b45309 100%);
+      background: linear-gradient(90deg, #b45309 0%, #d97706 25%, #f59e0b 45%, #fef08a 50%, #f59e0b 55%, #d97706 75%, #b45309 100%);
       background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      animation: pct-shimmer-sweep 2.8s linear infinite, continuous-text-aura 3.2s ease-in-out infinite;
+      animation: pct-shimmer-sweep 8s linear infinite, continuous-text-aura 7s ease-in-out infinite;
       font-weight: 800;
     }
 
-    /* Workbench Laser Scanner Beam */
-    @keyframes scanline-sweep {
-      0% { top: 0%; opacity: 0; }
-      15% { opacity: 0.95; }
-      85% { opacity: 0.95; }
-      100% { top: 100%; opacity: 0; }
+    /* Live Token Reduction Gauge Animation */
+    @keyframes waste-stripes-flow {
+      0% { background-position: 0 0; }
+      100% { background-position: 28px 0; }
     }
 
-    .scanner-beam {
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent 0%, rgba(245, 158, 11, 0.3) 15%, #fbbf24 50%, rgba(245, 158, 11, 0.3) 85%, transparent 100%);
-      box-shadow: 0 0 14px #f59e0b, 0 0 28px rgba(245, 158, 11, 0.5);
-      pointer-events: none;
-      animation: scanline-sweep 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-      z-index: 15;
+    .token-waste-stripes {
+      background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(244, 63, 94, 0.22),
+        rgba(244, 63, 94, 0.22) 7px,
+        rgba(244, 63, 94, 0.06) 7px,
+        rgba(244, 63, 94, 0.06) 14px
+      );
+      background-size: 28px 28px;
+      animation: waste-stripes-flow 2.2s linear infinite;
+    }
+
+    /* AST Skeleton Signal Glow */
+    @keyframes ast-signal-breathe {
+      0%, 100% {
+        opacity: 0.95;
+      }
+      50% {
+        opacity: 1;
+        filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.35));
+      }
+    }
+
+    .ast-signal-glow {
+      animation: ast-signal-breathe 5s ease-in-out infinite;
     }
   </style>
 </head>
@@ -222,21 +235,55 @@
         <div class="flex items-center gap-2">
           <span class="text-xs font-mono text-zinc-500 font-medium mr-1">LANG:</span>
           <div class="flex items-center gap-1 font-mono text-xs">
-            <button onclick="setLang('ts', true)" id="tab-ts" class="px-2.5 py-1 rounded-md bg-zinc-900 text-white font-medium">TypeScript</button>
-            <button onclick="setLang('py', true)" id="tab-py" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink">Python</button>
-            <button onclick="setLang('go', true)" id="tab-go" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink">Go</button>
-            <button onclick="setLang('rs', true)" id="tab-rs" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink">Rust</button>
+            <button onclick="setLang('ts', true)" id="tab-ts" class="px-2.5 py-1 rounded-md bg-zinc-900 text-white font-medium shadow-sm">TypeScript</button>
+            <button onclick="setLang('py', true)" id="tab-py" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink transition">Python</button>
+            <button onclick="setLang('go', true)" id="tab-go" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink transition">Go</button>
+            <button onclick="setLang('rs', true)" id="tab-rs" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink transition">Rust</button>
           </div>
         </div>
 
         <div class="flex items-center gap-3 font-mono text-xs">
-          <div class="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 border border-zinc-200 text-[11px]">
-            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-            <span>LIVE AST SCANNER ACTIVE</span>
+          <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-100 text-zinc-600 border border-zinc-200 text-[11px]">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+            <span>TOKEN PRUNING PIPELINE ACTIVE</span>
           </div>
           <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-medium">
             <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-            <span id="reductionTag">-92.1% Token Mass</span>
+            <span id="reductionTag">-92.1% Waste Stripped</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Animated Token Reduction Pipeline Gauge -->
+      <div class="bg-white border border-zinc-200 rounded-xl p-4 shadow-sm font-mono text-xs space-y-2.5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span class="font-bold text-ink uppercase tracking-tight">Token Mass Reduction Gauge</span>
+            <span class="text-zinc-400">• Stripping function bodies before LLM inference</span>
+          </div>
+          <div class="flex items-center gap-2 text-[11px]">
+            <span class="text-zinc-400">Footprint:</span>
+            <span class="text-rose-600 font-bold line-through" id="gaugeRaw">1,420 tokens</span>
+            <span class="text-zinc-400">➔</span>
+            <span class="text-amber-600 font-bold" id="gaugeSkel">112 tokens</span>
+            <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-semibold" id="gaugeSaved">Saved ~1,308 tokens</span>
+          </div>
+        </div>
+
+        <!-- The Animated Evaporation Comparison Bar -->
+        <div class="w-full h-6 bg-zinc-100 rounded-lg overflow-hidden flex border border-zinc-200 p-0.5 relative">
+          <!-- Retained Signal Portion -->
+          <div id="gaugeSignal" class="h-full bg-amber-500 rounded-md transition-all duration-700 flex items-center justify-center text-[10px] text-zinc-950 font-bold tracking-tight px-1 overflow-hidden" style="width: 8%;" title="Preserved Zero-Loss Signal">
+            <span class="whitespace-nowrap">SIGNAL 8%</span>
+          </div>
+          <!-- Evaporated Waste Portion (Animated Striped Vaporizer) -->
+          <div id="gaugeWaste" class="h-full flex-1 rounded-md ml-0.5 token-waste-stripes flex items-center justify-between px-3 text-[10px] font-bold text-rose-600 overflow-hidden" title="Pruned Bloat / Function Bodies">
+            <span class="tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+              <span>⚡</span>
+              <span id="gaugeWasteLabel">PRUNED FUNCTION BODIES &amp; DEADWEIGHT (92.1% ELIMINATED)</span>
+            </span>
+            <span class="text-[9px] uppercase tracking-widest text-rose-500 font-mono hidden md:inline">Tokens Vaporized ↓</span>
           </div>
         </div>
       </div>
@@ -247,7 +294,10 @@
         <!-- Left: Full Implementation Source -->
         <div class="bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
           <div class="bg-zinc-50/80 px-4 py-2 border-b border-zinc-200 flex items-center justify-between text-xs font-mono">
-            <span class="text-zinc-600 font-medium">RAW SOURCE (AGENTS INGEST THIS BY DEFAULT)</span>
+            <span class="text-zinc-600 font-medium flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+              RAW SOURCE (AGENTS INGEST THIS BY DEFAULT)
+            </span>
             <span class="text-rose-600 font-bold" id="rawTokenCount">~1,420 tokens</span>
           </div>
           <textarea id="rawInput" oninput="onInputChanged()" spellcheck="false" class="w-full h-80 p-4 font-mono text-xs text-zinc-800 leading-relaxed border-0 focus:outline-none resize-none font-normal bg-white"></textarea>
@@ -258,21 +308,21 @@
 
         <!-- Right: AST Pruned Interface Skeleton -->
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg flex flex-col text-white relative">
-          <!-- Laser Scanner Beam that sweeps down the code -->
-          <div class="scanner-beam"></div>
-
           <div class="bg-zinc-950 px-4 py-2 border-b border-zinc-800 flex items-center justify-between text-xs font-mono">
-            <span class="text-amber-400 font-medium flex items-center gap-1.5">
+            <span class="text-amber-400 font-medium flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-amber-400 signal-ping"></span>
               SIFTRCODE AST SKELETON (FED TO AGENT)
             </span>
             <span class="text-amber-400 font-bold" id="skelTokenCount">~112 tokens (-92.1%)</span>
           </div>
           <div class="relative flex-1 overflow-hidden">
-            <pre id="skelOutput" class="w-full h-80 p-4 font-mono text-xs text-amber-200/95 leading-relaxed overflow-auto whitespace-pre-wrap selection:bg-amber-400 selection:text-zinc-950"></pre>
+            <pre id="skelOutput" class="w-full h-80 p-4 font-mono text-xs text-amber-200/95 leading-relaxed overflow-auto whitespace-pre-wrap selection:bg-amber-400 selection:text-zinc-950 ast-signal-glow"></pre>
           </div>
-          <div class="bg-zinc-950 px-4 py-1.5 border-t border-zinc-800 text-[11px] font-mono text-zinc-400 flex items-center justify-between">
-            <span class="text-amber-400">Zero-Loss Interfaces Preserved</span>
+          <div class="bg-zinc-950 px-4 py-2 border-t border-zinc-800 text-[11px] font-mono text-zinc-400 flex items-center justify-between">
+            <span class="text-amber-400 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-amber-400 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              100% Types, Interfaces &amp; Docstrings Preserved
+            </span>
             <span id="savedTokensCount" class="text-amber-400 font-semibold">Saved ~1,308 tokens</span>
           </div>
         </div>
@@ -596,25 +646,6 @@ impl Gateway for StripeGateway {
     let curLang = 'ts';
     let debounceTimer = null;
 
-    function setLang(lang) {
-      curLang = lang;
-      ['ts', 'py', 'go', 'rs'].forEach(l => {
-        const el = document.getElementById('tab-' + l);
-        if (l === lang) {
-          el.className = 'px-2.5 py-1 rounded-md bg-zinc-900 text-white font-medium';
-        } else {
-          el.className = 'px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink';
-        }
-      });
-      document.getElementById('rawInput').value = samples[lang];
-      renderAST();
-    }
-
-    function onInputChanged() {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(renderAST, 100);
-    }
-
     async function renderAST() {
       const code = document.getElementById('rawInput').value;
       const rawTokens = Math.ceil(code.length / 4);
@@ -651,12 +682,31 @@ impl Gateway for StripeGateway {
     function updateUI(skel, rawTokens, skelTokens) {
       const reduction = Math.max(0, ((rawTokens - skelTokens) / rawTokens) * 100).toFixed(1);
       const saved = Math.max(0, rawTokens - skelTokens);
+      const signalPct = Math.max(6, Math.min(94, (skelTokens / rawTokens) * 100)).toFixed(1);
 
       document.getElementById('rawTokenCount').innerText = `~${rawTokens.toLocaleString()} tokens`;
       document.getElementById('skelTokenCount').innerText = `~${skelTokens.toLocaleString()} tokens (-${reduction}%)`;
-      document.getElementById('reductionTag').innerText = `-${reduction}% Token Mass`;
+      document.getElementById('reductionTag').innerText = `-${reduction}% Waste Stripped`;
       document.getElementById('savedTokensCount').innerText = `Saved ~${saved.toLocaleString()} tokens`;
       document.getElementById('skelOutput').innerText = skel;
+
+      // Update Live Token Gauge
+      const gaugeSignal = document.getElementById('gaugeSignal');
+      const gaugeWasteLabel = document.getElementById('gaugeWasteLabel');
+      const gaugeRaw = document.getElementById('gaugeRaw');
+      const gaugeSkel = document.getElementById('gaugeSkel');
+      const gaugeSaved = document.getElementById('gaugeSaved');
+
+      if (gaugeSignal) {
+        gaugeSignal.style.width = `${signalPct}%`;
+        gaugeSignal.innerHTML = `<span class="whitespace-nowrap">SIGNAL ${Math.round(signalPct)}%</span>`;
+      }
+      if (gaugeWasteLabel) {
+        gaugeWasteLabel.innerText = `PRUNED FUNCTION BODIES & DEADWEIGHT (${reduction}% ELIMINATED)`;
+      }
+      if (gaugeRaw) gaugeRaw.innerText = `${rawTokens.toLocaleString()} tokens`;
+      if (gaugeSkel) gaugeSkel.innerText = `${skelTokens.toLocaleString()} tokens`;
+      if (gaugeSaved) gaugeSaved.innerText = `Saved ~${saved.toLocaleString()} tokens`;
     }
 
     function copyCommand() {
