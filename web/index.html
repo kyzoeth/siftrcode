@@ -43,17 +43,17 @@
               tertiary: '#a1a1aa'
             },
             brand: {
-              50: '#eff6ff',
-              100: '#dbeafe',
-              200: '#bfdbfe',
-              300: '#93c5fd',
-              400: '#60a5fa',
-              500: '#3b82f6',
-              600: '#2563eb',
-              700: '#1d4ed8',
-              800: '#1e40af',
-              900: '#1e3a8a',
-              950: '#172554',
+              50: '#FAF3F0',
+              100: '#F5E5DF',
+              200: '#ECCBBE',
+              300: '#E1AC99',
+              400: '#DA8E74',
+              500: '#D97757', // Canonical Claude Terracotta
+              600: '#C86241', // Button hover
+              700: '#B34E2E', // High-contrast text / active border
+              800: '#934026',
+              900: '#773722',
+              950: '#411A0E',
             }
           }
         }
@@ -69,10 +69,10 @@
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       letter-spacing: -0.015em;
-      background-color: #e8eff8;
+      background-color: #f7f3f0;
       background-image: 
-        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(191, 219, 254, 0.65) 0%, rgba(224, 238, 255, 0.45) 45%, transparent 80%),
-        radial-gradient(circle at 50% 0%, #edf4fe 0%, #e5eef9 40%, #dce7f5 75%, #d5e2f2 100%);
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(245, 229, 223, 0.7) 0%, rgba(250, 243, 240, 0.5) 45%, transparent 80%),
+        radial-gradient(circle at 50% 0%, #faf5f2 0%, #f5eee8 40%, #ede3dc 75%, #e6d8d0 100%);
       background-attachment: fixed;
     }
     .font-serif, h1.font-serif, h2.font-serif, h3.font-serif, .font-display {
@@ -83,7 +83,8 @@
       font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
     }
 
-    ::selection { background: #bfdbfe; color: #0f172a; }
+    ::selection { background: #ECCBBE; color: #411A0E; }
+    html.dark ::selection { background: rgba(217, 119, 87, 0.35); color: #FAF3F0; }
 
     /* Hide scrollbar for horizontal single-line ticker streams */
     .no-scrollbar {
@@ -179,8 +180,8 @@
       border-color: #27272a !important;
     }
     html.dark .glow-card:hover {
-      border-color: #3b82f6 !important;
-      box-shadow: 0 12px 32px -10px rgba(59, 130, 246, 0.28) !important;
+      border-color: #D97757 !important;
+      box-shadow: 0 12px 32px -10px rgba(217, 119, 87, 0.3) !important;
     }
     html.dark textarea#rawInput {
       color: #f4f4f5 !important;
@@ -202,18 +203,6 @@
     }
     html.dark a[href="#workbench"].bg-ink span.text-zinc-400 {
       color: #71717a !important;
-    }
-    html.dark .bg-blue-50\/40 {
-      background-color: rgba(30, 64, 175, 0.12) !important;
-      border-color: #2563eb !important;
-    }
-    html.dark .border-blue-200,
-    html.dark .border-blue-200\/80 {
-      border-color: rgba(59, 130, 246, 0.3) !important;
-    }
-    html.dark .bg-blue-50 {
-      background-color: rgba(30, 64, 175, 0.2) !important;
-      color: #93c5fd !important;
     }
     html.dark .bg-emerald-50 {
       background-color: rgba(16, 185, 129, 0.12) !important;
@@ -252,7 +241,7 @@
     html.dark #trialModal input:focus,
     html.dark #trialModal select:focus {
       background-color: #1c1c22 !important;
-      border-color: #2563eb !important;
+      border-color: #D97757 !important;
     }
     html.dark #trialModal label {
       color: #d4d4d8 !important;
@@ -291,8 +280,8 @@
       transition: border-color 0.25s ease, box-shadow 0.25s ease;
     }
     .glow-card:hover {
-      border-color: #1d4ed8;
-      box-shadow: 0 12px 32px -10px rgba(29, 78, 216, 0.22);
+      border-color: #D97757;
+      box-shadow: 0 12px 32px -10px rgba(217, 119, 87, 0.22);
     }
 
     /* Token Diff Pulse */
@@ -322,7 +311,7 @@
       width: 7px;
       height: 13px;
       vertical-align: -1px;
-      background-color: #60a5fa;
+      background-color: #D97757;
       animation: ci-cursor-blink 1.05s infinite;
     }
 
@@ -337,17 +326,17 @@
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #1d4ed8; }
+    ::-webkit-scrollbar-thumb:hover { background: #D97757; }
     html.dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
-    html.dark ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+    html.dark ::-webkit-scrollbar-thumb:hover { background: #D97757; }
 
     /* Continuous Glowing 90% Typography (No Box) - Ultra-subtle, slow ambient cadence */
     @keyframes continuous-text-aura {
       0%, 100% {
-        filter: drop-shadow(0 0 6px rgba(29, 78, 216, 0.16));
+        filter: drop-shadow(0 0 6px rgba(217, 119, 87, 0.2));
       }
       50% {
-        filter: drop-shadow(0 0 12px rgba(37, 99, 235, 0.32));
+        filter: drop-shadow(0 0 12px rgba(217, 119, 87, 0.35));
       }
     }
 
@@ -359,14 +348,14 @@
 
     .hero-glow-text {
       display: inline-block;
-      background: linear-gradient(90deg, #1e40af 0%, #2563eb 35%, #3b82f6 50%, #2563eb 65%, #1e40af 100%);
+      background: linear-gradient(90deg, #934026 0%, #B34E2E 35%, #D97757 50%, #B34E2E 65%, #934026 100%);
       background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       animation: pct-shimmer-sweep 14s linear infinite, continuous-text-aura 10s ease-in-out infinite;
     }
     html.dark .hero-glow-text {
-      background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 35%, #93c5fd 50%, #60a5fa 65%, #3b82f6 100%);
+      background: linear-gradient(90deg, #D97757 0%, #E58B6E 35%, #F39C82 50%, #E58B6E 65%, #D97757 100%);
       background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -375,7 +364,7 @@
     /* Synthesized Signal Glow */
     @keyframes signal-breathe {
       0%, 100% { opacity: 0.95; }
-      50% { opacity: 1; filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.4)); }
+      50% { opacity: 1; filter: drop-shadow(0 0 6px rgba(217, 119, 87, 0.4)); }
     }
 
     .signal-glow {
@@ -539,9 +528,9 @@
       height: 120px;
       background: linear-gradient(180deg, 
         transparent 0%, 
-        rgba(59, 130, 246, 0.02) 20%, 
-        rgba(99, 102, 241, 0.07) 50%, 
-        rgba(59, 130, 246, 0.03) 80%, 
+        rgba(217, 119, 87, 0.04) 20%, 
+        rgba(239, 107, 74, 0.08) 50%, 
+        rgba(217, 119, 87, 0.04) 80%, 
         transparent 100%
       );
       box-shadow: none;
@@ -554,9 +543,9 @@
     html.dark .ast-scope-wave {
       background: linear-gradient(180deg, 
         transparent 0%, 
-        rgba(59, 130, 246, 0.04) 20%, 
-        rgba(99, 102, 241, 0.12) 50%, 
-        rgba(59, 130, 246, 0.05) 80%, 
+        rgba(217, 119, 87, 0.06) 20%, 
+        rgba(239, 107, 74, 0.14) 50%, 
+        rgba(217, 119, 87, 0.06) 80%, 
         transparent 100%
       );
       box-shadow: none;
@@ -567,7 +556,7 @@
       background: linear-gradient(180deg, 
         transparent 0%, 
         rgba(16, 185, 129, 0.05) 20%, 
-        rgba(59, 130, 246, 0.14) 50%, 
+        rgba(217, 119, 87, 0.16) 50%, 
         rgba(16, 185, 129, 0.06) 80%, 
         transparent 100%
       );
@@ -576,7 +565,7 @@
       background: linear-gradient(180deg, 
         transparent 0%, 
         rgba(16, 185, 129, 0.08) 20%, 
-        rgba(59, 130, 246, 0.22) 50%, 
+        rgba(217, 119, 87, 0.24) 50%, 
         rgba(16, 185, 129, 0.10) 80%, 
         transparent 100%
       );
@@ -594,14 +583,14 @@
     .ast-compiler-runner {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, #3b82f6 0%, #6366f1 60%, #06b6d4 100%);
+      background: linear-gradient(90deg, #D97757 0%, #E58B6E 50%, #F59E0B 100%);
       opacity: 0;
-      box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+      box-shadow: 0 0 8px rgba(217, 119, 87, 0.5);
     }
 
     .dissolve-pill {
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
+      background: #FAF3F0;
+      border: 1px solid #ECCBBE;
       border-radius: 4px;
       transition: max-height 1.4s cubic-bezier(0.16, 1, 0.3, 1), 
                   opacity 1.4s ease, 
@@ -609,16 +598,16 @@
                   margin 1.4s ease;
     }
     .dissolve-pill:hover {
-      border-color: #93c5fd;
-      background-color: #dbeafe;
+      border-color: #DA8E74;
+      background-color: #F5E5DF;
     }
     html.dark .dissolve-pill {
-      background-color: rgba(59, 130, 246, 0.1);
-      border-color: rgba(59, 130, 246, 0.25);
+      background-color: rgba(217, 119, 87, 0.1);
+      border-color: rgba(217, 119, 87, 0.25);
     }
     html.dark .dissolve-pill:hover {
-      border-color: rgba(37, 99, 235, 0.5);
-      background-color: rgba(37, 99, 235, 0.15);
+      border-color: rgba(217, 119, 87, 0.5);
+      background-color: rgba(217, 119, 87, 0.18);
     }
 
     /* Sparkle Particle Dissolution System */
@@ -698,17 +687,17 @@
     }
   </style>
 </head>
-<body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-blue-200 selection:text-blue-950">
+<body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-[#ECCBBE] selection:text-[#411A0E] dark:selection:bg-[#D97757]/30 dark:selection:text-[#FAF3F0]">
 
   <!-- Dynamic Interactive Dot Matrix Background Canvas -->
   <canvas id="dotMatrixCanvas" class="fixed inset-0 pointer-events-none z-0 w-full h-full"></canvas>
 
   <!-- Background Ambient Lights -->
   <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
-    <div class="ambient-glow w-[800px] h-[500px] bg-blue-300/35 -top-28 left-1/2 -translate-x-1/2" style="filter: blur(110px);"></div>
-    <div class="ambient-glow w-[600px] h-[600px] bg-indigo-200/35 -top-20 -left-20" style="filter: blur(100px);"></div>
-    <div class="ambient-glow w-[550px] h-[550px] bg-sky-200/40 top-80 -right-20" style="animation-delay: -5s; filter: blur(100px);"></div>
-    <div class="ambient-glow w-[650px] h-[500px] bg-blue-200/30 top-[850px] -left-20" style="animation-delay: -10s; filter: blur(110px);"></div>
+    <div class="ambient-glow w-[800px] h-[500px] bg-[#E1AC99]/35 -top-28 left-1/2 -translate-x-1/2" style="filter: blur(110px);"></div>
+    <div class="ambient-glow w-[600px] h-[600px] bg-[#ECCBBE]/30 -top-20 -left-20" style="filter: blur(100px);"></div>
+    <div class="ambient-glow w-[550px] h-[550px] bg-[#F5E5DF]/40 top-80 -right-20" style="animation-delay: -5s; filter: blur(100px);"></div>
+    <div class="ambient-glow w-[650px] h-[500px] bg-[#ECCBBE]/25 top-[850px] -left-20" style="animation-delay: -10s; filter: blur(110px);"></div>
   </div>
 
   <!-- Header Navigation -->
@@ -716,11 +705,11 @@
     <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
       <div class="flex items-center gap-6">
         <a href="#" class="flex items-center gap-2.5 font-bold tracking-tight text-ink text-sm group">
-          <div class="w-6 h-6 rounded bg-blue-700 flex items-center justify-center text-white font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
+          <div class="w-6 h-6 rounded bg-[#D97757] flex items-center justify-center text-white font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
             S
           </div>
           <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
-          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-200/80 font-medium">v0.1.1</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-medium">v0.1.1</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="/how-it-works" class="hover:text-ink transition">How It Works</a>
@@ -741,7 +730,7 @@
         <!-- Light / Dark Theme Switch Button -->
         <button id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light / Dark Theme" aria-label="Toggle theme" class="w-8 h-8 rounded-md bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
           <!-- Sun Icon (shown in dark mode) -->
-          <svg id="themeSunIcon" class="w-4 h-4 text-blue-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg id="themeSunIcon" class="w-4 h-4 text-[#F39C82] hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
           <!-- Moon Icon (shown in light mode) -->
@@ -751,7 +740,7 @@
         </button>
 
         <!-- Start Team Trial Button (Icon-Only) -->
-        <button onclick="openTrialModal()" title="Start Team Trial" aria-label="Start Team Trial" class="w-8 h-8 rounded-md bg-blue-700 hover:bg-blue-600 text-white transition cursor-pointer btn-press flex items-center justify-center shadow-sm">
+        <button onclick="openTrialModal()" title="Start Team Trial" aria-label="Start Team Trial" class="w-8 h-8 rounded-md bg-[#D97757] hover:bg-[#C86241] text-white transition cursor-pointer btn-press flex items-center justify-center shadow-sm">
           <svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
@@ -772,15 +761,15 @@
 
     <!-- Mobile Navigation Drawer / Dropdown -->
     <div id="mobileNavMenu" class="hidden md:hidden border-t border-zinc-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md px-4 py-3 space-y-1 transition-all duration-200">
-      <a href="/how-it-works" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-blue-700 dark:hover:text-blue-400 transition">
+      <a href="/how-it-works" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>How It Works</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
-      <a href="/claude" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-blue-700 dark:hover:text-blue-400 transition">
+      <a href="/claude" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>Claude Code Integration</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
-      <a href="/about" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-blue-700 dark:hover:text-blue-400 transition">
+      <a href="/about" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>About SiftrCode</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
@@ -859,7 +848,7 @@
             <!-- Diffuse Ambient AST Scope Wave -->
             <div id="scanBeam" class="ast-scope-wave"></div>
             <div id="sparkleOverlay" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
-            <div id="skelOutput" class="w-full h-full p-3.5 sm:p-5 font-mono text-[11px] sm:text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-auto selection:bg-blue-100 selection:text-blue-900 signal-glow"></div>
+            <div id="skelOutput" class="w-full h-full p-3.5 sm:p-5 font-mono text-[11px] sm:text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-auto selection:bg-[#ECCBBE]/60 selection:text-[#411A0E] signal-glow"></div>
           </div>
 
           <!-- Terminal Footer: Consolidated Step & Context Telemetry Banner -->
@@ -976,7 +965,7 @@
             <div class="flex items-center gap-2">
               <h3 id="agentConfigTitle" class="text-sm sm:text-base font-semibold text-ink tracking-tight font-sans">Connect to Claude Code</h3>
               <span class="text-zinc-300 dark:text-zinc-700 select-none">•</span>
-              <a id="agentGuideLink" href="/claude" class="text-xs text-blue-600 dark:text-blue-400 font-medium hover:underline">
+              <a id="agentGuideLink" href="/claude" class="text-xs text-[#D97757] dark:text-[#F39C82] font-medium hover:underline">
                 Guide →
               </a>
             </div>
@@ -1027,11 +1016,11 @@
             <div class="p-3 rounded-lg bg-white dark:bg-zinc-800/70 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1 shadow-2xs">
               <div class="text-[10px] uppercase font-mono text-zinc-400 font-semibold tracking-wider flex items-center justify-between">
                 <span>Query Cost</span>
-                <span id="costSavingsTag" class="text-blue-700 dark:text-blue-400 font-bold">Save $0.346 / query</span>
+                <span id="costSavingsTag" class="text-[#B34E2E] dark:text-[#F39C82] font-bold">Save $0.346 / query</span>
               </div>
               <div class="flex items-baseline justify-between pt-0.5">
                 <span id="costComparisonRaw" class="text-xs font-mono text-rose-500 line-through">$0.375</span>
-                <span id="costComparisonSkel" class="text-sm font-mono font-bold text-blue-700 dark:text-blue-400">$0.029</span>
+                <span id="costComparisonSkel" class="text-sm font-mono font-bold text-[#B34E2E] dark:text-[#F39C82]">$0.029</span>
               </div>
             </div>
 
@@ -1123,20 +1112,20 @@
         </div>
 
         <!-- Team Pro -->
-        <div class="p-6 bg-blue-50/40 border-2 border-blue-600 rounded-lg flex flex-col justify-between relative shadow-sm">
-          <span class="absolute -top-2.5 right-4 px-2.5 py-0.5 bg-blue-700 text-white font-bold text-[9px] rounded uppercase tracking-wider">TEAM PRO</span>
+        <div class="p-6 bg-[#FAF3F0]/60 dark:bg-[#411A0E]/30 border-2 border-[#D97757] rounded-lg flex flex-col justify-between relative shadow-sm">
+          <span class="absolute -top-2.5 right-4 px-2.5 py-0.5 bg-[#D97757] text-white font-bold text-[9px] rounded uppercase tracking-wider">TEAM PRO</span>
           <div class="space-y-4">
             <div>
-              <div class="text-[10px] text-blue-800 uppercase font-semibold tracking-wider">FOR STARTUPS &amp; TEAMS</div>
+              <div class="text-[10px] text-[#B34E2E] dark:text-[#F39C82] uppercase font-semibold tracking-wider">FOR STARTUPS &amp; TEAMS</div>
               <h3 class="text-xl font-bold text-ink mt-0.5">SiftrCode Pro</h3>
             </div>
 
             <div class="flex items-baseline gap-1.5">
-              <span class="text-3xl font-extrabold text-blue-800 dark:text-blue-400 font-mono">$19</span>
+              <span class="text-3xl font-extrabold text-[#B34E2E] dark:text-[#F39C82] font-mono">$19</span>
               <span class="text-xs text-zinc-500">/ seat / mo</span>
             </div>
 
-            <ul class="space-y-2.5 text-zinc-700 text-xs border-t border-blue-200/80 pt-3.5">
+            <ul class="space-y-2.5 text-zinc-700 text-xs border-t border-[#ECCBBE] dark:border-[#B34E2E]/30 pt-3.5">
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
                 <span>Everything in Community CLI</span>
@@ -1157,7 +1146,7 @@
           </div>
 
           <div class="pt-6">
-            <button onclick="openTrialModal()" class="w-full h-10 flex items-center justify-center gap-2 rounded-md bg-blue-700 hover:bg-blue-600 text-white font-semibold transition btn-press text-xs shadow-sm cursor-pointer">
+            <button onclick="openTrialModal()" class="w-full h-10 flex items-center justify-center gap-2 rounded-md bg-[#D97757] hover:bg-[#C86241] text-white font-semibold transition btn-press text-xs shadow-sm cursor-pointer">
               <svg class="w-3.5 h-3.5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
@@ -1187,7 +1176,7 @@
         <a href="https://github.com/kyzoeth/siftrcode" target="_blank" rel="noopener noreferrer" class="hover:text-ink transition">GitHub</a>
         <a href="mailto:info@siftrcode.com" class="hover:text-ink transition">Contact</a>
         <button onclick="openFeedbackModal()" class="hover:text-ink transition cursor-pointer flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
-          <svg class="w-3.5 h-3.5 text-blue-700 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3.5 h-3.5 text-[#D97757] dark:text-[#F39C82]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
           </svg>
           Feedback
@@ -1531,8 +1520,8 @@ impl PaymentGateway for StripeGateway {
         tabInactiveClass: 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-800/40 border border-transparent',
         rawBadge: 'user_service.ts',
         skelBadge: 'user_service.ts',
-        badgeStyle: 'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-300 dark:bg-blue-950/70 dark:border-blue-800/80',
-        pingColor: 'bg-blue-500',
+        badgeStyle: 'text-[#3178C6] bg-[#3178C6]/10 border-[#3178C6]/30 dark:text-[#58A6FF] dark:bg-[#3178C6]/20 dark:border-[#3178C6]/40',
+        pingColor: 'bg-[#3178C6]',
         rawTokens: 2420,
         skelTokens: 176,
         reduction: 92.7,
@@ -2152,7 +2141,7 @@ impl PaymentGateway for StripeGateway {
       const trimmed = line.trim();
       if (trimmed.includes('dissolved by SiftrCode') || trimmed.includes('lines dissolved')) {
         const cleanText = trimmed.replace(/^(\/\/|#)\s*(⟡\s*)?/, '').replace(/^\[\s*/, '').replace(/\s*\]$/, '');
-        return `<div class="my-2 py-1 px-2.5 rounded bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 font-semibold text-[11px] flex items-center gap-1.5"><span class="text-blue-600 dark:text-blue-400">⟡</span> ${escapeHtml(cleanText)}</div>`;
+        return `<div class="my-2 py-1 px-2.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/50 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] font-semibold text-[11px] flex items-center gap-1.5"><span class="text-[#D97757] dark:text-[#F39C82]">⟡</span> ${escapeHtml(cleanText)}</div>`;
       }
       if (trimmed.startsWith('// [SiftrCode') || trimmed.startsWith('# [SiftrCode')) {
         return `<span class="text-zinc-500 dark:text-zinc-400 font-medium">${escapeHtml(line)}</span>`;
@@ -2161,7 +2150,7 @@ impl PaymentGateway for StripeGateway {
         return `<span class="text-zinc-400 dark:text-zinc-500 italic">${escapeHtml(line)}</span>`;
       }
 
-      let kwColor = 'text-blue-600 dark:text-blue-400';
+      let kwColor = 'text-[#3178C6] dark:text-[#58A6FF]';
       let typeColor = 'text-indigo-600 dark:text-sky-300';
       if (lang === 'py') {
         kwColor = 'text-emerald-700 dark:text-emerald-400';
@@ -2379,7 +2368,7 @@ impl PaymentGateway for StripeGateway {
     function spawnSparkles(parentEl, count = 18) {
       if (!parentEl) return;
       const glyphs = ['✦', '✧', '⋆', '✨', '•'];
-      const colors = ['#3b82f6', '#10b981', '#6366f1', '#f59e0b', '#ec4899', '#06b6d4'];
+      const colors = ['#D97757', '#10b981', '#6366f1', '#f59e0b', '#ec4899', '#06b6d4'];
 
       for (let i = 0; i < count; i++) {
         const p = document.createElement('span');
@@ -3596,13 +3585,13 @@ ${renderedRaw}
       <form id="trialForm" onsubmit="submitTrialForm(event)" class="space-y-3 text-left font-sans text-xs">
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Work Email *</label>
-          <input type="email" id="trialEmail" required placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-900 font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
+          <input type="email" id="trialEmail" required placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-900 font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div>
             <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Team Size</label>
-            <select id="trialTeamSize" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-800 font-sans text-sm sm:text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
+            <select id="trialTeamSize" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-800 font-sans text-sm sm:text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
               <option value="1-5 devs">1–5 engineers</option>
               <option value="5-20 devs" selected>5–20 engineers</option>
               <option value="20-50 devs">20–50 engineers</option>
@@ -3612,7 +3601,7 @@ ${renderedRaw}
 
           <div>
             <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Primary AI Agent</label>
-            <select id="trialAgent" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-800 font-sans text-sm sm:text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
+            <select id="trialAgent" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-800 font-sans text-sm sm:text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
               <option value="Cursor" selected>Cursor</option>
               <option value="Claude Code">Claude Code</option>
               <option value="Antigravity">Antigravity</option>
@@ -3623,12 +3612,12 @@ ${renderedRaw}
 
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Repository URL / Stack (Optional)</label>
-          <input type="text" id="trialRepo" placeholder="github.com/company/repo" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-zinc-900 font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
+          <input type="text" id="trialRepo" placeholder="github.com/company/repo" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-900 font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
         </div>
 
         <div id="trialError" class="hidden text-[11px] text-rose-600 bg-rose-50 border border-rose-200 rounded-md p-2 font-sans"></div>
 
-        <button type="submit" id="trialSubmitBtn" class="w-full py-2.5 rounded-md bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs transition btn-press shadow-xs hover:shadow active:scale-[0.99] flex items-center justify-center gap-1.5 cursor-pointer">
+        <button type="submit" id="trialSubmitBtn" class="w-full py-2.5 rounded-md bg-[#D97757] hover:bg-[#C86241] text-white font-bold text-xs transition btn-press shadow-xs hover:shadow active:scale-[0.99] flex items-center justify-center gap-1.5 cursor-pointer">
           <span>Activate 14-Day Team Trial</span>
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
         </button>
@@ -3653,7 +3642,7 @@ ${renderedRaw}
         </div>
         <div class="p-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-left space-y-1.5 font-sans text-xs">
           <div class="text-zinc-500 text-[10px] uppercase font-semibold">Start auditing your repo right now:</div>
-          <div class="bg-zinc-900 text-blue-400 p-2 rounded-md flex items-center justify-between font-mono text-xs">
+          <div class="bg-zinc-900 text-[#F39C82] p-2 rounded-md flex items-center justify-between font-mono text-xs">
             <code>npx siftrcode audit</code>
           </div>
         </div>
@@ -3676,8 +3665,8 @@ ${renderedRaw}
 
       <!-- Header -->
       <div class="space-y-1 text-left pr-6">
-        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-blue-300 text-[10px] font-mono font-semibold uppercase tracking-wider">
-          <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] text-[10px] font-mono font-semibold uppercase tracking-wider">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#D97757]"></span>
           ANONYMOUS FEEDBACK
         </div>
         <h3 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight leading-snug">Help us improve SiftrCode</h3>
@@ -3691,15 +3680,15 @@ ${renderedRaw}
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1.5 text-[10px] uppercase tracking-wider">Category</label>
           <div class="grid grid-cols-3 gap-1.5 text-[11px]">
-            <label class="flex items-center justify-center gap-1 py-1.5 px-2 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 cursor-pointer hover:border-blue-500 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-950/50 has-[:checked]:text-blue-700 dark:has-[:checked]:text-blue-300 transition">
+            <label class="flex items-center justify-center gap-1 py-1.5 px-2 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 cursor-pointer hover:border-[#D97757] has-[:checked]:border-[#D97757] has-[:checked]:bg-[#FAF3F0] dark:has-[:checked]:bg-[#411A0E]/40 has-[:checked]:text-[#B34E2E] dark:has-[:checked]:text-[#F39C82] transition">
               <input type="radio" name="fbCategory" value="feature" class="hidden" checked>
               <span>Idea / Feature</span>
             </label>
-            <label class="flex items-center justify-center gap-1 py-1.5 px-2 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 cursor-pointer hover:border-blue-500 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-950/50 has-[:checked]:text-blue-700 dark:has-[:checked]:text-blue-300 transition">
+            <label class="flex items-center justify-center gap-1 py-1.5 px-2 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 cursor-pointer hover:border-[#D97757] has-[:checked]:border-[#D97757] has-[:checked]:bg-[#FAF3F0] dark:has-[:checked]:bg-[#411A0E]/40 has-[:checked]:text-[#B34E2E] dark:has-[:checked]:text-[#F39C82] transition">
               <input type="radio" name="fbCategory" value="bug" class="hidden">
               <span>Bug / Issue</span>
             </label>
-            <label class="flex items-center justify-center gap-1 py-1.5 px-2 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 cursor-pointer hover:border-blue-500 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-950/50 has-[:checked]:text-blue-700 dark:has-[:checked]:text-blue-300 transition">
+            <label class="flex items-center justify-center gap-1 py-1.5 px-2 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 cursor-pointer hover:border-[#D97757] has-[:checked]:border-[#D97757] has-[:checked]:bg-[#FAF3F0] dark:has-[:checked]:bg-[#411A0E]/40 has-[:checked]:text-[#B34E2E] dark:has-[:checked]:text-[#F39C82] transition">
               <input type="radio" name="fbCategory" value="general" class="hidden">
               <span>General DX</span>
             </label>
@@ -3708,17 +3697,17 @@ ${renderedRaw}
 
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Your Feedback *</label>
-          <textarea id="fbMessage" required rows="4" placeholder="What works well, what feels clunky, or what language/feature should we support next?..." class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-ink font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850 resize-none"></textarea>
+          <textarea id="fbMessage" required rows="4" placeholder="What works well, what feels clunky, or what language/feature should we support next?..." class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-ink font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850 resize-none"></textarea>
         </div>
 
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Email (Optional — only if you'd like a response)</label>
-          <input type="email" id="fbEmail" placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-ink font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850" />
+          <input type="email" id="fbEmail" placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-ink font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850" />
         </div>
 
         <div id="fbError" class="hidden text-[11px] text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-md p-2 font-sans"></div>
 
-        <button type="submit" id="fbSubmitBtn" class="w-full py-2.5 rounded-md bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs transition btn-press shadow-xs hover:shadow flex items-center justify-center gap-1.5 cursor-pointer">
+        <button type="submit" id="fbSubmitBtn" class="w-full py-2.5 rounded-md bg-[#D97757] hover:bg-[#C86241] text-white font-bold text-xs transition btn-press shadow-xs hover:shadow flex items-center justify-center gap-1.5 cursor-pointer">
           <span>Send Anonymous Feedback</span>
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
         </button>

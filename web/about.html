@@ -31,7 +31,20 @@
           },
           colors: {
             surface: { 50: '#eef1f5', 100: '#e2e6eb', 200: '#cbd2d9', 300: '#94a3b8' },
-            ink: { DEFAULT: '#09090b', secondary: '#52525b', tertiary: '#a1a1aa' }
+            ink: { DEFAULT: '#09090b', secondary: '#52525b', tertiary: '#a1a1aa' },
+            brand: {
+              50: '#FAF3F0',
+              100: '#F5E5DF',
+              200: '#ECCBBE',
+              300: '#E1AC99',
+              400: '#DA8E74',
+              500: '#D97757',
+              600: '#C86241',
+              700: '#B34E2E',
+              800: '#934026',
+              900: '#773722',
+              950: '#411A0E',
+            }
           }
         }
       }
@@ -46,22 +59,23 @@
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       letter-spacing: -0.015em;
-      background-color: #eef1f5;
-      background-image: radial-gradient(circle at 50% 0%, #f4f6f9 0%, #eef1f5 55%, #e6ebf1 100%);
+      background-color: #f7f3f0;
+      background-image: radial-gradient(circle at 50% 0%, #faf5f2 0%, #f5eee8 55%, #ede3dc 100%);
       background-attachment: fixed;
     }
     .font-serif, h1.font-serif, h2.font-serif, h3.font-serif, .font-display { font-family: 'Instrument Serif', Georgia, serif; letter-spacing: -0.02em; }
     code, pre, .font-mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; }
-    ::selection { background: #bfdbfe; color: #0f172a; }
+    ::selection { background: #ECCBBE; color: #411A0E; }
+    html.dark ::selection { background: rgba(217, 119, 87, 0.35); color: #FAF3F0; }
     body, header, section, footer { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
 
     /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #1d4ed8; }
+    ::-webkit-scrollbar-thumb:hover { background: #D97757; }
     html.dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
-    html.dark ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+    html.dark ::-webkit-scrollbar-thumb:hover { background: #D97757; }
 
     html.dark { color-scheme: dark; }
     html.dark body {
@@ -90,18 +104,18 @@
     .ci-live-dot { animation: ci-live-blink 2.2s ease-in-out infinite; }
   </style>
 </head>
-<body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-blue-200 selection:text-blue-950">
+<body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-[#ECCBBE] selection:text-[#411A0E] dark:selection:bg-[#D97757]/30 dark:selection:text-[#FAF3F0]">
 
   <!-- Header Navigation -->
   <header class="border-b border-zinc-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
       <div class="flex items-center gap-6">
         <a href="/" class="flex items-center gap-2.5 font-bold tracking-tight text-ink text-sm group">
-          <div class="w-6 h-6 rounded bg-blue-700 flex items-center justify-center text-white font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
+          <div class="w-6 h-6 rounded bg-[#D97757] flex items-center justify-center text-white font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
             S
           </div>
           <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
-          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-200/80 font-medium">v0.1.1</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-medium">v0.1.1</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="/how-it-works" class="hover:text-ink transition">How It Works</a>
@@ -121,7 +135,7 @@
 
         <!-- Light / Dark Theme Switch Button -->
         <button id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light / Dark Theme" aria-label="Toggle theme" class="w-8 h-8 rounded-md bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
-          <svg id="themeSunIcon" class="w-4 h-4 text-blue-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg id="themeSunIcon" class="w-4 h-4 text-[#D97757] hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
           <svg id="themeMoonIcon" class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,7 +143,7 @@
           </svg>
         </button>
 
-        <a href="/#quickstart" title="Start Team Trial" aria-label="Start Team Trial" class="w-8 h-8 rounded-md bg-blue-700 hover:bg-blue-600 text-white transition cursor-pointer btn-press flex items-center justify-center shadow-sm">
+        <a href="/#quickstart" title="Start Team Trial" aria-label="Start Team Trial" class="w-8 h-8 rounded-md bg-[#D97757] hover:bg-[#C86241] text-white transition cursor-pointer btn-press flex items-center justify-center shadow-sm">
           <svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
@@ -150,17 +164,17 @@
 
     <!-- Mobile Navigation Drawer / Dropdown -->
     <div id="mobileNavMenu" class="hidden md:hidden border-t border-zinc-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md px-4 py-3 space-y-1 transition-all duration-200">
-      <a href="/how-it-works" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-blue-700 dark:hover:text-blue-400 transition">
+      <a href="/how-it-works" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>How It Works</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
-      <a href="/claude" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-blue-700 dark:hover:text-blue-400 transition">
+      <a href="/claude" class="flex items-center justify-between py-2 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>Claude Code Integration</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
-      <a href="/about" class="flex items-center justify-between py-2 text-xs font-medium text-blue-700 dark:text-blue-400 font-semibold transition">
+      <a href="/about" class="flex items-center justify-between py-2 text-xs font-medium text-[#B34E2E] dark:text-[#F39C82] font-semibold transition">
         <span>About SiftrCode</span>
-        <span class="text-blue-500 font-mono text-[10px]">✓</span>
+        <span class="text-[#D97757] font-mono text-[10px]">✓</span>
       </a>
     </div>
   </header>
@@ -170,7 +184,7 @@
     
     <!-- Title Area -->
     <div class="space-y-3 border-b border-zinc-200/80 pb-8">
-      <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-blue-50 border border-blue-200 text-blue-900 text-[10px] font-mono font-semibold uppercase tracking-wider">
+      <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] text-[10px] font-mono font-semibold uppercase tracking-wider">
         THE SIFTRCODE MISSION
       </div>
       <h1 class="text-4xl sm:text-5xl font-normal text-ink font-serif tracking-tight">About SiftrCode</h1>
@@ -210,7 +224,7 @@
         </div>
 
         <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-lg space-y-3 shadow-2xs">
-          <div class="w-8 h-8 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200/80 dark:border-blue-900/60 flex items-center justify-center text-sm shadow-2xs">
+          <div class="w-8 h-8 rounded-md bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 flex items-center justify-center text-sm shadow-2xs">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
@@ -252,7 +266,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs pt-1">
           <div class="p-4 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5 shadow-2xs">
             <div class="text-[10px] text-zinc-400 font-sans uppercase font-semibold">General Inquiries &amp; Team Pilots:</div>
-            <a href="mailto:info@siftrcode.com" class="text-blue-700 dark:text-blue-400 font-bold hover:underline flex items-center gap-1.5">
+            <a href="mailto:info@siftrcode.com" class="text-[#B34E2E] dark:text-[#F39C82] font-bold hover:underline flex items-center gap-1.5">
               <svg class="w-3.5 h-3.5 text-zinc-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
               info@siftrcode.com
             </a>
@@ -286,7 +300,7 @@
         </div>
       </div>
       <div class="flex items-center gap-3 shrink-0">
-        <a href="/#quickstart" class="px-5 py-2.5 bg-blue-700 hover:bg-blue-600 text-white rounded-md text-xs font-bold transition btn-press shadow-xs">
+        <a href="/#quickstart" class="px-5 py-2.5 bg-[#D97757] hover:bg-[#C86241] text-white rounded-md text-xs font-bold transition btn-press shadow-xs">
           Run 30-Second Setup →
         </a>
       </div>
@@ -302,7 +316,7 @@
       </p>
       
       <nav class="flex flex-wrap items-center justify-center md:justify-end gap-x-5 gap-y-2 font-sans font-medium text-zinc-600 dark:text-zinc-400">
-        <a href="/about" class="text-blue-700 dark:text-blue-400 font-medium transition">About us</a>
+        <a href="/about" class="text-[#B34E2E] dark:text-[#F39C82] font-semibold transition">About us</a>
         <a href="/how-it-works" class="hover:text-ink transition">How it works</a>
         <a href="/claude" class="hover:text-ink transition">Claude Code</a>
         <a href="/privacy" class="hover:text-ink transition">Privacy</a>
@@ -310,7 +324,7 @@
         <a href="https://github.com/kyzoeth/siftrcode" target="_blank" rel="noopener noreferrer" class="hover:text-ink transition">GitHub</a>
         <a href="mailto:info@siftrcode.com" class="hover:text-ink transition">Contact</a>
         <button onclick="openFeedbackModal()" class="hover:text-ink transition cursor-pointer flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
-          <svg class="w-3.5 h-3.5 text-blue-700 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3.5 h-3.5 text-[#D97757] dark:text-[#F39C82]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
           </svg>
           Feedback
@@ -328,8 +342,8 @@
       </button>
 
       <div class="space-y-1 text-left pr-6">
-        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-blue-300 text-[10px] font-mono font-semibold uppercase tracking-wider">
-          <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] text-[10px] font-mono font-semibold uppercase tracking-wider">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#D97757]"></span>
           ANONYMOUS FEEDBACK
         </div>
         <h3 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight leading-snug">Help us improve SiftrCode</h3>
@@ -342,15 +356,15 @@
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1.5 text-[10px] uppercase tracking-wider">Category</label>
           <div class="grid grid-cols-3 gap-1.5 text-[11px]">
-            <label class="flex items-center justify-center gap-1 py-1.5 px-2 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 cursor-pointer hover:border-blue-500 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-950/50 has-[:checked]:text-blue-700 dark:has-[:checked]:text-blue-300 transition">
+            <label class="flex items-center justify-center gap-1 py-1.5 px-2 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 cursor-pointer hover:border-[#D97757] has-[:checked]:border-[#D97757] has-[:checked]:bg-[#FAF3F0] dark:has-[:checked]:bg-[#411A0E]/40 has-[:checked]:text-[#B34E2E] dark:has-[:checked]:text-[#F39C82] transition">
               <input type="radio" name="fbCategory" value="feature" class="hidden" checked>
               <span>Idea / Feature</span>
             </label>
-            <label class="flex items-center justify-center gap-1 py-1.5 px-2 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 cursor-pointer hover:border-blue-500 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-950/50 has-[:checked]:text-blue-700 dark:has-[:checked]:text-blue-300 transition">
+            <label class="flex items-center justify-center gap-1 py-1.5 px-2 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 cursor-pointer hover:border-[#D97757] has-[:checked]:border-[#D97757] has-[:checked]:bg-[#FAF3F0] dark:has-[:checked]:bg-[#411A0E]/40 has-[:checked]:text-[#B34E2E] dark:has-[:checked]:text-[#F39C82] transition">
               <input type="radio" name="fbCategory" value="bug" class="hidden">
               <span>Bug / Issue</span>
             </label>
-            <label class="flex items-center justify-center gap-1 py-1.5 px-2 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 cursor-pointer hover:border-blue-500 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-950/50 has-[:checked]:text-blue-700 dark:has-[:checked]:text-blue-300 transition">
+            <label class="flex items-center justify-center gap-1 py-1.5 px-2 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 cursor-pointer hover:border-[#D97757] has-[:checked]:border-[#D97757] has-[:checked]:bg-[#FAF3F0] dark:has-[:checked]:bg-[#411A0E]/40 has-[:checked]:text-[#B34E2E] dark:has-[:checked]:text-[#F39C82] transition">
               <input type="radio" name="fbCategory" value="general" class="hidden">
               <span>General DX</span>
             </label>
@@ -359,17 +373,17 @@
 
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Your Feedback *</label>
-          <textarea id="fbMessage" required rows="4" placeholder="What works well, what feels clunky, or what language/feature should we support next?..." class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-ink font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850 resize-none"></textarea>
+          <textarea id="fbMessage" required rows="4" placeholder="What works well, what feels clunky, or what language/feature should we support next?..." class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-ink font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850 resize-none"></textarea>
         </div>
 
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Email (Optional — only if you'd like a response)</label>
-          <input type="email" id="fbEmail" placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-200/50 outline-none text-ink font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850" />
+          <input type="email" id="fbEmail" placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-ink font-sans text-sm sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-850" />
         </div>
 
         <div id="fbError" class="hidden text-[11px] text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-md p-2 font-sans"></div>
 
-        <button type="submit" id="fbSubmitBtn" class="w-full py-2.5 rounded-md bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs transition btn-press shadow-xs hover:shadow flex items-center justify-center gap-1.5 cursor-pointer">
+        <button type="submit" id="fbSubmitBtn" class="w-full py-2.5 rounded-md bg-[#D97757] hover:bg-[#C86241] text-white font-bold text-xs transition btn-press shadow-xs hover:shadow flex items-center justify-center gap-1.5 cursor-pointer">
           <span>Send Anonymous Feedback</span>
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
         </button>
