@@ -7,7 +7,7 @@
 
 ## [Skeleton Interface] `skeleton/typescript.ts`
 ```typescript
-// [SiftrCode Skeleton] skeleton/typescript.ts (AST Interface)
+// [SiftrCode Synthesized Interface] skeleton/typescript.ts
 import * as ts from 'typescript';
 import { SkeletonResult } from './types';
 /**
@@ -20,7 +20,7 @@ export function skeletonizeTypeScript(code: string, filePath: string = 'file.ts'
 
 ## [Skeleton Interface] `skeleton/types.ts`
 ```typescript
-// [SiftrCode Skeleton] skeleton/types.ts (AST Interface)
+// [SiftrCode Synthesized Interface] skeleton/types.ts
 export interface SkeletonResult {
     filePath: string;
     language: 'typescript' | 'javascript' | 'python' | 'unknown';
@@ -44,7 +44,7 @@ export interface PruneDecision {
 
 ## [Skeleton Interface] `skeleton/python_ast.py`
 ```python
-# [SiftrCode Skeleton] skeleton/python_ast.py (AST Interface)
+# [SiftrCode Synthesized Interface] skeleton/python_ast.py
 """
 SiftrCode Python AST Skeletonizer
 Reads Python code from stdin and emits skeletonized AST with function bodies replaced by `...`

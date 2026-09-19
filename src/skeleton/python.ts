@@ -29,7 +29,7 @@ export function skeletonizePython(code: string, filePath: string = 'file.py'): S
     }
   }
 
-  const skeletonContent = `# [SiftrCode Skeleton] ${filePath} (AST Interface)\n` + skeletonBody.trim() + '\n';
+  const skeletonContent = `# [SiftrCode Synthesized Interface] ${filePath}\n` + skeletonBody.trim() + '\n';
 
   const origLines = code.split('\n').length;
   const skelLines = skeletonContent.split('\n').length;

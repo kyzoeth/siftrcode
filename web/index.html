@@ -291,30 +291,58 @@
 
   <!-- Interactive Dual-Viewport Workbench (Centered Product Experience) -->
   <section id="workbench" class="py-12 px-4 relative z-10">
-    <div class="max-w-6xl mx-auto space-y-6">
+    <div class="max-w-6xl mx-auto space-y-5">
       
-      <!-- Minimalist, Breathable Header Bar -->
+      <!-- Minimalist, Breathable Header Bar with Language Selector & Context Mass -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-zinc-200/70 font-mono text-xs">
         <div class="flex items-center gap-2">
           <span class="text-zinc-400 text-[11px] font-medium uppercase tracking-wider mr-1">LANG:</span>
-          <div class="inline-flex p-1 rounded-xl bg-zinc-100/80 border border-zinc-200/70">
-            <button onclick="setLang('ts', true)" id="tab-ts" class="px-3 py-1 rounded-lg bg-white text-zinc-950 font-medium shadow-xs transition">TypeScript</button>
-            <button onclick="setLang('py', true)" id="tab-py" class="px-3 py-1 rounded-lg text-zinc-500 hover:text-zinc-950 transition">Python</button>
-            <button onclick="setLang('go', true)" id="tab-go" class="px-3 py-1 rounded-lg text-zinc-500 hover:text-zinc-950 transition">Go</button>
-            <button onclick="setLang('rs', true)" id="tab-rs" class="px-3 py-1 rounded-lg text-zinc-500 hover:text-zinc-950 transition">Rust</button>
+          <div class="inline-flex p-1 rounded-xl bg-zinc-100/90 border border-zinc-200/80 gap-1">
+            <button onclick="setLang('ts', true)" id="tab-ts" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+              <span>TypeScript</span>
+            </button>
+            <button onclick="setLang('py', true)" id="tab-py" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>Python</span>
+            </button>
+            <button onclick="setLang('go', true)" id="tab-go" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition">
+              <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
+              <span>Go</span>
+            </button>
+            <button onclick="setLang('rs', true)" id="tab-rs" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition">
+              <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+              <span>Rust</span>
+            </button>
           </div>
         </div>
 
         <div class="flex items-center gap-3 text-xs">
           <div class="flex items-center gap-2">
             <span class="text-zinc-400 text-[11px]">Context Mass:</span>
-            <span class="text-rose-500 font-semibold" id="bridgeRaw">1,420 tokens</span>
+            <span class="text-rose-500 font-semibold" id="bridgeRaw">1,840 tokens</span>
             <span class="text-zinc-300">➔</span>
-            <span class="text-amber-500 font-bold" id="bridgeSkel">112 tokens</span>
+            <span class="text-amber-500 font-bold" id="bridgeSkel">138 tokens</span>
           </div>
           <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-semibold text-[11px]" id="bridgeReductionTag">
-            -92.1% Evaporated
+            -92.5% Evaporated
           </span>
+        </div>
+      </div>
+
+      <!-- Language Information & Synthesis Rule Banner -->
+      <div id="langIntelBar" class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-white border border-zinc-200/80 shadow-2xs text-xs font-mono">
+        <div class="flex items-center gap-2.5">
+          <span id="langIntelBadge" class="px-2 py-0.5 rounded-md font-semibold text-[10px] uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+            TypeScript Synthesis
+          </span>
+          <span id="langIntelText" class="text-zinc-600 text-[11px] font-sans">
+            Strips function &amp; method bodies • Preserves 100% exported interfaces, type aliases, generic signatures, and class layouts
+          </span>
+        </div>
+        <div class="flex items-center gap-2 text-[11px] text-zinc-400 shrink-0 self-end sm:self-auto">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span>Zero-Loss Interface</span>
         </div>
       </div>
 
@@ -324,11 +352,12 @@
         <!-- Left: Full Implementation Source -->
         <div class="bg-white border border-zinc-200/90 rounded-2xl overflow-hidden shadow-xs flex flex-col transition hover:border-zinc-300">
           <div class="bg-zinc-50/80 px-4 py-2.5 border-b border-zinc-100 flex items-center justify-between text-xs font-mono">
-            <span class="text-zinc-600 font-medium flex items-center gap-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-              RAW IMPLEMENTATION (DEFAULT INGESTION)
-            </span>
-            <span class="text-rose-600 font-semibold text-[11px]" id="rawTokenCount">~1,420 tokens</span>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+              <span id="rawFileBadge" class="font-semibold text-zinc-800 bg-white px-2 py-0.5 rounded border border-zinc-200">src/services/user_service.ts</span>
+              <span class="text-zinc-400 text-[10px] hidden sm:inline">(Raw Source)</span>
+            </div>
+            <span class="text-rose-600 font-semibold text-[11px]" id="rawTokenCount">~1,840 tokens</span>
           </div>
           <textarea id="rawInput" oninput="onInputChanged()" spellcheck="false" class="w-full h-84 p-4 font-mono text-xs text-zinc-800 leading-relaxed border-0 focus:outline-none resize-none font-normal bg-transparent"></textarea>
           <div class="bg-zinc-50/50 px-4 py-2 border-t border-zinc-100 text-[11px] font-mono text-zinc-400 flex items-center justify-between">
@@ -339,61 +368,64 @@
 
         <!-- Center: Token Evaporation & Vanishing Chamber (Desktop) -->
         <div class="hidden lg:flex flex-col items-center justify-center relative w-full h-84 my-auto select-none pointer-events-none">
-          <!-- Vertical Luminous Guide -->
-          <div class="w-px h-64 bg-gradient-to-b from-transparent via-amber-300/60 to-transparent relative flex items-center justify-center">
+          <!-- Vertical Luminous Guide with dynamic color -->
+          <div id="vaporGuide" class="w-px h-64 bg-gradient-to-b from-transparent via-blue-400/60 to-transparent relative flex items-center justify-center transition-all duration-500">
             
-            <!-- Central Synthesis Glyph -->
-            <div class="w-7 h-7 rounded-full bg-white border border-amber-300 shadow-sm flex items-center justify-center text-amber-600 text-xs font-serif z-10 animate-pulse" title="Zero-Loss Synthesis">
+            <!-- Central Synthesis Glyph with dynamic color -->
+            <div id="vaporGlyph" class="w-7 h-7 rounded-full bg-white border border-blue-400 shadow-sm flex items-center justify-center text-blue-600 text-xs font-serif z-10 animate-pulse transition-all duration-300" title="Zero-Loss Synthesis">
               ⟡
             </div>
 
-            <!-- Evaporating Code Tokens (Dissolving into thin vapor) -->
-            <span class="vapor-token-1 absolute text-[10px] font-mono text-amber-800 bg-amber-50/95 border border-amber-200/80 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
-              await db.query()
-            </span>
-            <span class="vapor-token-2 absolute text-[10px] font-mono text-amber-800 bg-amber-50/95 border border-amber-200/80 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
-              for (let i = 0; ...)
-            </span>
-            <span class="vapor-token-3 absolute text-[10px] font-mono text-amber-800 bg-amber-50/95 border border-amber-200/80 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
-              return res.json()
-            </span>
-            <span class="vapor-token-4 absolute text-[10px] font-mono text-amber-800 bg-amber-50/95 border border-amber-200/80 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
-              try { ... }
-            </span>
-            <span class="vapor-token-5 absolute text-[10px] font-mono text-amber-800 bg-amber-50/95 border border-amber-200/80 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
-              throw new Error()
-            </span>
+            <!-- Dynamic Evaporating Code Tokens Container -->
+            <div id="vaporTokensContainer" class="contents">
+              <span class="vapor-token-1 absolute text-[10px] font-mono text-blue-900 bg-blue-50/95 border border-blue-200/90 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
+                await this.db.query(...)
+              </span>
+              <span class="vapor-token-2 absolute text-[10px] font-mono text-blue-900 bg-blue-50/95 border border-blue-200/90 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
+                for (let attempt = 0; ...)
+              </span>
+              <span class="vapor-token-3 absolute text-[10px] font-mono text-blue-900 bg-blue-50/95 border border-blue-200/90 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
+                return await tx.insert(data)
+              </span>
+              <span class="vapor-token-4 absolute text-[10px] font-mono text-blue-900 bg-blue-50/95 border border-blue-200/90 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
+                this.logger.error(...)
+              </span>
+              <span class="vapor-token-5 absolute text-[10px] font-mono text-blue-900 bg-blue-50/95 border border-blue-200/90 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
+                throw new Error(...)
+              </span>
+            </div>
 
           </div>
-          <div class="text-[9px] font-mono uppercase tracking-widest text-zinc-400 mt-2">
+          <div id="vaporLabel" class="text-[9px] font-mono uppercase tracking-widest text-blue-500 font-semibold mt-2 transition-colors">
             VAPORIZED
           </div>
         </div>
 
         <!-- Mobile Evaporation Divider -->
         <div class="flex lg:hidden items-center justify-center gap-2 py-2 text-xs font-mono text-amber-700">
-          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-          <span>Implementation bodies dissolve into zero-loss interface ↓</span>
+          <span id="mobilePingDot" class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping"></span>
+          <span id="mobileIntelText">Implementation bodies dissolve into zero-loss interface ↓</span>
         </div>
 
         <!-- Right: Synthesized Context (Fed to Agent) -->
         <div class="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden shadow-lg flex flex-col text-white relative transition hover:border-zinc-700">
           <div class="bg-zinc-900/90 px-4 py-2.5 border-b border-zinc-800/90 flex items-center justify-between text-xs font-mono">
-            <span class="text-amber-400 font-medium flex items-center gap-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 signal-ping"></span>
-              SYNTHESIZED CONTEXT (FED TO AGENT)
-            </span>
-            <span class="text-amber-400 font-bold text-[11px]" id="skelTokenCount">~112 tokens (-92.1%)</span>
+            <div class="flex items-center gap-2">
+              <span id="skelPingDot" class="w-2 h-2 rounded-full bg-blue-400 signal-ping"></span>
+              <span id="skelFileBadge" class="font-semibold text-xs px-2 py-0.5 rounded border text-blue-300 bg-blue-950/70 border-blue-800/80">src/services/user_service.ts.siftr</span>
+              <span class="text-emerald-400 text-[10px] hidden sm:inline">Zero-Loss Interface</span>
+            </div>
+            <span class="font-bold text-[11px] text-blue-300" id="skelTokenCount">~138 tokens (-92.5%)</span>
           </div>
           <div class="relative flex-1 overflow-hidden">
-            <pre id="skelOutput" class="w-full h-84 p-4 font-mono text-xs text-amber-100/90 leading-relaxed overflow-auto whitespace-pre-wrap selection:bg-amber-400 selection:text-zinc-950 signal-glow"></pre>
+            <pre id="skelOutput" class="w-full h-84 p-4 font-mono text-xs text-zinc-200 leading-relaxed overflow-auto whitespace-pre-wrap selection:bg-amber-400 selection:text-zinc-950 signal-glow"></pre>
           </div>
           <div class="bg-zinc-900/60 px-4 py-2 border-t border-zinc-800/80 text-[11px] font-mono text-zinc-400 flex items-center justify-between">
             <span class="text-emerald-400 flex items-center gap-1.5">
               <svg class="w-3.5 h-3.5 text-emerald-400 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               100% Types &amp; Signatures Preserved
             </span>
-            <span id="savedTokensCount" class="text-amber-400 font-medium">Saved ~1,308 tokens</span>
+            <span id="savedTokensCount" class="text-amber-400 font-medium">Saved ~1,702 tokens</span>
           </div>
         </div>
 
@@ -714,18 +746,188 @@ impl Gateway for StripeGateway {
 }`
     };
 
+    const langConfig = {
+      ts: {
+        name: 'TypeScript',
+        ext: 'ts',
+        color: '#3178c6',
+        tabActiveClass: 'bg-[#3178c6] text-white font-medium shadow-md shadow-blue-500/25 ring-1 ring-blue-400/40',
+        tabInactiveClass: 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/60',
+        rawBadge: 'src/services/user_service.ts',
+        skelBadge: 'src/services/user_service.ts.siftr',
+        badgeStyle: 'text-blue-300 bg-blue-950/70 border-blue-800/80',
+        guideGradient: 'via-blue-400/60',
+        glyphBorder: 'border-blue-400 text-blue-600 shadow-blue-200/50',
+        pingColor: 'bg-blue-400',
+        vaporLabelColor: 'text-blue-500',
+        vaporPillClass: 'text-blue-900 bg-blue-50/95 border-blue-200/90',
+        intelTitle: 'TypeScript / TSX Synthesis',
+        intelBadgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+        intelDesc: 'Strips function & method bodies • Preserves 100% exported interfaces, type aliases, generic signatures, and class layouts',
+        vaporTokens: [
+          'await this.db.query(...)',
+          'for (let attempt = 0; ...)',
+          'return await tx.insert(data)',
+          'this.logger.error(...)',
+          'throw new Error(...)'
+        ]
+      },
+      py: {
+        name: 'Python',
+        ext: 'py',
+        color: '#10b981',
+        tabActiveClass: 'bg-[#10b981] text-white font-medium shadow-md shadow-emerald-500/25 ring-1 ring-emerald-400/40',
+        tabInactiveClass: 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/60',
+        rawBadge: 'api/billing/stripe_gateway.py',
+        skelBadge: 'api/billing/stripe_gateway.py.siftr',
+        badgeStyle: 'text-emerald-300 bg-emerald-950/70 border-emerald-800/80',
+        guideGradient: 'via-emerald-400/60',
+        glyphBorder: 'border-emerald-400 text-emerald-600 shadow-emerald-200/50',
+        pingColor: 'bg-emerald-400',
+        vaporLabelColor: 'text-emerald-500',
+        vaporPillClass: 'text-emerald-900 bg-emerald-50/95 border-emerald-200/90',
+        intelTitle: 'Python 3 Synthesis',
+        intelBadgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        intelDesc: 'Strips loops, retry blocks & calculations into ellipsis (...) • Preserves PEP 484 type hints, docstrings & class structures',
+        vaporTokens: [
+          'for retry in range(3):',
+          'except stripe.CardError as e:',
+          'self.client.charges.create(...)',
+          'self._verify_credentials()',
+          'return {"status": "declined"}'
+        ]
+      },
+      go: {
+        name: 'Go',
+        ext: 'go',
+        color: '#00add8',
+        tabActiveClass: 'bg-[#00add8] text-white font-medium shadow-md shadow-cyan-500/25 ring-1 ring-cyan-400/40',
+        tabInactiveClass: 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/60',
+        rawBadge: 'pkg/server/router.go',
+        skelBadge: 'pkg/server/router.go.siftr',
+        badgeStyle: 'text-cyan-300 bg-cyan-950/70 border-cyan-800/80',
+        guideGradient: 'via-cyan-400/60',
+        glyphBorder: 'border-cyan-400 text-cyan-600 shadow-cyan-200/50',
+        pingColor: 'bg-cyan-400',
+        vaporLabelColor: 'text-cyan-500',
+        vaporPillClass: 'text-cyan-900 bg-cyan-50/95 border-cyan-200/90',
+        intelTitle: 'Go (Golang) Synthesis',
+        intelBadgeClass: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+        intelDesc: 'Strips goroutines, handlers & error branches • Preserves structs, method sets, interfaces & receiver contracts',
+        vaporTokens: [
+          'http.ListenAndServe(":8080")',
+          'mux := http.NewServeMux()',
+          'if err != nil { return err }',
+          'select { case <-ctx.Done(): }',
+          'return &Server{cfg: cfg}'
+        ]
+      },
+      rs: {
+        name: 'Rust',
+        ext: 'rs',
+        color: '#f97316',
+        tabActiveClass: 'bg-[#f97316] text-white font-medium shadow-md shadow-orange-500/25 ring-1 ring-orange-400/40',
+        tabInactiveClass: 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/60',
+        rawBadge: 'crates/engine/src/gateway.rs',
+        skelBadge: 'crates/engine/src/gateway.rs.siftr',
+        badgeStyle: 'text-orange-300 bg-orange-950/70 border-orange-800/80',
+        guideGradient: 'via-orange-400/60',
+        glyphBorder: 'border-orange-400 text-orange-600 shadow-orange-200/50',
+        pingColor: 'bg-orange-400',
+        vaporLabelColor: 'text-orange-500',
+        vaporPillClass: 'text-orange-900 bg-orange-50/95 border-orange-200/90',
+        intelTitle: 'Rust Synthesis',
+        intelBadgeClass: 'bg-orange-50 text-orange-700 border-orange-200',
+        intelDesc: 'Strips trait method implementations & match arms • Preserves trait contracts, public structs, enums & Result types',
+        vaporTokens: [
+          'Ok(format!("ch_{}", id))',
+          'impl Gateway for Stripe',
+          'match self.verify() { ... }',
+          'let mut stream = ...',
+          'Err("network_timeout")'
+        ]
+      }
+    };
+
     let curLang = 'ts';
     let debounceTimer = null;
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function highlightCode(code, lang) {
+      const lines = code.split('\n');
+      const highlightedLines = lines.map(line => {
+        const trimmed = line.trim();
+        if (trimmed.includes('dissolved by SiftrCode')) {
+          const cleanText = trimmed.replace(/^(\/\/|#)\s*(⟡\s*)?/, '').replace(/^\[\s*/, '').replace(/\s*\]$/, '');
+          return `<div class="my-2 py-1 px-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 font-semibold text-[11px] flex items-center gap-1.5"><span class="text-amber-400">⟡</span> ${escapeHtml(cleanText)}</div>`;
+        }
+        if (trimmed.startsWith('// [SiftrCode') || trimmed.startsWith('# [SiftrCode')) {
+          return `<span class="text-zinc-500 font-medium">${escapeHtml(line)}</span>`;
+        }
+        if (trimmed.startsWith('//') || trimmed.startsWith('#') || trimmed.startsWith('/*') || trimmed.startsWith('*') || trimmed.startsWith('"""')) {
+          return `<span class="text-zinc-500 italic">${escapeHtml(line)}</span>`;
+        }
+
+        let kwColor = 'text-blue-400';
+        let typeColor = 'text-amber-300';
+        if (lang === 'py') {
+          kwColor = 'text-emerald-400';
+          typeColor = 'text-amber-300';
+        } else if (lang === 'go') {
+          kwColor = 'text-cyan-400';
+          typeColor = 'text-amber-300';
+        } else if (lang === 'rs') {
+          kwColor = 'text-orange-400';
+          typeColor = 'text-amber-300';
+        }
+
+        const langKeywords = {
+          ts: new Set(['export', 'class', 'interface', 'type', 'async', 'public', 'private', 'protected', 'constructor', 'return', 'import', 'from', 'const', 'let', 'extends', 'implements', 'new', 'throw', 'try', 'catch', 'null', 'undefined']),
+          py: new Set(['def', 'class', 'import', 'from', 'return', 'async', 'await', 'self', 'try', 'except', 'for', 'in', 'raise', 'None', 'True', 'False', 'pass']),
+          go: new Set(['package', 'import', 'type', 'struct', 'interface', 'func', 'return', 'var', 'const', 'select', 'case', 'chan', 'nil']),
+          rs: new Set(['pub', 'trait', 'struct', 'enum', 'impl', 'fn', 'for', 'async', 'const', 'return', 'use', 'match', 'let', 'mut', 'where', 'type', 'self', 'Result', 'Ok', 'Err'])
+        };
+
+        const typeSet = new Set(['Promise', 'User', 'UserCreateInput', 'Database', 'Logger', 'string', 'number', 'boolean', 'any', 'void', 'Dict', 'List', 'Optional', 'Union', 'Tuple', 'Any', 'str', 'int', 'bool', 'float', 'Config', 'Server', 'ServeMux', 'Context', 'error', 'String', 'u64', 'u32', 'i64', 'usize', 'Gateway', 'StripeGateway']);
+
+        const kws = langKeywords[lang] || langKeywords.ts;
+
+        return line.replace(/(["'`].*?["'`])|([A-Za-z_][A-Za-z0-9_]*)|([<>&])|([^\s\w"'`<>&]+)/g, (match, str, id, sym) => {
+          if (str) {
+            return `<span class="text-emerald-300/90">${escapeHtml(str)}</span>`;
+          }
+          if (id) {
+            if (kws.has(id)) {
+              return `<span class="${kwColor} font-semibold">${id}</span>`;
+            }
+            if (typeSet.has(id)) {
+              return `<span class="${typeColor}">${id}</span>`;
+            }
+            return id;
+          }
+          if (sym) {
+            return escapeHtml(sym);
+          }
+          return escapeHtml(match);
+        });
+      });
+
+      return highlightedLines.join('\n');
+    }
 
     async function renderAST() {
       const code = document.getElementById('rawInput').value;
       const rawTokens = Math.ceil(code.length / 4);
+      const conf = langConfig[curLang];
 
       try {
         const res = await fetch('/api/skeleton', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: code, language: curLang })
+          body: JSON.stringify({ code: code, language: curLang, filename: conf.rawBadge })
         });
 
         if (res.ok) {
@@ -736,14 +938,14 @@ impl Gateway for StripeGateway {
       } catch (e) {}
 
       // Fallback
-      let skel = `// [SiftrCode Synthesized Interface] service.${curLang}\n`;
+      let skel = (curLang === 'py' ? `# [SiftrCode Synthesized Interface] ${conf.rawBadge}\n` : `// [SiftrCode Synthesized Interface] ${conf.rawBadge}\n`);
       const lines = code.split('\n');
       const filtered = lines.filter(l => {
         const t = l.trim();
         return t.startsWith('import') || t.startsWith('export') || t.startsWith('type') ||
                t.startsWith('interface') || t.startsWith('pub') || t.startsWith('package') ||
                t.startsWith('func') || t.startsWith('class') || t.startsWith('def') ||
-               t.startsWith('/**') || t.startsWith('*') || t.startsWith('//');
+               t.startsWith('/**') || t.startsWith('*') || t.startsWith('//') || t.startsWith('#');
       });
       skel += filtered.join('\n') + '\n\n// ⟡ [ Implementation bodies dissolved by SiftrCode • 100% types preserved ]';
       const skelTokens = Math.ceil(skel.length / 4);
@@ -808,7 +1010,8 @@ impl Gateway for StripeGateway {
       animateNumber('bridgeSkel', prevMetrics.skelTokens, skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
       animateNumber('bridgeReductionTag', prevMetrics.reduction, reduction, duration, v => `-${v.toFixed(1)}% Evaporated`);
 
-      document.getElementById('skelOutput').innerText = skel;
+      // Render syntax-highlighted code
+      document.getElementById('skelOutput').innerHTML = highlightCode(skel, curLang);
 
       // Persist metrics for smooth continuous tweening
       prevMetrics = {
@@ -821,7 +1024,6 @@ impl Gateway for StripeGateway {
         savedTokens: saved
       };
     }
-
 
     function copyCommand() {
       navigator.clipboard.writeText('npx siftrcode audit');
@@ -841,14 +1043,68 @@ impl Gateway for StripeGateway {
       if (fromUser) userInteracted = true;
       curLang = lang;
       langIndex = langs.indexOf(lang);
+      const conf = langConfig[lang];
+
+      // 1. Update Tabs
       langs.forEach(l => {
         const el = document.getElementById('tab-' + l);
+        const cfg = langConfig[l];
         if (l === lang) {
-          el.className = 'px-2.5 py-1 rounded-md bg-zinc-900 text-white font-medium shadow-sm';
+          el.className = `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition ${cfg.tabActiveClass}`;
         } else {
-          el.className = 'px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink transition';
+          el.className = `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition ${cfg.tabInactiveClass}`;
         }
       });
+
+      // 2. Update Intel Banner
+      const intelBadge = document.getElementById('langIntelBadge');
+      if (intelBadge) {
+        intelBadge.className = `px-2 py-0.5 rounded-md font-semibold text-[10px] uppercase tracking-wider shrink-0 ${conf.intelBadgeClass}`;
+        intelBadge.innerText = conf.intelTitle;
+      }
+      const intelDesc = document.getElementById('langIntelText');
+      if (intelDesc) {
+        intelDesc.innerText = conf.intelDesc;
+      }
+
+      // 3. Update File Badges
+      const rawBadge = document.getElementById('rawFileBadge');
+      if (rawBadge) rawBadge.innerText = conf.rawBadge;
+
+      const skelBadge = document.getElementById('skelFileBadge');
+      if (skelBadge) {
+        skelBadge.innerText = conf.skelBadge;
+        skelBadge.className = `font-semibold text-xs px-2 py-0.5 rounded border transition-colors ${conf.badgeStyle}`;
+      }
+
+      const skelPing = document.getElementById('skelPingDot');
+      if (skelPing) {
+        skelPing.className = `w-2 h-2 rounded-full signal-ping transition-colors ${conf.pingColor}`;
+      }
+
+      // 4. Update Vapor Chamber
+      const guide = document.getElementById('vaporGuide');
+      if (guide) {
+        guide.className = `w-px h-64 bg-gradient-to-b from-transparent ${conf.guideGradient} to-transparent relative flex items-center justify-center transition-all duration-300`;
+      }
+      const glyph = document.getElementById('vaporGlyph');
+      if (glyph) {
+        glyph.className = `w-7 h-7 rounded-full bg-white border ${conf.glyphBorder} shadow-sm flex items-center justify-center text-xs font-serif z-10 animate-pulse transition-all duration-300`;
+      }
+      const vLabel = document.getElementById('vaporLabel');
+      if (vLabel) {
+        vLabel.className = `text-[9px] font-mono uppercase tracking-widest font-semibold mt-2 transition-colors ${conf.vaporLabelColor}`;
+      }
+
+      // Update 5 Floating Vapor Tokens
+      const vaporTokensContainer = document.getElementById('vaporTokensContainer');
+      if (vaporTokensContainer) {
+        vaporTokensContainer.innerHTML = conf.vaporTokens.map((tok, i) => {
+          return `<span class="vapor-token-${i + 1} absolute text-[10px] font-mono ${conf.vaporPillClass} px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">${escapeHtml(tok)}</span>`;
+        }).join('');
+      }
+
+      // 5. Update Source Code
       document.getElementById('rawInput').value = samples[lang];
       renderAST();
     }

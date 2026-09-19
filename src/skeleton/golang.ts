@@ -80,7 +80,7 @@ export function skeletonizeGolang(code: string, filePath: string = 'file.go'): S
   }
 
   const skeletonBody = resultLines.join('\n');
-  const skeletonContent = `// [SiftrCode Skeleton] ${filePath} (AST Interface)\n` + skeletonBody.trim() + '\n';
+  const skeletonContent = `// [SiftrCode Synthesized Interface] ${filePath}\n` + skeletonBody.trim() + '\n';
 
   const origTokens = Math.ceil(code.length / 4);
   const skelTokens = Math.ceil(skeletonContent.length / 4);

@@ -6,3 +6,4 @@ siftr_context.md
 *.log
 benchmarks/
 .cursor/
+data/

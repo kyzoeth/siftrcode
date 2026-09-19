@@ -174,7 +174,7 @@ export function skeletonizeTypeScript(code: string, filePath: string = 'file.ts'
   transformedResult.dispose();
 
   // Clean up formatting
-  const skeletonContent = `// [SiftrCode Skeleton] ${filePath} (AST Interface)\n` + rawSkeleton.trim() + '\n';
+  const skeletonContent = `// [SiftrCode Synthesized Interface] ${filePath}\n` + rawSkeleton.trim() + '\n';
 
   const origLines = code.split('\n').length;
   const skelLines = skeletonContent.split('\n').length;
