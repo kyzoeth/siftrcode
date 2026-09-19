@@ -33,11 +33,11 @@
               tertiary: '#a1a1aa'
             },
             signal: {
-              emerald: '#059669',
-              lightEmerald: '#10b981',
-              softBg: '#ecfdf5',
-              crimson: '#e11d48',
-              amber: '#d97706'
+              yellow: '#f59e0b',
+              gold: '#eab308',
+              amber: '#d97706',
+              softBg: '#fffbeb',
+              crimson: '#e11d48'
             }
           }
         }
@@ -46,7 +46,7 @@
   </script>
 
   <style>
-    ::selection { background: #10b981; color: #fff; }
+    ::selection { background: #fbbf24; color: #18181b; }
 
     /* Luminous Grid Pattern */
     .bg-grid {
@@ -79,8 +79,8 @@
       transition: border-color 0.25s ease, box-shadow 0.25s ease;
     }
     .glow-card:hover {
-      border-color: #10b981;
-      box-shadow: 0 12px 32px -10px rgba(16, 185, 129, 0.12);
+      border-color: #f59e0b;
+      box-shadow: 0 12px 32px -10px rgba(245, 158, 11, 0.18);
     }
 
     /* Token Diff Pulse */
@@ -96,29 +96,29 @@
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #10b981; }
+    ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
 
     /* Continuous Glowing 90% Badge */
-    @keyframes continuous-emerald-glow {
+    @keyframes continuous-yellow-glow {
       0%, 100% {
-        box-shadow: 0 0 16px -2px rgba(16, 185, 129, 0.4), 0 0 5px rgba(16, 185, 129, 0.3);
-        border-color: rgba(16, 185, 129, 0.55);
+        box-shadow: 0 0 18px -2px rgba(245, 158, 11, 0.45), 0 0 6px rgba(245, 158, 11, 0.3);
+        border-color: rgba(245, 158, 11, 0.6);
         transform: scale(1);
       }
       50% {
-        box-shadow: 0 0 30px 4px rgba(16, 185, 129, 0.65), 0 0 10px rgba(16, 185, 129, 0.5);
-        border-color: rgba(16, 185, 129, 0.9);
+        box-shadow: 0 0 32px 5px rgba(245, 158, 11, 0.7), 0 0 12px rgba(245, 158, 11, 0.5);
+        border-color: rgba(245, 158, 11, 0.95);
         transform: scale(1.025);
       }
     }
 
     .hero-glow-badge {
-      animation: continuous-emerald-glow 3s ease-in-out infinite;
+      animation: continuous-yellow-glow 3s ease-in-out infinite;
     }
 
     /* Continuous Shimmer Sweep across 90% */
     .hero-pct-text {
-      background: linear-gradient(90deg, #047857 0%, #059669 30%, #34d399 50%, #059669 70%, #047857 100%);
+      background: linear-gradient(90deg, #b45309 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #b45309 100%);
       background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -142,20 +142,20 @@
       left: 0;
       right: 0;
       height: 2px;
-      background: linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.3) 15%, #34d399 50%, rgba(16, 185, 129, 0.3) 85%, transparent 100%);
-      box-shadow: 0 0 14px #10b981, 0 0 28px rgba(16, 185, 129, 0.5);
+      background: linear-gradient(90deg, transparent 0%, rgba(245, 158, 11, 0.3) 15%, #fbbf24 50%, rgba(245, 158, 11, 0.3) 85%, transparent 100%);
+      box-shadow: 0 0 14px #f59e0b, 0 0 28px rgba(245, 158, 11, 0.5);
       pointer-events: none;
       animation: scanline-sweep 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
       z-index: 15;
     }
   </style>
 </head>
-<body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-signal-lightEmerald selection:text-white">
+<body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-amber-400 selection:text-zinc-950">
 
   <!-- Background Ambient Lights -->
   <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
-    <div class="ambient-glow w-[600px] h-[600px] bg-emerald-200/50 -top-40 -left-20"></div>
-    <div class="ambient-glow w-[500px] h-[500px] bg-cyan-200/40 top-96 -right-20" style="animation-delay: -5s;"></div>
+    <div class="ambient-glow w-[600px] h-[600px] bg-amber-200/40 -top-40 -left-20"></div>
+    <div class="ambient-glow w-[500px] h-[500px] bg-yellow-200/35 top-96 -right-20" style="animation-delay: -5s;"></div>
   </div>
 
   <!-- Header Navigation -->
@@ -163,11 +163,11 @@
     <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
       <div class="flex items-center gap-6">
         <a href="#" class="flex items-center gap-2.5 font-bold tracking-tight text-ink text-sm group">
-          <div class="w-6 h-6 rounded-md bg-emerald-600 flex items-center justify-center text-white font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
+          <div class="w-6 h-6 rounded-md bg-amber-500 flex items-center justify-center text-zinc-950 font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
             S
           </div>
           <span>SiftrCode</span>
-          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-medium">v0.1</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80 font-medium">v0.1</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="#workbench" class="hover:text-ink transition">Interactive Workbench</a>
@@ -191,7 +191,7 @@
       
       <!-- Hero Headline -->
       <h1 class="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-ink sm:whitespace-nowrap max-w-none mx-auto leading-tight">
-        Cut agent token waste by <span id="heroBadge" class="hero-glow-badge relative inline-flex items-center px-3.5 py-0.5 mx-1.5 bg-emerald-50/90 border border-emerald-300 rounded-xl font-mono align-baseline select-none"><span class="hero-pct-text font-bold tracking-tight">90%</span><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1.5 signal-ping"></span></span>.
+        Cut agent token waste by <span id="heroBadge" class="hero-glow-badge relative inline-flex items-center px-3.5 py-0.5 mx-1.5 bg-amber-50/90 border border-amber-300 rounded-xl font-mono align-baseline select-none"><span class="hero-pct-text font-bold tracking-tight">90%</span><span class="w-1.5 h-1.5 rounded-full bg-amber-500 ml-1.5 signal-ping"></span></span>.
       </h1>
 
       <!-- Subtitle -->
@@ -203,10 +203,10 @@
       <div class="pt-2 max-w-md mx-auto flex items-center justify-center gap-2">
         <div class="flex-1 bg-white border border-zinc-200 rounded-lg px-3.5 py-2 text-xs font-mono text-ink flex items-center justify-between shadow-sm">
           <div class="flex items-center gap-2">
-            <span class="text-emerald-600 font-bold select-none">$</span>
+            <span class="text-amber-600 font-bold select-none">$</span>
             <span>npx siftrcode audit</span>
           </div>
-          <button onclick="copyCommand()" id="copyBtn" class="text-[11px] font-mono text-zinc-500 hover:text-emerald-600 transition px-2 py-0.5 rounded bg-zinc-50 border border-zinc-200">
+          <button onclick="copyCommand()" id="copyBtn" class="text-[11px] font-mono text-zinc-500 hover:text-amber-600 transition px-2 py-0.5 rounded bg-zinc-50 border border-zinc-200">
             COPY
           </button>
         </div>
@@ -218,9 +218,9 @@
       <!-- Compressed Metric Strip -->
       <div class="pt-2 inline-flex items-center divide-x divide-zinc-200 bg-white border border-zinc-200 rounded-full px-1 py-1 shadow-sm text-xs font-mono">
         <div class="px-3 py-0.5 flex items-center gap-1.5">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
           <span class="text-zinc-400">Reduction:</span>
-          <span class="font-bold text-emerald-600">-85% to -98%</span>
+          <span class="font-bold text-amber-600">-85% to -98%</span>
         </div>
         <div class="px-3 py-0.5 flex items-center gap-1.5">
           <span class="text-zinc-400">Latency:</span>
@@ -253,11 +253,11 @@
 
         <div class="flex items-center gap-3 font-mono text-xs">
           <div class="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 border border-zinc-200 text-[11px]">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
             <span>LIVE AST SCANNER ACTIVE</span>
           </div>
-          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-medium">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
             <span id="reductionTag">-92.1% Token Mass</span>
           </div>
         </div>
@@ -284,18 +284,18 @@
           <div class="scanner-beam"></div>
 
           <div class="bg-zinc-950 px-4 py-2 border-b border-zinc-800 flex items-center justify-between text-xs font-mono">
-            <span class="text-emerald-400 font-medium flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 signal-ping"></span>
+            <span class="text-amber-400 font-medium flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-400 signal-ping"></span>
               SIFTRCODE AST SKELETON (FED TO AGENT)
             </span>
-            <span class="text-emerald-400 font-bold" id="skelTokenCount">~112 tokens (-92.1%)</span>
+            <span class="text-amber-400 font-bold" id="skelTokenCount">~112 tokens (-92.1%)</span>
           </div>
           <div class="relative flex-1 overflow-hidden">
-            <pre id="skelOutput" class="w-full h-80 p-4 font-mono text-xs text-emerald-300/90 leading-relaxed overflow-auto whitespace-pre-wrap selection:bg-emerald-500 selection:text-black"></pre>
+            <pre id="skelOutput" class="w-full h-80 p-4 font-mono text-xs text-amber-200/95 leading-relaxed overflow-auto whitespace-pre-wrap selection:bg-amber-400 selection:text-zinc-950"></pre>
           </div>
           <div class="bg-zinc-950 px-4 py-1.5 border-t border-zinc-800 text-[11px] font-mono text-zinc-400 flex items-center justify-between">
-            <span class="text-emerald-400">Zero-Loss Interfaces Preserved</span>
-            <span id="savedTokensCount" class="text-emerald-400 font-semibold">Saved ~1,308 tokens</span>
+            <span class="text-amber-400">Zero-Loss Interfaces Preserved</span>
+            <span id="savedTokensCount" class="text-amber-400 font-semibold">Saved ~1,308 tokens</span>
           </div>
         </div>
 
@@ -322,10 +322,10 @@
           </div>
           <div class="space-y-1 text-[11px] text-zinc-600">
             <div class="flex justify-between"><span>Raw Code:</span> <span class="text-rose-600 font-bold">175,353 tokens</span></div>
-            <div class="flex justify-between"><span>SiftrCode:</span> <span class="text-emerald-600 font-bold">2,357 tokens</span></div>
+            <div class="flex justify-between"><span>SiftrCode:</span> <span class="text-amber-600 font-bold">2,357 tokens</span></div>
           </div>
           <div class="pt-2 border-t border-zinc-200 flex items-baseline justify-between">
-            <span class="text-2xl font-extrabold text-emerald-600">-98.7%</span>
+            <span class="text-2xl font-extrabold text-amber-600">-98.7%</span>
             <span class="text-[11px] text-zinc-500">0.15s pack</span>
           </div>
         </div>
@@ -338,10 +338,10 @@
           </div>
           <div class="space-y-1 text-[11px] text-zinc-600">
             <div class="flex justify-between"><span>Raw Code:</span> <span class="text-rose-600 font-bold">3,498,358 tokens</span></div>
-            <div class="flex justify-between"><span>SiftrCode:</span> <span class="text-emerald-600 font-bold">720,715 tokens</span></div>
+            <div class="flex justify-between"><span>SiftrCode:</span> <span class="text-amber-600 font-bold">720,715 tokens</span></div>
           </div>
           <div class="pt-2 border-t border-zinc-200 flex items-baseline justify-between">
-            <span class="text-2xl font-extrabold text-emerald-600">-79.4%</span>
+            <span class="text-2xl font-extrabold text-amber-600">-79.4%</span>
             <span class="text-[11px] text-zinc-500">2.7M saved</span>
           </div>
         </div>
@@ -354,10 +354,10 @@
           </div>
           <div class="space-y-1 text-[11px] text-zinc-600">
             <div class="flex justify-between"><span>Raw Code:</span> <span class="text-rose-600 font-bold">15,931 tokens</span></div>
-            <div class="flex justify-between"><span>SiftrCode:</span> <span class="text-emerald-600 font-bold">817 tokens</span></div>
+            <div class="flex justify-between"><span>SiftrCode:</span> <span class="text-amber-600 font-bold">817 tokens</span></div>
           </div>
           <div class="pt-2 border-t border-zinc-200 flex items-baseline justify-between">
-            <span class="text-2xl font-extrabold text-emerald-600">-94.9%</span>
+            <span class="text-2xl font-extrabold text-amber-600">-94.9%</span>
             <span class="text-[11px] text-zinc-500">0.13s pack</span>
           </div>
         </div>
@@ -440,20 +440,20 @@
         </div>
 
         <!-- Team Pro -->
-        <div class="p-6 bg-emerald-50/40 border-2 border-emerald-600 rounded-xl space-y-4 flex flex-col justify-between relative shadow-sm">
-          <span class="absolute -top-2.5 right-4 px-2 py-0.5 bg-emerald-600 text-white font-bold text-[9px] rounded-full uppercase tracking-wider">TEAM PRO</span>
+        <div class="p-6 bg-amber-50/40 border-2 border-amber-500 rounded-xl space-y-4 flex flex-col justify-between relative shadow-sm">
+          <span class="absolute -top-2.5 right-4 px-2 py-0.5 bg-amber-500 text-zinc-950 font-bold text-[9px] rounded-full uppercase tracking-wider">TEAM PRO</span>
           <div class="space-y-3">
-            <div class="text-[10px] text-emerald-800 uppercase font-semibold">FOR STARTUPS & TEAMS</div>
+            <div class="text-[10px] text-amber-800 uppercase font-semibold">FOR STARTUPS & TEAMS</div>
             <h3 class="text-lg font-bold text-ink font-sans">SiftrCode Pro</h3>
-            <div class="text-2xl font-bold text-emerald-700">$19 <span class="text-xs font-normal text-zinc-500">/ seat / mo</span></div>
-            <ul class="space-y-2 text-zinc-700 text-[11px] border-t border-emerald-200 pt-3">
+            <div class="text-2xl font-bold text-amber-700">$19 <span class="text-xs font-normal text-zinc-500">/ seat / mo</span></div>
+            <ul class="space-y-2 text-zinc-700 text-[11px] border-t border-amber-200 pt-3">
               <li>✔ Everything in Community CLI</li>
               <li>✔ TypeSafe Jev Cloud Relevance Gate</li>
               <li>✔ Team Cross-Repo AST Cache</li>
               <li>✔ CI/CD Pull Request Context Auditor</li>
             </ul>
           </div>
-          <button class="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition text-xs">
+          <button class="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold transition text-xs">
             Start 14-Day Trial
           </button>
         </div>
@@ -664,9 +664,12 @@ impl Gateway for StripeGateway {
       navigator.clipboard.writeText('npx siftrcode audit');
       const btn = document.getElementById('copyBtn');
       btn.innerText = 'COPIED!';
-      btn.className = 'text-[11px] font-mono text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded';
+      btn.className = 'text-[11px] font-mono text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded';
       setTimeout(() => {
         btn.innerText = 'COPY';
+        btn.className = 'text-[11px] font-mono text-zinc-500 hover:text-amber-600 transition px-2 py-0.5 rounded bg-zinc-50 border border-zinc-200';
+      }, 2000);
+    }
     const langs = ['ts', 'py', 'go', 'rs'];
     let langIndex = 0;
     let userInteracted = false;
