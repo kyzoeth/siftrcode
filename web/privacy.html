@@ -9,7 +9,7 @@
   <link rel="canonical" href="https://siftrcode.com/privacy">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
 
   <script>
@@ -24,9 +24,10 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-            display: ['"Space Grotesk"', '"Plus Jakarta Sans"', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
+            sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            serif: ['"Instrument Serif"', 'Georgia', 'serif'],
+            display: ['"Instrument Serif"', 'Georgia', 'serif'],
+            mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
           },
           colors: {
             surface: { 50: '#fafafa', 100: '#f4f4f6', 200: '#e5e7eb', 300: '#d1d5db' },
@@ -38,8 +39,9 @@
   </script>
 
   <style>
-    body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -0.011em; }
-    h1, h2, h3, .font-display { font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.025em; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -0.015em; }
+    .font-serif, h1.font-serif, h2.font-serif, h3.font-serif, .font-display { font-family: 'Instrument Serif', Georgia, serif; letter-spacing: -0.02em; }
+    code, pre, .font-mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; }
     ::selection { background: #dec278; color: #18181b; }
     body, header, section, footer { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
 
@@ -75,7 +77,7 @@
           <div class="w-6 h-6 rounded-md bg-amber-500 flex items-center justify-center text-zinc-950 font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
             S
           </div>
-          <span class="font-display font-bold text-base tracking-tight">SiftrCode</span>
+          <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
           <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80 font-medium">v0.1</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
@@ -115,8 +117,8 @@
     </div>
   </header>
 
-  <!-- Privacy Content -->
-  <main class="max-w-4xl mx-auto px-4 py-16 sm:py-20 space-y-12">
+  <!-- Main Content Container -->
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 space-y-12">
     
     <!-- Title Area -->
     <div class="space-y-3 border-b border-zinc-200/80 pb-8">
@@ -124,7 +126,7 @@
         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ci-live-dot"></span>
         ZERO-EGRESS DATA BOUNDARIES
       </div>
-      <h1 class="text-3xl sm:text-4xl font-extrabold text-ink font-display tracking-tight">Privacy Policy</h1>
+      <h1 class="text-4xl sm:text-5xl font-normal text-ink font-serif tracking-tight">Privacy Policy</h1>
       <p class="text-xs sm:text-sm text-ink-secondary">
         Last updated: September 19, 2026 • Effective immediately across all SiftrCode software distributions.
       </p>
@@ -132,7 +134,7 @@
 
     <!-- Core Principle Card -->
     <div class="p-6 bg-white border border-zinc-200/90 rounded-2xl shadow-xs space-y-3">
-      <div class="flex items-center gap-2 text-amber-600 font-display font-bold text-sm uppercase tracking-wide">
+      <div class="flex items-center gap-2 text-amber-600 font-bold text-xs uppercase tracking-wider">
         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
         <span>Foundational Commitment: Your Code Never Leaves Your Machine</span>
       </div>
@@ -145,7 +147,7 @@
     <div class="space-y-10 text-xs sm:text-sm leading-relaxed font-sans text-zinc-600 dark:text-zinc-300">
       
       <section class="space-y-3">
-        <h2 class="text-lg font-bold text-ink font-display">1. Source Code Execution &amp; Processing</h2>
+        <h2 class="text-lg font-bold text-ink">1. Source Code Execution &amp; Processing</h2>
         <p>
           When you execute <code class="px-1.5 py-0.5 rounded bg-zinc-100 font-mono text-xs">siftrcode audit</code>, <code class="px-1.5 py-0.5 rounded bg-zinc-100 font-mono text-xs">siftrcode pack</code>, or attach the SiftrCode MCP server to your IDE, all syntax tree analysis, token estimation, and body dissolution occur exclusively on your local device's CPU using SiftrCode's air-gapped local runtime.
         </p>
@@ -157,21 +159,21 @@
       </section>
 
       <section class="space-y-3">
-        <h2 class="text-lg font-bold text-ink font-display">2. Telemetry &amp; Analytics</h2>
+        <h2 class="text-lg font-bold text-ink">2. Telemetry &amp; Analytics</h2>
         <p>
           The SiftrCode Open Source CLI (<code class="px-1.5 py-0.5 rounded bg-zinc-100 font-mono text-xs">npx siftrcode</code>) contains <strong>no usage tracking, no user telemetry, no analytics beacons, and no crash report uploads</strong>. We do not track what repositories you audit, which files you prune, or what AI agents you pair with SiftrCode.
         </p>
       </section>
 
       <section class="space-y-3">
-        <h2 class="text-lg font-bold text-ink font-display">3. Model Context Protocol (MCP) Boundaries</h2>
+        <h2 class="text-lg font-bold text-ink">3. Model Context Protocol (MCP) Boundaries</h2>
         <p>
           The SiftrCode MCP Server communicates with coding agents (such as Claude Code, Cursor, Windsurf, or Antigravity) strictly over local Unix standard streams (<code class="font-mono">stdio</code>). MCP tool calls (<code class="font-mono">siftr_skeleton</code>, <code class="font-mono">siftr_pack</code>, <code class="font-mono">siftr_audit</code>) execute as direct child processes of your IDE, preserving your IDE's established security boundary.
         </p>
       </section>
 
       <section class="space-y-3">
-        <h2 class="text-lg font-bold text-ink font-display">4. Website &amp; Team Trial Inquiries</h2>
+        <h2 class="text-lg font-bold text-ink">4. Website &amp; Team Trial Inquiries</h2>
         <p>
           When you visit our marketing website (<a href="https://siftrcode.com" class="text-amber-600 hover:underline">siftrcode.com</a>) or request a Team Pro trial via our activation form, we may collect:
         </p>
@@ -186,7 +188,7 @@
       </section>
 
       <section class="space-y-3">
-        <h2 class="text-lg font-bold text-ink font-display">5. Security Disclosures &amp; Inquiries</h2>
+        <h2 class="text-lg font-bold text-ink">5. Security Disclosures &amp; Inquiries</h2>
         <p>
           Because SiftrCode is open source, our AST engine and local daemon are completely transparent and verifiable. If you have questions regarding security or wish to report a vulnerability, contact our engineering team directly at:
         </p>
@@ -207,7 +209,7 @@
           <div class="w-5 h-5 rounded bg-amber-500 flex items-center justify-center text-zinc-950 font-mono font-bold text-[10px]">
             S
           </div>
-          <span class="font-bold text-ink text-xs font-display">SiftrCode</span>
+          <span class="font-bold text-ink text-xs">SiftrCode</span>
           <span class="text-zinc-300 dark:text-zinc-700">•</span>
           <span class="text-zinc-500 font-sans">AST Codebase Pruner for AI Coding Agents</span>
         </div>

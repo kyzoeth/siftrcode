@@ -9,7 +9,7 @@
   <link rel="canonical" href="https://siftrcode.com/how-it-works">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
 
   <script>
@@ -24,9 +24,10 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-            display: ['"Space Grotesk"', '"Plus Jakarta Sans"', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
+            sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            serif: ['"Instrument Serif"', 'Georgia', 'serif'],
+            display: ['"Instrument Serif"', 'Georgia', 'serif'],
+            mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
           },
           colors: {
             surface: { 50: '#fafafa', 100: '#f4f4f6', 200: '#e5e7eb', 300: '#d1d5db' },
@@ -38,8 +39,9 @@
   </script>
 
   <style>
-    body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -0.011em; }
-    h1, h2, h3, .font-display { font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.025em; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -0.015em; }
+    .font-serif, h1.font-serif, h2.font-serif, h3.font-serif, .font-display { font-family: 'Instrument Serif', Georgia, serif; letter-spacing: -0.02em; }
+    code, pre, .font-mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; }
     ::selection { background: #dec278; color: #18181b; }
     body, header, section, footer { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
 
@@ -75,7 +77,7 @@
           <div class="w-6 h-6 rounded-md bg-amber-500 flex items-center justify-center text-zinc-950 font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
             S
           </div>
-          <span class="font-display font-bold text-base tracking-tight">SiftrCode</span>
+          <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
           <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80 font-medium">v0.1</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
@@ -115,8 +117,8 @@
     </div>
   </header>
 
-  <!-- How It Works Main Content -->
-  <main class="max-w-4xl mx-auto px-4 py-16 sm:py-20 space-y-14">
+  <!-- Main Content Container -->
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 space-y-12">
     
     <!-- Title Area -->
     <div class="space-y-3 border-b border-zinc-200/80 pb-8 text-center sm:text-left">
@@ -124,7 +126,7 @@
         <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
         TECHNICAL ARCHITECTURE &amp; SPECIFICATION
       </div>
-      <h1 class="text-3xl sm:text-4xl font-extrabold text-ink font-display tracking-tight">How SiftrCode Works</h1>
+      <h1 class="text-4xl sm:text-5xl font-normal text-ink font-serif tracking-tight">How SiftrCode Works</h1>
       <p class="text-xs sm:text-sm text-ink-secondary max-w-2xl">
         An engineering breakdown of how SiftrCode dissolves 90% of token bloat while keeping 100% of exported interfaces, type signatures, and contracts intact.
       </p>
@@ -140,7 +142,7 @@
             01
           </div>
           <div>
-            <h2 class="text-base font-bold text-ink font-display">The Context Window Saturation Problem</h2>
+            <h2 class="text-base font-bold text-ink">The Context Window Saturation Problem</h2>
             <span class="text-[11px] font-mono text-zinc-400">Context Window Degradation &amp; Needle-in-a-Haystack Physics</span>
           </div>
         </div>
@@ -159,7 +161,7 @@
             02
           </div>
           <div>
-            <h2 class="text-base font-bold text-ink font-display">Deterministic AST Synthesis Engine (&lt;0.15s)</h2>
+            <h2 class="text-base font-bold text-ink">Deterministic AST Synthesis Engine (&lt;0.15s)</h2>
             <span class="text-[11px] font-mono text-zinc-400">Zero-Regex Deterministic Syntax Graphs</span>
           </div>
         </div>
@@ -178,7 +180,7 @@
             03
           </div>
           <div>
-            <h2 class="text-base font-bold text-ink font-display">Imperative Body Dissolution &amp; Fold</h2>
+            <h2 class="text-base font-bold text-ink">Imperative Body Dissolution &amp; Fold</h2>
             <span class="text-[11px] font-mono text-zinc-400">Language-Specific AST Skeletonization Rules</span>
           </div>
         </div>
@@ -220,7 +222,7 @@
             04
           </div>
           <div>
-            <h2 class="text-base font-bold text-ink font-display">Interface Contracts &amp; AST Fidelity</h2>
+            <h2 class="text-base font-bold text-ink">Interface Contracts &amp; AST Fidelity</h2>
             <span class="text-[11px] font-mono text-zinc-400">Mathematically Guaranteed Type Alignment</span>
           </div>
         </div>
@@ -239,7 +241,7 @@
             05
           </div>
           <div>
-            <h2 class="text-base font-bold text-ink font-display">Standard Stdio Model Context Protocol (MCP)</h2>
+            <h2 class="text-base font-bold text-ink">Standard Stdio Model Context Protocol (MCP)</h2>
             <span class="text-[11px] font-mono text-zinc-400">Drop-In Integration across Modern Agent Frameworks</span>
           </div>
         </div>
@@ -259,7 +261,7 @@
     <!-- Quickstart Link Callout -->
     <div class="p-8 bg-zinc-900 text-white rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-5 text-center sm:text-left">
       <div class="space-y-1">
-        <h3 class="text-lg font-bold font-display">Ready to test it on your codebase?</h3>
+        <h3 class="text-xl sm:text-2xl font-normal font-serif">Ready to test it on your codebase?</h3>
         <p class="text-xs text-zinc-400 font-sans">Run a 5-second audit to see how many tokens your repository burns.</p>
       </div>
       <a href="/#quickstart" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 rounded-xl text-xs font-bold transition btn-press shrink-0">
@@ -277,7 +279,7 @@
           <div class="w-5 h-5 rounded bg-amber-500 flex items-center justify-center text-zinc-950 font-mono font-bold text-[10px]">
             S
           </div>
-          <span class="font-bold text-ink text-xs font-display">SiftrCode</span>
+          <span class="font-bold text-ink text-xs">SiftrCode</span>
           <span class="text-zinc-300 dark:text-zinc-700">•</span>
           <span class="text-zinc-500 font-sans">AST Codebase Pruner for AI Coding Agents</span>
         </div>

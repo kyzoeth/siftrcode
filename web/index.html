@@ -9,7 +9,7 @@
   <link rel="canonical" href="https://siftrcode.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
 
   <script>
@@ -25,9 +25,10 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-            display: ['"Space Grotesk"', '"Plus Jakarta Sans"', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
+            sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            serif: ['"Instrument Serif"', 'Georgia', 'serif'],
+            display: ['"Instrument Serif"', 'Georgia', 'serif'],
+            mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
           },
           colors: {
             surface: {
@@ -95,12 +96,15 @@
 
   <style>
     body {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      letter-spacing: -0.011em;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      letter-spacing: -0.015em;
     }
-    h1, h2, h3, .font-display {
-      font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
-      letter-spacing: -0.025em;
+    .font-serif, h1.font-serif, h2.font-serif, h3.font-serif, .font-display {
+      font-family: 'Instrument Serif', Georgia, serif;
+      letter-spacing: -0.02em;
+    }
+    code, pre, .font-mono {
+      font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
     }
 
     ::selection { background: #dec278; color: #18181b; }
@@ -391,7 +395,6 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       animation: pct-shimmer-sweep 14s linear infinite, continuous-text-aura 10s ease-in-out infinite;
-      font-weight: 800;
     }
 
 
@@ -492,7 +495,7 @@
           <div class="w-6 h-6 rounded-md bg-amber-500 flex items-center justify-center text-zinc-950 font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
             S
           </div>
-          <span class="font-display font-bold text-base tracking-tight">SiftrCode</span>
+          <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
           <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80 font-medium">v0.1</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
@@ -541,8 +544,8 @@
   <section class="relative pt-16 pb-12 md:pt-24 md:pb-16 px-4 bg-grid">
     <div class="max-w-4xl mx-auto text-center space-y-6 relative z-10">
       
-      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-ink font-display sm:whitespace-nowrap max-w-none mx-auto leading-tight">
-        Cut agent token waste by <span class="hero-glow-text">90%</span>
+      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-normal tracking-tight text-ink font-serif sm:whitespace-nowrap max-w-none mx-auto leading-[1.08]">
+        Cut agent token waste by <span class="italic hero-glow-text">90%</span>
       </h1>
 
       <!-- Subtitle -->
@@ -737,7 +740,7 @@
           </svg>
           <span>LOCAL DATA BOUNDARIES &amp; PRIVACY</span>
         </div>
-        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-ink font-display">
+        <h2 class="text-3xl sm:text-4xl font-normal tracking-tight text-ink font-serif">
           Your code never leaves your workstation
         </h2>
         <p class="text-xs sm:text-sm text-ink-secondary">
@@ -862,7 +865,7 @@
           <div class="p-4 bg-white border border-zinc-200/90 rounded-xl shadow-2xs space-y-1.5 hover:border-zinc-300 transition">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <h3 class="font-bold text-xs text-ink font-display uppercase tracking-wide">100% Local CPU Execution</h3>
+              <h3 class="font-bold text-xs text-ink uppercase tracking-wider">100% Local CPU Execution</h3>
             </div>
             <p class="text-xs text-zinc-600 font-sans leading-relaxed">
               Every parse, token count, and skeleton synthesis runs directly on your workstation's CPU via SiftrCode's air-gapped local runtime. No code is transmitted to any cloud API.
@@ -872,7 +875,7 @@
           <div class="p-4 bg-white border border-zinc-200/90 rounded-xl shadow-2xs space-y-1.5 hover:border-zinc-300 transition">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-              <h3 class="font-bold text-xs text-ink font-display uppercase tracking-wide">Interface Fidelity Guarantees</h3>
+              <h3 class="font-bold text-xs text-ink uppercase tracking-wider">Interface Fidelity Guarantees</h3>
             </div>
             <p class="text-xs text-zinc-600 font-sans leading-relaxed">
               Coding agents need exact signatures, generics, and exported interfaces to write correct code. SiftrCode dissolves the internal bodies while keeping 100% of the contracts agents rely on.
@@ -882,7 +885,7 @@
           <div class="p-4 bg-white border border-zinc-200/90 rounded-xl shadow-2xs space-y-1.5 hover:border-zinc-300 transition">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-              <h3 class="font-bold text-xs text-ink font-display uppercase tracking-wide">Standard Stdio MCP Protocol</h3>
+              <h3 class="font-bold text-xs text-ink uppercase tracking-wider">Standard Stdio MCP Protocol</h3>
             </div>
             <p class="text-xs text-zinc-600 font-sans leading-relaxed">
               No proprietary background daemons or closed network proxies. SiftrCode integrates through the open Model Context Protocol (MCP) using standard Unix pipes.
@@ -904,7 +907,7 @@
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-200/80 pb-3">
         <div>
           <div class="flex items-center gap-2">
-            <h2 class="text-base sm:text-lg font-bold tracking-tight text-ink font-display">Verified Production Benchmarks</h2>
+            <h2 class="text-base sm:text-lg font-bold tracking-tight text-ink">Verified Production Benchmarks</h2>
             <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-medium">Public GitHub Audits</span>
           </div>
           <p class="text-xs text-ink-secondary mt-0.5">Exact figures scanned directly from public repositories.</p>
@@ -1011,7 +1014,7 @@
     <div class="max-w-4xl mx-auto space-y-8">
       
       <div class="text-center space-y-1">
-        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-ink font-display">30-Second Setup</h2>
+        <h2 class="text-3xl sm:text-4xl font-normal tracking-tight text-ink font-serif">30-Second Setup</h2>
         <p class="text-xs sm:text-sm text-ink-secondary">Works with Claude Code, Cursor, Windsurf, and Antigravity.</p>
       </div>
 
@@ -1057,7 +1060,7 @@
     <div class="max-w-4xl mx-auto space-y-8">
       
       <div class="text-center space-y-1">
-        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-ink font-display">Simple Licensing</h2>
+        <h2 class="text-3xl sm:text-4xl font-normal tracking-tight text-ink font-serif">Simple Licensing</h2>
         <p class="text-xs sm:text-sm text-ink-secondary">Free open-source CLI for individuals. Paid caching for teams.</p>
       </div>
 
@@ -1069,7 +1072,7 @@
           <div class="space-y-4">
             <div>
               <div class="text-[10px] text-zinc-500 uppercase font-semibold tracking-wider">INDIVIDUAL DEVELOPERS</div>
-              <h3 class="text-xl font-bold text-ink font-display mt-0.5">Community CLI</h3>
+              <h3 class="text-xl font-bold text-ink mt-0.5">Community CLI</h3>
             </div>
 
             <div class="flex items-baseline gap-1.5 font-mono">
@@ -1110,7 +1113,7 @@
           <div class="space-y-4">
             <div>
               <div class="text-[10px] text-amber-800 uppercase font-semibold tracking-wider">FOR STARTUPS &amp; TEAMS</div>
-              <h3 class="text-xl font-bold text-ink font-display mt-0.5">SiftrCode Pro</h3>
+              <h3 class="text-xl font-bold text-ink mt-0.5">SiftrCode Pro</h3>
             </div>
 
             <div class="flex items-baseline gap-1.5 font-mono">
@@ -1161,7 +1164,7 @@
           <div class="w-5 h-5 rounded bg-amber-500 flex items-center justify-center text-zinc-950 font-mono font-bold text-[10px]">
             S
           </div>
-          <span class="font-bold text-ink text-xs font-display">SiftrCode</span>
+          <span class="font-bold text-ink text-xs">SiftrCode</span>
           <span class="text-zinc-300 dark:text-zinc-700">•</span>
           <span class="text-zinc-500 font-sans">AST Codebase Pruner for AI Coding Agents</span>
         </div>
@@ -2193,7 +2196,7 @@ ${highlightPrunedCode(item.rawCode, lang)}
           <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
           14-Day Free Team Trial
         </div>
-        <h3 class="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight font-display">Supercharge your team's coding agents</h3>
+        <h3 class="text-2xl sm:text-3xl font-normal text-zinc-900 tracking-tight font-serif">Supercharge your team's coding agents</h3>
         <p class="text-xs sm:text-sm text-zinc-500 font-sans">
           Eliminate 90% token waste, slash agent latency from 45s to 4s, and sync synthesized interfaces across your engineers.
         </p>
