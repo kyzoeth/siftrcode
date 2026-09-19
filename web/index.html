@@ -116,8 +116,10 @@
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
           <div class="flex items-center gap-2">
             <span class="text-xs font-mono text-slate-400">Preset Sample:</span>
-            <button onclick="loadSample('ts')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-mono text-emerald-400 border border-slate-700">TypeScript Database Service</button>
-            <button onclick="loadSample('py')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-mono text-cyan-400 border border-slate-700">Python Payment Gateway</button>
+            <button onclick="loadSample('ts')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-mono text-emerald-400 border border-slate-700">TypeScript</button>
+            <button onclick="loadSample('py')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-mono text-cyan-400 border border-slate-700">Python</button>
+            <button onclick="loadSample('go')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-mono text-blue-400 border border-slate-700">Go</button>
+            <button onclick="loadSample('rs')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-mono text-amber-400 border border-slate-700">Rust</button>
           </div>
           <div id="statsBadge" class="text-xs font-mono px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full">
             Tokens: 1,420 ➔ 110 (-92.3%)
@@ -295,43 +297,115 @@ class StripeGateway:
         """Cancels active recurring subscription."""
         # 30 lines of state machine transition...
         return True`
+        return True`,
+      go: `package server
+
+import (
+    "context"
+    "net/http"
+)
+
+type Config struct {
+    Port int
+    DBUrl string
+}
+
+type Server struct {
+    cfg Config
+    mux *http.ServeMux
+}
+
+func NewServer(cfg Config) *Server {
+    // 40 lines of pool initialization, router setup, and middleware chains...
+    mux := http.NewServeMux()
+    return &Server{cfg: cfg, mux: mux}
+}
+
+func (s *Server) Start(ctx context.Context) error {
+    // 30 lines of graceful shutdown handling and listener binding...
+    return http.ListenAndServe(":8080", s.mux)
+}`,
+      rs: `use std::collections::HashMap;
+use std::sync::Arc;
+
+pub struct Config {
+    pub api_key: String,
+    pub timeout_ms: u64,
+}
+
+pub trait Gateway {
+    fn charge(&self, customer_id: &str, amount: u64) -> Result<String, String>;
+}
+
+pub struct StripeGateway {
+    config: Arc<Config>,
+    cache: HashMap<String, String>,
+}
+
+impl Gateway for StripeGateway {
+    pub fn charge(&self, customer_id: &str, amount: u64) -> Result<String, String> {
+        // 50 lines of TLS handshakes, telemetry, and error mappings...
+        Ok(format!("ch_{}", customer_id))
+    }
+}`
     };
 
+    let currentLang = 'ts';
+    let debounceTimer = null;
+
     function loadSample(lang) {
+      currentLang = lang;
       document.getElementById('rawCodeInput').value = samples[lang];
-      simulateSkeletons();
+      triggerSkeletons();
     }
 
-    function simulateSkeletons() {
+    function triggerSkeletons() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        simulateSkeletons();
+      }, 150);
+    }
+
+    async function simulateSkeletons() {
       const raw = document.getElementById('rawCodeInput').value;
       const rawTokens = Math.ceil(raw.length / 4);
 
-      // Fast JS-side simulation for demo
-      let skel = '';
-      if (raw.includes('export class') || raw.includes('interface')) {
-        skel = `// [SiftrCode Skeleton] service.ts (AST Interface)\n` +
-`import { Database } from './database';\nimport { User, UserCreateInput } from '../types';\n\n` +
-`export class UserService {\n` +
-`  private db: Database;\n` +
-`  constructor(db: Database);\n` +
-`  /** Finds a user by their unique primary ID */\n` +
-`  public async getUserById(id: string): Promise<User | null>;\n` +
-`  public async createUser(data: UserCreateInput): Promise<User>;\n` +
-`}\n\n// ✨ Implementation bodies stripped (-92.3% tokens)`;
-      } else {
-        skel = `# [SiftrCode Skeleton] gateway.py (AST Interface)\n` +
-`from typing import Optional, List, Dict\n\n` +
-`class StripeGateway:\n` +
-`    """Manages credit card and subscription payments."""\n` +
-`    def __init__(self, api_key: str, webhook_secret: str):\n` +
-`        ...\n` +
-`    def charge_customer(self, customer_id: str, amount_cents: int) -> Dict[str, any]:\n` +
-`        """Executes one-time payment charge."""\n` +
-`        ...\n` +
-`    def cancel_subscription(self, sub_id: str) -> bool:\n` +
-`        """Cancels active recurring subscription."""\n` +
-`        ...\n\n# ✨ Implementation bodies replaced with ...`;
+      try {
+        // Attempt live AST API call if running against server
+        const res = await fetch('/api/skeleton', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: raw, language: currentLang })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const skel = data.skeletonContent;
+          const origTok = data.originalTokensEstimate || rawTokens;
+          const skelTok = data.skeletonTokensEstimate || Math.ceil(skel.length / 4);
+          const red = (data.reductionRatio * 100).toFixed(1);
+
+          document.getElementById('rawTokenCount').innerText = `~${origTok.toLocaleString()} tokens`;
+          document.getElementById('skelTokenCount').innerText = `~${skelTok.toLocaleString()} tokens (-${red}%)`;
+          document.getElementById('statsBadge').innerText = `Tokens: ${origTok.toLocaleString()} ➔ ${skelTok.toLocaleString()} (-${red}%)`;
+          document.getElementById('skelCodeOutput').innerText = skel;
+          return;
+        }
+      } catch (e) {
+        // Fallback to client-side heuristic if opened directly via file://
       }
+
+      // Fast Client Fallback
+      let skel = `// [SiftrCode Skeleton] file.${currentLang} (AST Interface)\n`;
+      const lines = raw.split('\n');
+      const filtered = lines.filter(l => {
+        const t = l.trim();
+        return t.startsWith('import') || t.startsWith('export') || t.startsWith('type') ||
+               t.startsWith('interface') || t.startsWith('pub') || t.startsWith('package') ||
+               t.startsWith('func') || t.startsWith('class') || t.startsWith('def') ||
+               t.startsWith('/**') || t.startsWith('*') || t.startsWith('//');
+      });
+      skel += filtered.join('\n') + '\n\n// ✨ Implementation bodies pruned';
 
       const skelTokens = Math.ceil(skel.length / 4);
       const reduction = Math.max(0, ((rawTokens - skelTokens) / rawTokens) * 100).toFixed(1);

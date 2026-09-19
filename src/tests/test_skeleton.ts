@@ -1,5 +1,7 @@
 import { skeletonizeTypeScript } from '../skeleton/typescript';
 import { skeletonizePython } from '../skeleton/python';
+import { skeletonizeGolang } from '../skeleton/golang';
+import { skeletonizeRust } from '../skeleton/rust';
 
 console.log('--- Testing TypeScript Skeletonizer ---');
 const sampleTS = `
@@ -67,7 +69,7 @@ class OrderService:
         return False
 
 def calculate_discount(tier: str, total: float) -> float:
-    \"\"\"Calculates tier discount.\"\"\"
+    """Calculates tier discount."""
     if tier == "vip":
         return total * 0.2
     return 0.0
@@ -78,3 +80,62 @@ console.log('Original Lines:', pyResult.originalLines, '-> Skeleton Lines:', pyR
 console.log('Token Reduction:', (pyResult.reductionRatio * 100).toFixed(1) + '%');
 console.log('Symbols Extracted:', pyResult.symbols);
 console.log('\nGenerated Python Skeleton:\n' + pyResult.skeletonContent);
+
+console.log('--- Testing Go Skeletonizer ---');
+const sampleGo = `
+package service
+
+import "context"
+
+type User struct {
+    ID string
+    Email string
+}
+
+type UserService interface {
+    GetUser(ctx context.Context, id string) (*User, error)
+}
+
+func NewUserService() *UserServiceImpl {
+    for i := 0; i < 5; i++ {
+        println("init", i)
+    }
+    return &UserServiceImpl{}
+}
+`;
+
+const goResult = skeletonizeGolang(sampleGo, 'user_service.go');
+console.log('Original Lines:', goResult.originalLines, '-> Skeleton Lines:', goResult.skeletonLines);
+console.log('Token Reduction:', (goResult.reductionRatio * 100).toFixed(1) + '%');
+console.log('Symbols Extracted:', goResult.symbols);
+console.log('\nGenerated Go Skeleton:\n' + goResult.skeletonContent);
+
+console.log('--- Testing Rust Skeletonizer ---');
+const sampleRust = `
+pub struct User {
+    pub id: String,
+    pub email: String,
+}
+
+pub trait UserService {
+    fn get_user(&self, id: &str) -> Option<User>;
+}
+
+pub struct UserServiceImpl;
+
+impl UserServiceImpl {
+    pub fn new() -> Self {
+        for _ in 0..5 {
+            println!("connecting");
+        }
+        UserServiceImpl
+    }
+}
+`;
+
+const rustResult = skeletonizeRust(sampleRust, 'user_service.rs');
+console.log('Original Lines:', rustResult.originalLines, '-> Skeleton Lines:', rustResult.skeletonLines);
+console.log('Token Reduction:', (rustResult.reductionRatio * 100).toFixed(1) + '%');
+console.log('Symbols Extracted:', rustResult.symbols);
+console.log('\nGenerated Rust Skeleton:\n' + rustResult.skeletonContent);
+

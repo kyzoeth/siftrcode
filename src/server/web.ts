@@ -1,8 +1,7 @@
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
-import { skeletonizeTypeScript } from '../skeleton/typescript';
-import { skeletonizePython } from '../skeleton/python';
+import { skeletonizeFile } from '../skeleton/dispatcher';
 
 const PORT = process.env.PORT || 3000;
 const WEB_DIR = path.join(__dirname, '..', '..', 'web');
@@ -46,14 +45,15 @@ const server = http.createServer((req, res) => {
         const payload = JSON.parse(body || '{}');
         const code = payload.code || '';
         const lang = (payload.language || 'typescript').toLowerCase();
-        const filename = payload.filename || (lang === 'python' ? 'app.py' : 'app.ts');
+        
+        let ext = '.ts';
+        if (lang === 'python' || lang === 'py') ext = '.py';
+        else if (lang === 'go' || lang === 'golang') ext = '.go';
+        else if (lang === 'rust' || lang === 'rs') ext = '.rs';
+        else if (lang === 'javascript' || lang === 'js') ext = '.js';
 
-        let result;
-        if (lang === 'python' || filename.endsWith('.py')) {
-          result = skeletonizePython(code, filename);
-        } else {
-          result = skeletonizeTypeScript(code, filename);
-        }
+        const filename = payload.filename || `snippet${ext}`;
+        const result = skeletonizeFile(code, filename);
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(result));

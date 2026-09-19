@@ -1,0 +1,10 @@
+# Smithery MCP Server Manifest (smithery.ai)
+version: 1
+startCommand:
+  type: stdio
+  config:
+    command: npx
+    args:
+      - "-y"
+      - "siftrcode"
+      - "mcp"

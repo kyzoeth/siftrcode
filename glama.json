@@ -1,0 +1,23 @@
+{
+  "$schema": "https://glama.ai/mcp/schema.json",
+  "name": "siftrcode",
+  "description": "AST-powered codebase skeletonizer and context pruner for AI coding agents",
+  "homepage": "https://siftrcode.com",
+  "repository": "https://github.com/kyzoeth/siftrcode",
+  "command": "npx",
+  "args": ["-y", "siftrcode", "mcp"],
+  "tools": [
+    {
+      "name": "siftr_pack",
+      "description": "Analyzes repository AST and generates a pruned context pack for a specific task"
+    },
+    {
+      "name": "siftr_skeleton",
+      "description": "Returns the AST interface skeleton of a source file"
+    },
+    {
+      "name": "siftr_audit",
+      "description": "Audits a codebase's token footprint and estimated token waste"
+    }
+  ]
+}

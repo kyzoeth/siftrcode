@@ -1,6 +1,6 @@
 export interface SkeletonResult {
   filePath: string;
-  language: 'typescript' | 'javascript' | 'python' | 'unknown';
+  language: 'typescript' | 'javascript' | 'python' | 'go' | 'rust' | 'unknown';
   originalContent: string;
   skeletonContent: string;
   originalLines: number;

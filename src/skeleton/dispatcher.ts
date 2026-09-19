@@ -2,6 +2,8 @@ import * as path from 'path';
 import { SkeletonResult } from './types';
 import { skeletonizeTypeScript } from './typescript';
 import { skeletonizePython } from './python';
+import { skeletonizeGolang } from './golang';
+import { skeletonizeRust } from './rust';
 
 export function skeletonizeFile(content: string, filePath: string): SkeletonResult {
   const ext = path.extname(filePath).toLowerCase();
@@ -12,6 +14,14 @@ export function skeletonizeFile(content: string, filePath: string): SkeletonResu
 
   if (['.py', '.pyi'].includes(ext)) {
     return skeletonizePython(content, filePath);
+  }
+
+  if (['.go'].includes(ext)) {
+    return skeletonizeGolang(content, filePath);
+  }
+
+  if (['.rs'].includes(ext)) {
+    return skeletonizeRust(content, filePath);
   }
 
   // Fallback for non-AST files (json, yaml, sql, md, etc.)
