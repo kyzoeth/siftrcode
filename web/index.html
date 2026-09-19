@@ -124,23 +124,6 @@
       font-weight: 800;
     }
 
-    /* Live Token Reduction Gauge Animation */
-    @keyframes waste-stripes-flow {
-      0% { background-position: 0 0; }
-      100% { background-position: 28px 0; }
-    }
-
-    .token-waste-stripes {
-      background-image: repeating-linear-gradient(
-        -45deg,
-        rgba(244, 63, 94, 0.22),
-        rgba(244, 63, 94, 0.22) 7px,
-        rgba(244, 63, 94, 0.06) 7px,
-        rgba(244, 63, 94, 0.06) 14px
-      );
-      background-size: 28px 28px;
-      animation: waste-stripes-flow 2.2s linear infinite;
-    }
 
     /* AST Skeleton Signal Glow */
     @keyframes ast-signal-breathe {
@@ -258,39 +241,64 @@
         </div>
       </div>
 
-      <!-- Live Animated Token Reduction Pipeline Gauge -->
-      <div class="bg-white border border-zinc-200 rounded-xl p-4 shadow-sm font-mono text-xs space-y-2.5">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
+      <!-- 200k Token Context Window Memory Visualizer -->
+      <div class="bg-white border border-zinc-200/90 rounded-2xl p-4 sm:p-5 shadow-xs font-mono text-xs space-y-3.5">
+        
+        <!-- Header / Telemetry Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] pb-2 border-b border-zinc-100">
           <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-            <span class="font-bold text-ink uppercase tracking-tight">Token Mass Reduction Gauge</span>
-            <span class="text-zinc-400">• Stripping function bodies before LLM inference</span>
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+            <span class="font-bold text-zinc-900 tracking-tight font-sans text-xs">200,000 Token Context Window Profiler</span>
+            <span class="hidden md:inline text-zinc-400 font-mono text-[10px]">• Claude Code / Cursor / Windsurf</span>
           </div>
-          <div class="flex items-center gap-2 text-[11px]">
-            <span class="text-zinc-400">Footprint:</span>
-            <span class="text-rose-600 font-bold line-through" id="gaugeRaw">1,420 tokens</span>
-            <span class="text-zinc-400">➔</span>
+          <div class="flex items-center gap-2 text-[11px] font-mono">
+            <span class="text-zinc-400">File Footprint:</span>
+            <span class="text-zinc-500 line-through" id="gaugeRaw">1,420 tokens</span>
+            <span class="text-zinc-300">➔</span>
             <span class="text-amber-600 font-bold" id="gaugeSkel">112 tokens</span>
-            <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-semibold" id="gaugeSaved">Saved ~1,308 tokens</span>
+            <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-[10px]" id="headroomPill">+92.1% Headroom</span>
           </div>
         </div>
 
-        <!-- The Animated Evaporation Comparison Bar -->
-        <div class="w-full h-6 bg-zinc-100 rounded-lg overflow-hidden flex border border-zinc-200 p-0.5 relative">
-          <!-- Retained Signal Portion -->
-          <div id="gaugeSignal" class="h-full bg-amber-500 rounded-md transition-all duration-700 flex items-center justify-center text-[10px] text-zinc-950 font-bold tracking-tight px-1 overflow-hidden" style="width: 8%;" title="Preserved Zero-Loss Signal">
-            <span class="whitespace-nowrap">SIGNAL 8%</span>
+        <!-- Dual-Lane Context Memory Comparison -->
+        <div class="space-y-3 font-sans">
+          
+          <!-- Lane 1: Default Ingestion (Raw Codebase) -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="flex items-center gap-1.5 font-medium text-zinc-700">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                <span>Without SiftrCode (Raw Codebase)</span>
+              </span>
+              <span class="font-mono text-[10px] text-rose-600 font-semibold" id="laneRawLabel">
+                71.0% Context Choked (Method Bodies &amp; Loops) • Latency 42s ⚠️
+              </span>
+            </div>
+            <div class="w-full h-2.5 bg-zinc-100 rounded-full overflow-hidden flex p-0.5 border border-zinc-200/80">
+              <div id="laneRawBar" class="h-full bg-zinc-400 rounded-full transition-all duration-500" style="width: 71%;"></div>
+            </div>
           </div>
-          <!-- Evaporated Waste Portion (Animated Striped Vaporizer) -->
-          <div id="gaugeWaste" class="h-full flex-1 rounded-md ml-0.5 token-waste-stripes flex items-center justify-between px-3 text-[10px] font-bold text-rose-600 overflow-hidden" title="Pruned Bloat / Function Bodies">
-            <span class="tracking-wider flex items-center gap-1.5 whitespace-nowrap">
-              <span>⚡</span>
-              <span id="gaugeWasteLabel">PRUNED FUNCTION BODIES &amp; DEADWEIGHT (92.1% ELIMINATED)</span>
-            </span>
-            <span class="text-[9px] uppercase tracking-widest text-rose-500 font-mono hidden md:inline">Tokens Vaporized ↓</span>
+
+          <!-- Lane 2: SiftrCode Ingestion (AST Skeletons) -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="flex items-center gap-1.5 font-medium text-zinc-900">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                <span class="font-semibold text-amber-900">With SiftrCode AST Skeleton</span>
+              </span>
+              <span class="font-mono text-[10px] text-emerald-600 font-semibold" id="laneSkelLabel">
+                5.6% Allocated • 94.4% Buffer Free for Agent Reasoning ✅
+              </span>
+            </div>
+            <div class="w-full h-2.5 bg-zinc-100 rounded-full overflow-hidden flex p-0.5 border border-zinc-200/80">
+              <div id="laneSkelBar" class="h-full bg-amber-500 rounded-full transition-all duration-500 shadow-xs" style="width: 5.6%;"></div>
+            </div>
           </div>
+
         </div>
+
       </div>
+
 
       <!-- Dual-Pane Viewport -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -687,7 +695,6 @@ impl Gateway for StripeGateway {
     function updateUI(skel, rawTokens, skelTokens) {
       const reduction = Math.max(0, ((rawTokens - skelTokens) / rawTokens) * 100).toFixed(1);
       const saved = Math.max(0, rawTokens - skelTokens);
-      const signalPct = Math.max(6, Math.min(94, (skelTokens / rawTokens) * 100)).toFixed(1);
 
       document.getElementById('rawTokenCount').innerText = `~${rawTokens.toLocaleString()} tokens`;
       document.getElementById('skelTokenCount').innerText = `~${skelTokens.toLocaleString()} tokens (-${reduction}%)`;
@@ -695,24 +702,35 @@ impl Gateway for StripeGateway {
       document.getElementById('savedTokensCount').innerText = `Saved ~${saved.toLocaleString()} tokens`;
       document.getElementById('skelOutput').innerText = skel;
 
-      // Update Live Token Gauge
-      const gaugeSignal = document.getElementById('gaugeSignal');
-      const gaugeWasteLabel = document.getElementById('gaugeWasteLabel');
+      // 200k Context Window Allocation Telemetry
+      // Scaled to a realistic 38-file multi-file agent task:
+      const contextWindow = 200000;
+      const multiFileMultiplier = 38;
+      const sessionRawTokens = Math.min(contextWindow * 0.94, rawTokens * multiFileMultiplier);
+      const sessionSkelTokens = Math.min(sessionRawTokens, skelTokens * multiFileMultiplier);
+
+      const rawPct = Math.max(18, Math.min(92, ((sessionRawTokens / contextWindow) * 100))).toFixed(1);
+      const skelPct = Math.max(2.4, Math.min(18, ((sessionSkelTokens / contextWindow) * 100))).toFixed(1);
+      const freeHeadroom = (100 - parseFloat(skelPct)).toFixed(1);
+      const latencySecs = Math.max(18, Math.round((sessionRawTokens / 3200) * 1.1));
+
+      const laneRawBar = document.getElementById('laneRawBar');
+      const laneSkelBar = document.getElementById('laneSkelBar');
+      const laneRawLabel = document.getElementById('laneRawLabel');
+      const laneSkelLabel = document.getElementById('laneSkelLabel');
+      const headroomPill = document.getElementById('headroomPill');
       const gaugeRaw = document.getElementById('gaugeRaw');
       const gaugeSkel = document.getElementById('gaugeSkel');
-      const gaugeSaved = document.getElementById('gaugeSaved');
 
-      if (gaugeSignal) {
-        gaugeSignal.style.width = `${signalPct}%`;
-        gaugeSignal.innerHTML = `<span class="whitespace-nowrap">SIGNAL ${Math.round(signalPct)}%</span>`;
-      }
-      if (gaugeWasteLabel) {
-        gaugeWasteLabel.innerText = `PRUNED FUNCTION BODIES & DEADWEIGHT (${reduction}% ELIMINATED)`;
-      }
+      if (laneRawBar) laneRawBar.style.width = `${rawPct}%`;
+      if (laneSkelBar) laneSkelBar.style.width = `${skelPct}%`;
+      if (laneRawLabel) laneRawLabel.innerText = `${rawPct}% Context Choked (Method Bodies & Loops) • Latency ~${latencySecs}s ⚠️`;
+      if (laneSkelLabel) laneSkelLabel.innerText = `${skelPct}% Allocated • ${freeHeadroom}% Buffer Free for Agent Reasoning & Code Gen ✅`;
+      if (headroomPill) headroomPill.innerText = `+${reduction}% Headroom`;
       if (gaugeRaw) gaugeRaw.innerText = `${rawTokens.toLocaleString()} tokens`;
       if (gaugeSkel) gaugeSkel.innerText = `${skelTokens.toLocaleString()} tokens`;
-      if (gaugeSaved) gaugeSaved.innerText = `Saved ~${saved.toLocaleString()} tokens`;
     }
+
 
     function copyCommand() {
       navigator.clipboard.writeText('npx siftrcode audit');
