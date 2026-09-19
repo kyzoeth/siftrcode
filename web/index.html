@@ -856,76 +856,59 @@
                   <span id="stepStageText" class="font-semibold text-zinc-900 dark:text-zinc-100">Raw Code</span>
                 </span>
 
-                <!-- Mobile-Only Replay Action (Aligned to Right on Line 1) -->
-                <button onclick="triggerPruneMorph()" title="Replay AST synthesis demo" class="sm:hidden flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-sans text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition btn-press cursor-pointer shrink-0 border border-zinc-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-800/80 shadow-2xs">
-                  <span class="text-xs">↺</span>
-                  <span>Replay</span>
-                </button>
+                <span id="stepStageHint" class="hidden sm:inline-block text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                  Unpruned source loaded into context
+                </span>
               </div>
 
-              <!-- Desktop Inline Telemetry & Savings Tag -->
-              <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-2.5 min-w-0 sm:mr-auto">
-                <span class="hidden sm:inline-block text-zinc-300 dark:text-zinc-700 select-none shrink-0">|</span>
-
-                <div class="flex items-center gap-1.5 sm:gap-2 font-mono shrink-0 flex-wrap sm:flex-nowrap">
-                  <span class="text-zinc-400 dark:text-zinc-500 font-sans text-[11px] font-medium uppercase tracking-wider select-none shrink-0">Context:</span>
-                  
-                  <div class="flex items-baseline gap-1 text-[#D97757] dark:text-[#F39C82] shrink-0">
-                    <span id="bridgeRaw" class="font-semibold">0 tokens</span>
-                    <span class="text-[11px] text-zinc-400 dark:text-zinc-500">(<span id="costRaw">$0.00</span>)</span>
-                  </div>
-
-                  <span class="text-zinc-400 dark:text-zinc-600 font-sans select-none px-0.5 shrink-0">➔</span>
-
-                  <div class="flex items-baseline gap-1 text-emerald-600 dark:text-emerald-400 font-semibold shrink-0">
-                    <span id="bridgeSkel">0 tokens</span>
-                    <span class="text-[11px] text-zinc-500 dark:text-zinc-400 font-normal">(<span id="costSkel">$0.00</span>)</span>
-                  </div>
-                </div>
-
-                <span id="costSavedTag" class="hidden px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold tracking-tight transition-all duration-200 shrink-0 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300">Save $0.00</span>
-              </div>
-
-              <!-- Desktop-Only Replay Action (Pinned to Far Right) -->
-              <button onclick="triggerPruneMorph()" title="Replay AST synthesis demo" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-sans text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition btn-press cursor-pointer shrink-0 border border-zinc-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-800/80 shadow-2xs">
+              <!-- Replay Action -->
+              <button onclick="triggerPruneMorph()" title="Replay AST synthesis demo" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-sans text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition btn-press cursor-pointer shrink-0 border border-zinc-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-800/80 shadow-2xs">
                 <span class="text-xs">↺</span>
                 <span>Replay</span>
               </button>
             </div>
 
-            <!-- Bottom Line: Animated Horizontal Context Transition Bar (Before ➔ After) -->
-            <div class="w-full pt-1.5 border-t border-zinc-200/60 dark:border-zinc-800/60 flex flex-col gap-1.5">
-              <div class="flex items-center justify-between text-[10.5px] sm:text-[11px] font-mono leading-none">
-                <!-- Before (Raw Source) Label with Claude Terracotta Accent -->
-                <div class="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
-                  <span class="w-2 h-2 rounded-full bg-[#D97757] shrink-0 shadow-2xs"></span>
-                  <span class="text-[10px] uppercase font-sans tracking-wider text-zinc-400 dark:text-zinc-500 select-none">Before:</span>
-                  <span id="barRawTokens" class="font-medium text-[#D97757] dark:text-[#F39C82]">0 tokens</span>
-                  <span class="text-zinc-400 dark:text-zinc-500 text-[10px] sm:text-[10.5px]">(<span id="barRawCost">$0.00</span>)</span>
-                </div>
-
-                <!-- After (Synthesized Contract) Label with Emerald Green Accent -->
-                <div class="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0 shadow-2xs"></span>
-                  <span class="text-[10px] uppercase font-sans tracking-wider text-zinc-400 dark:text-zinc-500 select-none">After:</span>
-                  <span id="barSkelTokens" class="font-semibold text-emerald-600 dark:text-emerald-400">0 tokens</span>
-                  <span class="text-zinc-400 dark:text-zinc-500 text-[10px] sm:text-[10.5px]">(<span id="barSkelCost">$0.00</span>)</span>
-                  <span id="barReductionBadge" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-700/80 transition-all ml-0.5 shadow-2xs">-0%</span>
-                </div>
+            <!-- Bottom Line: Dynamic Token Gauge Bar (Green/Low to Red/High) -->
+            <div class="w-full pt-1.5 border-t border-zinc-200/60 dark:border-zinc-800/60 flex flex-col gap-1">
+              <!-- Scale Markers -->
+              <div class="flex items-center justify-between text-[10px] font-mono text-zinc-400 dark:text-zinc-500 select-none px-0.5">
+                <span class="flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span>Low Context</span>
+                </span>
+                <span id="barTargetMaxLabel" class="flex items-center gap-1">
+                  <span>High Bloat</span>
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                </span>
               </div>
 
-              <!-- The Horizontal Progress Track & Transition Bar -->
-              <div class="relative w-full h-2 sm:h-2.5 rounded-full bg-zinc-200/80 dark:bg-zinc-800/80 overflow-hidden flex items-center shadow-inner border border-zinc-200/40 dark:border-zinc-700/40">
-                <!-- Retained Context Bar (transitions 0% -> 100% in Profiling, shrinks to ~7.5% in Pruning, turns emerald in Synthesized) -->
-                <div id="footerRetainedBar" class="h-full rounded-full bg-gradient-to-r from-[#D97757] via-[#E58B6E] to-[#F59E0B] shadow-2xs relative overflow-hidden transition-[width,background-color] duration-500 ease-out" style="width: 0%;">
-                  <!-- Shimmer Light sweep -->
+              <!-- Main Horizontal Track -->
+              <div class="relative w-full h-7 sm:h-8 rounded-lg bg-zinc-200/80 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700/80 overflow-hidden shadow-inner flex items-center">
+                
+                <!-- Background Gradient Track: Green (left) to Red (right) -->
+                <div class="absolute inset-0 opacity-15 dark:opacity-20 pointer-events-none bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500"></div>
+
+                <!-- Active Payload Bar (green when low, red when high; gets smaller & greener as we prune) -->
+                <div id="footerPayloadBar" class="h-full rounded-l-lg shadow-sm relative overflow-hidden transition-[width,background-color] duration-500 ease-out" style="width: 0%; background-color: #10b981;">
+                  <!-- Shimmer sweep -->
                   <div id="footerBarShimmer" class="absolute inset-0 bg-white/30 opacity-0 transition-opacity duration-300 pointer-events-none"></div>
                 </div>
 
-                <!-- Pruned / Saved Context Area (Shows subtle emerald tint as bloat is pruned away) -->
-                <div id="footerPrunedBar" class="h-full flex-1 transition-[opacity,background-color] duration-500 opacity-0 bg-emerald-500/15 dark:bg-emerald-400/15 border-l border-emerald-400/30 flex items-center justify-end pr-1.5">
-                  <span id="footerPrunedLabel" class="hidden sm:inline-block text-[8.5px] font-mono font-medium text-emerald-700 dark:text-emerald-300 uppercase tracking-wider select-none opacity-0 transition-opacity duration-500">SAVED PAYLOAD</span>
+                <!-- Floating Head Tally Tracker (strictly follows the moving head of the bar) -->
+                <div id="payloadHeadTracker" class="absolute top-0 bottom-0 pointer-events-none flex items-center transition-[left] duration-500 ease-out z-10" style="left: 0%;">
+                  <div id="payloadHeadTally" class="flex items-center gap-1 font-mono text-[10.5px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-2xs whitespace-nowrap transition-all duration-300 transform translate-x-1 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700">
+                    <span id="payloadTallyValue">0 tokens</span>
+                  </div>
                 </div>
+
+                <!-- Visual Highlight of Total Token Savings (from where it started to where it ended up) -->
+                <div id="footerSavingsZone" class="absolute top-0 bottom-0 right-0 opacity-0 pointer-events-none transition-opacity duration-500 flex items-center justify-center px-2 sm:px-3 z-[5] bg-emerald-500/15 dark:bg-emerald-400/20 border-l-2 border-dashed border-emerald-500 dark:border-emerald-400" style="left: 0%;">
+                  <div class="flex items-center gap-1.5 font-mono text-[10px] sm:text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-white/95 dark:bg-zinc-900/95 px-2 sm:px-2.5 py-0.5 rounded-md border border-emerald-400/80 dark:border-emerald-600/80 shadow-2xs">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="footerSavingsText">−0 tokens saved (−0%)</span>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
@@ -2469,6 +2452,19 @@ impl PaymentGateway for StripeGateway {
         stageEl.innerText = stageText;
       }
 
+      const stageHints = {
+        1: 'Unpruned source loaded into context',
+        2: 'Scanning AST scopes & token telemetry',
+        3: 'Targeting non-exported implementations',
+        4: 'Dissolving bodies into type contracts',
+        5: 'Purging unreferenced dependencies',
+        6: 'Clean AST interface synthesized'
+      };
+      const hintEl = document.getElementById('stepStageHint');
+      if (hintEl && stepNum) {
+        hintEl.innerText = stageHints[stepNum] || '';
+      }
+
       const animContainer = document.getElementById('stepThinkingAnim');
       const badge = document.getElementById('morphStepBadge');
       if (animContainer) {
@@ -2513,6 +2509,57 @@ impl PaymentGateway for StripeGateway {
       setMorphStatus(mode, step, text);
     }
 
+    // Dynamic HSL interpolation: 0% (emerald green) to 100% (crimson red)
+    function getPayloadColor(pct) {
+      const clamped = Math.max(0, Math.min(100, pct));
+      const hue = Math.round(145 * (1 - clamped / 100));
+      const sat = Math.round(75 + 15 * (clamped / 100));
+      const light = Math.round(44 + 4 * (1 - clamped / 100));
+      return `hsl(${hue}, ${sat}%, ${light}%)`;
+    }
+
+    function updatePayloadBar(currentTokens, rawTokens, durationMs = 0) {
+      const bar = document.getElementById('footerPayloadBar');
+      const tracker = document.getElementById('payloadHeadTracker');
+      const tally = document.getElementById('payloadHeadTally');
+      const tallyVal = document.getElementById('payloadTallyValue');
+
+      const maxTokens = Math.max(1, rawTokens || 1);
+      const pct = Math.max(0, Math.min(100, (currentTokens / maxTokens) * 100));
+      const color = getPayloadColor(pct);
+
+      if (bar) {
+        if (durationMs > 0) {
+          bar.style.transition = `width ${durationMs}ms cubic-bezier(0.16, 1, 0.3, 1), background-color ${durationMs}ms ease`;
+        } else {
+          bar.style.transition = 'none';
+        }
+        bar.style.width = `${pct.toFixed(1)}%`;
+        bar.style.backgroundColor = color;
+      }
+
+      if (tracker) {
+        if (durationMs > 0) {
+          tracker.style.transition = `left ${durationMs}ms cubic-bezier(0.16, 1, 0.3, 1)`;
+        } else {
+          tracker.style.transition = 'none';
+        }
+        tracker.style.left = `${pct.toFixed(1)}%`;
+      }
+
+      if (tally) {
+        if (pct > 25) {
+          tally.className = 'flex items-center gap-1 font-mono text-[10.5px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-2xs whitespace-nowrap transition-all duration-300 transform -translate-x-full -ml-1 bg-zinc-950/85 text-white border border-zinc-700/80 backdrop-blur-xs';
+        } else {
+          tally.className = 'flex items-center gap-1 font-mono text-[10.5px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-2xs whitespace-nowrap transition-all duration-300 transform translate-x-1.5 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 shadow-xs';
+        }
+      }
+
+      if (tallyVal) {
+        tallyVal.innerText = `${Math.round(currentTokens).toLocaleString()} tokens`;
+      }
+    }
+
     function setMetricsInstant(skelTokens, skelCost, savedCost, savedTokens, reduction = null) {
       const conf = langConfig[curLang];
       const isRawMode = (skelTokens === conf.rawTokens || savedCost === 0);
@@ -2525,18 +2572,8 @@ impl PaymentGateway for StripeGateway {
       const bridgeSkel = document.getElementById('bridgeSkel');
       const costSkel = document.getElementById('costSkel');
       const costSavedTag = document.getElementById('costSavedTag');
-
-      const barRawTokens = document.getElementById('barRawTokens');
-      const barRawCost = document.getElementById('barRawCost');
-      const barSkelTokens = document.getElementById('barSkelTokens');
-      const barSkelCost = document.getElementById('barSkelCost');
-      const barReductionBadge = document.getElementById('barReductionBadge');
-      const footerRetainedBar = document.getElementById('footerRetainedBar');
-      const footerPrunedBar = document.getElementById('footerPrunedBar');
-      const footerPrunedLabel = document.getElementById('footerPrunedLabel');
-
-      if (barRawTokens) barRawTokens.innerText = `${conf.rawTokens.toLocaleString()} tokens`;
-      if (barRawCost) barRawCost.innerText = `$${conf.rawCost.toFixed(2)}`;
+      const savingsZone = document.getElementById('footerSavingsZone');
+      const savingsText = document.getElementById('footerSavingsText');
 
       if (isRawMode) {
         if (bridgeSkel) bridgeSkel.innerText = `${conf.rawTokens.toLocaleString()} tokens`;
@@ -2544,16 +2581,8 @@ impl PaymentGateway for StripeGateway {
         if (costSavedTag) {
           costSavedTag.classList.add('hidden');
         }
-
-        if (barSkelTokens) barSkelTokens.innerText = `${conf.rawTokens.toLocaleString()} tokens`;
-        if (barSkelCost) barSkelCost.innerText = `$${conf.rawCost.toFixed(2)}`;
-        if (barReductionBadge) barReductionBadge.innerText = '-0%';
-        if (footerRetainedBar) {
-          footerRetainedBar.style.width = '100%';
-          footerRetainedBar.className = 'h-full rounded-full bg-gradient-to-r from-[#D97757] via-[#E58B6E] to-[#F59E0B] shadow-2xs relative overflow-hidden transition-[width,background-color] duration-500 ease-out';
-        }
-        if (footerPrunedBar) footerPrunedBar.style.opacity = '0';
-        if (footerPrunedLabel) footerPrunedLabel.style.opacity = '0';
+        updatePayloadBar(conf.rawTokens, conf.rawTokens, 0);
+        if (savingsZone) savingsZone.style.opacity = '0';
       } else {
         if (bridgeSkel) bridgeSkel.innerText = `${conf.skelTokens.toLocaleString()} tokens`;
         if (costSkel) costSkel.innerText = `$${conf.skelCost.toFixed(2)}`;
@@ -2563,17 +2592,19 @@ impl PaymentGateway for StripeGateway {
           costSavedTag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold tracking-tight transition-all duration-200 shrink-0 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300';
         }
 
-        if (barSkelTokens) barSkelTokens.innerText = `${conf.skelTokens.toLocaleString()} tokens`;
-        if (barSkelCost) barSkelCost.innerText = `$${conf.skelCost.toFixed(2)}`;
         const redVal = reduction != null ? reduction : conf.reduction;
-        if (barReductionBadge) barReductionBadge.innerText = `-${redVal.toFixed(1)}%`;
-        if (footerRetainedBar) {
-          const pct = (conf.skelTokens / conf.rawTokens) * 100;
-          footerRetainedBar.style.width = `${pct.toFixed(1)}%`;
-          footerRetainedBar.className = 'h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 shadow-2xs relative overflow-hidden transition-[width,background-color] duration-500 ease-out';
+        const savedCount = savedTokens != null ? savedTokens : conf.savedTokens;
+        const skelPct = (conf.skelTokens / conf.rawTokens) * 100;
+
+        updatePayloadBar(conf.skelTokens, conf.rawTokens, 400);
+
+        if (savingsZone) {
+          savingsZone.style.left = `${skelPct.toFixed(1)}%`;
+          savingsZone.style.opacity = '1';
         }
-        if (footerPrunedBar) footerPrunedBar.style.opacity = '1';
-        if (footerPrunedLabel) footerPrunedLabel.style.opacity = '1';
+        if (savingsText) {
+          savingsText.innerText = `−${savedCount.toLocaleString()} tokens saved (−${redVal.toFixed(1)}%)`;
+        }
       }
     }
 
@@ -2764,27 +2795,9 @@ impl PaymentGateway for StripeGateway {
       const costSkel = document.getElementById('costSkel');
       if (costSkel) costSkel.innerText = '$0.00';
 
-      const barRawTokens = document.getElementById('barRawTokens');
-      const barRawCost = document.getElementById('barRawCost');
-      const barSkelTokens = document.getElementById('barSkelTokens');
-      const barSkelCost = document.getElementById('barSkelCost');
-      const barReductionBadge = document.getElementById('barReductionBadge');
-      const footerRetainedBar = document.getElementById('footerRetainedBar');
-      const footerPrunedBar = document.getElementById('footerPrunedBar');
-      const footerPrunedLabel = document.getElementById('footerPrunedLabel');
-
-      if (barRawTokens) barRawTokens.innerText = '0 tokens';
-      if (barRawCost) barRawCost.innerText = '$0.00';
-      if (barSkelTokens) barSkelTokens.innerText = '0 tokens';
-      if (barSkelCost) barSkelCost.innerText = '$0.00';
-      if (barReductionBadge) barReductionBadge.innerText = '-0%';
-      if (footerRetainedBar) {
-        footerRetainedBar.style.transition = 'none';
-        footerRetainedBar.style.width = '0%';
-        footerRetainedBar.className = 'h-full rounded-full bg-gradient-to-r from-[#D97757] via-[#E58B6E] to-[#F59E0B] shadow-2xs relative overflow-hidden transition-[width,background-color] duration-500 ease-out';
-      }
-      if (footerPrunedBar) footerPrunedBar.style.opacity = '0';
-      if (footerPrunedLabel) footerPrunedLabel.style.opacity = '0';
+      updatePayloadBar(0, conf.rawTokens, 0);
+      const savingsZone = document.getElementById('footerSavingsZone');
+      if (savingsZone) savingsZone.style.opacity = '0';
 
       const costSavedTag = document.getElementById('costSavedTag');
       if (costSavedTag) costSavedTag.classList.add('hidden');
@@ -2826,15 +2839,15 @@ impl PaymentGateway for StripeGateway {
         animateNumber('bridgeSkel', 0, conf.rawTokens, profileCountDuration, v => `${Math.round(v).toLocaleString()} tokens`);
         animateNumber('costSkel', 0, conf.rawCost, profileCountDuration, v => `$${v.toFixed(2)}`);
 
-        animateNumber('barRawTokens', 0, conf.rawTokens, profileCountDuration, v => `${Math.round(v).toLocaleString()} tokens`);
-        animateNumber('barRawCost', 0, conf.rawCost, profileCountDuration, v => `$${v.toFixed(2)}`);
-        animateNumber('barSkelTokens', 0, conf.rawTokens, profileCountDuration, v => `${Math.round(v).toLocaleString()} tokens`);
-        animateNumber('barSkelCost', 0, conf.rawCost, profileCountDuration, v => `$${v.toFixed(2)}`);
-
-        if (footerRetainedBar) {
-          footerRetainedBar.style.transition = `width ${profileCountDuration}ms cubic-bezier(0.22, 1, 0.36, 1), background-color 0.5s ease`;
-          footerRetainedBar.style.width = '100%';
-        }
+        // Animate the single dynamic payload bar filling up from 0 to rawTokens (green to red)
+        animateNumber(
+          'payloadTallyValue',
+          0,
+          conf.rawTokens,
+          profileCountDuration,
+          v => `${Math.round(v).toLocaleString()} tokens`,
+          curr => updatePayloadBar(curr, conf.rawTokens, 0)
+        );
       }, rawHoldDuration);
       morphTimeouts.push(scanTimeout);
 
@@ -3045,25 +3058,15 @@ impl PaymentGateway for StripeGateway {
                 animateNumber('bridgeSkel', prevTokens, targetTokens, tokenCountdownDuration, v => `${Math.round(v).toLocaleString()} tokens`);
                 animateNumber('costSkel', prevCost, targetCost, tokenCountdownDuration, v => `$${v.toFixed(2)}`);
 
-                animateNumber('barSkelTokens', prevTokens, targetTokens, tokenCountdownDuration, v => `${Math.round(v).toLocaleString()} tokens`);
-                animateNumber('barSkelCost', prevCost, targetCost, tokenCountdownDuration, v => `$${v.toFixed(2)}`);
-
-                const prevRed = ((conf.rawTokens - prevTokens) / conf.rawTokens) * 100;
-                const targetRed = ((conf.rawTokens - targetTokens) / conf.rawTokens) * 100;
-                animateNumber('barReductionBadge', prevRed, targetRed, tokenCountdownDuration, v => `-${v.toFixed(1)}%`);
-
-                const footerRetainedBar = document.getElementById('footerRetainedBar');
-                const footerPrunedBar = document.getElementById('footerPrunedBar');
-                const footerPrunedLabel = document.getElementById('footerPrunedLabel');
-                if (footerRetainedBar) {
-                  const targetPct = (targetTokens / conf.rawTokens) * 100;
-                  footerRetainedBar.style.transition = `width ${tokenCountdownDuration}ms cubic-bezier(0.16, 1, 0.3, 1), background-color 0.5s ease`;
-                  footerRetainedBar.style.width = `${targetPct.toFixed(1)}%`;
-                }
-                if (footerPrunedBar) {
-                  footerPrunedBar.style.opacity = '1';
-                  if (footerPrunedLabel && targetRed > 25) footerPrunedLabel.style.opacity = '1';
-                }
+                // Animate the single dynamic payload bar shrinking and getting greener as bloat is pruned
+                animateNumber(
+                  'payloadTallyValue',
+                  prevTokens,
+                  targetTokens,
+                  tokenCountdownDuration,
+                  v => `${Math.round(v).toLocaleString()} tokens`,
+                  curr => updatePayloadBar(curr, conf.rawTokens, 0)
+                );
 
                 const costSavedTag = document.getElementById('costSavedTag');
                 if (costSavedTag) {
@@ -3190,26 +3193,9 @@ ${renderedRaw}
       if (bridgeSkel) bridgeSkel.innerText = '0 tokens';
       const costSkel = document.getElementById('costSkel');
       if (costSkel) costSkel.innerText = '$0.00';
-      const barRawTokens = document.getElementById('barRawTokens');
-      const barRawCost = document.getElementById('barRawCost');
-      const barSkelTokens = document.getElementById('barSkelTokens');
-      const barSkelCost = document.getElementById('barSkelCost');
-      const barReductionBadge = document.getElementById('barReductionBadge');
-      const footerRetainedBar = document.getElementById('footerRetainedBar');
-      const footerPrunedBar = document.getElementById('footerPrunedBar');
-      const footerPrunedLabel = document.getElementById('footerPrunedLabel');
-      if (barRawTokens) barRawTokens.innerText = '0 tokens';
-      if (barRawCost) barRawCost.innerText = '$0.00';
-      if (barSkelTokens) barSkelTokens.innerText = '0 tokens';
-      if (barSkelCost) barSkelCost.innerText = '$0.00';
-      if (barReductionBadge) barReductionBadge.innerText = '-0%';
-      if (footerRetainedBar) {
-        footerRetainedBar.style.transition = 'none';
-        footerRetainedBar.style.width = '0%';
-        footerRetainedBar.className = 'h-full rounded-full bg-gradient-to-r from-[#D97757] via-[#E58B6E] to-[#F59E0B] shadow-2xs relative overflow-hidden transition-[width,background-color] duration-500 ease-out';
-      }
-      if (footerPrunedBar) footerPrunedBar.style.opacity = '0';
-      if (footerPrunedLabel) footerPrunedLabel.style.opacity = '0';
+      updatePayloadBar(0, conf.rawTokens, 0);
+      const savingsZone = document.getElementById('footerSavingsZone');
+      if (savingsZone) savingsZone.style.opacity = '0';
       const costSavedTag = document.getElementById('costSavedTag');
       if (costSavedTag) costSavedTag.classList.add('hidden');
     }
@@ -3282,11 +3268,12 @@ ${renderedRaw}
       savedTokens: 0
     };
 
-    function animateNumber(elementId, startVal, endVal, durationMs, formatter) {
-      const el = document.getElementById(elementId);
-      if (!el) return;
+    function animateNumber(elementId, startVal, endVal, durationMs, formatter, onTick) {
+      const el = elementId ? document.getElementById(elementId) : null;
+      if (!el && !onTick) return;
       if (Math.abs(startVal - endVal) < 0.05) {
-        el.innerText = formatter(endVal);
+        if (el) el.innerText = formatter(endVal);
+        if (onTick) onTick(endVal);
         return;
       }
       const startTime = performance.now();
@@ -3295,11 +3282,13 @@ ${renderedRaw}
         const progress = Math.min(1, elapsed / durationMs);
         const ease = 1 - Math.pow(1 - progress, 3);
         const current = startVal + (endVal - startVal) * ease;
-        el.innerText = formatter(current);
+        if (el) el.innerText = formatter(current);
+        if (onTick) onTick(current);
         if (progress < 1) {
           requestAnimationFrame(tick);
         } else {
-          el.innerText = formatter(endVal);
+          if (el) el.innerText = formatter(endVal);
+          if (onTick) onTick(endVal);
         }
       }
       requestAnimationFrame(tick);
@@ -3326,6 +3315,18 @@ ${renderedRaw}
       const costSavedTag = document.getElementById('costSavedTag');
       if (costSavedTag) {
         costSavedTag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold tracking-tight transition-all duration-200 shrink-0 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300';
+      }
+
+      updatePayloadBar(skelTokens, rawTokens, duration);
+      const savingsZone = document.getElementById('footerSavingsZone');
+      const savingsText = document.getElementById('footerSavingsText');
+      if (savingsZone) {
+        const skelPct = (skelTokens / Math.max(1, rawTokens)) * 100;
+        savingsZone.style.left = `${skelPct.toFixed(1)}%`;
+        savingsZone.style.opacity = '1';
+      }
+      if (savingsText) {
+        savingsText.innerText = `−${saved.toLocaleString()} tokens saved (−${Math.round(reduction)}%)`;
       }
 
       document.getElementById('skelOutput').innerHTML = `<div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">${renderCodeLinesWithNumbers(skel, curLang, 1)}</div>`;
