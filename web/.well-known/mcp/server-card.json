@@ -1,0 +1,67 @@
+{
+  "serverInfo": {
+    "name": "siftrcode",
+    "version": "0.1.1",
+    "description": "AST-powered codebase skeletonizer and context pruner for AI coding agents. Slashes agent token waste by up to 90%."
+  },
+  "authentication": {
+    "required": false
+  },
+  "tools": [
+    {
+      "name": "siftr_skeleton",
+      "description": "Returns the pruned AST interface skeleton of source code. Strips function bodies and internal loops while preserving 100% of exported types, signatures, classes, and docstrings. Cuts token usage by 80-95%.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Source code content to skeletonize"
+          },
+          "language": {
+            "type": "string",
+            "description": "Source language: typescript, python, go, or rust",
+            "enum": ["typescript", "python", "go", "rust", "javascript"]
+          },
+          "filename": {
+            "type": "string",
+            "description": "Optional filename (e.g. index.ts, app.py, main.go, lib.rs)"
+          }
+        },
+        "required": ["code"]
+      }
+    },
+    {
+      "name": "siftr_audit",
+      "description": "Audits source code or repository for token bloat, dead weight, and context waste. Returns potential token and cost savings.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Code snippet to audit"
+          },
+          "language": {
+            "type": "string",
+            "description": "Language of snippet"
+          }
+        }
+      }
+    },
+    {
+      "name": "siftr_pack",
+      "description": "Prepares an AST-compressed context pack for AI coding agents.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "focus": {
+            "type": "string",
+            "description": "Task description or focus area"
+          }
+        }
+      }
+    }
+  ],
+  "resources": [],
+  "prompts": []
+}
