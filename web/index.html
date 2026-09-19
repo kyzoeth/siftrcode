@@ -98,17 +98,55 @@
     ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #10b981; }
 
-    /* Shimmering Text Gradient for 90% */
-    .pct-shimmer {
-      background: linear-gradient(115deg, #059669 15%, #34d399 50%, #059669 85%);
+    /* Continuous Glowing 90% Badge */
+    @keyframes continuous-emerald-glow {
+      0%, 100% {
+        box-shadow: 0 0 16px -2px rgba(16, 185, 129, 0.4), 0 0 5px rgba(16, 185, 129, 0.3);
+        border-color: rgba(16, 185, 129, 0.55);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 30px 4px rgba(16, 185, 129, 0.65), 0 0 10px rgba(16, 185, 129, 0.5);
+        border-color: rgba(16, 185, 129, 0.9);
+        transform: scale(1.025);
+      }
+    }
+
+    .hero-glow-badge {
+      animation: continuous-emerald-glow 3s ease-in-out infinite;
+    }
+
+    /* Continuous Shimmer Sweep across 90% */
+    .hero-pct-text {
+      background: linear-gradient(90deg, #047857 0%, #059669 30%, #34d399 50%, #059669 70%, #047857 100%);
       background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      animation: pct-shine 3.8s ease-in-out infinite;
+      animation: pct-shimmer-sweep 2.6s linear infinite;
     }
-    @keyframes pct-shine {
+    @keyframes pct-shimmer-sweep {
       0% { background-position: 200% center; }
-      100% { background-position: -20% center; }
+      100% { background-position: -200% center; }
+    }
+
+    /* Workbench Laser Scanner Beam */
+    @keyframes scanline-sweep {
+      0% { top: 0%; opacity: 0; }
+      15% { opacity: 0.95; }
+      85% { opacity: 0.95; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    .scanner-beam {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.3) 15%, #34d399 50%, rgba(16, 185, 129, 0.3) 85%, transparent 100%);
+      box-shadow: 0 0 14px #10b981, 0 0 28px rgba(16, 185, 129, 0.5);
+      pointer-events: none;
+      animation: scanline-sweep 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      z-index: 15;
     }
   </style>
 </head>
@@ -153,7 +191,7 @@
       
       <!-- Hero Headline -->
       <h1 class="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-ink sm:whitespace-nowrap max-w-none mx-auto leading-tight">
-        Cut agent token waste by <span id="heroBadge" class="relative inline-flex items-center px-3 py-0.5 mx-1 bg-emerald-50/80 hover:bg-emerald-100/70 border border-emerald-300/90 rounded-xl font-mono shadow-sm transition-all duration-300 cursor-pointer align-baseline group" onmouseenter="scrambleHeroPct()" onclick="scrambleHeroPct()" title="Hover or click to re-scramble"><span id="heroPct" class="font-bold text-emerald-700 tracking-tight">90%</span><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1.5 signal-ping"></span><span class="absolute -bottom-0.5 left-2 right-2 h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-70 group-hover:opacity-100 transition"></span></span>.
+        Cut agent token waste by <span id="heroBadge" class="hero-glow-badge relative inline-flex items-center px-3.5 py-0.5 mx-1.5 bg-emerald-50/90 border border-emerald-300 rounded-xl font-mono align-baseline select-none"><span class="hero-pct-text font-bold tracking-tight">90%</span><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1.5 signal-ping"></span></span>.
       </h1>
 
       <!-- Subtitle -->
@@ -206,14 +244,18 @@
         <div class="flex items-center gap-2">
           <span class="text-xs font-mono text-zinc-500 font-medium mr-1">LANG:</span>
           <div class="flex items-center gap-1 font-mono text-xs">
-            <button onclick="setLang('ts')" id="tab-ts" class="px-2.5 py-1 rounded-md bg-zinc-900 text-white font-medium">TypeScript</button>
-            <button onclick="setLang('py')" id="tab-py" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink">Python</button>
-            <button onclick="setLang('go')" id="tab-go" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink">Go</button>
-            <button onclick="setLang('rs')" id="tab-rs" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink">Rust</button>
+            <button onclick="setLang('ts', true)" id="tab-ts" class="px-2.5 py-1 rounded-md bg-zinc-900 text-white font-medium">TypeScript</button>
+            <button onclick="setLang('py', true)" id="tab-py" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink">Python</button>
+            <button onclick="setLang('go', true)" id="tab-go" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink">Go</button>
+            <button onclick="setLang('rs', true)" id="tab-rs" class="px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink">Rust</button>
           </div>
         </div>
 
         <div class="flex items-center gap-3 font-mono text-xs">
+          <div class="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 border border-zinc-200 text-[11px]">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>LIVE AST SCANNER ACTIVE</span>
+          </div>
           <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             <span id="reductionTag">-92.1% Token Mass</span>
@@ -237,15 +279,20 @@
         </div>
 
         <!-- Right: AST Pruned Interface Skeleton -->
-        <div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg flex flex-col text-white">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg flex flex-col text-white relative">
+          <!-- Laser Scanner Beam that sweeps down the code -->
+          <div class="scanner-beam"></div>
+
           <div class="bg-zinc-950 px-4 py-2 border-b border-zinc-800 flex items-center justify-between text-xs font-mono">
             <span class="text-emerald-400 font-medium flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span class="w-2 h-2 rounded-full bg-emerald-500 signal-ping"></span>
               SIFTRCODE AST SKELETON (FED TO AGENT)
             </span>
             <span class="text-emerald-400 font-bold" id="skelTokenCount">~112 tokens (-92.1%)</span>
           </div>
-          <pre id="skelOutput" class="w-full h-80 p-4 font-mono text-xs text-emerald-300/90 leading-relaxed overflow-auto whitespace-pre-wrap selection:bg-emerald-500 selection:text-black"></pre>
+          <div class="relative flex-1 overflow-hidden">
+            <pre id="skelOutput" class="w-full h-80 p-4 font-mono text-xs text-emerald-300/90 leading-relaxed overflow-auto whitespace-pre-wrap selection:bg-emerald-500 selection:text-black"></pre>
+          </div>
           <div class="bg-zinc-950 px-4 py-1.5 border-t border-zinc-800 text-[11px] font-mono text-zinc-400 flex items-center justify-between">
             <span class="text-emerald-400">Zero-Loss Interfaces Preserved</span>
             <span id="savedTokensCount" class="text-emerald-400 font-semibold">Saved ~1,308 tokens</span>
@@ -620,43 +667,44 @@ impl Gateway for StripeGateway {
       btn.className = 'text-[11px] font-mono text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded';
       setTimeout(() => {
         btn.innerText = 'COPY';
-        btn.className = 'text-[11px] font-mono text-zinc-500 hover:text-emerald-600 transition px-2 py-0.5 rounded bg-zinc-50 border border-zinc-200';
-      }, 2000);
+    const langs = ['ts', 'py', 'go', 'rs'];
+    let langIndex = 0;
+    let userInteracted = false;
+
+    function setLang(lang, fromUser = false) {
+      if (fromUser) userInteracted = true;
+      curLang = lang;
+      langIndex = langs.indexOf(lang);
+      langs.forEach(l => {
+        const el = document.getElementById('tab-' + l);
+        if (l === lang) {
+          el.className = 'px-2.5 py-1 rounded-md bg-zinc-900 text-white font-medium shadow-sm';
+        } else {
+          el.className = 'px-2.5 py-1 rounded-md text-zinc-600 hover:text-ink transition';
+        }
+      });
+      document.getElementById('rawInput').value = samples[lang];
+      renderAST();
     }
 
-    const glyphs = '0123456789%#$*Δ∇Ξ+@';
-    const targetText = '90%';
-    let isScrambling = false;
+    function onInputChanged() {
+      userInteracted = true;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(renderAST, 100);
+    }
 
-    function scrambleHeroPct() {
-      if (isScrambling) return;
-      isScrambling = true;
-      const el = document.getElementById('heroPct');
-      if (!el) return;
-      
-      let iteration = 0;
-      const interval = setInterval(() => {
-        el.innerText = targetText
-          .split('')
-          .map((char, index) => {
-            if (index < iteration) {
-              return targetText[index];
-            }
-            return glyphs[Math.floor(Math.random() * glyphs.length)];
-          })
-          .join('');
-
-        if (iteration >= targetText.length) {
-          clearInterval(interval);
-          isScrambling = false;
+    function startAutoTour() {
+      setInterval(() => {
+        if (!userInteracted) {
+          langIndex = (langIndex + 1) % langs.length;
+          setLang(langs[langIndex], false);
         }
-        iteration += 1 / 3;
-      }, 35);
+      }, 5500);
     }
 
     // Init
     setLang('ts');
-    setTimeout(scrambleHeroPct, 200);
+    startAutoTour();
   </script>
 </body>
 </html>
