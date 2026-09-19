@@ -30,7 +30,7 @@
             mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
           },
           colors: {
-            surface: { 50: '#fafafa', 100: '#f4f4f6', 200: '#e5e7eb', 300: '#d1d5db' },
+            surface: { 50: '#eef1f5', 100: '#e2e6eb', 200: '#cbd2d9', 300: '#94a3b8' },
             ink: { DEFAULT: '#09090b', secondary: '#52525b', tertiary: '#a1a1aa' }
           }
         }
@@ -43,7 +43,13 @@
       overflow-y: scroll;
       scrollbar-gutter: stable;
     }
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -0.015em; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      letter-spacing: -0.015em;
+      background-color: #eef1f5;
+      background-image: radial-gradient(circle at 50% 0%, #f4f6f9 0%, #eef1f5 55%, #e6ebf1 100%);
+      background-attachment: fixed;
+    }
     .font-serif, h1.font-serif, h2.font-serif, h3.font-serif, .font-display { font-family: 'Instrument Serif', Georgia, serif; letter-spacing: -0.02em; }
     code, pre, .font-mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; }
     ::selection { background: #bfdbfe; color: #0f172a; }
@@ -58,7 +64,12 @@
     html.dark ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
 
     html.dark { color-scheme: dark; }
-    html.dark body { background-color: #09090b !important; color: #fafafa !important; }
+    html.dark body {
+      background-color: #09090b !important;
+      background-image: radial-gradient(circle at 50% 0%, #111218 0%, #09090b 70%) !important;
+      background-attachment: fixed;
+      color: #fafafa !important;
+    }
     html.dark header { background-color: rgba(9, 9, 11, 0.85) !important; border-color: rgba(39, 39, 42, 0.8) !important; }
     html.dark .text-ink { color: #fafafa !important; }
     html.dark .text-ink-secondary { color: #a1a1aa !important; }

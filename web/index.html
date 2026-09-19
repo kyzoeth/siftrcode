@@ -32,10 +32,10 @@
           },
           colors: {
             surface: {
-              50: '#fafafa',
-              100: '#f4f4f6',
-              200: '#e5e7eb',
-              300: '#d1d5db',
+              50: '#eef1f5',
+              100: '#e2e6eb',
+              200: '#cbd2d9',
+              300: '#94a3b8',
             },
             ink: {
               DEFAULT: '#09090b',
@@ -69,6 +69,9 @@
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       letter-spacing: -0.015em;
+      background-color: #eef1f5;
+      background-image: radial-gradient(circle at 50% 0%, #f4f6f9 0%, #eef1f5 55%, #e6ebf1 100%);
+      background-attachment: fixed;
     }
     .font-serif, h1.font-serif, h2.font-serif, h3.font-serif, .font-display {
       font-family: 'Instrument Serif', Georgia, serif;
@@ -102,6 +105,8 @@
     }
     html.dark body {
       background-color: #09090b !important;
+      background-image: radial-gradient(circle at 50% 0%, #111218 0%, #09090b 70%) !important;
+      background-attachment: fixed;
       color: #fafafa !important;
     }
     html.dark header {
@@ -680,7 +685,7 @@
     <div class="max-w-4xl mx-auto space-y-3.5">
       
       <!-- Integrated Language Selector & AST Synthesis Contract Deck -->
-      <div id="langSelectorDeck" class="bg-surface-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 rounded-lg p-2 sm:px-3 sm:py-2 shadow-2xs">
+      <div id="langSelectorDeck" class="bg-white/80 dark:bg-zinc-900/60 backdrop-blur-xs border border-zinc-200/80 dark:border-zinc-800 rounded-lg p-2 sm:px-3 sm:py-2 shadow-2xs">
         <div class="flex items-center justify-between gap-2.5 sm:gap-3">
           <!-- Left: Language Selection Tabs with Hover Popovers -->
           <div class="flex items-center gap-2 shrink-0">
@@ -929,7 +934,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
         
         <!-- Community -->
-        <div class="p-6 bg-surface-50 border-2 border-zinc-200 rounded-lg glow-card flex flex-col justify-between relative shadow-2xs">
+        <div class="p-6 bg-white dark:bg-zinc-900/80 border-2 border-zinc-200 dark:border-zinc-800 rounded-lg glow-card flex flex-col justify-between relative shadow-2xs">
           <span class="absolute -top-2.5 right-4 px-2.5 py-0.5 bg-zinc-200 text-zinc-700 font-bold text-[9px] rounded uppercase tracking-wider">OPEN SOURCE</span>
           <div class="space-y-4">
             <div>
