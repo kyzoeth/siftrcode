@@ -486,19 +486,44 @@
       pointer-events: auto;
     }
 
-    /* Telemetry Scan Beam */
-    .scan-beam {
+    /* Precision AST Analysis Ambient Wave (Soft & Diffuse, Replaces Neon Laser Wire) */
+    .ast-scope-wave {
       position: absolute;
       left: 0;
       right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.3) 15%, #3b82f6 50%, rgba(96, 165, 250, 0.3) 85%, transparent 100%);
-      box-shadow: 0 0 16px 3px rgba(59, 130, 246, 0.7);
+      height: 120px;
+      background: linear-gradient(180deg, 
+        transparent 0%, 
+        rgba(59, 130, 246, 0.02) 20%, 
+        rgba(99, 102, 241, 0.07) 50%, 
+        rgba(59, 130, 246, 0.03) 80%, 
+        transparent 100%
+      );
+      box-shadow: none;
       opacity: 0;
-      top: 0;
+      top: -40px;
       pointer-events: none;
       z-index: 25;
-      transition: opacity 0.25s ease;
+      transition: opacity 0.35s ease;
+    }
+    html.dark .ast-scope-wave {
+      background: linear-gradient(180deg, 
+        transparent 0%, 
+        rgba(59, 130, 246, 0.04) 20%, 
+        rgba(99, 102, 241, 0.12) 50%, 
+        rgba(59, 130, 246, 0.05) 80%, 
+        transparent 100%
+      );
+      box-shadow: none;
+    }
+
+    /* Top Compiler Pipeline Progress Runner */
+    .ast-compiler-runner {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #3b82f6 0%, #6366f1 60%, #06b6d4 100%);
+      opacity: 0;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
     }
 
     .dissolve-pill {
@@ -707,7 +732,12 @@
 
           <!-- Code Viewport Body with Sparkle Particle Overlay -->
           <div class="relative flex-1 overflow-hidden flex flex-col min-h-[300px] max-h-[480px] bg-white dark:bg-zinc-950">
-            <div id="scanBeam" class="scan-beam"></div>
+            <!-- Modern Compiler Pipeline Progress Track -->
+            <div id="astProgressTrack" class="absolute top-0 left-0 right-0 h-[2px] bg-zinc-200/40 dark:bg-zinc-800/40 z-30 pointer-events-none overflow-hidden">
+              <div id="astProgressBar" class="ast-compiler-runner"></div>
+            </div>
+            <!-- Diffuse Ambient AST Scope Wave -->
+            <div id="scanBeam" class="ast-scope-wave"></div>
             <div id="sparkleOverlay" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
             <div id="skelOutput" class="w-full h-full p-4 sm:p-5 font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-y-auto selection:bg-blue-100 selection:text-blue-900 signal-glow"></div>
           </div>
@@ -1564,6 +1594,8 @@ impl Gateway for StripeGateway {
       clearTimeout(highlightTimeout);
       const scanBeam = document.getElementById('scanBeam');
       if (scanBeam) scanBeam.style.opacity = '0';
+      const astProgressBar = document.getElementById('astProgressBar');
+      if (astProgressBar) { astProgressBar.style.opacity = '0'; astProgressBar.style.width = '0%'; }
       currentMorphState = mode;
       const conf = langConfig[curLang];
       const container = document.getElementById('skelOutput');
@@ -1637,6 +1669,13 @@ impl Gateway for StripeGateway {
       if (!container) return;
 
       const scanBeam = document.getElementById('scanBeam');
+      const astProgressBar = document.getElementById('astProgressBar');
+      if (astProgressBar) {
+        astProgressBar.style.opacity = '0';
+        astProgressBar.style.width = '0%';
+      }
+      if (scanBeam) scanBeam.style.opacity = '0';
+
       const allBlocks = container.querySelectorAll('.dissolve-block');
       const allCards = container.querySelectorAll('.targeted-prune-card');
       const allLines = container.querySelectorAll('.prune-line');
@@ -1674,24 +1713,33 @@ impl Gateway for StripeGateway {
 
       const costSavedTag = document.getElementById('costSavedTag');
       if (costSavedTag) {
-        costSavedTag.innerText = 'Scanning...';
+        costSavedTag.innerText = 'Profiling...';
         costSavedTag.className = 'text-[10px] px-1.5 py-0.5 rounded bg-blue-600 text-white font-mono font-bold tracking-wide whitespace-nowrap shrink-0 ml-0.5';
       }
 
-      setMorphStatus('scan', 2, 'AST Telemetry • Scanning Code & Token Density...');
+      setMorphStatus('scan', 2, 'AST Analysis • Profiling Syntax Tree & Token Density...');
 
       // ==========================================
-      // PHASE 2: Token Telemetry & Cost Tally (0ms - 2000ms)
-      // Laser scan beam sweeps down editor while tokens & cost count UP
+      // PHASE 2: Token Telemetry & Compiler Profiling (0ms - 2000ms)
+      // Top compiler progress runner advances 0% -> 100% while ambient wave passes through scopes
       // ==========================================
       const scanDuration = 2000;
+      if (astProgressBar) {
+        astProgressBar.style.transition = 'none';
+        astProgressBar.style.width = '0%';
+        astProgressBar.style.opacity = '1';
+        void astProgressBar.offsetHeight;
+        astProgressBar.style.transition = `width ${scanDuration}ms cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease`;
+        astProgressBar.style.width = '100%';
+      }
+
       if (scanBeam) {
         scanBeam.style.transition = 'none';
-        scanBeam.style.top = '0%';
+        scanBeam.style.top = '-40px';
         scanBeam.style.opacity = '1';
         void scanBeam.offsetHeight;
-        scanBeam.style.transition = `top ${scanDuration}ms cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease`;
-        scanBeam.style.top = '96%';
+        scanBeam.style.transition = `top ${scanDuration}ms cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s ease`;
+        scanBeam.style.top = 'calc(100% - 60px)';
       }
 
       // Count UP tokens (0 -> rawTokens) and cost ($0.00 -> rawCost)
@@ -1705,6 +1753,10 @@ impl Gateway for StripeGateway {
       const bloatHoldDuration = 3200;
       highlightTimeout = setTimeout(() => {
         if (scanBeam) scanBeam.style.opacity = '0';
+        if (astProgressBar) {
+          astProgressBar.style.opacity = '0';
+          setTimeout(() => { if (astProgressBar) astProgressBar.style.width = '0%'; }, 350);
+        }
 
         allCards.forEach(c => {
           c.classList.add('bloat-highlighted');
@@ -1774,6 +1826,8 @@ impl Gateway for StripeGateway {
       clearTimeout(highlightTimeout);
       const scanBeam = document.getElementById('scanBeam');
       if (scanBeam) scanBeam.style.opacity = '0';
+      const astProgressBar = document.getElementById('astProgressBar');
+      if (astProgressBar) { astProgressBar.style.opacity = '0'; astProgressBar.style.width = '0%'; }
       const conf = langConfig[lang];
       const container = document.getElementById('skelOutput');
       if (!container) return;
