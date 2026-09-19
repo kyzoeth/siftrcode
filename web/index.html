@@ -541,41 +541,85 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
         
         <!-- Community -->
-        <div class="p-6 bg-surface-50 border border-zinc-200 rounded-xl space-y-4 glow-card flex flex-col justify-between">
-          <div class="space-y-3">
-            <div class="text-[10px] text-zinc-500 uppercase font-semibold">OPEN SOURCE</div>
-            <h3 class="text-lg font-bold text-ink font-sans">Community CLI</h3>
-            <div class="text-2xl font-bold text-ink">$0 <span class="text-xs font-normal text-zinc-500">Free forever (MIT)</span></div>
-            <ul class="space-y-2 text-zinc-600 text-[11px] border-t border-zinc-200 pt-3">
-              <li>✔ Local Zero-Loss Pruning (TS, Py, Go, Rust)</li>
-              <li>✔ Codebase Auditor (`siftrcode audit`)</li>
-              <li>✔ Context Packer (`siftrcode pack`)</li>
-              <li>✔ Stdio MCP Server integration</li>
+        <div class="p-6 bg-surface-50 border-2 border-zinc-200 rounded-xl glow-card flex flex-col justify-between relative shadow-2xs">
+          <span class="absolute -top-2.5 right-4 px-2.5 py-0.5 bg-zinc-200 text-zinc-700 font-bold text-[9px] rounded-full uppercase tracking-wider">OPEN SOURCE</span>
+          <div class="space-y-4">
+            <div>
+              <div class="text-[10px] text-zinc-500 uppercase font-semibold tracking-wider">INDIVIDUAL DEVELOPERS</div>
+              <h3 class="text-xl font-bold text-ink font-sans mt-0.5">Community CLI</h3>
+            </div>
+
+            <div class="flex items-baseline gap-1.5 font-mono">
+              <span class="text-3xl font-extrabold text-ink">$0</span>
+              <span class="text-xs text-zinc-500">Free forever (MIT)</span>
+            </div>
+
+            <ul class="space-y-2.5 text-zinc-600 text-[11px] font-mono border-t border-zinc-200 pt-3.5">
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-600 font-bold shrink-0">✔</span>
+                <span>Local Zero-Loss Pruning (TS, Py, Go, Rust)</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-600 font-bold shrink-0">✔</span>
+                <span>Codebase Auditor (<span class="text-zinc-800 font-semibold">siftrcode audit</span>)</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-600 font-bold shrink-0">✔</span>
+                <span>Context Packer (<span class="text-zinc-800 font-semibold">siftrcode pack</span>)</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-600 font-bold shrink-0">✔</span>
+                <span>Stdio MCP Server integration</span>
+              </li>
             </ul>
           </div>
-          <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="block text-center py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white font-medium transition text-xs">
-            GitHub Repository →
-          </a>
+
+          <div class="pt-6">
+            <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="w-full h-10 flex items-center justify-center rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white font-bold transition text-xs shadow-2xs">
+              GitHub Repository →
+            </a>
+          </div>
         </div>
 
         <!-- Team Pro -->
-        <div class="p-6 bg-amber-50/40 border-2 border-amber-500 rounded-xl space-y-4 flex flex-col justify-between relative shadow-sm">
-          <span class="absolute -top-2.5 right-4 px-2 py-0.5 bg-amber-500 text-zinc-950 font-bold text-[9px] rounded-full uppercase tracking-wider">TEAM PRO</span>
-          <div class="space-y-3">
-            <div class="text-[10px] text-amber-800 uppercase font-semibold">FOR STARTUPS & TEAMS</div>
-            <h3 class="text-lg font-bold text-ink font-sans">SiftrCode Pro</h3>
-            <div class="text-2xl font-bold text-amber-700">$19 <span class="text-xs font-normal text-zinc-500">/ seat / mo</span></div>
-            <ul class="space-y-2 text-zinc-700 text-[11px] border-t border-amber-200 pt-3">
-              <li>✔ Everything in Community CLI</li>
-              <li>✔ TypeSafe Jev Cloud Relevance Gate</li>
-              <li>✔ Team Cross-Repo Context Cache</li>
-              <li>✔ CI/CD Pull Request Context Auditor</li>
+        <div class="p-6 bg-amber-50/40 border-2 border-amber-500 rounded-xl flex flex-col justify-between relative shadow-sm">
+          <span class="absolute -top-2.5 right-4 px-2.5 py-0.5 bg-amber-500 text-zinc-950 font-bold text-[9px] rounded-full uppercase tracking-wider">TEAM PRO</span>
+          <div class="space-y-4">
+            <div>
+              <div class="text-[10px] text-amber-800 uppercase font-semibold tracking-wider">FOR STARTUPS &amp; TEAMS</div>
+              <h3 class="text-xl font-bold text-ink font-sans mt-0.5">SiftrCode Pro</h3>
+            </div>
+
+            <div class="flex items-baseline gap-1.5 font-mono">
+              <span class="text-3xl font-extrabold text-amber-700">$19</span>
+              <span class="text-xs text-zinc-500">/ seat / mo</span>
+            </div>
+
+            <ul class="space-y-2.5 text-zinc-700 text-[11px] font-mono border-t border-amber-200/80 pt-3.5">
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-600 font-bold shrink-0">✔</span>
+                <span>Everything in Community CLI</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-600 font-bold shrink-0">✔</span>
+                <span>TypeSafe Jev Cloud Relevance Gate</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-600 font-bold shrink-0">✔</span>
+                <span>Team Cross-Repo Context Cache</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-600 font-bold shrink-0">✔</span>
+                <span>CI/CD Pull Request Context Auditor</span>
+              </li>
             </ul>
           </div>
-          <button onclick="openTrialModal()" class="w-full py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold transition text-xs shadow-sm active:scale-[0.98]">
-            Start 14-Day Trial
-          </button>
 
+          <div class="pt-6">
+            <button onclick="openTrialModal()" class="w-full h-10 flex items-center justify-center rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold transition text-xs shadow-sm active:scale-[0.98] cursor-pointer">
+              Start 14-Day Trial
+            </button>
+          </div>
         </div>
 
       </div>
