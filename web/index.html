@@ -575,45 +575,6 @@
       );
     }
 
-    /* Emerald AST Reorganization Laser */
-    .ast-laser-beam.ast-reorg-wave, .ast-scope-wave.ast-reorg-wave {
-      background: linear-gradient(90deg, 
-        transparent 0%, 
-        rgba(16, 185, 129, 0.3) 10%, 
-        #10B981 25%, 
-        #34D399 45%, 
-        #FFFFFF 50%, 
-        #34D399 55%, 
-        #10B981 75%, 
-        rgba(16, 185, 129, 0.3) 90%, 
-        transparent 100%
-      );
-      box-shadow: 
-        0 0 6px 1.5px rgba(255, 255, 255, 0.9),
-        0 0 14px 3px rgba(52, 211, 153, 0.85),
-        0 0 24px 5px rgba(16, 185, 129, 0.45);
-    }
-    .ast-laser-beam.ast-reorg-wave::before, .ast-scope-wave.ast-reorg-wave::before {
-      background: linear-gradient(180deg, 
-        transparent 0%, 
-        rgba(16, 185, 129, 0.2) 50%, 
-        transparent 100%
-      );
-    }
-    html.dark .ast-laser-beam.ast-reorg-wave, html.dark .ast-scope-wave.ast-reorg-wave {
-      box-shadow: 
-        0 0 8px 2px rgba(255, 255, 255, 0.95),
-        0 0 16px 4px rgba(52, 211, 153, 0.9),
-        0 0 28px 6px rgba(16, 185, 129, 0.6);
-    }
-    html.dark .ast-laser-beam.ast-reorg-wave::before, html.dark .ast-scope-wave.ast-reorg-wave::before {
-      background: linear-gradient(180deg, 
-        transparent 0%, 
-        rgba(16, 185, 129, 0.28) 50%, 
-        transparent 100%
-      );
-    }
-
     .line-reorg-purge {
       transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
       opacity: 0.28 !important;
@@ -2975,6 +2936,14 @@ impl PaymentGateway for StripeGateway {
 
           setMorphStatus('reorganize', 5, 'Reorganizing AST');
 
+          // Ensure scanner beam is completely hidden during Step 5 (scanner is profiling-only)
+          const scanBeam = document.getElementById('scanBeam');
+          if (scanBeam) {
+            scanBeam.style.opacity = '0';
+            scanBeam.style.transition = 'none';
+            scanBeam.style.top = '0px';
+          }
+
           // 1. Smoothly fade out collapsed prune card wrappers
           const deadCards = container.querySelectorAll('.targeted-prune-card, .bloat-card-header');
           deadCards.forEach(el => {
@@ -2997,33 +2966,18 @@ impl PaymentGateway for StripeGateway {
             }
           });
 
-          // 3. Deliberate hold for 850ms so user clearly registers the dead imports and internal fields being eliminated
-          const waveLaunchTimer = setTimeout(() => {
-            // Trigger the Precision Reorganization Laser across the editor
-            const scanBeam = document.getElementById('scanBeam');
-            if (scanBeam) {
-              scanBeam.style.transition = 'none';
-              scanBeam.style.top = '0px';
-              scanBeam.style.opacity = '1';
-              scanBeam.className = 'ast-laser-beam ast-reorg-wave';
-              void scanBeam.offsetHeight;
-              scanBeam.style.transition = 'top 1500ms cubic-bezier(0.25, 1, 0.5, 1), opacity 0.45s ease';
-              scanBeam.style.top = 'calc(100% - 3px)';
-            }
+          // 3. Deliberate hold for 1000ms so user clearly registers the dead imports and internal fields being eliminated
+          const dissolveTimer = setTimeout(() => {
+            // Fade out the purged lines smoothly without any scanner beam
+            const purgedLines = container.querySelectorAll('.line-reorg-purge');
+            purgedLines.forEach(pLine => {
+              pLine.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+              pLine.style.opacity = '0';
+              pLine.style.transform = 'translateX(-12px)';
+            });
 
-            const shimmer = document.getElementById('footerBarShimmer');
-            if (shimmer) {
-              shimmer.style.opacity = '1';
-              setTimeout(() => { if (shimmer) shimmer.style.opacity = '0'; }, 1500);
-            }
-
-            // 4. At 1000ms as the reorganization laser travels down, smoothly manifest the clean synthesized contract
+            // 4. Smoothly manifest the clean synthesized contract
             const manifestTimer = setTimeout(() => {
-              if (scanBeam) {
-                scanBeam.style.opacity = '0';
-                setTimeout(() => { if (scanBeam) scanBeam.className = 'ast-laser-beam'; }, 450);
-              }
-
               const cleanCode = cleanSynthesizedCode[lang] || '';
               const cleanHtml = renderCodeLinesWithNumbers(cleanCode, lang, 1);
 
@@ -3048,15 +3002,15 @@ impl PaymentGateway for StripeGateway {
                 }, idx * 30);
               });
 
-              // 6. Hold on clean code for 750ms so user absorbs the synthesized structure, then transition to Step 6
+              // 6. Hold on clean code for 850ms so user absorbs the synthesized structure, then transition to Step 6
               const finishTimer = setTimeout(() => {
                 if (onComplete) onComplete();
-              }, 750);
+              }, 850);
               morphTimeouts.push(finishTimer);
-            }, 1000);
+            }, 450);
             morphTimeouts.push(manifestTimer);
-          }, 850);
-          morphTimeouts.push(waveLaunchTimer);
+          }, 1000);
+          morphTimeouts.push(dissolveTimer);
         }
 
         function removeSectionsSequentially(index) {
