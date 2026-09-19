@@ -194,6 +194,34 @@
     .profiler-bar {
       transition: width 0.75s cubic-bezier(0.16, 1, 0.3, 1);
     }
+
+    /* Central Compiler Laser Conduit Beam */
+    @keyframes laser-sweep {
+      0% {
+        left: -30%;
+        opacity: 0;
+      }
+      20% {
+        opacity: 1;
+      }
+      80% {
+        opacity: 1;
+      }
+      100% {
+        left: 110%;
+        opacity: 0;
+      }
+    }
+
+    .compiler-laser-beam {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 70px;
+      background: linear-gradient(90deg, transparent, #f59e0b, #fbbf24, transparent);
+      border-radius: 9999px;
+      animation: laser-sweep 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
   </style>
 </head>
 <body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-amber-400 selection:text-zinc-950">
@@ -296,136 +324,89 @@
         </div>
       </div>
 
-      <!-- 200k Token Context Window Memory Visualizer -->
-      <div class="bg-white border border-zinc-200/90 rounded-2xl p-4 sm:p-5 shadow-xs font-mono text-xs space-y-4">
-        
-        <!-- Header / Telemetry Bar -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] pb-2.5 border-b border-zinc-100">
-          <div class="flex items-center gap-2.5">
-            <span class="relative flex h-2.5 w-2.5">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-            </span>
-            <span class="font-bold text-zinc-900 tracking-tight font-sans text-xs">200,000 Token Context Window Profiler</span>
-            <span class="hidden md:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 font-mono text-[10px] font-medium border border-zinc-200/70">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Claude Code / Cursor / Windsurf Context Bus</span>
-            </span>
+      <!-- Concept 3: The Integrated Compiler Bridge -->
+      <div class="bg-white border border-zinc-200/90 rounded-xl p-3 shadow-xs font-mono text-xs flex flex-col sm:flex-row items-center justify-between gap-3 relative overflow-hidden">
+        <!-- Left Source Telemetry -->
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+          <span class="text-zinc-500 font-medium">Raw Source:</span>
+          <span class="text-rose-600 font-bold" id="bridgeRaw">~1,420 tokens</span>
+        </div>
+
+        <!-- Central Laser Conduit & AST Pass Badge -->
+        <div class="flex-1 max-w-sm mx-4 relative w-full sm:w-auto h-7 flex items-center justify-center">
+          <div class="w-full h-0.5 bg-zinc-200 relative overflow-hidden rounded-full">
+            <div class="compiler-laser-beam"></div>
           </div>
-          <div class="flex items-center gap-2 text-[11px] font-mono">
-            <span class="text-zinc-400">Footprint:</span>
-            <span class="text-zinc-500 line-through font-medium" id="gaugeRaw">1,420 tokens</span>
-            <span class="text-zinc-300">➔</span>
-            <span class="text-amber-600 font-bold" id="gaugeSkel">112 tokens</span>
-            <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-[10px]" id="headroomPill">+92.1% Headroom</span>
+          <div class="absolute px-3.5 py-1 bg-amber-500 text-zinc-950 rounded-full font-bold text-[11px] tracking-tight flex items-center gap-1.5 shadow-sm transform hover:scale-105 transition">
+            <span class="animate-pulse">⚡</span>
+            <span>AST ZERO-LOSS PASS:</span>
+            <span id="bridgeReductionTag" class="font-extrabold">-92.1%</span>
           </div>
         </div>
 
-        <!-- Dual-Lane Context Memory Comparison -->
-        <div class="space-y-4 font-sans">
-          
-          <!-- Lane 1: Default Ingestion (Raw Codebase) -->
-          <div class="space-y-1.5">
-            <div class="flex items-center justify-between text-[11px]">
-              <span class="flex items-center gap-1.5 font-medium text-zinc-700">
-                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                <span>Without SiftrCode (Raw Codebase)</span>
-              </span>
-              <span class="font-mono text-[10px] text-rose-600 font-semibold flex items-center gap-1" id="laneRawLabel">
-                <span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
-                <span id="laneRawPct">71.0%</span> Context Choked (Method Bodies &amp; Loops) • Latency <span id="laneRawLatency">~42s</span> ⚠️
-              </span>
-            </div>
-            <!-- Lane 1 Bar Track -->
-            <div class="w-full h-3.5 sm:h-4 bg-rose-50/80 rounded-full overflow-hidden flex p-0.5 border border-rose-200/80 relative">
-              <div id="laneRawBar" class="h-full bg-gradient-to-r from-rose-500 via-rose-500 to-rose-600 rounded-full profiler-bar scanner-beam choked-bar shadow-sm" style="width: 71%;"></div>
-              <div class="flex-1 flex items-center justify-end px-2.5 pointer-events-none overflow-hidden">
-                <span class="text-[9px] font-mono text-rose-500 font-semibold tracking-wider flex items-center gap-1 opacity-80 whitespace-nowrap">
-                  <span class="hidden sm:inline">PROMPT CACHE CONGESTION</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Lane 2: SiftrCode Ingestion (AST Skeletons) -->
-          <div class="space-y-1.5">
-            <div class="flex items-center justify-between text-[11px]">
-              <span class="flex items-center gap-1.5 font-medium text-zinc-900">
-                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                <span class="font-semibold text-amber-900">With SiftrCode AST Skeleton</span>
-              </span>
-              <span class="font-mono text-[10px] text-emerald-600 font-semibold flex items-center gap-1" id="laneSkelLabel">
-                <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span id="laneSkelPct">5.6%</span> Allocated • <span id="laneFreePct">94.4%</span> Buffer Free for Agent Reasoning &amp; Multi-Turn Tools ✅
-              </span>
-            </div>
-            <!-- Lane 2 Bar Track with continuous streaming buffer pattern -->
-            <div class="w-full h-3.5 sm:h-4 bg-emerald-50/80 rounded-full overflow-hidden flex p-0.5 border border-emerald-200/80 headroom-active-pattern relative">
-              <div id="laneSkelBar" class="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full profiler-bar scanner-beam shadow-sm" style="width: 5.6%;"></div>
-              <div class="flex-1 flex items-center justify-end px-2.5 pointer-events-none overflow-hidden">
-                <span class="text-[9px] font-mono text-emerald-700 font-semibold tracking-wider flex items-center gap-1.5 opacity-90 whitespace-nowrap">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span class="hidden sm:inline">HIGH-SPEED REASONING BUFFER:</span>
-                  <span id="bufferFreeBadge" class="bg-emerald-100/90 text-emerald-800 px-1.5 py-0.5 rounded font-bold">94.4% FREE</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Token Window Scale Ruler (0k to 200k) -->
-          <div class="flex justify-between items-center text-[9px] font-mono text-zinc-400 pt-1.5 px-1 border-t border-zinc-100">
-            <span>0</span>
-            <span>50,000</span>
-            <span>100,000</span>
-            <span>150,000</span>
-            <span class="font-semibold text-zinc-700 flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-              200,000 Token Limit
-            </span>
-          </div>
-
+        <!-- Right Agent Telemetry -->
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+          <span class="text-zinc-500 font-medium">Agent Ingestion:</span>
+          <span class="text-amber-600 font-bold" id="bridgeSkel">~112 tokens</span>
+          <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]" id="bridgeHeadroom">+92.1% Buffer</span>
         </div>
-
       </div>
 
-
-      <!-- Dual-Pane Viewport -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Dual-Pane Viewport with Central Transform Bridge Node -->
+      <div class="relative">
         
-        <!-- Left: Full Implementation Source -->
-        <div class="bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
-          <div class="bg-zinc-50/80 px-4 py-2 border-b border-zinc-200 flex items-center justify-between text-xs font-mono">
-            <span class="text-zinc-600 font-medium flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-              RAW SOURCE (AGENTS INGEST THIS BY DEFAULT)
-            </span>
-            <span class="text-rose-600 font-bold" id="rawTokenCount">~1,420 tokens</span>
-          </div>
-          <textarea id="rawInput" oninput="onInputChanged()" spellcheck="false" class="w-full h-80 p-4 font-mono text-xs text-zinc-800 leading-relaxed border-0 focus:outline-none resize-none font-normal bg-white"></textarea>
-          <div class="bg-zinc-50/50 px-4 py-1.5 border-t border-zinc-100 text-[11px] font-mono text-zinc-400">
-            Edit or paste any code above to test live
+        <!-- Central Floating Bridge Chip (Desktop) -->
+        <div class="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+          <div class="bg-zinc-950 text-white border-2 border-amber-400/90 rounded-xl px-4 py-2.5 shadow-2xl flex flex-col items-center font-mono text-center backdrop-blur-md pointer-events-auto hover:scale-105 transition-transform duration-200">
+            <div class="flex items-center gap-1.5 text-[10px] text-amber-400 font-bold">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+              <span>AST COMPILER</span>
+            </div>
+            <div class="text-base font-black text-amber-400 tracking-tight" id="centerReduction">-92.1%</div>
+            <div class="text-[9px] text-zinc-400 font-medium whitespace-nowrap" id="centerSaved">~1,308 saved</div>
           </div>
         </div>
 
-        <!-- Right: AST Pruned Interface Skeleton -->
-        <div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg flex flex-col text-white relative">
-          <div class="bg-zinc-950 px-4 py-2 border-b border-zinc-800 flex items-center justify-between text-xs font-mono">
-            <span class="text-amber-400 font-medium flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-amber-400 signal-ping"></span>
-              SIFTRCODE AST SKELETON (FED TO AGENT)
-            </span>
-            <span class="text-amber-400 font-bold" id="skelTokenCount">~112 tokens (-92.1%)</span>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          
+          <!-- Left: Full Implementation Source -->
+          <div class="bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
+            <div class="bg-zinc-50/80 px-4 py-2 border-b border-zinc-200 flex items-center justify-between text-xs font-mono">
+              <span class="text-zinc-600 font-medium flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                RAW SOURCE (AGENTS INGEST THIS BY DEFAULT)
+              </span>
+              <span class="text-rose-600 font-bold" id="rawTokenCount">~1,420 tokens</span>
+            </div>
+            <textarea id="rawInput" oninput="onInputChanged()" spellcheck="false" class="w-full h-80 p-4 font-mono text-xs text-zinc-800 leading-relaxed border-0 focus:outline-none resize-none font-normal bg-white"></textarea>
+            <div class="bg-zinc-50/50 px-4 py-1.5 border-t border-zinc-100 text-[11px] font-mono text-zinc-400">
+              Edit or paste any code above to test live
+            </div>
           </div>
-          <div class="relative flex-1 overflow-hidden">
-            <pre id="skelOutput" class="w-full h-80 p-4 font-mono text-xs text-amber-200/95 leading-relaxed overflow-auto whitespace-pre-wrap selection:bg-amber-400 selection:text-zinc-950 ast-signal-glow"></pre>
+
+          <!-- Right: AST Pruned Interface Skeleton -->
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg flex flex-col text-white relative">
+            <div class="bg-zinc-950 px-4 py-2 border-b border-zinc-800 flex items-center justify-between text-xs font-mono">
+              <span class="text-amber-400 font-medium flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-400 signal-ping"></span>
+                SIFTRCODE AST SKELETON (FED TO AGENT)
+              </span>
+              <span class="text-amber-400 font-bold" id="skelTokenCount">~112 tokens (-92.1%)</span>
+            </div>
+            <div class="relative flex-1 overflow-hidden">
+              <pre id="skelOutput" class="w-full h-80 p-4 font-mono text-xs text-amber-200/95 leading-relaxed overflow-auto whitespace-pre-wrap selection:bg-amber-400 selection:text-zinc-950 ast-signal-glow"></pre>
+            </div>
+            <div class="bg-zinc-950 px-4 py-2 border-t border-zinc-800 text-[11px] font-mono text-zinc-400 flex items-center justify-between">
+              <span class="text-amber-400 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-amber-400 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                100% Types, Interfaces &amp; Docstrings Preserved
+              </span>
+              <span id="savedTokensCount" class="text-amber-400 font-semibold">Saved ~1,308 tokens</span>
+            </div>
           </div>
-          <div class="bg-zinc-950 px-4 py-2 border-t border-zinc-800 text-[11px] font-mono text-zinc-400 flex items-center justify-between">
-            <span class="text-amber-400 flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5 text-amber-400 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              100% Types, Interfaces &amp; Docstrings Preserved
-            </span>
-            <span id="savedTokensCount" class="text-amber-400 font-semibold">Saved ~1,308 tokens</span>
-          </div>
+
         </div>
 
       </div>
@@ -831,28 +812,20 @@ impl Gateway for StripeGateway {
       const freeHeadroom = Math.max(0, 100 - skelPct);
       const latencySecs = Math.max(18, Math.round((sessionRawTokens / 3200) * 1.1));
 
-      // Animated Odometer Tickers (Smooth Eased Count-up)
-      const duration = 650;
+      // Animated Odometer Tickers (Concept 3: Integrated Compiler Bridge)
+      const duration = 600;
       animateNumber('rawTokenCount', prevMetrics.rawTokens, rawTokens, duration, v => `~${Math.round(v).toLocaleString()} tokens`);
       animateNumber('skelTokenCount', prevMetrics.skelTokens, skelTokens, duration, v => `~${Math.round(v).toLocaleString()} tokens (-${reduction.toFixed(1)}%)`);
       animateNumber('reductionTag', prevMetrics.reduction, reduction, duration, v => `-${v.toFixed(1)}% Waste Stripped`);
       animateNumber('savedTokensCount', prevMetrics.savedTokens, saved, duration, v => `Saved ~${Math.round(v).toLocaleString()} tokens`);
 
-      animateNumber('gaugeRaw', prevMetrics.rawTokens, rawTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
-      animateNumber('gaugeSkel', prevMetrics.skelTokens, skelTokens, duration, v => `${Math.round(v).toLocaleString()} tokens`);
-      animateNumber('headroomPill', prevMetrics.reduction, reduction, duration, v => `+${v.toFixed(1)}% Headroom`);
+      animateNumber('bridgeRaw', prevMetrics.rawTokens, rawTokens, duration, v => `~${Math.round(v).toLocaleString()} tokens`);
+      animateNumber('bridgeSkel', prevMetrics.skelTokens, skelTokens, duration, v => `~${Math.round(v).toLocaleString()} tokens`);
+      animateNumber('bridgeReductionTag', prevMetrics.reduction, reduction, duration, v => `-${v.toFixed(1)}%`);
+      animateNumber('bridgeHeadroom', prevMetrics.reduction, reduction, duration, v => `+${v.toFixed(1)}% Buffer`);
 
-      animateNumber('laneRawPct', prevMetrics.rawPct, rawPct, duration, v => `${v.toFixed(1)}%`);
-      animateNumber('laneRawLatency', prevMetrics.latencySecs, latencySecs, duration, v => `~${Math.round(v)}s`);
-      animateNumber('laneSkelPct', prevMetrics.skelPct, skelPct, duration, v => `${v.toFixed(1)}%`);
-      animateNumber('laneFreePct', 100 - prevMetrics.skelPct, freeHeadroom, duration, v => `${v.toFixed(1)}%`);
-      animateNumber('bufferFreeBadge', 100 - prevMetrics.skelPct, freeHeadroom, duration, v => `${v.toFixed(1)}% FREE`);
-
-      // Update Bar Widths with Spring Transitions
-      const laneRawBar = document.getElementById('laneRawBar');
-      const laneSkelBar = document.getElementById('laneSkelBar');
-      if (laneRawBar) laneRawBar.style.width = `${rawPct.toFixed(1)}%`;
-      if (laneSkelBar) laneSkelBar.style.width = `${skelPct.toFixed(1)}%`;
+      animateNumber('centerReduction', prevMetrics.reduction, reduction, duration, v => `-${v.toFixed(1)}%`);
+      animateNumber('centerSaved', prevMetrics.savedTokens, saved, duration, v => `~${Math.round(v).toLocaleString()} saved`);
 
       document.getElementById('skelOutput').innerText = skel;
 
@@ -914,16 +887,9 @@ impl Gateway for StripeGateway {
       }, 5500);
     }
 
-    // Init with spring slide-in entrance
-    const rBar = document.getElementById('laneRawBar');
-    const sBar = document.getElementById('laneSkelBar');
-    if (rBar) rBar.style.width = '0%';
-    if (sBar) sBar.style.width = '0%';
-
-    setTimeout(() => {
-      setLang('ts');
-      startAutoTour();
-    }, 180);
+    // Init Concept 3 Workbench
+    setLang('ts');
+    startAutoTour();
 
     // B2B Team Trial Modal Handlers
     function openTrialModal() {
