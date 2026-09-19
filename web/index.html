@@ -97,6 +97,19 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #10b981; }
+
+    /* Shimmering Text Gradient for 90% */
+    .pct-shimmer {
+      background: linear-gradient(115deg, #059669 15%, #34d399 50%, #059669 85%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: pct-shine 3.8s ease-in-out infinite;
+    }
+    @keyframes pct-shine {
+      0% { background-position: 200% center; }
+      100% { background-position: -20% center; }
+    }
   </style>
 </head>
 <body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-signal-lightEmerald selection:text-white">
@@ -140,12 +153,12 @@
       
       <!-- Hero Headline -->
       <h1 class="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-ink sm:whitespace-nowrap max-w-none mx-auto leading-tight">
-        Cut agent token waste by <span class="text-emerald-600">90%</span>.
+        Cut agent token waste by <span class="inline-flex items-center px-2.5 py-0.5 mx-1 bg-emerald-50/90 text-emerald-600 border border-emerald-200/90 rounded-2xl font-mono shadow-sm align-baseline transition-transform hover:scale-105 cursor-pointer" onclick="animateHeroPct()" title="Click to re-animate"><span id="heroPct" class="pct-shimmer font-bold">90%</span><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1.5 signal-ping"></span></span>
       </h1>
 
       <!-- Subtitle -->
       <p class="text-sm sm:text-base text-zinc-500 sm:whitespace-nowrap max-w-none mx-auto font-normal -mt-2">
-        Strip function bodies into zero-loss AST skeletons before LLM inference.
+        Our proprietary AST compiler strips function bodies into zero-loss skeletons before inference.
       </p>
 
       <!-- Instant CLI Bar -->
@@ -611,8 +624,27 @@ impl Gateway for StripeGateway {
       }, 2000);
     }
 
+    function animateHeroPct() {
+      const el = document.getElementById('heroPct');
+      if (!el) return;
+      let val = 0;
+      const target = 90;
+      const step = () => {
+        val += Math.max(1, Math.ceil((target - val) * 0.18));
+        if (val >= target) {
+          val = target;
+          el.innerText = val + '%';
+        } else {
+          el.innerText = val + '%';
+          requestAnimationFrame(step);
+        }
+      };
+      requestAnimationFrame(step);
+    }
+
     // Init
     setLang('ts');
+    animateHeroPct();
   </script>
 </body>
 </html>
