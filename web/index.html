@@ -266,19 +266,11 @@
         Strips implementation bloat before LLM inference while preserving 100% of types and signatures.
       </p>
 
-      <!-- Instant CLI Bar -->
-      <div class="pt-2 max-w-md mx-auto flex items-center justify-center gap-2">
-        <div class="flex-1 bg-white border border-zinc-200 rounded-lg px-3.5 py-2 text-xs font-mono text-ink flex items-center justify-between shadow-sm">
-          <div class="flex items-center gap-2">
-            <span class="text-amber-600 font-bold select-none">$</span>
-            <span>npx siftrcode audit</span>
-          </div>
-          <button onclick="copyCommand()" id="copyBtn" class="text-[11px] font-mono text-zinc-500 hover:text-amber-600 transition px-2 py-0.5 rounded bg-zinc-50 border border-zinc-200">
-            COPY
-          </button>
-        </div>
-        <a href="#workbench" class="px-4 py-2 bg-ink hover:bg-zinc-800 text-white rounded-lg text-xs font-medium transition shadow-sm">
-          Try Live Demo ↓
+      <!-- Single Clear Hero Call to Action -->
+      <div class="pt-2 flex items-center justify-center">
+        <a href="#workbench" class="px-5 py-2.5 bg-ink hover:bg-zinc-800 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow-sm hover:shadow active:scale-[0.99] flex items-center gap-1.5">
+          <span>Try Live Demo</span>
+          <span class="text-zinc-400">↓</span>
         </a>
       </div>
 
@@ -540,8 +532,9 @@
             <span class="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center font-bold text-ink">1</span>
             <span>AUDIT YOUR REPO</span>
           </div>
-          <div class="bg-zinc-900 text-zinc-200 p-3 rounded-lg font-mono text-[11px] select-all">
-            npx siftrcode audit
+          <div class="bg-zinc-900 text-zinc-200 p-3 rounded-lg font-mono text-[11px] select-all flex items-center justify-between">
+            <span>npx siftrcode audit</span>
+            <button onclick="copyText('npx siftrcode audit', this)" class="text-[10px] font-mono text-zinc-400 hover:text-amber-400 transition px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">COPY</button>
           </div>
           <p class="text-[11px] text-ink-secondary font-sans">
             Instantly scans your directory and calculates monthly token waste.
@@ -554,8 +547,9 @@
             <span class="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center font-bold text-ink">2</span>
             <span>AUTO-CONNECT MCP</span>
           </div>
-          <div class="bg-zinc-900 text-zinc-200 p-3 rounded-lg font-mono text-[11px] select-all">
-            npx siftrcode init
+          <div class="bg-zinc-900 text-zinc-200 p-3 rounded-lg font-mono text-[11px] select-all flex items-center justify-between">
+            <span>npx siftrcode init</span>
+            <button onclick="copyText('npx siftrcode init', this)" class="text-[10px] font-mono text-zinc-400 hover:text-amber-400 transition px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">COPY</button>
           </div>
           <p class="text-[11px] text-ink-secondary font-sans">
             Automatically configures Claude Desktop, Cursor, and Windsurf MCP settings.
@@ -1372,14 +1366,14 @@ ${escapeHtml(item.rawCode)}
       };
     }
 
-    function copyCommand() {
-      navigator.clipboard.writeText('npx siftrcode audit');
-      const btn = document.getElementById('copyBtn');
+    function copyText(text, btn) {
+      navigator.clipboard.writeText(text);
+      const orig = btn.innerText;
       btn.innerText = 'COPIED!';
-      btn.className = 'text-[11px] font-mono text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded';
+      btn.className = 'text-[10px] font-mono text-amber-300 bg-amber-950/70 border border-amber-800/80 px-2 py-0.5 rounded transition';
       setTimeout(() => {
-        btn.innerText = 'COPY';
-        btn.className = 'text-[11px] font-mono text-zinc-500 hover:text-amber-600 transition px-2 py-0.5 rounded bg-zinc-50 border border-zinc-200';
+        btn.innerText = orig;
+        btn.className = 'text-[10px] font-mono text-zinc-400 hover:text-amber-400 transition px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 cursor-pointer';
       }, 2000);
     }
 
