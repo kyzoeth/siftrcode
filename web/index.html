@@ -705,7 +705,7 @@
           Your code never leaves your workstation
         </h2>
         <p class="text-xs sm:text-sm text-ink-secondary">
-          SiftrCode operates 100% locally via Tree-sitter AST parsing. No external network egress, no code telemetry, zero cloud dependencies.
+          SiftrCode operates 100% locally via our proprietary Deterministic AST Synthesis Engine. No external network egress, no code telemetry, zero cloud dependencies.
         </p>
       </div>
 
@@ -727,7 +727,7 @@
           </div>
           <div>
             <div class="font-bold text-zinc-800 text-[11px]">&lt;0.15s Synthesis</div>
-            <div class="text-[10px] text-zinc-400 font-sans">Local Tree-sitter AST</div>
+            <div class="text-[10px] text-zinc-400 font-sans">Deterministic Local AST</div>
           </div>
         </div>
 
@@ -784,7 +784,7 @@
 
             <div class="flex items-start gap-2">
               <span class="text-amber-400 shrink-0">›</span>
-              <div><span class="text-zinc-400">ast.parse(local):</span> <span class="text-emerald-400 font-semibold">status: complete</span> <span class="text-zinc-500">(0.14s elapsed via Tree-sitter)</span></div>
+              <div><span class="text-zinc-400">siftr.engine.compile(local):</span> <span class="text-emerald-400 font-semibold">status: complete</span> <span class="text-zinc-500">(0.14s elapsed • 0 bytes egress)</span></div>
             </div>
 
             <div class="flex items-start gap-2">
@@ -815,7 +815,7 @@
 
           <!-- Terminal Footer -->
           <div class="bg-zinc-900/40 px-4 py-2 border-t border-zinc-800/80 text-[10px] text-zinc-500 flex items-center justify-between">
-            <span>Verified: tree-sitter-typescript-v0.20.8</span>
+            <span>Verified: siftr-engine-v0.1.1 (Air-Gapped Local Runtime)</span>
             <span class="text-zinc-400 font-sans">Encrypted memory • Non-persistent AST cache</span>
           </div>
         </div>
@@ -829,7 +829,7 @@
               <h3 class="font-bold text-xs text-ink font-display uppercase tracking-wide">100% Local CPU Execution</h3>
             </div>
             <p class="text-xs text-zinc-600 font-sans leading-relaxed">
-              Every parse, token count, and skeleton synthesis runs directly on your machine's CPU via native C/Wasm Tree-sitter bindings. No code is transmitted to any cloud API.
+              Every parse, token count, and skeleton synthesis runs directly on your workstation's CPU via SiftrCode's air-gapped local runtime. No code is transmitted to any cloud API.
             </p>
           </div>
 

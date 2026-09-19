@@ -120,7 +120,7 @@ Add SiftrCode to your `~/.claude/settings.json` or Cursor MCP settings:
 [Raw Codebase: 250,000 tokens]
             │
             ▼
-[Tree-sitter AST Parser]
+[SiftrCode Local Synthesis Engine]
   ├── Extracts imports, types, exported classes & signatures
             │
             ▼
