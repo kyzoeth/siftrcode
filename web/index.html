@@ -3011,7 +3011,7 @@ impl PaymentGateway for StripeGateway {
           const targetSaved = sectionTargets[index].targetSaved;
 
           // 1. Auto-scroll to center this bloat section in view
-          const scrollDuration = 550;
+          const scrollDuration = 450;
           if (secEl) {
             const scrollTarget = getElementScrollTop(container, secEl);
             smoothScrollContainer(container, scrollTarget, scrollDuration);
@@ -3021,62 +3021,61 @@ impl PaymentGateway for StripeGateway {
             cardEl.classList.add('bloat-highlighted');
           }
 
-          // 2. Pause so user registers this bloat method, then strike red lines
+          // 2. Pause briefly so user registers the bloat method, then strike red lines
           const strikeTimer = setTimeout(() => {
             const lines = blockEl ? blockEl.querySelectorAll('.prune-line') : [];
             lines.forEach(l => l.classList.add('line-struck'));
 
-            // 3. Hold red strike lines for 650ms, then mechanically slide lines out
-            const slideTimer = setTimeout(() => {
+            // 3. Trigger line slicing, block folding, AND token bar reduction simultaneously in lockstep
+            const pruneActionTimer = setTimeout(() => {
+              // Slice lines out in quick succession
               lines.forEach((l, idx) => {
-                setTimeout(() => l.classList.add('line-sliced'), idx * 35);
+                setTimeout(() => l.classList.add('line-sliced'), idx * 25);
               });
 
-              // 4. Once lines have sliced away (~850ms), accordion-fold the block shut & count down tokens
-              const foldTimer = setTimeout(() => {
-                if (blockEl) {
-                  blockEl.classList.remove('expanded');
-                  blockEl.classList.add('collapsing');
-                  blockEl.style.maxHeight = '0px';
-                  spawnSparkles(blockEl, 12);
-                }
-                if (typeof window.triggerDotRipple === 'function') window.triggerDotRipple();
+              // Accordion-fold the block shut concurrently
+              if (blockEl) {
+                blockEl.classList.remove('expanded');
+                blockEl.classList.add('collapsing');
+                blockEl.style.maxHeight = '0px';
+                spawnSparkles(blockEl, 10);
+              }
+              if (typeof window.triggerDotRipple === 'function') window.triggerDotRipple();
 
-                const prevTokens = index === 0 ? conf.rawTokens : sectionTargets[index - 1].targetTokens;
-                const prevCost = index === 0 ? conf.rawCost : sectionTargets[index - 1].targetCost;
-                const prevSaved = index === 0 ? 0 : sectionTargets[index - 1].targetSaved;
+              // Synchronized token countdown & bar shrinking (executing in parallel with the code pruning)
+              const prevTokens = index === 0 ? conf.rawTokens : sectionTargets[index - 1].targetTokens;
+              const prevCost = index === 0 ? conf.rawCost : sectionTargets[index - 1].targetCost;
+              const prevSaved = index === 0 ? 0 : sectionTargets[index - 1].targetSaved;
 
-                const tokenCountdownDuration = 700;
-                animateNumber('bridgeSkel', prevTokens, targetTokens, tokenCountdownDuration, v => `${Math.round(v).toLocaleString()} tokens`);
-                animateNumber('costSkel', prevCost, targetCost, tokenCountdownDuration, v => `$${v.toFixed(2)}`);
+              const pruneDuration = 650;
+              animateNumber('bridgeSkel', prevTokens, targetTokens, pruneDuration, v => `${Math.round(v).toLocaleString()} tokens`);
+              animateNumber('costSkel', prevCost, targetCost, pruneDuration, v => `$${v.toFixed(2)}`);
 
-                // Animate the single dynamic payload bar shrinking and getting greener as bloat is pruned
-                animateNumber(
-                  'payloadTallyValue',
-                  prevTokens,
-                  targetTokens,
-                  tokenCountdownDuration,
-                  v => `${Math.round(v).toLocaleString()} tokens`,
-                  curr => updatePayloadBar(curr, conf.rawTokens, 0)
-                );
+              // Animate the payload bar, head tracker, and cost head badge in exact sync with code removal
+              animateNumber(
+                'payloadTallyValue',
+                prevTokens,
+                targetTokens,
+                pruneDuration,
+                v => `${Math.round(v).toLocaleString()} tokens`,
+                curr => updatePayloadBar(curr, conf.rawTokens, 0)
+              );
 
-                const costSavedTag = document.getElementById('costSavedTag');
-                if (costSavedTag) {
-                  costSavedTag.classList.remove('hidden');
-                  costSavedTag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight transition-all duration-200 shrink-0 bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300';
-                }
-                animateNumber('costSavedTag', prevSaved, targetSaved, tokenCountdownDuration, v => `Save $${v.toFixed(2)}`);
+              const costSavedTag = document.getElementById('costSavedTag');
+              if (costSavedTag) {
+                costSavedTag.classList.remove('hidden');
+                costSavedTag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight transition-all duration-200 shrink-0 bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300';
+              }
+              animateNumber('costSavedTag', prevSaved, targetSaved, pruneDuration, v => `Save $${v.toFixed(2)}`);
 
-                // 5. Hold on collapsed section for 800ms before camera glides to the next section
-                const nextTimer = setTimeout(() => {
-                  removeSectionsSequentially(index + 1);
-                }, tokenCountdownDuration + 550);
-                morphTimeouts.push(nextTimer);
-              }, 850);
-              morphTimeouts.push(foldTimer);
-            }, 650);
-            morphTimeouts.push(slideTimer);
-          }, scrollDuration + 350);
+              // 4. Brief hold after section is folded & bar has reached target, then glide to next section
+              const nextTimer = setTimeout(() => {
+                removeSectionsSequentially(index + 1);
+              }, pruneDuration + 350);
+              morphTimeouts.push(nextTimer);
+            }, 180);
+            morphTimeouts.push(pruneActionTimer);
+          }, scrollDuration + 150);
           morphTimeouts.push(strikeTimer);
         }
 
