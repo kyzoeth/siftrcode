@@ -380,28 +380,44 @@
       animation: signal-breathe 5s ease-in-out infinite;
     }
 
-    /* Mechanical Code Accordion Collapse (NO FADING) */
+    /* Mechanical Code Accordion Collapse with Smooth Height Handshake */
     .dissolve-block {
       overflow: hidden;
-      transition: max-height 0.8s cubic-bezier(0.25, 1, 0.5, 1), 
-                  margin 0.8s ease, 
-                  padding 0.8s ease;
+      transition: max-height 0.75s cubic-bezier(0.25, 1, 0.5, 1), 
+                  margin 0.75s ease, 
+                  padding 0.75s ease,
+                  opacity 0.45s ease;
       transform-origin: top center;
     }
     .dissolve-block.collapsing {
       max-height: 0px !important;
+      opacity: 0 !important;
       pointer-events: none !important;
       margin-top: 0 !important;
       margin-bottom: 0 !important;
       padding-top: 0 !important;
       padding-bottom: 0 !important;
     }
+    .dissolve-block.collapsing .targeted-prune-card {
+      padding: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+    .dissolve-block.collapsing .bloat-card-header {
+      max-height: 0 !important;
+      opacity: 0 !important;
+      margin-bottom: 0 !important;
+      padding-bottom: 0 !important;
+      border-bottom-color: transparent !important;
+    }
     .dissolve-block.expanded {
       max-height: 520px !important;
+      opacity: 1 !important;
       pointer-events: auto !important;
     }
 
-    /* Pruned Code Lines: Animated Strikethrough & Laser Slide-Out Deletion (NO FADING) */
+    /* Pruned Code Lines: Animated Strikethrough & Laser Slide-Out Deletion */
     .prune-line {
       position: relative;
       overflow: hidden;
@@ -445,13 +461,22 @@
     .line-num {
       user-select: none;
       -webkit-user-select: none;
+      transition: opacity 0.2s ease, color 0.2s ease;
     }
 
-    .save-tag-glow {
-      box-shadow: 0 0 14px -1px rgba(16, 185, 129, 0.45);
+    @keyframes synthesis-pulse-glow {
+      0% {
+        box-shadow: inset 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+      35% {
+        box-shadow: inset 0 0 24px 2px rgba(16, 185, 129, 0.14);
+      }
+      100% {
+        box-shadow: inset 0 0 0 0 rgba(16, 185, 129, 0);
+      }
     }
-    html.dark .save-tag-glow {
-      box-shadow: 0 0 16px 0px rgba(52, 211, 153, 0.4);
+    .synthesis-pulse {
+      animation: synthesis-pulse-glow 0.85s ease-out;
     }
 
     /* Targeted Implementation Highlight Card System */
@@ -1288,7 +1313,8 @@ export class UserService {
           rawCode: `    const sql = "SELECT * FROM users WHERE id = $1 LIMIT 1";
     const res = await this.db.query(sql, [id]);
     return res.rows[0] ?? null;`,
-          interfaceCode: `  /** Finds user by unique primary key */
+          interfaceCode: `
+  /** Finds user by unique primary key */
   public async getUser(id: string): Promise<User | null>;`
         },
         {
@@ -1298,7 +1324,8 @@ export class UserService {
           costSaved: 'Save ~$1.26/1k calls',
           rawCode: `    // 40 lines of bcrypt hashing, payload validation & transactions...
     return await this.db.insert("users", { email });`,
-          interfaceCode: `  /** Creates user record with hashing & transaction guarantees */
+          interfaceCode: `
+  /** Creates user record with hashing & transaction guarantees */
   public async createUser(email: string): Promise<User>;`
         },
         {
@@ -1322,7 +1349,8 @@ class StripeGateway:
           costSaved: 'Save ~$0.72/1k calls',
           rawCode: `        self.client = stripe.Client(api_key)
         self._verify_credentials()`,
-          interfaceCode: `    def __init__(self, api_key: str):
+          interfaceCode: `
+    def __init__(self, api_key: str):
         ...`
         },
         {
@@ -1332,7 +1360,8 @@ class StripeGateway:
           costSaved: 'Save ~$1.56/1k calls',
           rawCode: `        # 50 lines of retry loops, exponential backoff & fraud telemetry...
         return self.client.charges.create(customer=customer_id, amount=amount)`,
-          interfaceCode: `    def charge(self, customer_id: str, amount: int) -> Dict[str, any]:
+          interfaceCode: `
+    def charge(self, customer_id: str, amount: int) -> Dict[str, any]:
         """Executes payment charge with automatic retries."""
         ...`
         }
@@ -1359,7 +1388,8 @@ type Server struct {
           costSaved: 'Save ~$1.14/1k calls',
           rawCode: `    // 35 lines of pool init, middleware chaining & routes...
     return &Server{Port: port, Mux: http.NewServeMux()}`,
-          interfaceCode: `func NewServer(port int) *Server`
+          interfaceCode: `
+func NewServer(port int) *Server`
         },
         {
           type: 'dissolve',
@@ -1368,7 +1398,8 @@ type Server struct {
           costSaved: 'Save ~$1.32/1k calls',
           rawCode: `    // 40 lines of context timeouts & graceful teardown...
     return http.ListenAndServe(":8080", s.Mux)`,
-          interfaceCode: `func (s *Server) Start(ctx context.Context) error`
+          interfaceCode: `
+func (s *Server) Start(ctx context.Context) error`
         }
       ],
       rs: [
@@ -1851,7 +1882,7 @@ impl Gateway for StripeGateway {
       stageTimeout = setTimeout(() => {
         setMorphStatus('sparkle', 4, 'Pruning');
 
-        // 1. Strike through all lines with razor red deletion line (hold for 800ms so user clearly sees the cuts)
+        // 1. Strike through all lines with razor red deletion line (hold for 700ms so user clearly sees the cuts)
         const currentLines = container.querySelectorAll('.prune-line');
         currentLines.forEach(l => l.classList.add('line-struck'));
 
@@ -1859,36 +1890,52 @@ impl Gateway for StripeGateway {
         currentLines.forEach((l, idx) => {
           setTimeout(() => {
             l.classList.add('line-sliced');
-          }, 800 + idx * 65);
+          }, 700 + idx * 55);
         });
 
-        // 3. Count down tokens and cost simultaneously
-        const countdownDuration = 3200;
+        // 3. Count down tokens and cost simultaneously to converge with the accordion fold
+        const countdownDuration = 2400;
         animateNumber('bridgeSkel', conf.rawTokens, conf.skelTokens, countdownDuration, v => `${Math.round(v).toLocaleString()} tokens`);
         animateNumber('costSkel', conf.rawCost, conf.skelCost, countdownDuration, v => `$${v.toFixed(2)}`);
         animateNumber('costSavedTag', 0, conf.savedCost, countdownDuration, v => `Save $${v.toFixed(2)}`);
-        if (costSavedTag) {
-          costSavedTag.className = 'px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold tracking-tight transition-all duration-200 shrink-0 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300';
-        }
 
         if (typeof window.triggerDotRipple === 'function') window.triggerDotRipple();
 
-        // 4. Once lines have sliced away, smoothly fold the empty container shut
+        // 4. Once lines have sliced away (~1300ms), smoothly fold the empty container shut
         setTimeout(() => {
           allBlocks.forEach(b => {
             b.classList.remove('expanded');
             b.classList.add('collapsing');
             b.style.maxHeight = '0px';
           });
-        }, 1900);
+        }, 1300);
 
-        // 5. Complete transition - Step 5: Final code with NO extra annotations!
+        // 5. As the bloat folds away (~1750ms), smoothly re-index line numbers of surviving code lines
+        setTimeout(() => {
+          const survivingLineNums = container.querySelectorAll('.code-line:not(.prune-line) .line-num');
+          survivingLineNums.forEach((numEl, idx) => {
+            numEl.style.opacity = '0.2';
+            setTimeout(() => {
+              numEl.innerText = idx + 1;
+              numEl.style.opacity = '1';
+            }, 140);
+          });
+        }, 1750);
+
+        // 6. Seamless Handshake into Step 5: Exactly as the countdown completes at 2400ms!
         dissolveTimeout = setTimeout(() => {
           currentMorphState = 'skel';
-          renderSynthesizedPure(curLang);
+
+          // Soft synthesis wave confirming clean contract preserved
+          container.classList.add('synthesis-pulse');
+          setTimeout(() => container.classList.remove('synthesis-pulse'), 850);
+
           setMorphStatus('synthesized', 5, 'Synthesized');
           setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
-        }, countdownDuration + 300);
+
+          // Lock clean DOM structure seamlessly without layout shift
+          renderSynthesizedPure(curLang);
+        }, countdownDuration);
 
       }, rawHoldDuration + scanDuration + bloatHoldDuration);
     }
