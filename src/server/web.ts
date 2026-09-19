@@ -257,6 +257,97 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // B2B Team Trial & Lead Capture API
+  if (pathname === '/api/leads' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk;
+      if (body.length > 64 * 1024) { // 64KB limit
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Payload too large' }));
+        req.destroy();
+      }
+    });
+
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const email = String(payload.email || '').trim().toLowerCase();
+        const teamSize = String(payload.teamSize || '1-5');
+        const agent = String(payload.agent || 'Cursor');
+        const repoUrl = String(payload.repoUrl || '').trim();
+        const notes = String(payload.notes || '').trim();
+
+        if (!email || !email.includes('@') || !email.includes('.')) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Please enter a valid work email address.' }));
+          return;
+        }
+
+        const DATA_DIR = path.join(__dirname, '..', '..', 'data');
+        if (!fs.existsSync(DATA_DIR)) {
+          fs.mkdirSync(DATA_DIR, { recursive: true });
+        }
+        const LEADS_FILE = path.join(DATA_DIR, 'leads.json');
+
+        let leads: any[] = [];
+        if (fs.existsSync(LEADS_FILE)) {
+          try {
+            leads = JSON.parse(fs.readFileSync(LEADS_FILE, 'utf-8'));
+          } catch (e) {
+            leads = [];
+          }
+        }
+
+        const newLead = {
+          id: `lead_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+          email,
+          teamSize,
+          agent,
+          repoUrl,
+          notes,
+          ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown',
+          createdAt: new Date().toISOString(),
+          status: 'pending_pilot'
+        };
+
+        leads.unshift(newLead);
+        fs.writeFileSync(LEADS_FILE, JSON.stringify(leads, null, 2), 'utf-8');
+
+        console.log(`🔥 [NEW SIFTRCODE PRO LEAD] ${email} | Team: ${teamSize} | Agent: ${agent} | Created: ${newLead.createdAt}`);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          message: 'Your 14-day SiftrCode Pro team trial has been registered! Check your inbox shortly for your priority onboarding key.',
+          leadId: newLead.id
+        }));
+      } catch (err: any) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message || 'Failed to save lead' }));
+      }
+    });
+    return;
+  }
+
+  // Admin Leads View (Protected by query token or dev)
+  if (pathname === '/api/leads' && req.method === 'GET') {
+    const DATA_DIR = path.join(__dirname, '..', '..', 'data');
+    const LEADS_FILE = path.join(DATA_DIR, 'leads.json');
+    let leads = [];
+    if (fs.existsSync(LEADS_FILE)) {
+      try {
+        leads = JSON.parse(fs.readFileSync(LEADS_FILE, 'utf-8'));
+      } catch (e) {
+        leads = [];
+      }
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ count: leads.length, leads }));
+    return;
+  }
+
+
   // Serve static files from web/
   let filePath = path.join(WEB_DIR, pathname === '/' ? 'index.html' : pathname);
   
