@@ -4,3 +4,5 @@ dist/
 .DS_Store
 siftr_context.md
 *.log
+benchmarks/
+.cursor/

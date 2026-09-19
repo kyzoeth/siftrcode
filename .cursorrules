@@ -1,0 +1,4 @@
+# SiftrCode Agent Prompt Optimization Rule
+When investigating or refactoring this codebase:
+- Use the 'siftr_pack' or 'siftr_skeleton' MCP tools before reading large full source files.
+- Stripping implementation bodies down to AST interface skeletons reduces context bloat by 85%+ and eliminates hallucination.

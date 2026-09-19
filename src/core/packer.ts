@@ -123,7 +123,11 @@ export async function packRepository(options: PackOptions = {}): Promise<PackRes
   }
 
   const finalOutput = contentBlocks.join('\n');
-  const finalOutputPath = path.isAbsolute(outputFile) ? outputFile : path.join(rootDir, outputFile);
+  const finalOutputPath = path.isAbsolute(outputFile) ? outputFile : path.resolve(process.cwd(), outputFile);
+  const parentDir = path.dirname(finalOutputPath);
+  if (!fs.existsSync(parentDir)) {
+    fs.mkdirSync(parentDir, { recursive: true });
+  }
   fs.writeFileSync(finalOutputPath, finalOutput, 'utf-8');
 
   const reductionPercentage = rawTokens > 0 ? Math.max(0, (rawTokens - packedTokens) / rawTokens) * 100 : 0;

@@ -125,6 +125,36 @@ export function skeletonizeTypeScript(code: string, filePath: string = 'file.ts'
           }
         }
 
+        // 6. Function Expressions (e.g. app.use = function(...) { ... } or prototype methods)
+        if (ts.isFunctionExpression(node)) {
+          if (node.name && ts.isIdentifier(node.name)) {
+            symbols.push(node.name.text);
+          }
+          return ts.factory.updateFunctionExpression(
+            node,
+            node.modifiers,
+            node.asteriskToken,
+            node.name,
+            node.typeParameters,
+            node.parameters,
+            node.type,
+            ts.factory.createBlock([], false)
+          );
+        }
+
+        // 7. Arrow Functions
+        if (ts.isArrowFunction(node)) {
+          return ts.factory.updateArrowFunction(
+            node,
+            node.modifiers,
+            node.typeParameters,
+            node.parameters,
+            node.type,
+            node.equalsGreaterThanToken,
+            ts.factory.createBlock([], false)
+          );
+        }
+
         return ts.visitEachChild(node, visit, context);
       }
 
