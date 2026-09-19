@@ -570,6 +570,35 @@
         transparent 100%
       );
     }
+    .ast-laser-label {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      display: inline-flex;
+      align-items: center;
+      padding: 1.5px 8px;
+      border-radius: 9999px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      pointer-events: none;
+      background: rgba(255, 255, 255, 0.96);
+      color: #B34E2E;
+      border: 1px solid rgba(217, 119, 87, 0.45);
+      box-shadow: 0 0 8px rgba(217, 119, 87, 0.25), 0 1px 3px rgba(0, 0, 0, 0.08);
+      line-height: 1.4;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    html.dark .ast-laser-label {
+      background: rgba(18, 18, 20, 0.94);
+      color: #F39C82;
+      border-color: rgba(217, 119, 87, 0.5);
+      box-shadow: 0 0 10px rgba(217, 119, 87, 0.35), 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
 
     .line-reorg-purge {
       transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
@@ -849,7 +878,11 @@
           <!-- Code Viewport Body with Sparkle Particle Overlay (Fixed Height to Prevent Layout Shift) -->
           <div class="relative overflow-hidden flex flex-col h-[320px] sm:h-[420px] md:h-[480px] bg-white dark:bg-zinc-950 shrink-0">
             <!-- Focused AST Precision Laser Beam Scanner -->
-            <div id="scanBeam" class="ast-laser-beam"></div>
+            <div id="scanBeam" class="ast-laser-beam">
+              <span id="scanBeamLabel" class="ast-laser-label">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#D97757] dark:bg-[#F39C82] inline-block mr-1 align-middle animate-pulse"></span>scanning
+              </span>
+            </div>
             <div id="sparkleOverlay" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
             <div id="skelOutput" class="w-full h-full p-2.5 sm:p-5 font-mono text-[10.5px] sm:text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-auto selection:bg-[#ECCBBE]/60 selection:text-[#411A0E] signal-glow"></div>
           </div>
