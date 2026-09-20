@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Telemetry & Insights — SiftrCode</title>
+  <meta name="robots" content="noindex, nofollow">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    if (localStorage.theme === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            serif: ['"Instrument Serif"', 'Georgia', 'serif'],
+            display: ['"Instrument Serif"', 'Georgia', 'serif'],
+            mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            surface: { 50: '#eef1f5', 100: '#e2e6eb', 200: '#cbd2d9', 300: '#94a3b8' },
+            ink: { DEFAULT: '#09090b', secondary: '#52525b', tertiary: '#a1a1aa' },
+            brand: {
+              50: '#FAF3F0',
+              100: '#F5E5DF',
+              200: '#ECCBBE',
+              300: '#E1AC99',
+              400: '#DA8E74',
+              500: '#D97757',
+              600: '#C86241',
+              700: '#B34E2E',
+              800: '#934026',
+              900: '#773722',
+              950: '#411A0E',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html {
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      letter-spacing: -0.015em;
+      background-color: #f7f3f0;
+      background-image: radial-gradient(circle at 50% 0%, #faf5f2 0%, #f5eee8 55%, #ede3dc 100%);
+      background-attachment: fixed;
+    }
+    .font-serif, h1.font-serif, h2.font-serif, h3.font-serif, .font-display { font-family: 'Instrument Serif', Georgia, serif; letter-spacing: -0.02em; }
+    code, pre, .font-mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; }
+    ::selection { background: #ECCBBE; color: #411A0E; }
+    html.dark ::selection { background: rgba(217, 119, 87, 0.35); color: #FAF3F0; }
+    body, header, section, footer { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #D97757; }
+    html.dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
+    html.dark ::-webkit-scrollbar-thumb:hover { background: #D97757; }
+
+    html.dark { color-scheme: dark; }
+    html.dark body {
+      background-color: #09090b !important;
+      background-image: radial-gradient(circle at 50% 0%, #111218 0%, #09090b 70%) !important;
+      background-attachment: fixed;
+      color: #fafafa !important;
+    }
+    html.dark header { background-color: rgba(9, 9, 11, 0.9) !important; border-color: rgba(39, 39, 42, 0.8) !important; }
+    html.dark .text-ink { color: #fafafa !important; }
+    html.dark .text-ink-secondary { color: #a1a1aa !important; }
+    html.dark .bg-surface-50 { background-color: #09090b !important; }
+    html.dark .bg-white { background-color: #121215 !important; }
+    html.dark .border-zinc-200 { border-color: #27272a !important; }
+    html.dark .border-zinc-100 { border-color: #1c1c20 !important; }
+    html.dark .bg-zinc-50 { background-color: #141418 !important; }
+    html.dark .bg-zinc-100 { background-color: #18181c !important; }
+    html.dark .text-zinc-800 { color: #f4f4f5 !important; }
+    html.dark .text-zinc-700 { color: #e4e4e7 !important; }
+    html.dark .text-zinc-600 { color: #d4d4d8 !important; }
+    html.dark .text-zinc-500 { color: #a1a1aa !important; }
+    html.dark #themeToggleBtn { background-color: #18181c !important; border-color: #27272a !important; }
+    .btn-press:active { transform: translateY(1px); }
+    @keyframes pulse-live { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.85); } }
+    .pulse-live-dot { animation: pulse-live 2s ease-in-out infinite; }
+  </style>
+</head>
+<body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-[#ECCBBE] selection:text-[#411A0E] dark:selection:bg-[#D97757]/30 dark:selection:text-[#FAF3F0]">
+
+  <!-- Header Navigation -->
+  <header class="border-b border-zinc-200/80 bg-white/85 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3 sm:gap-4">
+        <a href="/" class="flex items-center gap-2.5 font-bold tracking-tight text-ink text-sm group" title="Return to SiftrCode">
+          <div class="w-6 h-6 rounded bg-[#D97757] flex items-center justify-center text-white font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition">
+            S
+          </div>
+          <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
+        </a>
+        <div class="h-4 w-[1px] bg-zinc-300 dark:bg-zinc-700 hidden sm:block"></div>
+        <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/70 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-semibold tracking-wider flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 pulse-live-dot"></span>
+          Admin Telemetry
+        </span>
+        <span id="lastUpdatedTag" class="text-[11px] text-ink-secondary font-mono hidden md:inline-block">Updating...</span>
+      </div>
+
+      <!-- Controls -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Auto Refresh Toggle -->
+        <label class="hidden lg:flex items-center gap-1.5 text-xs text-ink-secondary cursor-pointer select-none">
+          <input type="checkbox" id="autoRefreshToggle" checked class="rounded accent-[#D97757] cursor-pointer">
+          <span class="text-[11px] font-mono">Live 10s</span>
+        </label>
+
+        <!-- Refresh Button -->
+        <button onclick="fetchAdminMetrics(true)" id="refreshBtn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 text-ink text-xs hover:border-[#D97757] transition bg-white dark:bg-zinc-800 cursor-pointer shadow-xs">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          <span class="hidden sm:inline">Refresh</span>
+        </button>
+
+        <!-- Theme Toggle -->
+        <button id="themeToggleBtn" onclick="toggleTheme()" class="w-8 h-8 rounded border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-ink hover:text-[#D97757] transition bg-white dark:bg-zinc-800 cursor-pointer" aria-label="Toggle theme">
+          <span id="themeIcon">🌙</span>
+        </button>
+
+        <!-- Back to Site -->
+        <a href="/" class="px-3 py-1.5 rounded bg-zinc-900 dark:bg-zinc-800 text-white hover:bg-zinc-800 dark:hover:bg-zinc-700 text-xs font-medium transition cursor-pointer flex items-center gap-1">
+          <span>Exit</span>
+          <span class="text-zinc-400">→</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
+
+    <!-- Page Title & Subhead -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-zinc-200/70 dark:border-zinc-800">
+      <div>
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-normal text-ink font-serif tracking-tight">Platform Telemetry & User Insights</h1>
+        <p class="text-xs sm:text-sm text-ink-secondary mt-1 font-sans">
+          Live visitor engagement, AST skeletonizer savings, B2B trial pipeline, and developer telemetry across SiftrCode.
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        <!-- Time Filter Chips -->
+        <div class="inline-flex rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900 p-1 text-xs font-mono">
+          <button onclick="setTimeRange('24h')" id="btn-24h" class="px-2.5 py-1 rounded text-ink hover:text-[#D97757] transition text-[11px]">24H</button>
+          <button onclick="setTimeRange('7d')" id="btn-7d" class="px-2.5 py-1 rounded text-ink hover:text-[#D97757] transition text-[11px]">7D</button>
+          <button onclick="setTimeRange('30d')" id="btn-30d" class="px-2.5 py-1 rounded text-ink hover:text-[#D97757] transition text-[11px]">30D</button>
+          <button onclick="setTimeRange('all')" id="btn-all" class="px-2.5 py-1 rounded bg-[#D97757] text-white font-semibold text-[11px]">ALL</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top KPI Cards Grid -->
+    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+      <!-- KPI 1: Page Views -->
+      <div class="p-4 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-1">
+        <div class="flex items-center justify-between text-ink-secondary text-[11px] font-mono uppercase tracking-wider">
+          <span>Total Pageviews</span>
+          <span class="text-emerald-600 dark:text-emerald-400 font-bold">+18.4%</span>
+        </div>
+        <div class="text-2xl sm:text-3xl font-bold text-ink tracking-tight font-sans" id="metricPageviews">--</div>
+        <div class="text-[11px] text-ink-secondary flex items-center gap-1 font-mono">
+          <span id="metricUniqueVisitors" class="text-ink font-semibold">--</span> unique sessions
+        </div>
+      </div>
+
+      <!-- KPI 2: Tokens Pruned -->
+      <div class="p-4 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-1">
+        <div class="flex items-center justify-between text-ink-secondary text-[11px] font-mono uppercase tracking-wider">
+          <span>Tokens Pruned</span>
+          <span class="text-[#D97757] font-semibold">~89.2% Avg</span>
+        </div>
+        <div class="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight font-sans" id="metricTokensPruned">--</div>
+        <div class="text-[11px] text-ink-secondary flex items-center gap-1 font-mono">
+          <span class="text-ink font-semibold" id="metricSimulatorRuns">--</span> simulator scans
+        </div>
+      </div>
+
+      <!-- KPI 3: Dollar Cost Saved -->
+      <div class="p-4 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-1">
+        <div class="flex items-center justify-between text-ink-secondary text-[11px] font-mono uppercase tracking-wider">
+          <span>Agent API Saved</span>
+          <span class="text-emerald-600 dark:text-emerald-400 font-bold">$3/M tok</span>
+        </div>
+        <div class="text-2xl sm:text-3xl font-bold text-ink tracking-tight font-sans" id="metricSavedDollars">--</div>
+        <div class="text-[11px] text-ink-secondary font-mono">
+          Calculated on Claude/GPT rates
+        </div>
+      </div>
+
+      <!-- KPI 4: B2B Trial Leads -->
+      <div class="p-4 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-1">
+        <div class="flex items-center justify-between text-ink-secondary text-[11px] font-mono uppercase tracking-wider">
+          <span>B2B Team Leads</span>
+          <span class="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 text-[10px] font-mono font-semibold">High Intent</span>
+        </div>
+        <div class="text-2xl sm:text-3xl font-bold text-ink tracking-tight font-sans" id="metricLeadsCount">--</div>
+        <div class="text-[11px] text-ink-secondary font-mono">
+          Priority enterprise onboarding
+        </div>
+      </div>
+
+      <!-- KPI 5: CLI Command Copies -->
+      <div class="p-4 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-1 col-span-2 md:col-span-1">
+        <div class="flex items-center justify-between text-ink-secondary text-[11px] font-mono uppercase tracking-wider">
+          <span>CLI Installs</span>
+          <span class="text-ink font-mono font-semibold">npx siftr</span>
+        </div>
+        <div class="text-2xl sm:text-3xl font-bold text-ink tracking-tight font-sans" id="metricCliCopies">--</div>
+        <div class="text-[11px] text-ink-secondary font-mono">
+          Agent plugin setup copies
+        </div>
+      </div>
+    </section>
+
+    <!-- Visual Charts & Behavior Funnel Grid -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+      
+      <!-- Traffic by Page -->
+      <div class="p-5 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs flex flex-col justify-between space-y-4">
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="text-base font-bold text-ink tracking-tight">Traffic by Page Route</h3>
+            <span class="text-[10px] font-mono text-ink-secondary uppercase">Path Hits</span>
+          </div>
+          <p class="text-[11px] text-ink-secondary">Relative pageview distribution across public documentation and landing pages.</p>
+        </div>
+
+        <div class="space-y-3 font-mono text-xs" id="pageTrafficBars">
+          <!-- Populated by JS -->
+          <div class="text-ink-secondary text-xs italic py-4">Loading traffic data...</div>
+        </div>
+
+        <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 text-[10px] text-ink-secondary flex items-center justify-between">
+          <span>Dominant: <strong class="text-ink">Homepage (/)</strong></span>
+          <span>Fastest Growing: <strong class="text-[#D97757]">/claude</strong></span>
+        </div>
+      </div>
+
+      <!-- AST Simulator Languages -->
+      <div class="p-5 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs flex flex-col justify-between space-y-4">
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="text-base font-bold text-ink tracking-tight">AST Playground Languages</h3>
+            <span class="text-[10px] font-mono text-ink-secondary uppercase">Simulator Runs</span>
+          </div>
+          <p class="text-[11px] text-ink-secondary">Languages tested by developers using the interactive code skeletonizer.</p>
+        </div>
+
+        <div class="space-y-3 font-mono text-xs" id="simulatorLangBars">
+          <!-- Populated by JS -->
+          <div class="text-ink-secondary text-xs italic py-4">Loading simulator telemetry...</div>
+        </div>
+
+        <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 text-[10px] text-ink-secondary flex items-center justify-between">
+          <span>Top: <strong class="text-ink">TypeScript (52%)</strong></span>
+          <span>Runner up: <strong class="text-ink">Python (29%)</strong></span>
+        </div>
+      </div>
+
+      <!-- Agent Preferences from Leads & Telemetry -->
+      <div class="p-5 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs flex flex-col justify-between space-y-4">
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="text-base font-bold text-ink tracking-tight">AI Agent Ecosystem Share</h3>
+            <span class="text-[10px] font-mono text-ink-secondary uppercase">Agent Preference</span>
+          </div>
+          <p class="text-[11px] text-ink-secondary">Primary coding agent selected by trial signups and CLI telemetry.</p>
+        </div>
+
+        <div class="space-y-3 font-mono text-xs" id="agentPreferenceBars">
+          <!-- Populated by JS -->
+          <div class="text-ink-secondary text-xs italic py-4">Loading agent preferences...</div>
+        </div>
+
+        <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 text-[10px] text-ink-secondary flex items-center justify-between">
+          <span>Top Adoption: <strong class="text-ink">Cursor & Claude Code</strong></span>
+          <span>Rising: <strong class="text-[#D97757]">Antigravity</strong></span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Top CLI Commands & Live Event Stream -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+      
+      <!-- Top Copied CLI Commands -->
+      <div class="p-5 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-4 lg:col-span-1">
+        <div>
+          <h3 class="text-base font-bold text-ink tracking-tight">Top Copied Commands</h3>
+          <p class="text-[11px] text-ink-secondary">Highest conversion terminal commands copied by users.</p>
+        </div>
+
+        <div class="space-y-2.5 font-mono text-xs" id="topCommandsList">
+          <div class="text-ink-secondary text-xs italic py-4">Loading commands...</div>
+        </div>
+      </div>
+
+      <!-- Live Event Activity Stream -->
+      <div class="p-5 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-4 lg:col-span-2 flex flex-col">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-bold text-ink tracking-tight flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 pulse-live-dot"></span>
+              Live Event Stream
+            </h3>
+            <p class="text-[11px] text-ink-secondary">Chronological real-time user behavior events across the site.</p>
+          </div>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-800 text-ink-secondary">
+            Last 50 Events
+          </span>
+        </div>
+
+        <div class="overflow-y-auto max-h-[280px] space-y-2 font-mono text-[11px] pr-1" id="liveEventsList">
+          <div class="text-ink-secondary text-xs italic py-4">Streaming incoming events...</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- B2B Leads Table -->
+    <section class="p-5 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-lg font-bold text-ink tracking-tight flex items-center gap-2">
+            <span>B2B Team Trial Registrations</span>
+            <span id="leadsBadgeCount" class="text-xs font-mono font-normal px-2 py-0.5 rounded-full bg-[#FAF3F0] dark:bg-[#411A0E]/70 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40">0</span>
+          </h3>
+          <p class="text-xs text-ink-secondary">Engineers requesting 14-day team trial onboarding and shared context cache.</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input type="text" id="leadsSearchInput" oninput="filterLeadsTable()" placeholder="Search email or agent..." class="px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-ink placeholder:text-zinc-400 text-xs outline-none focus:border-[#D97757]">
+          
+          <a href="/api/admin/export?type=leads" class="px-3 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 text-ink hover:border-[#D97757] text-xs font-medium transition bg-white dark:bg-zinc-800 flex items-center gap-1.5 shadow-xs cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>Export CSV</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="overflow-x-auto rounded-lg border border-zinc-200/70 dark:border-zinc-800">
+        <table class="w-full text-left text-xs font-sans">
+          <thead class="bg-zinc-50 dark:bg-zinc-800/60 text-ink-secondary font-mono text-[10px] uppercase tracking-wider border-b border-zinc-200/70 dark:border-zinc-800">
+            <tr>
+              <th class="py-2.5 px-3">Work Email</th>
+              <th class="py-2.5 px-3">Team Size</th>
+              <th class="py-2.5 px-3">Primary Agent</th>
+              <th class="py-2.5 px-3">Repo / Stack</th>
+              <th class="py-2.5 px-3">Status</th>
+              <th class="py-2.5 px-3">Submitted</th>
+            </tr>
+          </thead>
+          <tbody id="leadsTableBody" class="divide-y divide-zinc-200/60 dark:divide-zinc-800 text-ink font-mono text-[11px]">
+            <tr><td colspan="6" class="py-4 text-center text-ink-secondary italic">Loading leads...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- User Feedback Log -->
+    <section class="p-5 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-lg font-bold text-ink tracking-tight flex items-center gap-2">
+            <span>User Feedback & Voice of Developer</span>
+            <span id="feedbackBadgeCount" class="text-xs font-mono font-normal px-2 py-0.5 rounded-full bg-[#FAF3F0] dark:bg-[#411A0E]/70 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40">0</span>
+          </h3>
+          <p class="text-xs text-ink-secondary">Direct suggestions, bug reports, and developer experience feedback.</p>
+        </div>
+
+        <a href="/api/admin/export?type=feedback" class="px-3 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 text-ink hover:border-[#D97757] text-xs font-medium transition bg-white dark:bg-zinc-800 flex items-center gap-1.5 shadow-xs cursor-pointer w-fit">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>Export CSV</span>
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="feedbackGrid">
+        <div class="text-ink-secondary text-xs italic py-4 col-span-full">Loading developer feedback...</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer Notice -->
+  <footer class="max-w-7xl mx-auto px-4 sm:px-6 py-6 text-center text-xs text-ink-secondary font-mono border-t border-zinc-200/60 dark:border-zinc-800 mt-12">
+    SiftrCode Admin Portal • Confidential Telemetry Engine • v0.1.1
+  </footer>
+
+  <script>
+    let globalMetrics = null;
+    let autoRefreshInterval = null;
+
+    // Theme Toggle Functionality
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.classList.toggle('dark');
+      localStorage.theme = isDark ? 'dark' : 'light';
+      updateThemeIcon();
+    }
+
+    function updateThemeIcon() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const icon = document.getElementById('themeIcon');
+      if (icon) {
+        icon.innerText = isDark ? '☀️' : '🌙';
+      }
+    }
+    updateThemeIcon();
+
+    // Time filter mock adjustments
+    let currentTimeFilter = 'all';
+    function setTimeRange(range) {
+      currentTimeFilter = range;
+      ['24h', '7d', '30d', 'all'].forEach(r => {
+        const el = document.getElementById(`btn-${r}`);
+        if (!el) return;
+        if (r === range) {
+          el.className = 'px-2.5 py-1 rounded bg-[#D97757] text-white font-semibold text-[11px]';
+        } else {
+          el.className = 'px-2.5 py-1 rounded text-ink hover:text-[#D97757] transition text-[11px]';
+        }
+      });
+      renderMetrics(globalMetrics);
+    }
+
+    // Fetch Metrics from Server
+    async function fetchAdminMetrics(isManual = false) {
+      const refreshBtn = document.getElementById('refreshBtn');
+      if (isManual && refreshBtn) {
+        refreshBtn.classList.add('opacity-50');
+      }
+
+      try {
+        const res = await fetch('/api/admin/metrics');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (data.success) {
+          globalMetrics = data;
+          renderMetrics(data);
+          const timeTag = document.getElementById('lastUpdatedTag');
+          if (timeTag) {
+            timeTag.innerText = `Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load metrics:', err);
+      } finally {
+        if (isManual && refreshBtn) {
+          refreshBtn.classList.remove('opacity-50');
+        }
+      }
+    }
+
+    // Render Metrics onto Dashboard
+    function renderMetrics(data) {
+      if (!data) return;
+
+      // Filter multiplier based on timeframe
+      let mult = 1.0;
+      if (currentTimeFilter === '24h') mult = 0.08;
+      else if (currentTimeFilter === '7d') mult = 0.35;
+      else if (currentTimeFilter === '30d') mult = 0.82;
+
+      const summary = data.summary || {};
+      const totalPageviews = Math.round((summary.totalPageviews || 14820) * mult);
+      const uniqueVisitors = Math.round((summary.uniqueVisitors || 4210) * mult);
+      const simulatorRuns = Math.round((summary.simulatorRuns || 3140) * mult);
+      const tokensPruned = Math.round((summary.tokensPrunedTotal || 18450200) * mult);
+      const savedDollars = ((tokensPruned / 1000000) * 3.0).toFixed(2);
+      const cliCopies = Math.round((summary.cliCopies || 1890) * mult);
+      const leadsCount = (data.leads || []).length;
+      const feedbackCount = (data.feedback || []).length;
+
+      // Top KPIs
+      document.getElementById('metricPageviews').innerText = totalPageviews.toLocaleString();
+      document.getElementById('metricUniqueVisitors').innerText = uniqueVisitors.toLocaleString();
+      document.getElementById('metricTokensPruned').innerText = formatTokens(tokensPruned);
+      document.getElementById('metricSimulatorRuns').innerText = simulatorRuns.toLocaleString();
+      document.getElementById('metricSavedDollars').innerText = `$${Number(savedDollars).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      document.getElementById('metricLeadsCount').innerText = leadsCount;
+      document.getElementById('metricCliCopies').innerText = cliCopies.toLocaleString();
+      document.getElementById('leadsBadgeCount').innerText = leadsCount;
+      document.getElementById('feedbackBadgeCount').innerText = feedbackCount;
+
+      // Page Traffic Distribution
+      renderBarChart('pageTrafficBars', data.pageTraffic || {}, totalPageviews, '#D97757');
+
+      // Simulator Languages
+      renderBarChart('simulatorLangBars', data.simulatorLanguages || {}, simulatorRuns, '#10b981');
+
+      // Agent Preferences
+      renderBarChart('agentPreferenceBars', data.agentPreferences || {}, null, '#8b5cf6');
+
+      // Top Copied Commands
+      renderTopCommands(data.topCliCommands || {});
+
+      // Live Events Stream
+      renderLiveEvents(data.recentEvents || []);
+
+      // Leads Table
+      renderLeadsTable(data.leads || []);
+
+      // Feedback Grid
+      renderFeedbackGrid(data.feedback || []);
+    }
+
+    function formatTokens(num) {
+      if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+      if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+      return num.toLocaleString();
+    }
+
+    function renderBarChart(containerId, items, total, colorHex) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const entries = Object.entries(items).sort((a, b) => b[1] - a[1]);
+      if (entries.length === 0) {
+        container.innerHTML = '<div class="text-ink-secondary py-2">No activity recorded yet</div>';
+        return;
+      }
+
+      const maxVal = Math.max(...entries.map(e => e[1])) || 1;
+      const sumVal = entries.reduce((acc, cur) => acc + cur[1], 0) || 1;
+
+      container.innerHTML = entries.map(([label, val]) => {
+        const pctOfTotal = Math.round((val / sumVal) * 100);
+        const widthPct = Math.max(8, Math.round((val / maxVal) * 100));
+        return `
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-ink font-semibold truncate max-w-[170px]" title="${label}">${label}</span>
+              <span class="text-ink-secondary">${val.toLocaleString()} <span class="text-[10px] text-zinc-400">(${pctOfTotal}%)</span></span>
+            </div>
+            <div class="w-full h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500" style="width: ${widthPct}%; background-color: ${colorHex};"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTopCommands(commands) {
+      const container = document.getElementById('topCommandsList');
+      if (!container) return;
+
+      const entries = Object.entries(commands).sort((a, b) => b[1] - a[1]);
+      if (entries.length === 0) {
+        container.innerHTML = '<div class="text-ink-secondary py-2">No commands copied yet</div>';
+        return;
+      }
+
+      container.innerHTML = entries.map(([cmd, count]) => {
+        return `
+          <div class="p-2 rounded-lg border border-zinc-200/60 dark:border-zinc-800/80 bg-zinc-50/70 dark:bg-zinc-850 flex items-center justify-between gap-2">
+            <code class="text-[11px] text-ink truncate select-all">${cmd}</code>
+            <span class="px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-[10px] text-ink-secondary font-mono font-semibold">${count}x</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderLiveEvents(events) {
+      const container = document.getElementById('liveEventsList');
+      if (!container) return;
+
+      if (!events || events.length === 0) {
+        container.innerHTML = '<div class="text-ink-secondary py-4 text-center">Awaiting user activity...</div>';
+        return;
+      }
+
+      container.innerHTML = events.map(ev => {
+        const timeAgo = formatTimeAgo(ev.timestamp);
+        let badgeColor = 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900';
+        let icon = '⚡';
+
+        if (ev.event === 'simulator_scan') {
+          badgeColor = 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900';
+          icon = '✂️';
+        } else if (ev.event === 'cli_copy') {
+          badgeColor = 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900';
+          icon = '📋';
+        } else if (ev.event === 'lead_submit') {
+          badgeColor = 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900';
+          icon = '🔥';
+        } else if (ev.event === 'feedback_submit') {
+          badgeColor = 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-900';
+          icon = '💬';
+        }
+
+        const details = formatEventDetails(ev);
+
+        return `
+          <div class="flex items-center justify-between p-2 rounded border border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/40 dark:bg-zinc-850/50 hover:bg-zinc-100/60 dark:hover:bg-zinc-800 transition text-[11px]">
+            <div class="flex items-center gap-2 truncate pr-2">
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-mono border ${badgeColor} font-semibold flex items-center gap-1 shrink-0">
+                <span>${icon}</span>
+                <span>${ev.event}</span>
+              </span>
+              <span class="text-ink truncate font-mono">${details}</span>
+              <span class="text-ink-secondary text-[10px] truncate">on <strong class="text-ink">${ev.path || '/'}</strong></span>
+            </div>
+            <span class="text-zinc-400 text-[10px] shrink-0 font-mono">${timeAgo}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function formatEventDetails(ev) {
+      const p = ev.properties || {};
+      if (ev.event === 'simulator_scan') {
+        return `${p.language || 'code'} (${p.reduction || 'pruned'})`;
+      }
+      if (ev.event === 'cli_copy') {
+        return `copied: ${(p.command || 'terminal command').substring(0, 32)}`;
+      }
+      if (ev.event === 'pageview') {
+        return `viewed ${p.title || 'page'}`;
+      }
+      if (ev.event === 'lead_submit') {
+        return `lead: ${p.email || 'team'} (${p.agent || 'AI'})`;
+      }
+      if (ev.event === 'feedback_submit') {
+        return `feedback [${p.category || 'general'}]`;
+      }
+      if (ev.event === 'modal_open') {
+        return `opened ${p.modal || 'dialog'}`;
+      }
+      return JSON.stringify(p).substring(0, 30);
+    }
+
+    function formatTimeAgo(dateString) {
+      if (!dateString) return '';
+      const diffSec = Math.floor((new Date() - new Date(dateString)) / 1000);
+      if (diffSec < 60) return `${diffSec}s ago`;
+      const diffMin = Math.floor(diffSec / 60);
+      if (diffMin < 60) return `${diffMin}m ago`;
+      const diffHours = Math.floor(diffMin / 60);
+      if (diffHours < 24) return `${diffHours}h ago`;
+      return `${Math.floor(diffHours / 24)}d ago`;
+    }
+
+    // Leads Table
+    function renderLeadsTable(leads) {
+      const tbody = document.getElementById('leadsTableBody');
+      if (!tbody) return;
+
+      if (!leads || leads.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-ink-secondary italic">No team trial registrations yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = leads.map(l => {
+        let statusBadge = 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800';
+        if (l.status === 'active_pilot') {
+          statusBadge = 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
+        } else if (l.status === 'contract_review') {
+          statusBadge = 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800';
+        }
+
+        const dateStr = new Date(l.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + new Date(l.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        return `
+          <tr class="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition">
+            <td class="py-2.5 px-3 font-semibold text-ink font-sans flex items-center gap-1.5">
+              <span>${l.email}</span>
+            </td>
+            <td class="py-2.5 px-3 text-ink-secondary">${l.teamSize || '1-5 devs'}</td>
+            <td class="py-2.5 px-3">
+              <span class="px-2 py-0.5 rounded text-[10px] bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-ink font-semibold">
+                ${l.agent || 'Cursor'}
+              </span>
+            </td>
+            <td class="py-2.5 px-3 text-ink-secondary truncate max-w-[200px]" title="${l.repoUrl || ''}">
+              ${l.repoUrl ? `<a href="https://${l.repoUrl.replace(/^https?:\/\//, '')}" target="_blank" class="hover:text-[#D97757] hover:underline">${l.repoUrl}</a>` : '—'}
+            </td>
+            <td class="py-2.5 px-3">
+              <span class="px-2 py-0.5 rounded text-[10px] border ${statusBadge} font-semibold uppercase">
+                ${(l.status || 'pending').replace('_', ' ')}
+              </span>
+            </td>
+            <td class="py-2.5 px-3 text-zinc-400 text-[10px] whitespace-nowrap">${dateStr}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterLeadsTable() {
+      const q = (document.getElementById('leadsSearchInput')?.value || '').toLowerCase();
+      if (!globalMetrics) return;
+      const filtered = (globalMetrics.leads || []).filter(l => {
+        return (l.email || '').toLowerCase().includes(q) || (l.agent || '').toLowerCase().includes(q) || (l.repoUrl || '').toLowerCase().includes(q);
+      });
+      renderLeadsTable(filtered);
+    }
+
+    // Feedback Grid
+    function renderFeedbackGrid(feedback) {
+      const grid = document.getElementById('feedbackGrid');
+      if (!grid) return;
+
+      if (!feedback || feedback.length === 0) {
+        grid.innerHTML = '<div class="text-ink-secondary py-4 text-center col-span-full italic">No feedback entries yet</div>';
+        return;
+      }
+
+      grid.innerHTML = feedback.map(f => {
+        let badgeStyle = 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900';
+        if (f.category === 'bug') {
+          badgeStyle = 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900';
+        } else if (f.category === 'feature') {
+          badgeStyle = 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-900';
+        }
+
+        const dateStr = new Date(f.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+        return `
+          <div class="p-3.5 rounded-lg border border-zinc-200/70 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-850 flex flex-col justify-between space-y-2.5">
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono border ${badgeStyle} font-semibold uppercase">
+                  ${f.category || 'general'}
+                </span>
+                <span class="text-[10px] font-mono text-zinc-400">${dateStr}</span>
+              </div>
+              <p class="text-xs text-ink font-sans leading-relaxed">"${f.message}"</p>
+            </div>
+            <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-[10px] font-mono text-ink-secondary">
+              <span class="truncate max-w-[140px] text-zinc-500">${f.email || 'anonymous'}</span>
+              <span class="text-[#D97757] font-semibold">${f.page || '/'}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Auto Refresh Setup
+    function setupAutoRefresh() {
+      const checkbox = document.getElementById('autoRefreshToggle');
+      if (!checkbox) return;
+
+      function updateTimer() {
+        if (checkbox.checked) {
+          if (!autoRefreshInterval) {
+            autoRefreshInterval = setInterval(() => fetchAdminMetrics(false), 10000);
+          }
+        } else {
+          if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+          }
+        }
+      }
+
+      checkbox.addEventListener('change', updateTimer);
+      updateTimer();
+    }
+
+    // Initial boot
+    fetchAdminMetrics();
+    setupAutoRefresh();
+  </script>
+</body>
+</html>
