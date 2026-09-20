@@ -391,10 +391,10 @@
     /* Mechanical Code Accordion Collapse with Smooth Height Handshake */
     .dissolve-block {
       overflow: hidden;
-      transition: max-height 0.75s cubic-bezier(0.25, 1, 0.5, 1), 
-                  margin 0.75s ease, 
-                  padding 0.75s ease,
-                  opacity 0.45s ease;
+      transition: max-height 1.1s cubic-bezier(0.25, 1, 0.5, 1), 
+                  margin 1.0s ease, 
+                  padding 1.0s ease,
+                  opacity 0.7s ease;
       transform-origin: top center;
     }
     .dissolve-block.collapsing {
@@ -429,8 +429,8 @@
     .prune-line {
       position: relative;
       overflow: hidden;
-      transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), 
-                  background-color 0.35s ease;
+      transition: transform 0.95s cubic-bezier(0.16, 1, 0.3, 1), 
+                  background-color 0.45s ease;
     }
     .prune-line.line-struck {
       background-color: rgba(244, 63, 94, 0.12) !important;
@@ -618,8 +618,8 @@
     }
 
     .line-reorg-purge {
-      transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
-      opacity: 0.28 !important;
+      transition: opacity 0.75s ease, transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s ease;
+      opacity: 0.32 !important;
       text-decoration: line-through 1.5px #f43f5e !important;
       color: #f43f5e !important;
       transform: translateX(-8px);
@@ -2896,7 +2896,7 @@ impl PaymentGateway for StripeGateway {
           // 1. Smoothly fade out collapsed prune card wrappers
           const deadCards = container.querySelectorAll('.targeted-prune-card, .bloat-card-header');
           deadCards.forEach(el => {
-            el.style.transition = 'opacity 0.5s ease';
+            el.style.transition = 'opacity 0.7s ease';
             el.style.opacity = '0';
           });
 
@@ -2915,14 +2915,14 @@ impl PaymentGateway for StripeGateway {
             }
           });
 
-          // 3. Deliberate hold for 1000ms so user clearly registers the dead imports and internal fields being eliminated
+          // 3. Deliberate hold for 1450ms so user clearly registers the dead imports and internal fields being eliminated
           const dissolveTimer = setTimeout(() => {
             // Fade out the purged lines smoothly without any scanner beam
             const purgedLines = container.querySelectorAll('.line-reorg-purge');
             purgedLines.forEach(pLine => {
-              pLine.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+              pLine.style.transition = 'opacity 0.65s ease, transform 0.65s cubic-bezier(0.16, 1, 0.3, 1)';
               pLine.style.opacity = '0';
-              pLine.style.transform = 'translateX(-12px)';
+              pLine.style.transform = 'translateX(-14px)';
             });
 
             // 4. Smoothly manifest the clean synthesized contract
@@ -2930,7 +2930,7 @@ impl PaymentGateway for StripeGateway {
               const cleanCode = cleanSynthesizedCode[lang] || '';
               const cleanHtml = renderCodeLinesWithNumbers(cleanCode, lang, 1);
 
-              container.innerHTML = `<div id="synthesizedBlock" class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed transition-all duration-700 opacity-0 transform translate-y-1">${cleanHtml}</div>`;
+              container.innerHTML = `<div id="synthesizedBlock" class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed transition-all duration-800 opacity-0 transform translate-y-1">${cleanHtml}</div>`;
 
               // Seamless upward fade-in of the synthesized interface
               requestAnimationFrame(() => {
@@ -2946,19 +2946,19 @@ impl PaymentGateway for StripeGateway {
               survivingLineNums.forEach((numEl, idx) => {
                 numEl.style.opacity = '0.3';
                 setTimeout(() => {
-                  numEl.style.transition = 'opacity 0.3s ease';
+                  numEl.style.transition = 'opacity 0.4s ease';
                   numEl.style.opacity = '1';
-                }, idx * 30);
+                }, idx * 35);
               });
 
-              // 6. Hold on clean code for 850ms so user absorbs the synthesized structure, then transition to Step 6
+              // 6. Hold on clean code for 1100ms so user absorbs the synthesized structure, then transition to Step 6
               const finishTimer = setTimeout(() => {
                 if (onComplete) onComplete();
-              }, 850);
+              }, 1100);
               morphTimeouts.push(finishTimer);
-            }, 450);
+            }, 650);
             morphTimeouts.push(manifestTimer);
-          }, 1000);
+          }, 1450);
           morphTimeouts.push(dissolveTimer);
         }
 
@@ -2966,7 +2966,7 @@ impl PaymentGateway for StripeGateway {
           if (currentMorphState !== 'sparkle' && currentMorphState !== 'targeting' && currentMorphState !== 'raw') return;
           if (index >= totalSections) {
             // All sections removed in succession! Smooth glide to top
-            const returnScrollDuration = 750;
+            const returnScrollDuration = 850;
             smoothScrollContainer(container, 0, returnScrollDuration);
 
             // Execute intermediate AST Reorganization Animation (Step 5)
@@ -2979,7 +2979,7 @@ impl PaymentGateway for StripeGateway {
                 setMorphStatus('synthesized', 6, 'Synthesized');
                 setMetricsInstant(conf.skelTokens, conf.skelCost, conf.savedCost, conf.savedTokens, conf.reduction);
               });
-            }, returnScrollDuration + 350);
+            }, returnScrollDuration + 450);
             morphTimeouts.push(reorgTimer);
             return;
           }
@@ -2993,7 +2993,7 @@ impl PaymentGateway for StripeGateway {
           const targetSaved = sectionTargets[index].targetSaved;
 
           // 1. Auto-scroll to center this bloat section in view
-          const scrollDuration = 450;
+          const scrollDuration = 550;
           if (secEl) {
             const scrollTarget = getElementScrollTop(container, secEl);
             smoothScrollContainer(container, scrollTarget, scrollDuration);
@@ -3003,16 +3003,16 @@ impl PaymentGateway for StripeGateway {
             cardEl.classList.add('bloat-highlighted');
           }
 
-          // 2. Pause briefly so user registers the bloat method, then strike red lines
+          // 2. Pause so user clearly registers the targeted bloat method, then strike red lines
           const strikeTimer = setTimeout(() => {
             const lines = blockEl ? blockEl.querySelectorAll('.prune-line') : [];
             lines.forEach(l => l.classList.add('line-struck'));
 
             // 3. Trigger line slicing, block folding, AND token bar reduction simultaneously in lockstep
             const pruneActionTimer = setTimeout(() => {
-              // Slice lines out in quick succession
+              // Slice lines out in deliberate, readable succession
               lines.forEach((l, idx) => {
-                setTimeout(() => l.classList.add('line-sliced'), idx * 25);
+                setTimeout(() => l.classList.add('line-sliced'), idx * 50);
               });
 
               // Accordion-fold the block shut concurrently
@@ -3029,7 +3029,7 @@ impl PaymentGateway for StripeGateway {
               const prevCost = index === 0 ? conf.rawCost : sectionTargets[index - 1].targetCost;
               const prevSaved = index === 0 ? 0 : sectionTargets[index - 1].targetSaved;
 
-              const pruneDuration = 650;
+              const pruneDuration = 1000;
               animateNumber('bridgeSkel', prevTokens, targetTokens, pruneDuration, v => `${Math.round(v).toLocaleString()} tokens`);
               animateNumber('costSkel', prevCost, targetCost, pruneDuration, v => `$${v.toFixed(2)}`);
 
@@ -3050,14 +3050,14 @@ impl PaymentGateway for StripeGateway {
               }
               animateNumber('costSavedTag', prevSaved, targetSaved, pruneDuration, v => `Save $${v.toFixed(2)}`);
 
-              // 4. Brief hold after section is folded & bar has reached target, then glide to next section
+              // 4. Hold after section is folded & bar has reached target, then glide to next section
               const nextTimer = setTimeout(() => {
                 removeSectionsSequentially(index + 1);
-              }, pruneDuration + 350);
+              }, pruneDuration + 450);
               morphTimeouts.push(nextTimer);
-            }, 180);
+            }, 320);
             morphTimeouts.push(pruneActionTimer);
-          }, scrollDuration + 150);
+          }, scrollDuration + 300);
           morphTimeouts.push(strikeTimer);
         }
 
