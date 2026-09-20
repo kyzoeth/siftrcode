@@ -29,7 +29,7 @@
             mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
           },
           colors: {
-            surface: { 50: '#eef1f5', 100: '#e2e6eb', 200: '#cbd2d9', 300: '#94a3b8' },
+            surface: { 50: '#f7f3f0', 100: '#f2ece6', 200: '#e8dfd7', 300: '#d5c7bc' },
             ink: { DEFAULT: '#09090b', secondary: '#52525b', tertiary: '#a1a1aa' },
             brand: {
               50: '#FAF3F0',
@@ -169,13 +169,13 @@
         </label>
 
         <!-- Refresh Button -->
-        <button onclick="fetchAdminMetrics(true)" id="refreshBtn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 text-ink dark:text-zinc-200 text-xs hover:border-[#D97757] transition bg-white dark:bg-zinc-800 hover:dark:bg-zinc-700 cursor-pointer shadow-xs">
+        <button onclick="fetchAdminMetrics(true)" id="refreshBtn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-700 hover:text-ink dark:text-zinc-200 text-xs hover:border-[#D97757] transition bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 hover:dark:bg-zinc-700 cursor-pointer shadow-xs">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
           <span class="hidden sm:inline">Refresh</span>
         </button>
 
         <!-- Theme Toggle -->
-        <button id="themeToggleBtn" onclick="toggleTheme()" class="w-8 h-8 rounded border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-ink dark:text-zinc-200 hover:text-[#D97757] transition bg-white dark:bg-zinc-800 cursor-pointer" aria-label="Toggle theme">
+        <button id="themeToggleBtn" onclick="toggleTheme()" class="w-8 h-8 rounded border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-700 hover:text-ink dark:text-zinc-200 hover:text-[#D97757] transition bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 cursor-pointer" aria-label="Toggle theme">
           <span id="themeIcon">🌙</span>
         </button>
 
@@ -201,7 +201,7 @@
       </div>
       <div class="flex items-center gap-2">
         <!-- Time Filter Chips -->
-        <div class="inline-flex rounded-md border border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-950 p-1 text-xs font-mono">
+        <div class="inline-flex rounded-md border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950 p-1 text-xs font-mono shadow-2xs">
           <button onclick="setTimeRange('24h')" id="btn-24h" class="px-2.5 py-1 rounded text-ink hover:text-[#D97757] transition text-[11px]">24H</button>
           <button onclick="setTimeRange('7d')" id="btn-7d" class="px-2.5 py-1 rounded text-ink hover:text-[#D97757] transition text-[11px]">7D</button>
           <button onclick="setTimeRange('30d')" id="btn-30d" class="px-2.5 py-1 rounded text-ink hover:text-[#D97757] transition text-[11px]">30D</button>
@@ -291,9 +291,9 @@
           <div class="text-ink-secondary text-xs italic py-4">Loading traffic data...</div>
         </div>
 
-        <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 text-[10px] text-ink-secondary flex items-center justify-between">
-          <span>Dominant: <strong class="text-ink">Homepage (/)</strong></span>
-          <span>Fastest Growing: <strong class="text-[#D97757]">/claude</strong></span>
+        <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 text-[10px] text-ink-secondary flex items-center justify-between font-mono">
+          <span>Tracking: <strong class="text-ink">Live Pageviews</strong></span>
+          <span>Coverage: <strong class="text-emerald-600 dark:text-emerald-400">100% Client-Side</strong></span>
         </div>
       </div>
 
@@ -312,9 +312,9 @@
           <div class="text-ink-secondary text-xs italic py-4">Loading simulator telemetry...</div>
         </div>
 
-        <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 text-[10px] text-ink-secondary flex items-center justify-between">
-          <span>Top: <strong class="text-ink">TypeScript (52%)</strong></span>
-          <span>Runner up: <strong class="text-ink">Python (29%)</strong></span>
+        <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 text-[10px] text-ink-secondary flex items-center justify-between font-mono">
+          <span>Supported: <strong class="text-ink">TS, PY, GO, RS</strong></span>
+          <span>Parser: <strong class="text-[#D97757]">Deterministic AST</strong></span>
         </div>
       </div>
 
@@ -333,9 +333,9 @@
           <div class="text-ink-secondary text-xs italic py-4">Loading agent preferences...</div>
         </div>
 
-        <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 text-[10px] text-ink-secondary flex items-center justify-between">
-          <span>Top Adoption: <strong class="text-ink">Cursor & Claude Code</strong></span>
-          <span>Rising: <strong class="text-[#D97757]">Antigravity</strong></span>
+        <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 text-[10px] text-ink-secondary flex items-center justify-between font-mono">
+          <span>Ecosystem: <strong class="text-ink">Claude, Cursor, AGY</strong></span>
+          <span>Protocol: <strong class="text-purple-600 dark:text-purple-400">MCP Stdio / HTTP</strong></span>
         </div>
       </div>
 
@@ -684,9 +684,9 @@
 
       container.innerHTML = entries.map(([cmd, count]) => {
         return `
-          <div class="p-2.5 rounded border border-zinc-200/70 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-950/60 flex items-center justify-between gap-2">
+          <div class="p-2.5 rounded border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 flex items-center justify-between gap-2">
             <code class="text-[11px] text-ink truncate select-all">${cmd}</code>
-            <span class="px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-[10px] text-ink-secondary dark:text-zinc-300 font-mono font-semibold">${count}x</span>
+            <span class="px-1.5 py-0.5 rounded bg-zinc-100 border border-zinc-200/60 dark:bg-zinc-800 text-[10px] text-ink-secondary dark:text-zinc-300 font-mono font-semibold">${count}x</span>
           </div>
         `;
       }).join('');
@@ -723,7 +723,7 @@
         const details = formatEventDetails(ev);
 
         return `
-          <div class="flex items-center justify-between p-2 rounded border border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-950/50 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/60 transition text-[11px]">
+          <div class="flex items-center justify-between p-2 rounded border border-zinc-200/60 dark:border-zinc-800/80 bg-white dark:bg-zinc-950/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition text-[11px]">
             <div class="flex items-center gap-2 truncate pr-2">
               <span class="px-1.5 py-0.5 rounded text-[10px] font-mono border ${badgeColor} font-semibold flex items-center gap-1 shrink-0">
                 <span>${icon}</span>
@@ -847,7 +847,7 @@
         const dateStr = new Date(f.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
 
         return `
-          <div class="p-3.5 rounded-md border border-zinc-200/70 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/70 flex flex-col justify-between space-y-2.5 shadow-2xs">
+          <div class="p-3.5 rounded-md border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/70 flex flex-col justify-between space-y-2.5 shadow-2xs">
             <div class="space-y-1.5">
               <div class="flex items-center justify-between">
                 <span class="px-2 py-0.5 rounded text-[10px] font-mono border ${badgeStyle} font-semibold uppercase">
