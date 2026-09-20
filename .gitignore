@@ -7,3 +7,4 @@ siftr_context.md
 benchmarks/
 .cursor/
 data/
+.siftr/

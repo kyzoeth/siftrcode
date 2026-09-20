@@ -9,3 +9,17 @@ export * from './core/packer';
 export * from './core/auditor';
 export * from './core/installer';
 export * from './mcp/server';
+
+// SiftrCode V2 Foundational Contracts & Configuration
+export * from './config/flags';
+export * from './context/context_resolution';
+export * from './security/trust';
+export * from './rights/data_rights';
+export * from './agents/agent_environment';
+export * from './workspace/repository_state';
+export * from './workspace/workspace_snapshot';
+export * from './workspace/workspace_manager';
+export * from './context/context_unit';
+export * from './context/task_evidence';
+export * from './context/task_context';
+export * from './storage/sqlite_store';

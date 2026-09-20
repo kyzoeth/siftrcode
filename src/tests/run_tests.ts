@@ -7,7 +7,11 @@ const tests = [
   { name: 'AST Skeletonizer Tests (TS, Py, Go, Rust)', file: 'test_skeleton.js' },
   { name: 'TypeSafe Jev Decision Engine Tests', file: 'test_jev.js' },
   { name: 'Model Context Protocol (MCP) Server Tests', file: 'test_mcp.js' },
-  { name: 'Claude & Cursor Plugin Installer Tests', file: 'test_installer.js' }
+  { name: 'Claude & Cursor Plugin Installer Tests', file: 'test_installer.js' },
+  { name: 'V1 Regression & Baseline Protection Tests', file: 'test_regression_v1.js' },
+  { name: 'V2 Foundational Domain Contracts Tests', file: 'test_foundational_contracts.js' },
+  { name: 'V2 WorkspaceSnapshot & WorkspaceManager Tests', file: 'test_workspace_snapshot.js' },
+  { name: 'V2 SQLite Persistent Storage & Migrations Tests', file: 'test_storage.js' }
 ];
 
 let failed = false;
