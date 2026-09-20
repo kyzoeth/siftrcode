@@ -9,11 +9,12 @@
 </p>
 
 > **Cut agent token waste by 90%.**  
-> AST compiler that strips function bodies before inference while preserving 100% of types and signatures.
+> 100% open-source (MIT), local-first AST compiler that strips function bodies before inference while preserving 100% of types and signatures.
 
-[![Version](https://img.shields.io/badge/version-0.1.0-amber.svg)](https://siftrcode.com)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![MCP](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://modelcontextprotocol.io)
+[![Version](https://img.shields.io/badge/version-0.1.1-amber.svg)](https://siftrcode.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://modelcontextprotocol.io)
+[![Open Source](https://img.shields.io/badge/Open%20Source-100%25-brightgreen.svg)](https://github.com/kyzoeth/siftrcode)
 [![CI](https://github.com/kyzoeth/siftrcode/actions/workflows/ci.yml/badge.svg)](https://github.com/kyzoeth/siftrcode/actions)
 
 ---
@@ -116,9 +117,29 @@ Add SiftrCode to your `~/.claude/settings.json` or Cursor MCP settings:
 ```
 
 ### Exposed MCP Tools:
-* `siftr_pack`: Generates a pruned context pack for a specific task.
 * `siftr_skeleton`: Returns the AST interface skeleton of any file on demand.
+* `siftr_batch_skeleton`: Extracts type signatures from multiple candidate files in parallel.
+* `siftr_pack`: Scans dependencies and generates a pruned context pack for a specific task.
 * `siftr_audit`: Returns a token bloat analysis of the repository.
+
+---
+
+## 📂 100% Open-Source Implementation (MIT Licensed)
+
+SiftrCode is completely open-source, local-first, and self-contained within this repository. There are **zero proprietary binaries**, **zero remote telemetry**, and **zero closed-source backends**.
+
+Every component runs entirely on your local machine:
+
+| Component | Source Implementation | Description |
+| :--- | :--- | :--- |
+| **MCP Server** | [`src/mcp/server.ts`](src/mcp/server.ts) | Native Model Context Protocol stdio server for Claude, Cursor & Antigravity. |
+| **TypeScript / JS AST** | [`src/skeleton/typescript.ts`](src/skeleton/typescript.ts) | Local AST compiler using the official TypeScript Compiler API. |
+| **Python AST** | [`src/skeleton/python_ast.py`](src/skeleton/python_ast.py) | Native Python AST parser stripping method bodies into ellipses (`...`). |
+| **Go Parser** | [`src/skeleton/go.ts`](src/skeleton/go.ts) | Native Go AST parser extracting structs, interfaces, and function headers. |
+| **Rust Parser** | [`src/skeleton/rust.ts`](src/skeleton/rust.ts) | Native Rust parser extracting traits, impl blocks, and public signatures. |
+| **Relevance Gate** | [`src/jev/client.ts`](src/jev/client.ts) | 100% offline, deterministic heuristic classifier (zero network latency). |
+| **Context Compiler** | [`src/core/packer.ts`](src/core/packer.ts) | Ingestion compiler and markdown context pack generator. |
+| **Token Auditor** | [`src/core/auditor.ts`](src/core/auditor.ts) | Codebase token bloat scanner and financial waste calculator. |
 
 ---
 
