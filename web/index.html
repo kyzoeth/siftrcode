@@ -1036,7 +1036,7 @@
       <div class="text-center space-y-1.5 max-w-2xl mx-auto">
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-ink font-serif">Token Economics</h2>
         <p class="text-xs sm:text-sm md:text-base text-ink-secondary">
-          Analysis for Claude 3.7 Sonnet ($3.00/MTok in) based on 50 agent turns / day.
+          The math is easy. You could be saving thousands in agent fees*
         </p>
       </div>
 
@@ -1055,34 +1055,51 @@
             </span>
           </div>
 
-          <!-- Bar Comparison -->
-          <div class="space-y-4">
-            <!-- Without SiftrCode -->
-            <div class="space-y-1.5">
-              <div class="flex justify-between items-center text-xs font-mono">
-                <span class="text-zinc-600 dark:text-zinc-400">Without SiftrCode</span>
-                <span class="font-bold text-rose-600 dark:text-rose-400">125,000 tokens</span>
+          <!-- Vertical Bar Chart Area -->
+          <div>
+            <div class="relative h-44 sm:h-48 flex items-end justify-center gap-8 sm:gap-12 px-6 sm:px-10 pb-0 border-b border-zinc-300 dark:border-zinc-700">
+              <!-- Subtle dashed grid guidelines -->
+              <div class="absolute inset-x-0 top-0 bottom-0 flex flex-col justify-between pointer-events-none opacity-40">
+                <div class="border-b border-dashed border-zinc-300 dark:border-zinc-700 w-full flex justify-end">
+                  <span class="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 -mt-2 pr-1">125k</span>
+                </div>
+                <div class="border-b border-dashed border-zinc-300 dark:border-zinc-700 w-full flex justify-end">
+                  <span class="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 -mt-2 pr-1">62k</span>
+                </div>
+                <div></div>
               </div>
-              <div class="w-full h-8 rounded-lg bg-zinc-200 dark:bg-zinc-800 p-0.5 flex items-center">
-                <div class="h-full w-full rounded-md bg-rose-500 flex items-center justify-between px-3 text-[11px] font-mono font-semibold text-white shadow-2xs">
-                  <span>Unpruned Source</span>
-                  <span>100%</span>
+
+              <!-- Bar 1: Without SiftrCode -->
+              <div class="flex flex-col items-center justify-end h-full flex-1 max-w-[110px] z-10">
+                <div class="mb-1.5 text-center">
+                  <div class="text-xs sm:text-sm font-mono font-bold text-rose-600 dark:text-rose-400">125,000</div>
+                  <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">tokens (100%)</div>
+                </div>
+                <div class="w-full h-[72%] rounded-t-lg bg-rose-500/90 dark:bg-rose-600 flex flex-col items-center justify-center p-1 shadow-2xs">
+                  <span class="text-[10px] font-mono font-semibold text-white/95 uppercase tracking-wide">Raw</span>
+                </div>
+              </div>
+
+              <!-- Bar 2: With SiftrCode -->
+              <div class="flex flex-col items-center justify-end h-full flex-1 max-w-[110px] z-10">
+                <div class="mb-1.5 text-center">
+                  <span class="inline-block text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/90 px-1.5 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 mb-0.5">−92.2%</span>
+                  <div class="text-xs sm:text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">9,800</div>
+                  <div class="text-[10px] font-mono text-emerald-600/80 dark:text-emerald-400/80">tokens</div>
+                </div>
+                <div class="w-full rounded-t-lg bg-emerald-500 flex items-center justify-center shadow-2xs" style="height: 10%; min-height: 22px;">
+                  <span class="text-[9px] font-mono font-bold text-white uppercase tracking-wider">AST</span>
                 </div>
               </div>
             </div>
 
-            <!-- With SiftrCode -->
-            <div class="space-y-1.5">
-              <div class="flex justify-between items-center text-xs font-mono">
-                <span class="text-zinc-600 dark:text-zinc-400">With SiftrCode</span>
-                <span class="font-bold text-emerald-600 dark:text-emerald-400">9,800 tokens</span>
+            <!-- Baseline labels -->
+            <div class="flex justify-center gap-8 sm:gap-12 px-6 sm:px-10 pt-2">
+              <div class="flex-1 max-w-[110px] text-center">
+                <span class="text-[11px] sm:text-xs font-mono font-medium text-zinc-600 dark:text-zinc-400">Without Siftr</span>
               </div>
-              <div class="w-full h-8 rounded-lg bg-zinc-200 dark:bg-zinc-800 p-0.5 flex items-center relative overflow-hidden">
-                <div class="h-full rounded-md bg-emerald-500 flex items-center justify-center shadow-2xs shrink-0" style="width: 7.8%; min-width: 24px;"></div>
-                <div class="ml-2.5 flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300 whitespace-nowrap">
-                  <span>Pure AST Contracts</span>
-                  <span class="font-normal text-zinc-400 dark:text-zinc-500 text-[11px]">(7.8% of raw size)</span>
-                </div>
+              <div class="flex-1 max-w-[110px] text-center">
+                <span class="text-[11px] sm:text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">With SiftrCode</span>
               </div>
             </div>
           </div>
@@ -1104,34 +1121,51 @@
             </span>
           </div>
 
-          <!-- Bar Comparison -->
-          <div class="space-y-4">
-            <!-- Without SiftrCode -->
-            <div class="space-y-1.5">
-              <div class="flex justify-between items-center text-xs font-mono">
-                <span class="text-zinc-600 dark:text-zinc-400">Without SiftrCode</span>
-                <span class="font-bold text-rose-600 dark:text-rose-400">$412.50 / mo</span>
+          <!-- Vertical Bar Chart Area -->
+          <div>
+            <div class="relative h-44 sm:h-48 flex items-end justify-center gap-8 sm:gap-12 px-6 sm:px-10 pb-0 border-b border-zinc-300 dark:border-zinc-700">
+              <!-- Subtle dashed grid guidelines -->
+              <div class="absolute inset-x-0 top-0 bottom-0 flex flex-col justify-between pointer-events-none opacity-40">
+                <div class="border-b border-dashed border-zinc-300 dark:border-zinc-700 w-full flex justify-end">
+                  <span class="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 -mt-2 pr-1">$412</span>
+                </div>
+                <div class="border-b border-dashed border-zinc-300 dark:border-zinc-700 w-full flex justify-end">
+                  <span class="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 -mt-2 pr-1">$200</span>
+                </div>
+                <div></div>
               </div>
-              <div class="w-full h-8 rounded-lg bg-zinc-200 dark:bg-zinc-800 p-0.5 flex items-center">
-                <div class="h-full w-full rounded-md bg-rose-500 flex items-center justify-between px-3 text-[11px] font-mono font-semibold text-white shadow-2xs">
-                  <span>$0.375 / turn</span>
-                  <span>$4,950 / yr</span>
+
+              <!-- Bar 1: Without SiftrCode -->
+              <div class="flex flex-col items-center justify-end h-full flex-1 max-w-[110px] z-10">
+                <div class="mb-1.5 text-center">
+                  <div class="text-xs sm:text-sm font-mono font-bold text-rose-600 dark:text-rose-400">$412.50<span class="text-[10px] font-normal">/mo</span></div>
+                  <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">$4,950 / yr</div>
+                </div>
+                <div class="w-full h-[72%] rounded-t-lg bg-rose-500/90 dark:bg-rose-600 flex flex-col items-center justify-center p-1 shadow-2xs">
+                  <span class="text-[10px] font-mono font-semibold text-white/95 uppercase tracking-wide">$0.38/turn</span>
+                </div>
+              </div>
+
+              <!-- Bar 2: With SiftrCode -->
+              <div class="flex flex-col items-center justify-end h-full flex-1 max-w-[110px] z-10">
+                <div class="mb-1.5 text-center">
+                  <span class="inline-block text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/90 px-1.5 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 mb-0.5">Save $380</span>
+                  <div class="text-xs sm:text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">$32.34<span class="text-[10px] font-normal">/mo</span></div>
+                  <div class="text-[10px] font-mono text-emerald-600/80 dark:text-emerald-400/80">$388 / yr</div>
+                </div>
+                <div class="w-full rounded-t-lg bg-emerald-500 flex items-center justify-center shadow-2xs" style="height: 10%; min-height: 22px;">
+                  <span class="text-[9px] font-mono font-bold text-white uppercase tracking-wider">$0.03</span>
                 </div>
               </div>
             </div>
 
-            <!-- With SiftrCode -->
-            <div class="space-y-1.5">
-              <div class="flex justify-between items-center text-xs font-mono">
-                <span class="text-zinc-600 dark:text-zinc-400">With SiftrCode</span>
-                <span class="font-bold text-emerald-600 dark:text-emerald-400">$32.34 / mo</span>
+            <!-- Baseline labels -->
+            <div class="flex justify-center gap-8 sm:gap-12 px-6 sm:px-10 pt-2">
+              <div class="flex-1 max-w-[110px] text-center">
+                <span class="text-[11px] sm:text-xs font-mono font-medium text-zinc-600 dark:text-zinc-400">Without Siftr</span>
               </div>
-              <div class="w-full h-8 rounded-lg bg-zinc-200 dark:bg-zinc-800 p-0.5 flex items-center relative overflow-hidden">
-                <div class="h-full rounded-md bg-emerald-500 flex items-center justify-center shadow-2xs shrink-0" style="width: 7.8%; min-width: 24px;"></div>
-                <div class="ml-2.5 flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300 whitespace-nowrap">
-                  <span>$0.029 / turn</span>
-                  <span class="font-normal text-zinc-400 dark:text-zinc-500 text-[11px]">($388 / yr)</span>
-                </div>
+              <div class="flex-1 max-w-[110px] text-center">
+                <span class="text-[11px] sm:text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">With SiftrCode</span>
               </div>
             </div>
           </div>
@@ -1171,6 +1205,13 @@
             COPY
           </button>
         </div>
+      </div>
+
+      <!-- Pricing Footnote -->
+      <div class="text-center pt-1">
+        <p class="text-[11px] sm:text-xs text-zinc-400 dark:text-zinc-500 font-mono">
+          * Analysis for Claude 3.7 Sonnet ($3.00/MTok in) based on 50 agent turns / day.
+        </p>
       </div>
 
     </div>
