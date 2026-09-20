@@ -14,7 +14,8 @@ const tests = [
   { name: 'V2 SQLite Persistent Storage & Migrations Tests', file: 'test_storage.js' },
   { name: 'V2 Heterogeneous ContextUnit Indexing Tests', file: 'test_indexing.js' },
   { name: 'V2 Engineering Context Graph & GraphBuilder Tests', file: 'test_context_graph.js' },
-  { name: 'V2 Point-in-Time Git Intelligence & Co-Change Tests', file: 'test_git_intelligence.js' }
+  { name: 'V2 Point-in-Time Git Intelligence & Co-Change Tests', file: 'test_git_intelligence.js' },
+  { name: 'V2 Security & Trust Plane Tests', file: 'test_security_plane.js' }
 ];
 
 let failed = false;
