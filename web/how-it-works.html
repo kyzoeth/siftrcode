@@ -255,7 +255,7 @@
     <section id="system-architecture" class="p-5 sm:p-7 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md shadow-2xs space-y-6">
       
       <!-- Diagram Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-zinc-200/70 dark:border-zinc-800/80 pb-5">
+      <div class="border-b border-zinc-200/70 dark:border-zinc-800/80 pb-5">
         <div class="space-y-1">
           <div class="flex items-center gap-2">
             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 uppercase tracking-wider">
@@ -270,14 +270,9 @@
             End-to-End Execution Flow &amp; Relevance Gate
           </h2>
           <p class="text-xs text-ink-secondary">
-            Trace each stage of execution from developer intent to token-dense inference payoff.
+            Click any stage to inspect its payload, runtime behavior, and context telemetry.
           </p>
         </div>
-
-        <button onclick="runFlowSimulation()" id="simBtn" class="self-start sm:self-auto flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-mono font-semibold bg-[#D97757] hover:bg-[#C86241] text-white transition btn-press cursor-pointer shadow-sm">
-          <span id="simBtnIcon">▶</span>
-          <span id="simBtnText">Simulate Pipeline Flow</span>
-        </button>
       </div>
 
       <!-- VISUAL EXECUTION FLOW DIAGRAM (TOPOLOGY MAP) -->
@@ -973,30 +968,6 @@ Total: 42 Files Evaluated • 6,420 Tokens Packed (-96.5% Reduction)`,
       if (code) code.innerText = data.code;
       const desc = document.getElementById('flowDesc');
       if (desc) desc.innerText = data.desc;
-    }
-
-    let simTimer = null;
-    let simStep = 1;
-    function runFlowSimulation() {
-      if (simTimer) {
-        clearInterval(simTimer);
-        simTimer = null;
-        const btnText = document.getElementById('simBtnText');
-        if (btnText) btnText.innerText = 'Simulate Pipeline Flow';
-        const btnIcon = document.getElementById('simBtnIcon');
-        if (btnIcon) btnIcon.innerText = '▶';
-        return;
-      }
-      const btnText = document.getElementById('simBtnText');
-      if (btnText) btnText.innerText = 'Pause Simulation';
-      const btnIcon = document.getElementById('simBtnIcon');
-      if (btnIcon) btnIcon.innerText = '⏸';
-      simStep = 1;
-      selectFlowStep(simStep);
-      simTimer = setInterval(() => {
-        simStep = simStep >= 6 ? 1 : simStep + 1;
-        selectFlowStep(simStep);
-      }, 2400);
     }
 
     // Initialize with Step 3 (Jev Relevance Gate) on load
