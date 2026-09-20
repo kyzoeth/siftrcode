@@ -87,16 +87,54 @@
     html.dark .text-ink { color: #fafafa !important; }
     html.dark .text-ink-secondary { color: #a1a1aa !important; }
     html.dark .bg-surface-50 { background-color: #09090b !important; }
-    html.dark .bg-white { background-color: #121215 !important; }
-    html.dark .border-zinc-200 { border-color: #27272a !important; }
-    html.dark .border-zinc-100 { border-color: #1c1c20 !important; }
-    html.dark .bg-zinc-50 { background-color: #141418 !important; }
-    html.dark .bg-zinc-100 { background-color: #18181c !important; }
+
+    /* Panel and container surfaces */
+    html.dark .bg-white { background-color: #131317 !important; }
+    html.dark .dark\:bg-zinc-900 { background-color: #141418 !important; }
+    html.dark .dark\:bg-zinc-800 { background-color: #222227 !important; }
+    html.dark .dark\:bg-zinc-950 { background-color: #09090b !important; }
+    html.dark [class*="dark:bg-zinc-950\/"] { background-color: rgba(9, 9, 11, 0.7) !important; }
+    html.dark [class*="dark:bg-zinc-800\/"] { background-color: rgba(34, 34, 39, 0.6) !important; }
+
+    /* Border overrides in dark mode */
+    html.dark .border-zinc-200,
+    html.dark .border-zinc-200\/90,
+    html.dark .border-zinc-200\/80,
+    html.dark .border-zinc-200\/70,
+    html.dark .border-zinc-200\/60 {
+      border-color: #27272a !important;
+    }
+    html.dark .border-zinc-100 {
+      border-color: #1c1c20 !important;
+    }
+
+    /* Sub-panel, well, and inner row surfaces */
+    html.dark .bg-zinc-50,
+    html.dark .bg-zinc-50\/80,
+    html.dark .bg-zinc-50\/70,
+    html.dark .bg-zinc-50\/60,
+    html.dark .bg-zinc-50\/50,
+    html.dark .bg-zinc-50\/40 {
+      background-color: #0c0c0f !important;
+    }
+    html.dark .bg-zinc-100,
+    html.dark .bg-zinc-100\/90,
+    html.dark .bg-zinc-100\/80,
+    html.dark .bg-zinc-100\/60 {
+      background-color: #18181d !important;
+    }
+    html.dark .bg-zinc-200,
+    html.dark .bg-zinc-200\/80,
+    html.dark .bg-zinc-200\/70 {
+      background-color: #27272a !important;
+      color: #d4d4d8 !important;
+    }
+
     html.dark .text-zinc-800 { color: #f4f4f5 !important; }
     html.dark .text-zinc-700 { color: #e4e4e7 !important; }
     html.dark .text-zinc-600 { color: #d4d4d8 !important; }
     html.dark .text-zinc-500 { color: #a1a1aa !important; }
-    html.dark #themeToggleBtn { background-color: #18181c !important; border-color: #27272a !important; }
+    html.dark #themeToggleBtn { background-color: #222227 !important; border-color: #33333a !important; }
     .btn-press:active { transform: translateY(1px); }
     @keyframes pulse-live { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.85); } }
     .pulse-live-dot { animation: pulse-live 2s ease-in-out infinite; }
@@ -131,13 +169,13 @@
         </label>
 
         <!-- Refresh Button -->
-        <button onclick="fetchAdminMetrics(true)" id="refreshBtn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 text-ink text-xs hover:border-[#D97757] transition bg-white dark:bg-zinc-800 cursor-pointer shadow-xs">
+        <button onclick="fetchAdminMetrics(true)" id="refreshBtn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 text-ink dark:text-zinc-200 text-xs hover:border-[#D97757] transition bg-white dark:bg-zinc-800 hover:dark:bg-zinc-700 cursor-pointer shadow-xs">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
           <span class="hidden sm:inline">Refresh</span>
         </button>
 
         <!-- Theme Toggle -->
-        <button id="themeToggleBtn" onclick="toggleTheme()" class="w-8 h-8 rounded border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-ink hover:text-[#D97757] transition bg-white dark:bg-zinc-800 cursor-pointer" aria-label="Toggle theme">
+        <button id="themeToggleBtn" onclick="toggleTheme()" class="w-8 h-8 rounded border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-ink dark:text-zinc-200 hover:text-[#D97757] transition bg-white dark:bg-zinc-800 cursor-pointer" aria-label="Toggle theme">
           <span id="themeIcon">🌙</span>
         </button>
 
@@ -163,7 +201,7 @@
       </div>
       <div class="flex items-center gap-2">
         <!-- Time Filter Chips -->
-        <div class="inline-flex rounded-md border border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900 p-1 text-xs font-mono">
+        <div class="inline-flex rounded-md border border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-950 p-1 text-xs font-mono">
           <button onclick="setTimeRange('24h')" id="btn-24h" class="px-2.5 py-1 rounded text-ink hover:text-[#D97757] transition text-[11px]">24H</button>
           <button onclick="setTimeRange('7d')" id="btn-7d" class="px-2.5 py-1 rounded text-ink hover:text-[#D97757] transition text-[11px]">7D</button>
           <button onclick="setTimeRange('30d')" id="btn-30d" class="px-2.5 py-1 rounded text-ink hover:text-[#D97757] transition text-[11px]">30D</button>
@@ -214,7 +252,7 @@
       <div class="p-4 rounded-md border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-1">
         <div class="flex items-center justify-between text-ink-secondary text-[11px] font-mono uppercase tracking-wider">
           <span>B2B Team Leads</span>
-          <span class="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 text-[10px] font-mono font-semibold">High Intent</span>
+          <span class="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60 text-[10px] font-mono font-semibold">High Intent</span>
         </div>
         <div class="text-2xl sm:text-3xl font-bold text-ink tracking-tight font-sans" id="metricLeadsCount">--</div>
         <div class="text-[11px] text-ink-secondary font-mono">
@@ -346,15 +384,15 @@
         <div>
           <h3 class="text-lg font-bold text-ink tracking-tight flex items-center gap-2">
             <span>B2B Team Trial Registrations</span>
-            <span id="leadsBadgeCount" class="text-xs font-mono font-normal px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/70 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40">0</span>
+            <span id="leadsBadgeCount" class="text-xs font-mono font-normal px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40">0</span>
           </h3>
           <p class="text-xs text-ink-secondary">Engineers requesting 14-day team trial onboarding and shared context cache.</p>
         </div>
 
         <div class="flex items-center gap-2">
-          <input type="text" id="leadsSearchInput" oninput="filterLeadsTable()" placeholder="Search email or agent..." class="px-3 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-ink placeholder:text-zinc-400 text-base sm:text-xs outline-none focus:border-[#D97757]">
+          <input type="text" id="leadsSearchInput" oninput="filterLeadsTable()" placeholder="Search email or agent..." class="px-3 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950/80 text-ink placeholder:text-zinc-400 dark:placeholder:text-zinc-500 text-base sm:text-xs outline-none focus:border-[#D97757] transition">
           
-          <a href="/api/admin/export?type=leads" class="px-3 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 text-ink hover:border-[#D97757] text-xs font-medium transition bg-white dark:bg-zinc-800 flex items-center gap-1.5 shadow-xs cursor-pointer">
+          <a href="/api/admin/export?type=leads" class="px-3 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 text-ink dark:text-zinc-200 hover:border-[#D97757] text-xs font-medium transition bg-white dark:bg-zinc-800 hover:dark:bg-zinc-750 flex items-center gap-1.5 shadow-xs cursor-pointer">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             <span>Export CSV</span>
           </a>
@@ -364,7 +402,7 @@
       <!-- Table Container -->
       <div class="overflow-x-auto touch-pan-x rounded-md border border-zinc-200/70 dark:border-zinc-800" style="-webkit-overflow-scrolling: touch;">
         <table class="w-full text-left text-xs font-sans">
-          <thead class="bg-zinc-50 dark:bg-zinc-800/60 text-ink-secondary font-mono text-[10px] uppercase tracking-wider border-b border-zinc-200/70 dark:border-zinc-800">
+          <thead class="bg-zinc-50 dark:bg-zinc-950/80 text-ink-secondary font-mono text-[10px] uppercase tracking-wider border-b border-zinc-200/70 dark:border-zinc-800">
             <tr>
               <th class="py-2.5 px-3">Work Email</th>
               <th class="py-2.5 px-3">Team Size</th>
@@ -387,12 +425,12 @@
         <div>
           <h3 class="text-lg font-bold text-ink tracking-tight flex items-center gap-2">
             <span>User Feedback & Voice of Developer</span>
-            <span id="feedbackBadgeCount" class="text-xs font-mono font-normal px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/70 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40">0</span>
+            <span id="feedbackBadgeCount" class="text-xs font-mono font-normal px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40">0</span>
           </h3>
           <p class="text-xs text-ink-secondary">Direct suggestions, bug reports, and developer experience feedback.</p>
         </div>
 
-        <a href="/api/admin/export?type=feedback" class="px-3 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 text-ink hover:border-[#D97757] text-xs font-medium transition bg-white dark:bg-zinc-800 flex items-center gap-1.5 shadow-xs cursor-pointer w-fit">
+        <a href="/api/admin/export?type=feedback" class="px-3 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 text-ink dark:text-zinc-200 hover:border-[#D97757] text-xs font-medium transition bg-white dark:bg-zinc-800 hover:dark:bg-zinc-750 flex items-center gap-1.5 shadow-xs cursor-pointer w-fit">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span>Export CSV</span>
         </a>
@@ -576,9 +614,9 @@
 
       container.innerHTML = entries.map(([cmd, count]) => {
         return `
-          <div class="p-2 rounded border border-zinc-200/60 dark:border-zinc-800/80 bg-zinc-50/70 dark:bg-zinc-850 flex items-center justify-between gap-2">
+          <div class="p-2.5 rounded border border-zinc-200/70 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-950/60 flex items-center justify-between gap-2">
             <code class="text-[11px] text-ink truncate select-all">${cmd}</code>
-            <span class="px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-[10px] text-ink-secondary font-mono font-semibold">${count}x</span>
+            <span class="px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-[10px] text-ink-secondary dark:text-zinc-300 font-mono font-semibold">${count}x</span>
           </div>
         `;
       }).join('');
@@ -595,27 +633,27 @@
 
       container.innerHTML = events.map(ev => {
         const timeAgo = formatTimeAgo(ev.timestamp);
-        let badgeColor = 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900';
+        let badgeColor = 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/60';
         let icon = '⚡';
 
         if (ev.event === 'simulator_scan') {
-          badgeColor = 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900';
+          badgeColor = 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60';
           icon = '✂️';
         } else if (ev.event === 'cli_copy') {
-          badgeColor = 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900';
+          badgeColor = 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60';
           icon = '📋';
         } else if (ev.event === 'lead_submit') {
-          badgeColor = 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900';
+          badgeColor = 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/60';
           icon = '🔥';
         } else if (ev.event === 'feedback_submit') {
-          badgeColor = 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-900';
+          badgeColor = 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60';
           icon = '💬';
         }
 
         const details = formatEventDetails(ev);
 
         return `
-          <div class="flex items-center justify-between p-2 rounded border border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/40 dark:bg-zinc-850/50 hover:bg-zinc-100/60 dark:hover:bg-zinc-800 transition text-[11px]">
+          <div class="flex items-center justify-between p-2 rounded border border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-950/50 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/60 transition text-[11px]">
             <div class="flex items-center gap-2 truncate pr-2">
               <span class="px-1.5 py-0.5 rounded text-[10px] font-mono border ${badgeColor} font-semibold flex items-center gap-1 shrink-0">
                 <span>${icon}</span>
@@ -729,17 +767,17 @@
       }
 
       grid.innerHTML = feedback.map(f => {
-        let badgeStyle = 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900';
+        let badgeStyle = 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/60';
         if (f.category === 'bug') {
-          badgeStyle = 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900';
+          badgeStyle = 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/60';
         } else if (f.category === 'feature') {
-          badgeStyle = 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-900';
+          badgeStyle = 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60';
         }
 
         const dateStr = new Date(f.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
 
         return `
-          <div class="p-3.5 rounded-md border border-zinc-200/70 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-850 flex flex-col justify-between space-y-2.5">
+          <div class="p-3.5 rounded-md border border-zinc-200/70 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/70 flex flex-col justify-between space-y-2.5 shadow-2xs">
             <div class="space-y-1.5">
               <div class="flex items-center justify-between">
                 <span class="px-2 py-0.5 rounded text-[10px] font-mono border ${badgeStyle} font-semibold uppercase">
