@@ -257,116 +257,114 @@
     <section id="system-architecture" class="p-5 sm:p-8 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md shadow-2xs space-y-8 overflow-hidden">
       
       <!-- Section Header -->
-      <div class="border-b border-zinc-200/70 dark:border-zinc-800/80 pb-5 space-y-2">
-        <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] text-xs font-mono font-semibold uppercase tracking-wider">
-          <span class="w-2 h-2 rounded-full bg-[#D97757]"></span>
+      <div class="border-b border-zinc-200/70 dark:border-zinc-800/80 pb-5 space-y-1.5">
+        <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] text-xs font-mono font-semibold uppercase tracking-wider">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#D97757]"></span>
           Pipeline Architecture
         </div>
         <h2 class="text-2xl sm:text-3xl font-serif text-ink tracking-tight font-normal">
           How SiftrCode Triages Repository Context
         </h2>
-        <p class="text-xs sm:text-sm text-ink-secondary max-w-2xl leading-relaxed">
-          Coding agents naively ingest dozens of entire files. SiftrCode intercepts these candidates locally and triages them into three distinct streams in under 100ms before model inference.
+        <p class="text-xs sm:text-sm text-ink-secondary max-w-2xl">
+          SiftrCode intercepts candidate files locally and triages them in under 100ms before model inference.
         </p>
       </div>
 
-      <!-- Part 1: High-Level End-to-End Flow Strip (Airy & Linear) -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 relative items-stretch">
+      <!-- Part 1: Each Stage Panel on its Own Row -->
+      <div class="space-y-3.5">
         
-        <!-- Stage 1 -->
-        <div class="p-4 sm:p-5 rounded-md bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-3.5 min-w-0">
-          <div class="space-y-2.5">
-            <div class="flex items-center justify-between">
+        <!-- Stage 01 Row -->
+        <div class="p-4 sm:p-5 rounded-md bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-1 min-w-0 sm:max-w-xl">
+            <div class="flex items-center gap-2.5">
               <span class="text-xs font-mono font-bold text-zinc-500 dark:text-zinc-400">STAGE 01</span>
-              <span class="text-xs font-mono px-2 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold">184,200 tok</span>
+              <span class="text-xs font-serif text-zinc-400 dark:text-zinc-600">•</span>
+              <h3 class="font-serif text-lg text-ink font-normal">Raw Repo Ingestion</h3>
             </div>
-            <div>
-              <h3 class="font-serif text-lg sm:text-xl text-ink font-normal">Raw Repo Ingestion</h3>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
-                Agent searches repo for a billing bug and naively pulls <strong>42 candidate files</strong> with complete function bodies, loops, and SQL queries.
-              </p>
-            </div>
+            <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              Agent searches repo and naively ingests 42 whole files with implementation bodies, loops, and queries.
+            </p>
           </div>
-          <div class="pt-3 border-t border-zinc-200/80 dark:border-zinc-800 space-y-1.5">
-            <div class="w-full bg-zinc-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-              <div class="bg-zinc-400 dark:bg-zinc-600 h-full w-full"></div>
+          <div class="sm:text-right shrink-0 space-y-1 sm:min-w-[160px]">
+            <div class="inline-block px-2.5 py-1 rounded bg-zinc-200/80 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700/60 font-mono text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+              184,200 tok
             </div>
-            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500 text-right">100% Bloat Baseline</div>
+            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">100% Bloat Baseline</div>
           </div>
         </div>
 
-        <!-- Stage 2 -->
-        <div class="p-4 sm:p-5 rounded-md bg-[#FAF3F0]/60 dark:bg-[#411A0E]/20 border border-[#ECCBBE] dark:border-[#B34E2E]/40 flex flex-col justify-between space-y-3.5 relative min-w-0">
-          <div class="space-y-2.5">
-            <div class="flex items-center justify-between">
+        <!-- Stage 02 Row -->
+        <div class="p-4 sm:p-5 rounded-md bg-[#FAF3F0]/60 dark:bg-[#411A0E]/20 border border-[#ECCBBE] dark:border-[#B34E2E]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-1 min-w-0 sm:max-w-xl">
+            <div class="flex items-center gap-2.5">
               <span class="text-xs font-mono font-bold text-[#B34E2E] dark:text-[#F39C82]">STAGE 02</span>
-              <span class="text-xs font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E] text-[#B34E2E] dark:text-[#F39C82] border border-[#B34E2E]/30 dark:border-[#B34E2E]/40 font-semibold">&lt;100ms Local</span>
+              <span class="text-xs font-serif text-[#ECCBBE] dark:text-[#B34E2E]">•</span>
+              <h3 class="font-serif text-lg text-ink font-normal">SiftrCode 3-Way Triage</h3>
             </div>
-            <div>
-              <h3 class="font-serif text-lg sm:text-xl text-ink font-normal">SiftrCode 3-Way Triage</h3>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
-                Jev relevance gating and AST synthesis triage files into <strong>3 streams</strong>: dropped deadweight, synthesized skeletons, or full target code.
-              </p>
-            </div>
+            <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              Relevance gating and AST extraction split candidates into target files, type skeletons, or deadweight.
+            </p>
           </div>
-          <div class="pt-3 text-[11px] font-mono text-zinc-500 dark:text-zinc-400 flex items-center justify-between border-t border-[#ECCBBE] dark:border-[#B34E2E]/30">
-            <span>Security:</span>
-            <span class="text-zinc-800 dark:text-zinc-200 font-semibold">Zero Egress • Local Stdio</span>
+          <div class="sm:text-right shrink-0 space-y-1 sm:min-w-[160px]">
+            <div class="inline-block px-2.5 py-1 rounded bg-[#FAF3F0] dark:bg-[#411A0E] border border-[#B34E2E]/30 dark:border-[#B34E2E]/50 font-mono text-xs font-semibold text-[#B34E2E] dark:text-[#F39C82]">
+              &lt;100ms Local
+            </div>
+            <div class="text-[11px] font-mono text-zinc-500 dark:text-zinc-400">Zero Egress • Local Stdio</div>
           </div>
         </div>
 
-        <!-- Stage 3 -->
-        <div class="p-4 sm:p-5 rounded-md bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 flex flex-col justify-between space-y-3.5 min-w-0">
-          <div class="space-y-2.5">
-            <div class="flex items-center justify-between">
+        <!-- Stage 03 Row -->
+        <div class="p-4 sm:p-5 rounded-md bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-1 min-w-0 sm:max-w-xl">
+            <div class="flex items-center gap-2.5">
               <span class="text-xs font-mono font-bold text-emerald-800 dark:text-emerald-400">STAGE 03</span>
-              <span class="text-xs font-mono px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-semibold">6,420 tok (-96.5%)</span>
+              <span class="text-xs font-serif text-emerald-300 dark:text-emerald-700">•</span>
+              <h3 class="font-serif text-lg text-ink font-normal">Clean Context Payoff</h3>
             </div>
-            <div>
-              <h3 class="font-serif text-lg sm:text-xl text-ink font-normal">Clean Context Payoff</h3>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
-                Claude / Cursor receives surgical context. Attention is 100% focused on relevant logic, yielding <strong>4.2s response time</strong> (vs 45s).
-              </p>
-            </div>
+            <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              Agent receives target files plus exact compiler-verified interface contracts in 4.2s (vs 45s).
+            </p>
           </div>
-          <div class="pt-3 border-t border-emerald-200/80 dark:border-emerald-800/60 space-y-1.5">
-            <div class="w-full bg-emerald-100 dark:bg-emerald-950 h-1.5 rounded-full overflow-hidden">
-              <div class="bg-emerald-600 dark:bg-emerald-500 h-full w-[3.5%]"></div>
+          <div class="sm:text-right shrink-0 space-y-1 sm:min-w-[160px]">
+            <div class="inline-block px-2.5 py-1 rounded bg-emerald-100 dark:bg-emerald-950 border border-emerald-300 dark:border-emerald-800 font-mono text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+              6,420 tok (-96.5%)
             </div>
-            <div class="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-medium text-right">3.5% of Original Volume</div>
+            <div class="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-medium">3.5% of Baseline</div>
           </div>
         </div>
 
       </div>
 
-      <!-- Part 2: Interactive Triage Explorer (Spacious & Concrete) -->
-      <div class="space-y-5 pt-2">
-        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-zinc-200/70 dark:border-zinc-800/80 pb-4">
+      <!-- Part 2: Interactive Triage Explorer -->
+      <div class="space-y-5 pt-3 border-t border-zinc-200/70 dark:border-zinc-800/80">
+        
+        <!-- Explorer Header with Segmented Tabs -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 class="text-xl sm:text-2xl font-serif text-ink font-normal">
-              Explore the Three Triage Channels
+              Inspect Triage Channels
             </h3>
-            <p class="text-xs text-ink-secondary mt-1">
-              Select a channel to inspect how SiftrCode transforms candidate files into token-dense contracts:
+            <p class="text-xs text-ink-secondary mt-0.5">
+              View how candidate files are transformed into token-dense contracts.
             </p>
           </div>
 
           <!-- Channel Tabs -->
-          <div class="flex flex-wrap sm:flex-nowrap p-1 rounded-lg bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs font-mono gap-1 shrink-0">
-            <button onclick="setTriageTab('skeletons')" id="tab-skeletons" class="px-3.5 py-2 rounded-md font-medium transition cursor-pointer bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-2xs">
+          <div class="flex p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs font-mono gap-1 shrink-0">
+            <button onclick="setTriageTab('skeletons')" id="tab-skeletons" class="px-3 py-1.5 rounded-md font-medium transition cursor-pointer bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-2xs">
               ⚡ Skeletons (6)
             </button>
-            <button onclick="setTriageTab('dropped')" id="tab-dropped" class="px-3.5 py-2 rounded-md font-medium transition cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
+            <button onclick="setTriageTab('dropped')" id="tab-dropped" class="px-3 py-1.5 rounded-md font-medium transition cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
               ✕ Dropped (34)
             </button>
-            <button onclick="setTriageTab('retained')" id="tab-retained" class="px-3.5 py-2 rounded-md font-medium transition cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
+            <button onclick="setTriageTab('retained')" id="tab-retained" class="px-3 py-1.5 rounded-md font-medium transition cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
               ★ Target Files (2)
             </button>
           </div>
         </div>
 
-        <!-- Dynamic Channel Content Box -->
-        <div id="triageContent" class="min-w-0 overflow-hidden"></div>
+        <!-- Dynamic Channel Content Box: Stacked Rows -->
+        <div id="triageContent" class="space-y-5"></div>
 
       </div>
 
@@ -774,7 +772,7 @@
         badge: '6 DEPENDENCY FILES • 92.2% TOKEN DISSOLUTION',
         badgeClass: 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
         title: 'Synthesized Type Skeletons',
-        desc: 'Supporting classes, utilities, and database clients are distilled into declarative interface contracts. Function bodies, SQL statements, and loops are completely stripped, preserving 100% type fidelity without context bloat.',
+        desc: 'Dependency files distilled into interface contracts. Implementation bodies and queries are stripped while preserving exact types.',
         stats: [
           { file: 'src/db/client.ts', before: '1,420', after: '110 tok', drop: '-92.3%' },
           { file: 'src/types/user.ts', before: '920', after: '84 tok', drop: '-90.9%' },
@@ -796,22 +794,22 @@ export interface DatabaseTransaction {
 export class DatabasePool {
   public async transaction(): Promise<DatabaseTransaction>;
 }
-// Stripped: 136 lines of connection pooling, retries, idle timeouts & SQL queries.`
+// Stripped: 136 lines of connection retries, idle timeouts & SQL queries.`
       },
       dropped: {
         badge: '34 DISTRACTOR FILES • 0 TOKENS (100% PRUNED)',
         badgeClass: 'bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800',
-        title: 'DeadWeight Files Omitted Completely',
-        desc: 'Evaluated by Jev Relevance Gating as non-causal for the developer prompt ("fix subscription billing webhook race condition"). Unrelated UI components, CSS files, and math utilities are dropped entirely before model ingestion.',
+        title: 'DeadWeight Files Omitted',
+        desc: 'Non-causal files (unrelated UI, styling, and utilities) filtered out before prompt ingestion.',
         stats: [
           { file: 'src/views/banner.tsx', before: '3,200', after: '0 tok', drop: '-100%' },
           { file: 'src/utils/math.ts', before: '740', after: '0 tok', drop: '-100%' },
           { file: 'src/auth/avatar.ts', before: '1,120', after: '0 tok', drop: '-100%' },
           { file: 'src/styles/theme.css', before: '4,500', after: '0 tok', drop: '-100%' }
         ],
-        codeHeading: 'Jev Relevance Gating Decision Log',
+        codeHeading: 'Jev Relevance Decision Log',
         codeSummary: '68ms Evaluation • 154,800 Tokens Saved',
-        codeSnippet: `// Jev System One Decision Log (Task: "fix subscription billing webhook race condition")
+        codeSnippet: `// Jev Relevance Decision Log (Task: "fix subscription billing webhook race condition")
 [34 DeadWeight Files Filtered Out]:
 - src/views/banner.tsx      [Drop: UI presentation has zero relevance to billing webhook]
 - src/utils/math.ts         [Drop: Calculation helpers not in concurrent billing path]
@@ -822,13 +820,13 @@ export class DatabasePool {
       retained: {
         badge: '2 ROOT CANDIDATES • 100% FULL FIDELITY',
         badgeClass: 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
-        title: 'Target Files Retained in Full Implementation',
-        desc: 'The direct source files where edits and bug fixes must occur. Full function bodies, lock handling, and database mutations are preserved with 100% line fidelity so the agent has full context to edit accurately on the first turn.',
+        title: 'Target Files Retained in Full',
+        desc: 'Direct target files where code edits occur. Full method bodies and logic are preserved at 100% fidelity.',
         stats: [
           { file: 'src/services/webhook.ts', before: '1,840', after: '1,840 tok', drop: 'Full Body' },
           { file: 'src/billing/subscription.ts', before: '2,150', after: '2,150 tok', drop: 'Full Body' }
         ],
-        codeHeading: 'Full Implementation Retained: src/services/webhook.ts',
+        codeHeading: 'Full Implementation: src/services/webhook.ts',
         codeSummary: '100% Line Visibility for Agent Edits',
         codeSnippet: `// Full Implementation Retained: src/services/webhook.ts
 export async function handleSubscriptionInvoice(event: StripeWebhookEvent) {
@@ -855,9 +853,9 @@ export async function handleSubscriptionInvoice(event: StripeWebhookEvent) {
         const btn = document.getElementById('tab-' + t);
         if (btn) {
           if (t === tab) {
-            btn.className = 'px-3.5 py-2 rounded-md font-medium transition cursor-pointer bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-2xs';
+            btn.className = 'px-3 py-1.5 rounded-md font-medium transition cursor-pointer bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-2xs';
           } else {
-            btn.className = 'px-3.5 py-2 rounded-md font-medium transition cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white';
+            btn.className = 'px-3 py-1.5 rounded-md font-medium transition cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white';
           }
         }
       });
@@ -866,9 +864,9 @@ export async function handleSubscriptionInvoice(event: StripeWebhookEvent) {
       const container = document.getElementById('triageContent');
       if (!data || !container) return;
 
-      const statRows = data.stats.map(s => `
-        <div class="flex items-center justify-between gap-4 py-2 border-b border-zinc-100 dark:border-zinc-800/60 last:border-0 text-xs font-mono">
-          <span class="text-zinc-700 dark:text-zinc-300 truncate font-mono">${s.file}</span>
+      const statCards = data.stats.map(s => `
+        <div class="flex items-center justify-between gap-3 p-2.5 rounded bg-white dark:bg-zinc-950/70 border border-zinc-200/90 dark:border-zinc-800/80 text-xs font-mono shadow-2xs">
+          <span class="text-zinc-800 dark:text-zinc-300 truncate font-mono">${s.file}</span>
           <div class="flex items-center gap-2 shrink-0">
             <span class="text-zinc-400 dark:text-zinc-500 line-through text-[11px] hidden sm:inline">${s.before}</span>
             <span class="font-semibold ${tab === 'dropped' ? 'text-rose-600 dark:text-rose-400' : (tab === 'retained' ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400')}">${s.after}</span>
@@ -878,42 +876,40 @@ export async function handleSubscriptionInvoice(event: StripeWebhookEvent) {
       `).join('');
 
       container.innerHTML = `
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start min-w-0">
-          
-          <!-- Left Column: Explanation & File Stats -->
-          <div class="lg:col-span-5 space-y-4 min-w-0 overflow-hidden">
-            <div>
-              <span class="px-2.5 py-1 rounded text-[10.5px] font-mono font-bold ${data.badgeClass}">
+        <!-- Row 1: Channel Title, Description & Sample Files Grid -->
+        <div class="p-4 sm:p-5 rounded-lg bg-zinc-50/90 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/90 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div class="space-y-1">
+              <span class="inline-block px-2.5 py-0.5 rounded text-[10.5px] font-mono font-bold ${data.badgeClass}">
                 ${data.badge}
               </span>
-              <h4 class="text-xl font-serif text-ink font-normal mt-2.5">${data.title}</h4>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mt-2">${data.desc}</p>
+              <h4 class="text-lg sm:text-xl font-serif text-ink font-normal">${data.title}</h4>
             </div>
-
-            <!-- File Breakdown Table -->
-            <div class="p-3.5 sm:p-4 rounded-md bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 space-y-2">
-              <div class="text-[10.5px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold pb-2 border-b border-zinc-200 dark:border-zinc-800 flex justify-between">
-                <span>Sample Files</span>
-                <span>Token Impact</span>
-              </div>
-              <div>${statRows}</div>
-            </div>
+            <p class="text-xs text-zinc-600 dark:text-zinc-400 max-w-md sm:text-right leading-relaxed">${data.desc}</p>
           </div>
 
-          <!-- Right Column: Code & Decision Inspector -->
-          <div class="lg:col-span-7 w-full overflow-hidden">
-            <div class="rounded-md bg-[#121215] border border-zinc-800 overflow-hidden shadow-2xs">
-              <div class="px-4 py-3 bg-zinc-900 border-b border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs font-mono">
-                <span class="font-medium text-zinc-200 flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  ${data.codeHeading}
-                </span>
-                <span class="text-[10.5px] text-zinc-400">${data.codeSummary}</span>
-              </div>
-              <pre class="p-4 text-xs sm:text-[12.5px] leading-relaxed font-mono text-zinc-200 overflow-x-auto w-full selection:bg-[#D97757]/40 selection:text-white"><code>${escapeHtml(data.codeSnippet)}</code></pre>
+          <!-- Sample Files in a clean 2-column grid -->
+          <div class="space-y-2 pt-2 border-t border-zinc-200/80 dark:border-zinc-800/70">
+            <div class="text-[10.5px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold flex justify-between">
+              <span>Sample Evaluated Files</span>
+              <span>Context Impact</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              ${statCards}
             </div>
           </div>
+        </div>
 
+        <!-- Row 2: Code & Decision Inspector on its own full-width row! -->
+        <div class="rounded-lg bg-[#121215] border border-zinc-800 overflow-hidden shadow-sm">
+          <div class="px-4 py-2.5 bg-zinc-900 border-b border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs font-mono">
+            <span class="font-medium text-zinc-200 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              ${data.codeHeading}
+            </span>
+            <span class="text-[11px] text-zinc-400">${data.codeSummary}</span>
+          </div>
+          <pre class="p-4 text-xs sm:text-[12.5px] leading-relaxed font-mono text-zinc-200 overflow-x-auto w-full selection:bg-[#D97757]/40 selection:text-white"><code>${escapeHtml(data.codeSnippet)}</code></pre>
         </div>
       `;
     }
