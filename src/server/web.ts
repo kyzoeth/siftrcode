@@ -690,7 +690,8 @@ const server = http.createServer(async (req, res) => {
       '.json': 'application/json',
       '.png': 'image/png',
       '.jpg': 'image/jpeg',
-      '.svg': 'image/svg+xml'
+      '.svg': 'image/svg+xml',
+      '.ico': 'image/x-icon'
     };
     const contentType = mimeTypes[ext] || 'application/octet-stream';
     res.writeHead(200, { 'Content-Type': contentType });

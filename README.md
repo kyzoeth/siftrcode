@@ -1,5 +1,13 @@
 # SiftrCode (siftrcode.com)
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="web/assets/logo-white.png">
+    <source media="(prefers-color-scheme: light)" srcset="web/assets/logo-black.png">
+    <img alt="SiftrCode Logo" src="web/assets/logo-black.png" width="340">
+  </picture>
+</p>
+
 > **Cut agent token waste by 90%.**  
 > AST compiler that strips function bodies before inference while preserving 100% of types and signatures.
 
