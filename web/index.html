@@ -3918,19 +3918,15 @@ ${renderedRaw}
 
   <!-- Anonymous Feedback Modal -->
   <div id="feedbackModal" onclick="if(event.target===this) closeFeedbackModal()" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-zinc-950/75 backdrop-blur-sm transition-all duration-200">
-    <div class="relative w-full max-w-md max-h-[92vh] overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-lg shadow-2xl p-5 sm:p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+    <div class="relative w-full max-w-md max-h-[92vh] overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-xl shadow-2xl p-5 sm:p-6 flex flex-col gap-3.5 sm:gap-4 animate-in fade-in zoom-in-95 duration-200">
       
       <!-- Close Button -->
-      <button onclick="closeFeedbackModal()" aria-label="Close" class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer">
+      <button onclick="closeFeedbackModal()" aria-label="Close" class="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
 
       <!-- Header -->
-      <div class="space-y-1 text-left pr-6">
-        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] text-[10px] font-mono font-semibold uppercase tracking-wider">
-          <span class="w-1.5 h-1.5 rounded-full bg-[#D97757]"></span>
-          ANONYMOUS FEEDBACK
-        </div>
+      <div class="space-y-1 text-left pr-7">
         <h3 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight leading-snug">Help us improve SiftrCode</h3>
         <p class="text-[11px] sm:text-xs text-ink-secondary font-sans leading-relaxed">
           Found a bug? Have an idea? Share your honest thoughts directly with our engineering team.
@@ -3970,7 +3966,7 @@ ${renderedRaw}
         <div id="fbError" class="hidden text-[11px] text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-md p-2 font-sans"></div>
 
         <button type="submit" id="fbSubmitBtn" class="w-full py-2.5 rounded-md bg-[#D97757] hover:bg-[#C86241] text-white font-bold text-xs transition btn-press shadow-xs hover:shadow flex items-center justify-center gap-1.5 cursor-pointer">
-          <span>Send Anonymous Feedback</span>
+          <span>Send Feedback</span>
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
         </button>
 
