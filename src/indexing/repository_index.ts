@@ -335,12 +335,16 @@ export class RepositoryIndexer {
         symKind = SymbolKind.CLASS;
         symName = node.name.text;
         qualName = symName;
-        sig = `class ${symName}`;
+        const classFullText = code.slice(node.getStart(sourceFile), node.getEnd());
+        const braceIdx = classFullText.indexOf('{');
+        sig = braceIdx !== -1 ? classFullText.slice(0, braceIdx).trim() : `class ${symName}`;
       } else if (ts.isInterfaceDeclaration(node)) {
         symKind = SymbolKind.INTERFACE;
         symName = node.name.text;
         qualName = symName;
-        sig = `interface ${symName}`;
+        const ifaceFullText = code.slice(node.getStart(sourceFile), node.getEnd());
+        const braceIdx = ifaceFullText.indexOf('{');
+        sig = braceIdx !== -1 ? ifaceFullText.slice(0, braceIdx).trim() : `interface ${symName}`;
       } else if (ts.isTypeAliasDeclaration(node)) {
         symKind = SymbolKind.TYPE_ALIAS;
         symName = node.name.text;

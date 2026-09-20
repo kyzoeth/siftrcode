@@ -25,3 +25,5 @@ export * from './context/task_context';
 export * from './storage/sqlite_store';
 export * from './indexing/index_quality';
 export * from './indexing/repository_index';
+export * from './graph/context_graph';
+export * from './graph/graph_builder';

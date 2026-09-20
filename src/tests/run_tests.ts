@@ -12,7 +12,8 @@ const tests = [
   { name: 'V2 Foundational Domain Contracts Tests', file: 'test_foundational_contracts.js' },
   { name: 'V2 WorkspaceSnapshot & WorkspaceManager Tests', file: 'test_workspace_snapshot.js' },
   { name: 'V2 SQLite Persistent Storage & Migrations Tests', file: 'test_storage.js' },
-  { name: 'V2 Heterogeneous ContextUnit Indexing Tests', file: 'test_indexing.js' }
+  { name: 'V2 Heterogeneous ContextUnit Indexing Tests', file: 'test_indexing.js' },
+  { name: 'V2 Engineering Context Graph & GraphBuilder Tests', file: 'test_context_graph.js' }
 ];
 
 let failed = false;
