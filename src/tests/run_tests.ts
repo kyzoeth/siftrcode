@@ -19,7 +19,8 @@ const tests = [
   { name: 'V2 Multi-Channel Candidate Discovery & Recall Tests', file: 'test_candidate_discovery.js' },
   { name: 'V2 AgentAdapter & Observability Tests', file: 'test_agent_adapter.js' },
   { name: 'V2 Versioned Features (ContextFeaturesV1) Tests', file: 'test_features.js' },
-  { name: 'V2 Exposure-Aware Telemetry & Data Rights Tests', file: 'test_telemetry.js' }
+  { name: 'V2 Exposure-Aware Telemetry & Data Rights Tests', file: 'test_telemetry.js' },
+  { name: 'V2 ContextRank (Transparent Candidate Ranker) Tests', file: 'test_context_rank.js' }
 ];
 
 let failed = false;

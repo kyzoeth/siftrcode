@@ -43,6 +43,7 @@ export * from './agents/session_handle';
 export * from './agents/observability_tracer';
 export * from './ranking/feature_schema';
 export * from './ranking/feature_builder';
+export * from './ranking/context_rank';
 export * from './telemetry/exposure_decision';
 export * from './telemetry/candidate_observation';
 export * from './telemetry/trajectory_event';
