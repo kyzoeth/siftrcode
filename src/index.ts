@@ -41,3 +41,5 @@ export * from './retrieval/candidate_generator';
 export * from './agents/agent_adapter';
 export * from './agents/session_handle';
 export * from './agents/observability_tracer';
+export * from './ranking/feature_schema';
+export * from './ranking/feature_builder';

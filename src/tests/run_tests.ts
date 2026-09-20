@@ -17,7 +17,8 @@ const tests = [
   { name: 'V2 Point-in-Time Git Intelligence & Co-Change Tests', file: 'test_git_intelligence.js' },
   { name: 'V2 Security & Trust Plane Tests', file: 'test_security_plane.js' },
   { name: 'V2 Multi-Channel Candidate Discovery & Recall Tests', file: 'test_candidate_discovery.js' },
-  { name: 'V2 AgentAdapter & Observability Tests', file: 'test_agent_adapter.js' }
+  { name: 'V2 AgentAdapter & Observability Tests', file: 'test_agent_adapter.js' },
+  { name: 'V2 Versioned Features (ContextFeaturesV1) Tests', file: 'test_features.js' }
 ];
 
 let failed = false;
