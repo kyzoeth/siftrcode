@@ -31,79 +31,121 @@ When an AI coding agent (Claude Code, Cursor, Antigravity) investigates a task, 
 
 ---
 
-## 🚀 Quickstart
+## 🚀 SiftrCode V2: Outcome-Aware Context Optimization
 
-Run SiftrCode instantly in any repository with zero configuration:
+SiftrCode V2 is a generational upgrade from simple token compaction to **outcome-aware context optimization**. Instead of flooding an LLM with either bloated full source files or naive summaries, SiftrCode computes the mathematically optimal context bundle tailored to the active coding task, protecting edit targets at 100% full implementation while safely compressing dependencies to AST skeletons.
+
+```
+Task Prompt / Issue / Stack Trace
+               │
+               ▼
+┌─────────────────────────────────────────┐
+│ 1. Multi-Channel Candidate Discovery     │ ➔ Exact + BM25 + Stack Trace + Graph + Git Co-Change
+└──────────────────┬──────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────┐
+│ 2. Point-in-Time Versioned Features      │ ➔ ContextFeaturesV1 (Strict cutoff, zero future leakage)
+└──────────────────┬──────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────┐
+│ 3. ContextRank Transparent Ranker       │ ➔ Heuristic scoring with explainable reason breakdown
+└──────────────────┬──────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────┐
+│ 4. BundleComposer Submodular Synergy    │ ➔ Maximizes evidence coverage, suppresses redundancy
+└──────────────────┬──────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────┐
+│ 5. ResolutionRank & BudgetSolver        │ ➔ Protects edit targets at FULL/BODY
+│    (Variable-Resolution Optimization)   │ ➔ Degrades dependencies to AST skeletons
+└──────────────────┬──────────────────────┘ ➔ Strict token budget & economic cost ceiling
+                   │
+                   ▼
+┌─────────────────────────────────────────┐
+│ 6. Agent Adapter Context & Telemetry    │ ➔ Claude Code XML, Cursor Markdown, Generic MCP
+└─────────────────────────────────────────┘ ➔ Privacy-by-default (trainingAllowed: false)
+```
+
+---
+
+## ⚡ Quickstart
+
+Run SiftrCode V2 instantly with zero configuration:
 
 ```bash
 # 1-command auto-configuration for Claude Code and Cursor MCP
 npx siftrcode init
 
-# Audit token waste in your current repo
-npx siftrcode audit
+# Generate an outcome-aware context bundle for your coding task (SiftrCode V2)
+siftr context "Fix payment webhook idempotency race condition" -o context.xml
 
-# Pack a repository into a token-pruned context pack (e.g. siftr_context.md)
-npx siftrcode pack --focus "checkout subscription webhook" -o context.md
+# Output as JSON for automated agent pipelines
+siftr context "Refactor authentication middleware" --json
+
+# Pack a repository into a token-pruned pack (V1 compatible)
+siftr pack --focus "checkout subscription webhook" -o context.md
+
+# Audit token bloat in your repository
+siftr audit
 ```
 
-Then feed the output directly to Claude or your agent:
+Then pass the generated context directly to Claude or your agent:
 ```bash
-claude "Review @context.md and fix the webhook idempotency bug"
-```
-
----
-
-## 🔄 GitHub Action (Automated PR Token Auditing)
-
-Track token mass reductions directly in your Pull Requests:
-
-```yaml
-name: SiftrCode PR Context Audit
-on: [pull_request]
-
-jobs:
-  audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: kyzoeth/siftrcode@v0.1.0
-        with:
-          output_summary: 'true'
+claude "Review @context.xml and fix the issue"
 ```
 
 ---
 
 ## 🛠️ Commands
 
-### 1. `siftrcode audit [options] [directory]`
-Analyzes repository token footprint and calculates how much token bloat can be eliminated:
+### 1. `siftr context <prompt> [directory]` (Aliases: `optimize`, `plan`)
+Generates an outcome-aware context bundle optimized for a specific agent model, token budget, and economic cost ceiling:
 
 ```bash
-# Human-readable terminal output
-siftrcode audit
+# Standard optimization with console summary
+siftr context "Fix race condition in Redis lock manager"
 
-# GitHub Flavored Markdown (great for PR comments & CI step summaries)
-siftrcode audit --markdown
+# Export formatted context directly to file
+siftr context "Add OAuth provider" -o siftr_context.xml
 
-# Programmatic JSON output
-siftrcode audit --json
+# Enforce strict token and economic cost limits
+siftr context "Fix memory leak" --budget 4000 --cost 0.02
+
+# Target specific agent harnesses
+siftr context "Refactor router" --agent cursor
 ```
 
-### 3. `siftrcode skeleton <file>`
-Prints the AST interface skeleton of a single source file to stdout:
+### 2. `siftr audit [options] [directory]`
+Audits codebase token footprint and calculates potential savings:
 
 ```bash
-siftrcode skeleton src/services/PaymentService.ts
+siftr audit
+siftr audit --markdown   # GitHub PR comment format
+siftr audit --json       # Machine-readable output
 ```
 
-### 4. `siftrcode mcp`
-Starts the Model Context Protocol (MCP) server over stdio for Claude Code, Cursor, and Antigravity.
+### 3. `siftr skeleton <file>`
+Prints the AST interface skeleton of a source file:
+
+```bash
+siftr skeleton src/services/PaymentService.ts
+```
+
+### 4. `siftr pack [directory]`
+Compiles a condensed AST context pack for a focus area.
+
+### 5. `siftr mcp`
+Starts the Model Context Protocol (MCP) server over stdio.
 
 ---
 
 ## 🤖 Add to Claude Code & Cursor (MCP)
 
-Add SiftrCode to your `~/.claude/settings.json` or Cursor MCP settings:
+Add SiftrCode to your `~/.claude/settings.json`, workspace `.mcp.json`, or Cursor MCP settings:
 
 ```json
 {
@@ -117,6 +159,9 @@ Add SiftrCode to your `~/.claude/settings.json` or Cursor MCP settings:
 ```
 
 ### Exposed MCP Tools:
+* `siftr_context`: **(V2 Primary)** Discovers candidates, ranks by evidence, protects edit targets, and materializes AST skeletons within token and cost limits.
+* `siftr_optimize`: Alias for `siftr_context`.
+* `siftr_rank`: Returns transparent candidate rankings with score breakdowns and primary reasons.
 * `siftr_skeleton`: Returns the AST interface skeleton of any file on demand.
 * `siftr_batch_skeleton`: Extracts type signatures from multiple candidate files in parallel.
 * `siftr_pack`: Scans dependencies and generates a pruned context pack for a specific task.
@@ -126,20 +171,20 @@ Add SiftrCode to your `~/.claude/settings.json` or Cursor MCP settings:
 
 ## 📂 100% Open-Source Implementation (MIT Licensed)
 
-SiftrCode is completely open-source, local-first, and self-contained within this repository. There are **zero proprietary binaries**, **zero remote telemetry**, and **zero closed-source backends**.
-
-Every component runs entirely on your local machine:
+SiftrCode V2 is completely open-source, local-first, and self-contained within this repository. There are **zero proprietary binaries**, **zero remote telemetry**, and **zero closed-source backends**. Privacy defaults are strictly enforced: `trainingAllowed: false` and `remoteProcessingAllowed: false`.
 
 | Component | Source Implementation | Description |
 | :--- | :--- | :--- |
+| **ContextEngine** | [`src/engine/context_engine.ts`](src/engine/context_engine.ts) | Master orchestrator coordinating discovery, features, ranking, budget solving, and materialization. |
+| **Candidate Discovery** | [`src/retrieval/candidate_generator.ts`](src/retrieval/candidate_generator.ts) | Multi-channel recall (exact, BM25, stack trace, graph, and git co-change). |
+| **ContextRank** | [`src/ranking/context_rank.ts`](src/ranking/context_rank.ts) | Heuristic ranker with explainable reason breakdown. |
+| **BundleComposer** | [`src/context/bundle_composer.ts`](src/context/bundle_composer.ts) | Submodular synergy composer maximizing evidence coverage. |
+| **BudgetSolver** | [`src/context/budget_solver.ts`](src/context/budget_solver.ts) | Dynamic token budget and economic cost ceiling solver. |
+| **ResolutionRank** | [`src/context/resolution_rank.ts`](src/context/resolution_rank.ts) | Edit target protection and safe variable-resolution degradation. |
+| **Agent Adapters** | [`src/agents/agent_adapter.ts`](src/agents/agent_adapter.ts) | Custom formatters for Claude Code, Cursor, and Generic MCP. |
 | **MCP Server** | [`src/mcp/server.ts`](src/mcp/server.ts) | Native Model Context Protocol stdio server for Claude, Cursor & Antigravity. |
-| **TypeScript / JS AST** | [`src/skeleton/typescript.ts`](src/skeleton/typescript.ts) | Local AST compiler using the official TypeScript Compiler API. |
-| **Python AST** | [`src/skeleton/python_ast.py`](src/skeleton/python_ast.py) | Native Python AST parser stripping method bodies into ellipses (`...`). |
-| **Go Parser** | [`src/skeleton/go.ts`](src/skeleton/go.ts) | Native Go AST parser extracting structs, interfaces, and function headers. |
-| **Rust Parser** | [`src/skeleton/rust.ts`](src/skeleton/rust.ts) | Native Rust parser extracting traits, impl blocks, and public signatures. |
-| **Relevance Gate** | [`src/jev/client.ts`](src/jev/client.ts) | 100% offline, deterministic heuristic classifier (zero network latency). |
-| **Context Compiler** | [`src/core/packer.ts`](src/core/packer.ts) | Ingestion compiler and markdown context pack generator. |
-| **Token Auditor** | [`src/core/auditor.ts`](src/core/auditor.ts) | Codebase token bloat scanner and financial waste calculator. |
+| **AST Parsers** | [`src/skeleton/`](src/skeleton/) | Multi-language AST interface extractors (TS, Python, Go, Rust). |
+
 
 ---
 
