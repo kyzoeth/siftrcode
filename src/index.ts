@@ -22,6 +22,7 @@ export * from './workspace/workspace_manager';
 export * from './context/context_unit';
 export * from './context/task_evidence';
 export * from './context/task_context';
+export * from './context/bundle_composer';
 export * from './storage/sqlite_store';
 export * from './indexing/index_quality';
 export * from './indexing/repository_index';

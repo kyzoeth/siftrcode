@@ -20,7 +20,8 @@ const tests = [
   { name: 'V2 AgentAdapter & Observability Tests', file: 'test_agent_adapter.js' },
   { name: 'V2 Versioned Features (ContextFeaturesV1) Tests', file: 'test_features.js' },
   { name: 'V2 Exposure-Aware Telemetry & Data Rights Tests', file: 'test_telemetry.js' },
-  { name: 'V2 ContextRank (Transparent Candidate Ranker) Tests', file: 'test_context_rank.js' }
+  { name: 'V2 ContextRank (Transparent Candidate Ranker) Tests', file: 'test_context_rank.js' },
+  { name: 'V2 BundleComposer (Submodular Synergy) Tests', file: 'test_bundle_composer.js' }
 ];
 
 let failed = false;
