@@ -50,3 +50,5 @@ export * from './ranking/context_rank';
 export * from './telemetry/exposure_decision';
 export * from './telemetry/candidate_observation';
 export * from './telemetry/trajectory_event';
+export * from './engine/context_plan';
+export * from './engine/context_engine';
