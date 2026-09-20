@@ -1202,32 +1202,42 @@
       </div>
 
       <!-- ROI Summary Strip & Audit Callout -->
-      <div class="p-4 sm:p-5 rounded-md bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 flex flex-col md:flex-row items-center justify-between gap-4 shadow-2xs">
-        <div class="grid grid-cols-3 sm:flex sm:flex-wrap items-center justify-center md:justify-start gap-2.5 sm:gap-6 text-center md:text-left w-full md:w-auto">
-          <div>
-            <div class="text-[9.5px] sm:text-[10px] font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold truncate">Net ROI</div>
-            <div class="text-lg sm:text-2xl font-extrabold text-emerald-900 dark:text-emerald-100 font-mono">+$4,560<span class="text-[10px] sm:text-xs font-normal text-emerald-700/80 dark:text-emerald-300/80"> / dev</span></div>
+      <div id="roiSummaryStrip" class="p-3.5 sm:p-5 rounded-md bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 flex flex-col md:flex-row items-center justify-between gap-3.5 sm:gap-4 shadow-2xs">
+        <!-- Metrics Grid (3 cols on all devices, with elegant divide-x borders and responsive vertical unit stacking on mobile) -->
+        <div class="grid grid-cols-3 divide-x divide-emerald-200/80 dark:divide-emerald-800/80 w-full md:w-auto text-center md:text-left">
+          <div class="px-2 sm:px-4 md:px-5 first:pl-0">
+            <div class="text-[9px] sm:text-[10px] md:text-xs font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold truncate">Net ROI</div>
+            <div class="text-sm sm:text-xl md:text-2xl font-extrabold text-emerald-900 dark:text-emerald-100 font-mono tracking-tight mt-0.5">
+              +$4,560<span class="block sm:inline text-[9px] sm:text-xs font-normal text-emerald-700/80 dark:text-emerald-300/80 sm:ml-1">/ dev</span>
+            </div>
           </div>
-          <div class="hidden sm:block w-px h-8 bg-emerald-300 dark:bg-emerald-800"></div>
-          <div>
-            <div class="text-[9.5px] sm:text-[10px] font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold truncate">Latency</div>
-            <div class="text-lg sm:text-2xl font-extrabold text-emerald-900 dark:text-emerald-100 font-mono">11x<span class="text-[10px] sm:text-xs font-normal text-emerald-700/80 dark:text-emerald-300/80"> faster</span></div>
+
+          <div class="px-2 sm:px-4 md:px-5">
+            <div class="text-[9px] sm:text-[10px] md:text-xs font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold truncate">Latency</div>
+            <div class="text-sm sm:text-xl md:text-2xl font-extrabold text-emerald-900 dark:text-emerald-100 font-mono tracking-tight mt-0.5">
+              11x<span class="block sm:inline text-[9px] sm:text-xs font-normal text-emerald-700/80 dark:text-emerald-300/80 sm:ml-1">faster</span>
+            </div>
           </div>
-          <div class="hidden sm:block w-px h-8 bg-emerald-300 dark:bg-emerald-800"></div>
-          <div>
-            <div class="text-[9.5px] sm:text-[10px] font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold truncate">10-Dev Team</div>
-            <div class="text-lg sm:text-2xl font-extrabold text-emerald-900 dark:text-emerald-100 font-mono">+$45.6k<span class="text-[10px] sm:text-xs font-normal text-emerald-700/80 dark:text-emerald-300/80"> / yr</span></div>
+
+          <div class="px-2 sm:px-4 md:px-5 last:pr-0">
+            <div class="text-[9px] sm:text-[10px] md:text-xs font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold truncate">10-Dev Team</div>
+            <div class="text-sm sm:text-xl md:text-2xl font-extrabold text-emerald-900 dark:text-emerald-100 font-mono tracking-tight mt-0.5">
+              +$45.6k<span class="block sm:inline text-[9px] sm:text-xs font-normal text-emerald-700/80 dark:text-emerald-300/80 sm:ml-1">/ yr</span>
+            </div>
           </div>
         </div>
 
-        <div class="flex items-center gap-2 shrink-0 w-full md:w-auto justify-center pt-2 md:pt-0 border-t md:border-t-0 border-emerald-200 dark:border-emerald-800/60">
-          <code class="px-2.5 py-1 rounded bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-zinc-800 text-ink text-xs font-mono font-semibold flex items-center gap-1.5">
-            <span class="text-emerald-500 dark:text-emerald-400 font-bold select-none shrink-0 bash-dollar-flash">$</span>
-            <span>npx siftrcode audit</span>
-          </code>
-          <button onclick="copySnippet('npx siftrcode audit', this)" class="text-xs font-mono text-zinc-700 dark:text-zinc-300 hover:text-ink px-2.5 py-1 rounded bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 transition cursor-pointer font-medium btn-press">
-            COPY
-          </button>
+        <!-- Audit CLI Callout -->
+        <div class="w-full md:w-auto flex items-center justify-center pt-2.5 md:pt-0 border-t md:border-t-0 border-emerald-200/80 dark:border-emerald-800/60">
+          <div class="flex items-center justify-between w-full max-w-[280px] sm:max-w-xs md:w-auto gap-2 bg-white dark:bg-zinc-900/90 p-1 pl-2.5 rounded-md border border-emerald-200 dark:border-zinc-800 shadow-2xs">
+            <code class="text-xs font-mono font-semibold text-ink flex items-center gap-1.5 truncate min-w-0">
+              <span class="text-emerald-500 dark:text-emerald-400 font-bold select-none shrink-0 bash-dollar-flash">$</span>
+              <span class="truncate">npx siftrcode audit</span>
+            </code>
+            <button onclick="copySnippet('npx siftrcode audit', this)" class="shrink-0 text-xs font-mono text-zinc-700 dark:text-zinc-300 hover:text-ink px-2.5 py-1 rounded bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 transition cursor-pointer font-medium btn-press" title="Copy command">
+              COPY
+            </button>
+          </div>
         </div>
       </div>
 
