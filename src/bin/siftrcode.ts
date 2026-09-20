@@ -8,6 +8,7 @@ import { packRepository } from '../core/packer';
 import { auditRepository, formatAuditMarkdown } from '../core/auditor';
 import { runMcpServer } from '../mcp/server';
 import { runInstaller } from '../core/installer';
+import { JevClient } from '../jev/client';
 
 const program = new Command();
 
@@ -229,6 +230,59 @@ program
       console.error('MCP Server Error:', err.message);
       process.exit(1);
     }
+  });
+
+// COMMAND: TRIAGE (Alias: JEV)
+program
+  .command('triage <file>')
+  .alias('jev')
+  .description('Evaluates a source file against a developer task using Jev Relevance Gating')
+  .requiredOption('-t, --task <prompt>', 'Developer task prompt (e.g. "fix JWT expiration bug in auth middleware")')
+  .option('--key <apiKey>', 'Jev / TypeSafe API key (defaults to JEV_API_KEY or TYPESAFE_API_KEY env var)')
+  .option('--endpoint <url>', 'Jev API endpoint URL', 'https://api.typesafe.ai/v1/decisions')
+  .action(async (file, options) => {
+    const fullPath = path.resolve(file);
+    if (!fs.existsSync(fullPath)) {
+      console.error(chalk.red(`File not found: ${file}`));
+      process.exit(1);
+    }
+
+    const rawContent = fs.readFileSync(fullPath, 'utf-8');
+    const skeleton = skeletonizeFile(rawContent, file);
+    const jev = new JevClient(options.key, options.endpoint);
+
+    const activeKey = options.key || process.env.JEV_API_KEY || process.env.TYPESAFE_API_KEY;
+    const maskedKey = activeKey ? activeKey.slice(0, 4) + '...' + activeKey.slice(-4) : null;
+
+    console.log(chalk.bold.magenta('⚡ [Jev Relevance Gate]'), 'Evaluating file causality...');
+    console.log(chalk.gray(`├── Target File:    ${chalk.white(file)}`));
+    console.log(chalk.gray(`├── Task Prompt:    "${chalk.cyan(options.task)}"`));
+    console.log(chalk.gray(`├── Extracted AST:  ${skeleton.symbols.length} symbols [${skeleton.symbols.slice(0, 6).join(', ')}${skeleton.symbols.length > 6 ? ', ...' : ''}]`));
+    console.log(chalk.gray(`├── API Credential: ${maskedKey ? chalk.green('Configured (' + maskedKey + ')') : chalk.yellow('Not set (Using deterministic local heuristic)')}`));
+    console.log(chalk.gray(`└── Endpoint:       ${chalk.gray(options.endpoint)}\n`));
+
+    const startTime = Date.now();
+    const decision = await jev.evaluate(file, skeleton.symbols, [], options.task);
+    const latency = Date.now() - startTime;
+
+    const classColor = decision.classification === 'RootCandidate'
+      ? chalk.bold.blue
+      : decision.classification === 'TypeDependencyOnly'
+        ? chalk.bold.green
+        : chalk.bold.red;
+
+    const actionText = decision.classification === 'RootCandidate'
+      ? 'Retain 100% full implementation body for direct agent edits'
+      : decision.classification === 'TypeDependencyOnly'
+        ? 'Synthesize into AST type signature skeleton (dissolve method bodies)'
+        : 'Drop completely from context (0 tokens ingested)';
+
+    console.log(chalk.bold.white('📊 Decision Telemetry:'));
+    console.log(`   • Classification: ${classColor(decision.classification)}`);
+    console.log(`   • Relevance Score: ${chalk.bold.yellow(decision.score + '/10')}`);
+    console.log(`   • Critical Path:   ${decision.is_critical_path ? chalk.bold.green('true') : chalk.gray('false')}`);
+    console.log(`   • Engine Source:   ${decision.source === 'typesafe-api' ? chalk.green('TypeSafe Jev Cloud API') : chalk.yellow('Local Heuristic Engine')} (${latency}ms)`);
+    console.log(`   • SiftrCode Action: ${chalk.white(actionText)}`);
   });
 
 program.parse(process.argv);

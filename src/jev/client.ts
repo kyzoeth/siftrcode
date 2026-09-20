@@ -1,4 +1,5 @@
 import * as https from 'https';
+import * as http from 'http';
 
 export interface JevDecisionRequest {
   state: string; // The file path, symbols, imports, and task description
@@ -90,10 +91,14 @@ export class JevClient {
     const data = JSON.stringify(payload);
     const url = new URL(this.endpoint);
 
+    const isHttp = url.protocol === 'http:';
+    const requestFn = isHttp ? http.request : https.request;
+
     return new Promise((resolve, reject) => {
-      const req = https.request(
+      const req = requestFn(
         {
           hostname: url.hostname,
+          port: url.port ? parseInt(url.port, 10) : (isHttp ? 80 : 443),
           path: url.pathname,
           method: 'POST',
           headers: {
