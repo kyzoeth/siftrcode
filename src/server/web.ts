@@ -180,68 +180,10 @@ function loadLeads(): any[] {
   if (fs.existsSync(LEADS_FILE)) {
     try {
       const data = JSON.parse(fs.readFileSync(LEADS_FILE, 'utf-8'));
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data)) return data;
     } catch (e) {}
   }
-  const seedLeads = [
-    {
-      id: 'lead_stripe_pilot',
-      email: 'alex.chen@stripe.com',
-      teamSize: '20-50 devs',
-      agent: 'Claude Code',
-      repoUrl: 'github.com/stripe/merchant-gateway',
-      notes: 'Testing token reduction on large monolithic repositories with Claude Code.',
-      ip: '198.51.100.24',
-      createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-      status: 'active_pilot'
-    },
-    {
-      id: 'lead_datadog_eval',
-      email: 'sarah.j@datadog.com',
-      teamSize: '50+ devs',
-      agent: 'Cursor',
-      repoUrl: 'github.com/DataDog/agent-fleet',
-      notes: 'Slashing agent latency in Cursor IDE on enterprise Go codebase.',
-      ip: '203.0.113.88',
-      createdAt: new Date(Date.now() - 6 * 3600 * 1000).toISOString(),
-      status: 'active_pilot'
-    },
-    {
-      id: 'lead_shopify_eval',
-      email: 'elena.r@shopify.com',
-      teamSize: '50+ devs',
-      agent: 'Antigravity',
-      repoUrl: 'github.com/shopify/checkout-core',
-      notes: 'Multi-repo context synthesis and team cache integration.',
-      ip: '198.51.100.59',
-      createdAt: new Date(Date.now() - 14 * 3600 * 1000).toISOString(),
-      status: 'pending_pilot'
-    },
-    {
-      id: 'lead_linear_dev',
-      email: 'david.l@linear.app',
-      teamSize: '5-20 devs',
-      agent: 'Cursor',
-      repoUrl: 'github.com/linear/client-desktop',
-      notes: 'Evaluating token cost reduction for team engineering license.',
-      ip: '192.0.2.14',
-      createdAt: new Date(Date.now() - 28 * 3600 * 1000).toISOString(),
-      status: 'active_pilot'
-    },
-    {
-      id: 'lead_uber_infra',
-      email: 'marcus.k@uber.com',
-      teamSize: '20-50 devs',
-      agent: 'Claude Code',
-      repoUrl: 'github.com/uber/trip-dispatch',
-      notes: 'Benchmarking context window bloat against raw code injection.',
-      ip: '198.51.100.91',
-      createdAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
-      status: 'active_pilot'
-    }
-  ];
-  saveLeads(seedLeads);
-  return seedLeads;
+  return [];
 }
 
 function saveLeads(leads: any[]) {
@@ -254,37 +196,10 @@ function loadFeedback(): any[] {
   if (fs.existsSync(FEEDBACK_FILE)) {
     try {
       const data = JSON.parse(fs.readFileSync(FEEDBACK_FILE, 'utf-8'));
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data)) return data;
     } catch (e) {}
   }
-  const seedFeedback = [
-    {
-      id: 'fb_seed_1',
-      category: 'feature',
-      message: 'Can we get Swift & Kotlin AST skeletonizers added? Our mobile team has massive Swift codebases that burn tokens in Claude Code.',
-      email: 'alex.mobile@dev.io',
-      page: '/claude',
-      createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString()
-    },
-    {
-      id: 'fb_seed_2',
-      category: 'general',
-      message: 'SiftrCode dropped our Cursor turn latency from ~42s down to 4s. The AST skeletonizer approach is noticeably cleaner than naive embeddings.',
-      email: 'engineering@startup.tech',
-      page: '/',
-      createdAt: new Date(Date.now() - 11 * 3600 * 1000).toISOString()
-    },
-    {
-      id: 'fb_seed_3',
-      category: 'bug',
-      message: 'On Rust macros with nested bracket definitions, doc comments sometimes get preserved twice in edge cases. Otherwise flawless.',
-      email: 'anonymous',
-      page: '/how-it-works',
-      createdAt: new Date(Date.now() - 25 * 3600 * 1000).toISOString()
-    }
-  ];
-  saveFeedback(seedFeedback);
-  return seedFeedback;
+  return [];
 }
 
 function saveFeedback(feedback: any[]) {
@@ -301,49 +216,21 @@ function loadTelemetry(): any {
   }
   const initial = {
     summary: {
-      totalPageviews: 14820,
-      uniqueVisitors: 4210,
-      simulatorRuns: 3140,
-      tokensPrunedTotal: 18450200,
-      estimatedSavedDollars: 55.35,
-      cliCopies: 1890,
-      leadsCount: 5,
-      feedbackCount: 3
+      totalPageviews: 0,
+      uniqueVisitors: 0,
+      simulatorRuns: 0,
+      tokensPrunedTotal: 0,
+      estimatedSavedDollars: 0,
+      cliCopies: 0,
+      leadsCount: 0,
+      feedbackCount: 0
     },
-    pageTraffic: {
-      '/': 9240,
-      '/claude': 2850,
-      '/how-it-works': 1610,
-      '/about': 720,
-      '/privacy': 220,
-      '/terms': 180
-    },
-    simulatorLanguages: {
-      'typescript': 1640,
-      'python': 910,
-      'go': 340,
-      'rust': 250
-    },
-    agentPreferences: {
-      'Claude Code': 1120,
-      'Cursor': 1350,
-      'Antigravity': 480,
-      'GitHub Copilot': 320,
-      'Windsurf': 190
-    },
-    topCliCommands: {
-      'npx siftrcode install --claude': 740,
-      'npx siftrcode install --cursor': 610,
-      'npx siftrcode pack .': 380,
-      'npx siftrcode audit .': 160
-    },
-    recentEvents: [
-      { id: 'ev_1', event: 'cli_copy', properties: { command: 'npx siftrcode install --claude' }, path: '/claude', timestamp: new Date(Date.now() - 3 * 60 * 1000).toISOString() },
-      { id: 'ev_2', event: 'simulator_scan', properties: { language: 'typescript', tokensReduced: 1272, reduction: '92.1%' }, path: '/', timestamp: new Date(Date.now() - 8 * 60 * 1000).toISOString() },
-      { id: 'ev_3', event: 'pageview', properties: { title: 'Claude Code SiftrCode Integration' }, path: '/claude', timestamp: new Date(Date.now() - 12 * 60 * 1000).toISOString() },
-      { id: 'ev_4', event: 'modal_open', properties: { modal: 'trial_b2b' }, path: '/', timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString() },
-      { id: 'ev_5', event: 'simulator_scan', properties: { language: 'python', tokensReduced: 940, reduction: '88.4%' }, path: '/', timestamp: new Date(Date.now() - 42 * 60 * 1000).toISOString() }
-    ]
+    pageTraffic: {},
+    simulatorLanguages: {},
+    agentPreferences: {},
+    topCliCommands: {},
+    recentEvents: [],
+    visitorSessions: []
   };
   saveTelemetry(initial);
   return initial;
@@ -644,6 +531,20 @@ const server = http.createServer(async (req, res) => {
         const sessionId = String(payload.sessionId || 'anonymous');
 
         const telemetry = loadTelemetry();
+
+        // Track unique visitor sessions
+        if (sessionId && sessionId !== 'anonymous') {
+          if (!Array.isArray(telemetry.visitorSessions)) {
+            telemetry.visitorSessions = [];
+          }
+          if (!telemetry.visitorSessions.includes(sessionId)) {
+            telemetry.visitorSessions.push(sessionId);
+            if (telemetry.visitorSessions.length > 10000) {
+              telemetry.visitorSessions.shift();
+            }
+            telemetry.summary.uniqueVisitors = (telemetry.summary.uniqueVisitors || 0) + 1;
+          }
+        }
 
         // Update summaries
         if (event === 'pageview') {

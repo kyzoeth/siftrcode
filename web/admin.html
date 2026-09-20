@@ -216,7 +216,7 @@
       <div class="p-4 rounded-md border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-1">
         <div class="flex items-center justify-between text-ink-secondary text-[11px] font-mono uppercase tracking-wider">
           <span>Total Pageviews</span>
-          <span class="text-emerald-600 dark:text-emerald-400 font-bold">+18.4%</span>
+          <span class="text-zinc-500 dark:text-zinc-400 font-mono text-[10px]">Real-Time</span>
         </div>
         <div class="text-2xl sm:text-3xl font-bold text-ink tracking-tight font-sans" id="metricPageviews">--</div>
         <div class="text-[11px] text-ink-secondary flex items-center gap-1 font-mono">
@@ -228,7 +228,7 @@
       <div class="p-4 rounded-md border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-1">
         <div class="flex items-center justify-between text-ink-secondary text-[11px] font-mono uppercase tracking-wider">
           <span>Tokens Pruned</span>
-          <span class="text-[#D97757] font-semibold">~89.2% Avg</span>
+          <span id="metricTokensAvgTag" class="text-zinc-500 dark:text-zinc-400 font-mono text-[10px]">AST Engine</span>
         </div>
         <div class="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight font-sans" id="metricTokensPruned">--</div>
         <div class="text-[11px] text-ink-secondary flex items-center gap-1 font-mono">
@@ -517,21 +517,80 @@
     function renderMetrics(data) {
       if (!data) return;
 
-      // Filter multiplier based on timeframe
-      let mult = 1.0;
-      if (currentTimeFilter === '24h') mult = 0.08;
-      else if (currentTimeFilter === '7d') mult = 0.35;
-      else if (currentTimeFilter === '30d') mult = 0.82;
+      let cutoff = 0;
+      const now = Date.now();
+      if (currentTimeFilter === '24h') cutoff = now - 24 * 3600 * 1000;
+      else if (currentTimeFilter === '7d') cutoff = now - 7 * 24 * 3600 * 1000;
+      else if (currentTimeFilter === '30d') cutoff = now - 30 * 24 * 3600 * 1000;
 
-      const summary = data.summary || {};
-      const totalPageviews = Math.round((summary.totalPageviews || 14820) * mult);
-      const uniqueVisitors = Math.round((summary.uniqueVisitors || 4210) * mult);
-      const simulatorRuns = Math.round((summary.simulatorRuns || 3140) * mult);
-      const tokensPruned = Math.round((summary.tokensPrunedTotal || 18450200) * mult);
-      const savedDollars = ((tokensPruned / 1000000) * 3.0).toFixed(2);
-      const cliCopies = Math.round((summary.cliCopies || 1890) * mult);
-      const leadsCount = (data.leads || []).length;
-      const feedbackCount = (data.feedback || []).length;
+      // Filter chronological collections
+      const rawEvents = data.recentEvents || [];
+      const events = cutoff ? rawEvents.filter(e => new Date(e.timestamp).getTime() >= cutoff) : rawEvents;
+
+      const rawLeads = data.leads || [];
+      const leads = cutoff ? rawLeads.filter(l => new Date(l.createdAt).getTime() >= cutoff) : rawLeads;
+
+      const rawFeedback = data.feedback || [];
+      const feedback = cutoff ? rawFeedback.filter(f => new Date(f.createdAt).getTime() >= cutoff) : rawFeedback;
+
+      let totalPageviews = 0;
+      let uniqueVisitors = 0;
+      let simulatorRuns = 0;
+      let tokensPruned = 0;
+      let savedDollars = '0.00';
+      let cliCopies = 0;
+      let pageTraffic = {};
+      let simulatorLanguages = {};
+      let agentPreferences = {};
+      let topCliCommands = {};
+
+      if (!cutoff) {
+        // All-time totals from summary
+        const summary = data.summary || {};
+        totalPageviews = summary.totalPageviews || 0;
+        uniqueVisitors = summary.uniqueVisitors || 0;
+        simulatorRuns = summary.simulatorRuns || 0;
+        tokensPruned = summary.tokensPrunedTotal || 0;
+        savedDollars = summary.estimatedSavedDollars != null ? Number(summary.estimatedSavedDollars).toFixed(2) : ((tokensPruned / 1000000) * 3.0).toFixed(2);
+        cliCopies = summary.cliCopies || 0;
+
+        pageTraffic = data.pageTraffic || {};
+        simulatorLanguages = data.simulatorLanguages || {};
+        agentPreferences = data.agentPreferences || {};
+        topCliCommands = data.topCliCommands || {};
+      } else {
+        // Compute dynamically for the selected time window
+        const sessions = new Set();
+        events.forEach(e => {
+          if (e.sessionId && e.sessionId !== 'anonymous') sessions.add(e.sessionId);
+          if (e.event === 'pageview') {
+            totalPageviews++;
+            const p = e.path || '/';
+            pageTraffic[p] = (pageTraffic[p] || 0) + 1;
+          } else if (e.event === 'simulator_scan') {
+            simulatorRuns++;
+            const lang = (e.properties?.language || 'typescript').toLowerCase();
+            simulatorLanguages[lang] = (simulatorLanguages[lang] || 0) + 1;
+            if (e.properties?.tokensReduced) {
+              tokensPruned += Number(e.properties.tokensReduced) || 0;
+            }
+          } else if (e.event === 'cli_copy') {
+            cliCopies++;
+            const cmd = e.properties?.command || '';
+            if (cmd) topCliCommands[cmd] = (topCliCommands[cmd] || 0) + 1;
+          }
+        });
+
+        leads.forEach(l => {
+          if (l.agent) agentPreferences[l.agent] = (agentPreferences[l.agent] || 0) + 1;
+        });
+
+        uniqueVisitors = sessions.size;
+        savedDollars = ((tokensPruned / 1000000) * 3.0).toFixed(2);
+      }
+
+      const leadsCount = leads.length;
+      const feedbackCount = feedback.length;
 
       // Top KPIs
       document.getElementById('metricPageviews').innerText = totalPageviews.toLocaleString();
@@ -544,26 +603,37 @@
       document.getElementById('leadsBadgeCount').innerText = leadsCount;
       document.getElementById('feedbackBadgeCount').innerText = feedbackCount;
 
+      // Dynamic Token Reduction Badge
+      const avgBadge = document.getElementById('metricTokensAvgTag');
+      if (avgBadge) {
+        if (simulatorRuns > 0 && tokensPruned > 0) {
+          const avgPerRun = Math.round(tokensPruned / simulatorRuns);
+          avgBadge.innerText = `~${formatTokens(avgPerRun)} / run`;
+        } else {
+          avgBadge.innerText = 'AST Engine';
+        }
+      }
+
       // Page Traffic Distribution
-      renderBarChart('pageTrafficBars', data.pageTraffic || {}, totalPageviews, '#D97757');
+      renderBarChart('pageTrafficBars', pageTraffic, totalPageviews, '#D97757');
 
       // Simulator Languages
-      renderBarChart('simulatorLangBars', data.simulatorLanguages || {}, simulatorRuns, '#10b981');
+      renderBarChart('simulatorLangBars', simulatorLanguages, simulatorRuns, '#10b981');
 
       // Agent Preferences
-      renderBarChart('agentPreferenceBars', data.agentPreferences || {}, null, '#8b5cf6');
+      renderBarChart('agentPreferenceBars', agentPreferences, null, '#8b5cf6');
 
       // Top Copied Commands
-      renderTopCommands(data.topCliCommands || {});
+      renderTopCommands(topCliCommands);
 
       // Live Events Stream
-      renderLiveEvents(data.recentEvents || []);
+      renderLiveEvents(events);
 
       // Leads Table
-      renderLeadsTable(data.leads || []);
+      renderLeadsTable(leads);
 
       // Feedback Grid
-      renderFeedbackGrid(data.feedback || []);
+      renderFeedbackGrid(feedback);
     }
 
     function formatTokens(num) {
