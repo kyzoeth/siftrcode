@@ -27,3 +27,5 @@ export * from './indexing/index_quality';
 export * from './indexing/repository_index';
 export * from './graph/context_graph';
 export * from './graph/graph_builder';
+export * from './graph/git_graph';
+export * from './learning/point_in_time_features';
