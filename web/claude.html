@@ -100,6 +100,22 @@
     html.dark #themeToggleBtn { background-color: #18181c !important; border-color: #27272a !important; }
     html.dark footer { background-color: #09090b !important; border-color: #27272a !important; }
     .btn-press:active { transform: translateY(1px); }
+    @keyframes bash-dollar-flash {
+      0%, 100% {
+        opacity: 1;
+        filter: drop-shadow(0 0 4px rgba(52, 211, 153, 0.7));
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.15;
+        filter: drop-shadow(0 0 0px transparent);
+        transform: scale(0.96);
+      }
+    }
+    .bash-dollar-flash {
+      display: inline-block;
+      animation: bash-dollar-flash 1.1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
   </style>
 </head>
 <body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-[#ECCBBE] selection:text-[#411A0E] dark:selection:bg-[#D97757]/30 dark:selection:text-[#FAF3F0]">
@@ -206,7 +222,7 @@
       </p>
       <div class="pt-2 flex flex-wrap items-center gap-3 font-mono text-xs">
         <div class="bg-zinc-950 text-zinc-100 px-3.5 py-1.5 rounded-md border border-zinc-800 flex items-center gap-2.5 shadow-2xs select-all">
-          <span class="text-emerald-400 select-none">$</span>
+          <span class="text-emerald-400 select-none font-bold bash-dollar-flash">$</span>
           <code>claude mcp add siftrcode -- npx -y siftrcode mcp</code>
           <button onclick="copySnippet('claude mcp add siftrcode -- npx -y siftrcode mcp', this)" class="text-[9px] text-zinc-400 hover:text-white px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer">
             COPY
@@ -245,21 +261,24 @@
               Run the standard Claude Code MCP registration command from any terminal:
             </p>
             <div class="bg-zinc-900 text-zinc-100 p-3 rounded-md font-mono text-[11px] flex items-center justify-between select-all border border-zinc-800">
-              <code>claude mcp add siftrcode -- npx -y siftrcode mcp</code>
+              <div class="flex items-center gap-2">
+                <span class="text-emerald-400 select-none font-bold bash-dollar-flash">$</span>
+                <code>claude mcp add siftrcode -- npx -y siftrcode mcp</code>
+              </div>
               <button onclick="copySnippet('claude mcp add siftrcode -- npx -y siftrcode mcp', this)" class="text-[10px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer">
                 COPY
               </button>
             </div>
-            <p class="text-[11px] text-zinc-500">Claude Code will automatically register SiftrCode's Stdio MCP server.</p>
+            <p class="text-[11px] text-zinc-500"><code class="font-mono">claude mcp add</code> registers the SiftrCode MCP server instantly.</p>
           </div>
 
-          <!-- Step 2: Project-Level .mcp.json -->
+          <!-- Step 2: Project Root Configuration -->
           <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-lg space-y-3 shadow-2xs">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-md bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-mono font-bold flex items-center justify-center text-sm shadow-2xs shrink-0">
                 02
               </div>
-              <span class="font-bold text-ink text-sm">Or drop in workspace <code class="font-mono text-xs">.mcp.json</code></span>
+              <span class="font-bold text-ink text-sm">Commit Shared Team Config</span>
             </div>
             <p class="text-ink-secondary text-xs">
               To automatically enable SiftrCode for every developer on your repository, commit a <code class="font-mono">.mcp.json</code> in your project root:
@@ -291,7 +310,10 @@
               Drop <code class="font-mono">.claude/commands/siftr.md</code> into your repository to trigger AST interface synthesis on demand by typing <code class="font-mono text-[#B34E2E] dark:text-[#F39C82]">/siftr [path]</code> directly inside Claude Code.
             </p>
             <div class="bg-zinc-900 text-zinc-100 p-3 rounded-md font-mono text-[11px] flex items-center justify-between select-all border border-zinc-800">
-              <code>npx siftrcode init</code>
+              <div class="flex items-center gap-2">
+                <span class="text-emerald-400 select-none font-bold bash-dollar-flash">$</span>
+                <code>npx siftrcode init</code>
+              </div>
               <button onclick="copySnippet('npx siftrcode init', this)" class="text-[10px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer">
                 COPY
               </button>
@@ -442,7 +464,7 @@
         <div class="pt-1 flex flex-wrap items-center justify-center sm:justify-start gap-2">
           <span class="text-[11px] font-sans text-zinc-500">Run audit:</span>
           <div class="inline-flex items-center gap-2 bg-zinc-950 text-zinc-100 px-2.5 py-1 rounded-md font-mono text-[11px] border border-zinc-800 select-all shadow-2xs">
-            <span class="text-emerald-400 select-none">$</span>
+            <span class="text-emerald-400 select-none font-bold bash-dollar-flash">$</span>
             <code>npx siftrcode audit</code>
             <button onclick="copySnippet('npx siftrcode audit', this)" class="text-[9px] text-zinc-400 hover:text-white px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer">
               COPY
