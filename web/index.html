@@ -1035,7 +1035,14 @@
 
       <!-- Section Header -->
       <div class="text-center space-y-1.5 max-w-2xl mx-auto">
-        <h2 class="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-ink font-serif">Token Economics</h2>
+        <div class="inline-flex items-center justify-center gap-2">
+          <h2 class="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-ink font-serif">Token Economics</h2>
+          <button onclick="triggerEconomicsAnimation()" title="Replay Token Economics chart animation" class="p-1.5 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition btn-press cursor-pointer border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+          </button>
+        </div>
         <p class="text-xs sm:text-sm md:text-base text-ink-secondary">
           The math is easy. You could be saving thousands in agent fees*
         </p>
@@ -1045,7 +1052,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
 
         <!-- Chart 1: Context Payload per Turn -->
-        <div class="p-5 sm:p-6 rounded-md bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-5">
+        <div class="p-5 sm:p-6 rounded-md bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-5 cursor-pointer select-none group/chart" onclick="triggerEconomicsAnimation()" title="Click to replay animation">
           <div class="flex items-center justify-between">
             <div>
               <span class="text-[10px] font-mono font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Context Window</span>
@@ -1073,10 +1080,10 @@
               <!-- Bar 1: Without SiftrCode -->
               <div class="flex flex-col items-center justify-end h-full flex-1 max-w-[85px] sm:max-w-[110px] z-10">
                 <div class="mb-1.5 text-center">
-                  <div class="text-xs sm:text-sm font-mono font-bold text-rose-600 dark:text-rose-400">125,000</div>
+                  <div id="econValPayloadRaw" class="text-xs sm:text-sm font-mono font-bold text-rose-600 dark:text-rose-400">125,000</div>
                   <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">tokens (100%)</div>
                 </div>
-                <div class="w-full h-[72%] rounded-t bg-rose-500/90 dark:bg-rose-600 flex flex-col items-center justify-center p-1 shadow-2xs">
+                <div id="econBarPayloadRaw" class="w-full rounded-t bg-rose-500/90 dark:bg-rose-600 flex flex-col items-center justify-center p-1 shadow-2xs overflow-hidden" style="height: 72%;">
                   <span class="text-[10px] font-mono font-semibold text-white/95 uppercase tracking-wide">Raw</span>
                 </div>
               </div>
@@ -1084,11 +1091,11 @@
               <!-- Bar 2: With SiftrCode -->
               <div class="flex flex-col items-center justify-end h-full flex-1 max-w-[85px] sm:max-w-[110px] z-10">
                 <div class="mb-1.5 text-center">
-                  <span class="inline-block text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/90 px-1.5 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 mb-0.5">−92.2%</span>
-                  <div class="text-xs sm:text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">9,800</div>
+                  <span id="econPillPayloadSavings" class="inline-block text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/90 px-1.5 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 mb-0.5 transition-all duration-500">−92.2%</span>
+                  <div id="econValPayloadSkel" class="text-xs sm:text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">9,800</div>
                   <div class="text-[10px] font-mono text-emerald-600/80 dark:text-emerald-400/80">tokens</div>
                 </div>
-                <div class="w-full rounded-t bg-emerald-500 flex items-center justify-center shadow-2xs" style="height: 10%; min-height: 22px;">
+                <div id="econBarPayloadSkel" class="w-full rounded-t bg-emerald-500 flex items-center justify-center shadow-2xs overflow-hidden" style="height: 10%; min-height: 22px;">
                   <span class="text-[9px] font-mono font-bold text-white uppercase tracking-wider">AST</span>
                 </div>
               </div>
@@ -1111,7 +1118,7 @@
         </div>
 
         <!-- Chart 2: Monthly Spend per Developer -->
-        <div class="p-5 sm:p-6 rounded-md bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-5">
+        <div class="p-5 sm:p-6 rounded-md bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-5 cursor-pointer select-none group/chart" onclick="triggerEconomicsAnimation()" title="Click to replay animation">
           <div class="flex items-center justify-between">
             <div>
               <span class="text-[10px] font-mono font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Claude Spend</span>
@@ -1139,10 +1146,10 @@
               <!-- Bar 1: Without SiftrCode -->
               <div class="flex flex-col items-center justify-end h-full flex-1 max-w-[85px] sm:max-w-[110px] z-10">
                 <div class="mb-1.5 text-center">
-                  <div class="text-xs sm:text-sm font-mono font-bold text-rose-600 dark:text-rose-400">$412.50<span class="text-[10px] font-normal">/mo</span></div>
-                  <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">$4,950 / yr</div>
+                  <div id="econValCostRaw" class="text-xs sm:text-sm font-mono font-bold text-rose-600 dark:text-rose-400">$412.50<span class="text-[10px] font-normal">/mo</span></div>
+                  <div id="econValCostRawAnnual" class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">$4,950 / yr</div>
                 </div>
-                <div class="w-full h-[72%] rounded-t bg-rose-500/90 dark:bg-rose-600 flex flex-col items-center justify-center p-1 shadow-2xs">
+                <div id="econBarCostRaw" class="w-full rounded-t bg-rose-500/90 dark:bg-rose-600 flex flex-col items-center justify-center p-1 shadow-2xs overflow-hidden" style="height: 72%;">
                   <span class="text-[10px] font-mono font-semibold text-white/95 uppercase tracking-wide">$0.38/turn</span>
                 </div>
               </div>
@@ -1150,11 +1157,11 @@
               <!-- Bar 2: With SiftrCode -->
               <div class="flex flex-col items-center justify-end h-full flex-1 max-w-[85px] sm:max-w-[110px] z-10">
                 <div class="mb-1.5 text-center">
-                  <span class="inline-block text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/90 px-1.5 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 mb-0.5">Save $380</span>
-                  <div class="text-xs sm:text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">$32.34<span class="text-[10px] font-normal">/mo</span></div>
-                  <div class="text-[10px] font-mono text-emerald-600/80 dark:text-emerald-400/80">$388 / yr</div>
+                  <span id="econPillCostSavings" class="inline-block text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/90 px-1.5 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 mb-0.5 transition-all duration-500">Save $380</span>
+                  <div id="econValCostSkel" class="text-xs sm:text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">$32.34<span class="text-[10px] font-normal">/mo</span></div>
+                  <div id="econValCostSkelAnnual" class="text-[10px] font-mono text-emerald-600/80 dark:text-emerald-400/80">$388 / yr</div>
                 </div>
-                <div class="w-full rounded-t bg-emerald-500 flex items-center justify-center shadow-2xs" style="height: 10%; min-height: 22px;">
+                <div id="econBarCostSkel" class="w-full rounded-t bg-emerald-500 flex items-center justify-center shadow-2xs overflow-hidden" style="height: 10%; min-height: 22px;">
                   <span class="text-[9px] font-mono font-bold text-white uppercase tracking-wider">$0.03</span>
                 </div>
               </div>
@@ -3518,6 +3525,148 @@ ${renderedRaw}
     setTimeout(() => {
       runDissolveAnimation();
     }, 1200);
+
+    // ==========================================
+    // TOKEN ECONOMICS ANIMATED CHARTS
+    // ==========================================
+    function triggerEconomicsAnimation() {
+      const barPayloadRaw = document.getElementById('econBarPayloadRaw');
+      const barPayloadSkel = document.getElementById('econBarPayloadSkel');
+      const barCostRaw = document.getElementById('econBarCostRaw');
+      const barCostSkel = document.getElementById('econBarCostSkel');
+
+      const pillPayload = document.getElementById('econPillPayloadSavings');
+      const pillCost = document.getElementById('econPillCostSavings');
+
+      if (!barPayloadRaw || !barPayloadSkel || !barCostRaw || !barCostSkel) return;
+
+      // Reset bars to 0% height without transition
+      barPayloadRaw.style.transition = 'none';
+      barPayloadSkel.style.transition = 'none';
+      barCostRaw.style.transition = 'none';
+      barCostSkel.style.transition = 'none';
+
+      barPayloadRaw.style.height = '0%';
+      barPayloadSkel.style.height = '0%';
+      barCostRaw.style.height = '0%';
+      barCostSkel.style.height = '0%';
+
+      // Reset savings badges
+      if (pillPayload) {
+        pillPayload.style.transition = 'none';
+        pillPayload.style.opacity = '0';
+        pillPayload.style.transform = 'scale(0.5)';
+      }
+      if (pillCost) {
+        pillCost.style.transition = 'none';
+        pillCost.style.opacity = '0';
+        pillCost.style.transform = 'scale(0.5)';
+      }
+
+      // Reset text values
+      const valPayloadRaw = document.getElementById('econValPayloadRaw');
+      const valPayloadSkel = document.getElementById('econValPayloadSkel');
+      const valCostRaw = document.getElementById('econValCostRaw');
+      const valCostRawAnnual = document.getElementById('econValCostRawAnnual');
+      const valCostSkel = document.getElementById('econValCostSkel');
+      const valCostSkelAnnual = document.getElementById('econValCostSkelAnnual');
+
+      if (valPayloadRaw) valPayloadRaw.innerText = '0';
+      if (valPayloadSkel) valPayloadSkel.innerText = '0';
+      if (valCostRaw) valCostRaw.innerHTML = '$0.00<span class="text-[10px] font-normal">/mo</span>';
+      if (valCostRawAnnual) valCostRawAnnual.innerText = '$0 / yr';
+      if (valCostSkel) valCostSkel.innerHTML = '$0.00<span class="text-[10px] font-normal">/mo</span>';
+      if (valCostSkelAnnual) valCostSkelAnnual.innerText = '$0 / yr';
+
+      // Force browser reflow
+      void barPayloadRaw.offsetHeight;
+
+      const duration = 1100;
+      const easeCurve = 'cubic-bezier(0.16, 1, 0.3, 1)';
+
+      // 1. Raw bloat bars rise up first
+      barPayloadRaw.style.transition = `height ${duration}ms ${easeCurve}`;
+      barCostRaw.style.transition = `height ${duration}ms ${easeCurve}`;
+      barPayloadRaw.style.height = '72%';
+      barCostRaw.style.height = '72%';
+
+      animateNumber('econValPayloadRaw', 0, 125000, duration, v => Math.round(v).toLocaleString());
+      animateNumber('econValCostRaw', 0, 412.5, duration, v => `$${v.toFixed(2)}<span class="text-[10px] font-normal">/mo</span>`);
+      animateNumber('econValCostRawAnnual', 0, 4950, duration, v => `$${Math.round(v).toLocaleString()} / yr`);
+
+      // 2. SiftrCode AST bars animate with a 130ms stagger to emphasize the radical 92% compression
+      setTimeout(() => {
+        barPayloadSkel.style.transition = `height ${duration - 100}ms ${easeCurve}`;
+        barCostSkel.style.transition = `height ${duration - 100}ms ${easeCurve}`;
+        barPayloadSkel.style.height = '10%';
+        barCostSkel.style.height = '10%';
+
+        animateNumber('econValPayloadSkel', 0, 9800, duration - 100, v => Math.round(v).toLocaleString());
+        animateNumber('econValCostSkel', 0, 32.34, duration - 100, v => `$${v.toFixed(2)}<span class="text-[10px] font-normal">/mo</span>`);
+        animateNumber('econValCostSkelAnnual', 0, 388, duration - 100, v => `$${Math.round(v).toLocaleString()} / yr`);
+      }, 130);
+
+      // 3. Savings badges pop in with bounce
+      setTimeout(() => {
+        if (pillPayload) {
+          pillPayload.style.transition = 'opacity 400ms ease, transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+          pillPayload.style.opacity = '1';
+          pillPayload.style.transform = 'scale(1)';
+        }
+        if (pillCost) {
+          pillCost.style.transition = 'opacity 400ms ease, transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+          pillCost.style.opacity = '1';
+          pillCost.style.transform = 'scale(1)';
+        }
+      }, 650);
+    }
+
+    function initEconomicsObserver() {
+      const econSection = document.getElementById('economics');
+      if (!econSection) return;
+
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+      }
+
+      if (!('IntersectionObserver' in window)) {
+        triggerEconomicsAnimation();
+        return;
+      }
+
+      // Start bars at 0% until visible
+      const barPayloadRaw = document.getElementById('econBarPayloadRaw');
+      const barPayloadSkel = document.getElementById('econBarPayloadSkel');
+      const barCostRaw = document.getElementById('econBarCostRaw');
+      const barCostSkel = document.getElementById('econBarCostSkel');
+      const pillPayload = document.getElementById('econPillPayloadSavings');
+      const pillCost = document.getElementById('econPillCostSavings');
+
+      if (barPayloadRaw) barPayloadRaw.style.height = '0%';
+      if (barPayloadSkel) barPayloadSkel.style.height = '0%';
+      if (barCostRaw) barCostRaw.style.height = '0%';
+      if (barCostSkel) barCostSkel.style.height = '0%';
+      if (pillPayload) { pillPayload.style.opacity = '0'; pillPayload.style.transform = 'scale(0.5)'; }
+      if (pillCost) { pillCost.style.opacity = '0'; pillCost.style.transform = 'scale(0.5)'; }
+
+      let hasTriggered = false;
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting && !hasTriggered) {
+            hasTriggered = true;
+            triggerEconomicsAnimation();
+          }
+        });
+      }, {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.25
+      });
+
+      observer.observe(econSection);
+    }
+
+    initEconomicsObserver();
 
     // B2B Team Trial Modal Handlers
     function openTrialModal() {
