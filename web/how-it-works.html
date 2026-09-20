@@ -265,8 +265,8 @@
     <!-- Interactive Animated System Architecture Diagram -->
     <section id="system-architecture" class="p-5 sm:p-7 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md shadow-2xs space-y-6">
       
-      <!-- Diagram Header & Controls -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-200/70 dark:border-zinc-800/80 pb-5">
+      <!-- Diagram Header -->
+      <div class="border-b border-zinc-200/70 dark:border-zinc-800/80 pb-5">
         <div class="space-y-1">
           <div class="flex items-center gap-2">
             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 uppercase tracking-wider">
@@ -281,18 +281,8 @@
             End-to-End Context Pipeline
           </h2>
           <p class="text-xs text-ink-secondary">
-            Click any stage to inspect its payload, or simulate the live transformation flow.
+            Click any stage to inspect its payload, runtime behavior, and context telemetry.
           </p>
-        </div>
-
-        <!-- Simulation Trigger Button -->
-        <div class="flex items-center gap-2 shrink-0">
-          <button id="btnSimulateFlow" onclick="simulateArchFlow()" class="flex items-center gap-2 px-3.5 py-1.5 rounded text-xs font-mono font-medium bg-[#D97757] hover:bg-[#C86241] text-white transition shadow-sm btn-press cursor-pointer">
-            <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
-            </svg>
-            <span id="btnSimulateText">▶ Simulate Pipeline Flow</span>
-          </button>
         </div>
       </div>
 
@@ -924,28 +914,6 @@ export class OrderService {
       if (code) code.innerText = data.code;
       const desc = document.getElementById('inspectorDesc');
       if (desc) desc.innerText = data.desc;
-    }
-
-    let isSimulatingArch = false;
-    function simulateArchFlow() {
-      if (isSimulatingArch) return;
-      isSimulatingArch = true;
-      const btn = document.getElementById('btnSimulateText');
-      if (btn) btn.innerText = 'Processing Flow...';
-
-      let step = 1;
-      selectArchNode(1);
-
-      const interval = setInterval(() => {
-        step++;
-        if (step <= 4) {
-          selectArchNode(step);
-        } else {
-          clearInterval(interval);
-          isSimulatingArch = false;
-          if (btn) btn.innerText = '↺ Re-run Simulation';
-        }
-      }, 950);
     }
 
     // Initialize with Node 1 on load
