@@ -890,8 +890,8 @@
             </div>
           </div>
 
-          <!-- Code Viewport Body with Sparkle Particle Overlay (Fixed Height to Prevent Layout Shift) -->
-          <div class="relative overflow-hidden flex flex-col h-[320px] sm:h-[420px] md:h-[480px] bg-white dark:bg-zinc-950 shrink-0">
+          <!-- Code Viewport Body with Sparkle Particle Overlay (Snug Height to Eliminate Empty Space) -->
+          <div class="relative overflow-hidden flex flex-col h-[260px] sm:h-[320px] md:h-[360px] bg-white dark:bg-zinc-950 shrink-0">
             <!-- Focused AST Precision Laser Beam Scanner -->
             <div id="scanBeam" class="ast-laser-beam">
               <span id="scanBeamLabel" class="ast-laser-label">
@@ -899,7 +899,7 @@
               </span>
             </div>
             <div id="sparkleOverlay" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
-            <div id="skelOutput" class="w-full h-full p-2.5 sm:p-5 font-mono text-[10.5px] sm:text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-auto selection:bg-[#ECCBBE]/60 selection:text-[#411A0E] signal-glow"></div>
+            <div id="skelOutput" class="w-full h-full p-2.5 sm:p-4 sm:px-5 font-mono text-[10.5px] sm:text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed overflow-auto selection:bg-[#ECCBBE]/60 selection:text-[#411A0E] signal-glow"></div>
           </div>
 
           <!-- Terminal Footer: Consolidated Step, Context Telemetry & Horizontal Transition Bar -->
@@ -933,13 +933,13 @@
 
             <!-- Bottom Line: Dynamic Token Gauge Bar (Green/Low to Red/High) -->
             <div class="w-full pt-1 sm:pt-1.5 border-t border-zinc-200/60 dark:border-zinc-800/60 flex flex-col gap-1">
-              <!-- Scale Markers: Dynamic cost badge following head of the bar -->
+              <!-- Scale Markers: Consolidated payload pill following head of the bar -->
               <div class="relative w-full h-6 flex items-center select-none text-[9.5px] sm:text-[11px] font-mono">
-                <!-- Floating Active Cost Tracker (follows the head of the bar in lockstep) -->
+                <!-- Floating Consolidated Payload Tracker (follows the head of the bar in lockstep) -->
                 <div id="costHeadTracker" class="absolute top-0 bottom-0 pointer-events-none flex items-center transition-[left] duration-500 ease-out z-10" style="left: 0%;">
-                  <div id="costHeadBadge" class="flex items-center gap-1 font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 px-1.5 sm:px-2 py-0.5 rounded border border-zinc-300 dark:border-zinc-700 shadow-2xs whitespace-nowrap transition-all duration-300 transform translate-x-0.5 text-[9.5px] sm:text-[11px]">
-                    <span class="text-zinc-400 font-normal text-[8.5px] sm:text-[9.5px]">Cost:</span>
-                    <span id="barActiveCostValue" class="font-mono text-zinc-900 dark:text-white">$0.00</span>
+                  <div id="costHeadBadge" class="flex items-center gap-1.5 font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-300 dark:border-zinc-700 shadow-2xs whitespace-nowrap transition-all duration-300 transform translate-x-0.5 text-[9.5px] sm:text-[11px]">
+                    <span id="payloadTallyValue">0 tokens</span>
+                    <span id="barActiveCostValue" class="text-zinc-500 dark:text-zinc-400 font-medium">$0.00</span>
                   </div>
                 </div>
               </div>
@@ -951,13 +951,6 @@
                 <div id="footerPayloadBar" class="h-full rounded-l-md shadow-sm relative overflow-hidden transition-[width,background-color] duration-500 ease-out" style="width: 0%; background-color: #10b981;">
                   <!-- Shimmer sweep -->
                   <div id="footerBarShimmer" class="absolute inset-0 bg-white/30 opacity-0 transition-opacity duration-300 pointer-events-none"></div>
-                </div>
-
-                <!-- Floating Head Tally Tracker (strictly follows the moving head of the bar, token values inside) -->
-                <div id="payloadHeadTracker" class="absolute top-0 bottom-0 pointer-events-none flex items-center transition-[left] duration-500 ease-out z-10" style="left: 0%;">
-                  <div id="payloadHeadTally" class="flex items-center gap-1 font-mono text-[9px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded shadow-2xs whitespace-nowrap transition-all duration-300 transform translate-x-1 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700">
-                    <span id="payloadTallyValue">0 tokens</span>
-                  </div>
                 </div>
 
                 <!-- Visual Highlight of Total Token Savings (from where it started to where it ended up) -->
@@ -2490,10 +2483,6 @@ impl PaymentGateway for StripeGateway {
 
     function updatePayloadBar(currentTokens, rawTokens, durationMs = 0) {
       const bar = document.getElementById('footerPayloadBar');
-      const tracker = document.getElementById('payloadHeadTracker');
-      const tally = document.getElementById('payloadHeadTally');
-      const tallyVal = document.getElementById('payloadTallyValue');
-
       const maxTokens = Math.max(1, rawTokens || 1);
       const pct = Math.max(0, Math.min(100, (currentTokens / maxTokens) * 100));
       const color = getPayloadColor(pct);
@@ -2510,23 +2499,7 @@ impl PaymentGateway for StripeGateway {
         bar.style.backgroundColor = color;
       }
 
-      if (tracker) {
-        if (durationMs > 0) {
-          tracker.style.transition = `left ${durationMs}ms cubic-bezier(0.16, 1, 0.3, 1)`;
-        } else {
-          tracker.style.transition = 'none';
-        }
-        tracker.style.left = `${pct.toFixed(1)}%`;
-      }
-
-      if (tally) {
-        if (pct > 25) {
-          tally.className = 'flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-2xs whitespace-nowrap transition-all duration-300 transform -translate-x-full -ml-1 bg-zinc-950/85 text-white border border-zinc-700/80 backdrop-blur-xs';
-        } else {
-          tally.className = 'flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-2xs whitespace-nowrap transition-all duration-300 transform translate-x-1.5 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 shadow-xs';
-        }
-      }
-
+      const tallyVal = document.getElementById('payloadTallyValue');
       if (tallyVal) {
         tallyVal.innerText = `${Math.round(currentTokens).toLocaleString()} tokens`;
       }
@@ -2550,11 +2523,11 @@ impl PaymentGateway for StripeGateway {
 
       if (costBadge) {
         if (pct > 80) {
-          costBadge.className = 'flex items-center gap-1 font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 px-1.5 sm:px-2 py-0.5 rounded border border-zinc-300 dark:border-zinc-700 shadow-2xs whitespace-nowrap transition-all duration-300 transform -translate-x-full -ml-0.5 text-[9.5px] sm:text-[11px] font-mono';
-        } else if (pct < 10) {
-          costBadge.className = 'flex items-center gap-1 font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 px-1.5 sm:px-2 py-0.5 rounded border border-zinc-300 dark:border-zinc-700 shadow-2xs whitespace-nowrap transition-all duration-300 transform translate-x-0.5 text-[9.5px] sm:text-[11px] font-mono';
+          costBadge.className = 'flex items-center gap-1.5 font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-300 dark:border-zinc-700 shadow-2xs whitespace-nowrap transition-all duration-300 transform -translate-x-full -ml-0.5 text-[9.5px] sm:text-[11px] font-mono';
+        } else if (pct < 12) {
+          costBadge.className = 'flex items-center gap-1.5 font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-300 dark:border-zinc-700 shadow-2xs whitespace-nowrap transition-all duration-300 transform translate-x-0.5 text-[9.5px] sm:text-[11px] font-mono';
         } else {
-          costBadge.className = 'flex items-center gap-1 font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 px-1.5 sm:px-2 py-0.5 rounded border border-zinc-300 dark:border-zinc-700 shadow-2xs whitespace-nowrap transition-all duration-300 transform -translate-x-1/2 text-[9.5px] sm:text-[11px] font-mono';
+          costBadge.className = 'flex items-center gap-1.5 font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-300 dark:border-zinc-700 shadow-2xs whitespace-nowrap transition-all duration-300 transform -translate-x-1/2 text-[9.5px] sm:text-[11px] font-mono';
         }
       }
     }
