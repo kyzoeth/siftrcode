@@ -86,6 +86,7 @@
     }
     html.dark header { background-color: rgba(9, 9, 11, 0.85) !important; border-color: rgba(39, 39, 42, 0.8) !important; }
     html.dark .text-ink { color: #fafafa !important; }
+    html.dark .hover\:text-ink:hover { color: #fafafa !important; }
     html.dark .text-ink-secondary { color: #a1a1aa !important; }
     html.dark .bg-surface-50 { background-color: #09090b !important; }
     html.dark .bg-white { background-color: #121215 !important; }
@@ -332,13 +333,13 @@
       
       <nav class="flex flex-wrap items-center justify-center md:justify-end gap-x-5 gap-y-2 font-sans font-medium text-zinc-600 dark:text-zinc-400">
         <a href="/about" class="text-[#B34E2E] dark:text-[#F39C82] font-semibold transition">About us</a>
-        <a href="/how-it-works" class="hover:text-ink transition">How it works</a>
-        <a href="/claude" class="hover:text-ink transition">Claude Code</a>
-        <a href="/privacy" class="hover:text-ink transition">Privacy</a>
-        <a href="/terms" class="hover:text-ink transition">Terms</a>
-        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" rel="noopener noreferrer" class="hover:text-ink transition">GitHub</a>
-        <a href="mailto:info@siftrcode.com" class="hover:text-ink transition">Contact</a>
-        <button onclick="openFeedbackModal()" class="hover:text-ink transition cursor-pointer flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
+        <a href="/how-it-works" class="hover:text-ink dark:hover:text-white transition">How it works</a>
+        <a href="/claude" class="hover:text-ink dark:hover:text-white transition">Claude Code</a>
+        <a href="/privacy" class="hover:text-ink dark:hover:text-white transition">Privacy</a>
+        <a href="/terms" class="hover:text-ink dark:hover:text-white transition">Terms</a>
+        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" rel="noopener noreferrer" class="hover:text-ink dark:hover:text-white transition">GitHub</a>
+        <a href="mailto:info@siftrcode.com" class="hover:text-ink dark:hover:text-white transition">Contact</a>
+        <button onclick="openFeedbackModal()" class="hover:text-ink dark:hover:text-white transition cursor-pointer flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
           <svg class="w-3.5 h-3.5 text-[#D97757] dark:text-[#F39C82]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
           </svg>
