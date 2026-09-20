@@ -38,3 +38,6 @@ export * from './retrieval/exact_retriever';
 export * from './retrieval/lexical_retriever';
 export * from './retrieval/stack_trace_retriever';
 export * from './retrieval/candidate_generator';
+export * from './agents/agent_adapter';
+export * from './agents/session_handle';
+export * from './agents/observability_tracer';
