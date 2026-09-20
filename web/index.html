@@ -956,7 +956,7 @@
                 <div id="footerSavingsZone" class="absolute top-0 bottom-0 right-0 opacity-0 pointer-events-none transition-opacity duration-500 flex items-center justify-center px-1.5 sm:px-3 z-[5] bg-emerald-500/15 dark:bg-emerald-400/20" style="left: 0%;">
                   <div class="flex items-center gap-1 sm:gap-1.5 font-mono text-[9px] sm:text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-white/95 dark:bg-zinc-900/95 px-1.5 sm:px-2.5 py-0.5 rounded border border-emerald-400/80 dark:border-emerald-600/80 shadow-2xs truncate max-w-full">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                    <span id="footerSavingsText" class="truncate">−0 tokens (Saved $0.00)</span>
+                    <span id="footerSavingsText" class="truncate">−0 tokens (saved $0.00)</span>
                   </div>
                 </div>
 
@@ -2596,8 +2596,8 @@ impl PaymentGateway for StripeGateway {
         if (savingsText) {
           const isNarrowMobile = typeof window !== 'undefined' && window.innerWidth < 420;
           savingsText.innerText = isNarrowMobile
-            ? `Saved $${savedCostVal.toFixed(2)} (−${Math.round((savedCount / conf.rawTokens) * 100)}%)`
-            : `−${savedCount.toLocaleString()} tokens (Saved $${savedCostVal.toFixed(2)})`;
+            ? `saved $${savedCostVal.toFixed(2)} (−${Math.round((savedCount / conf.rawTokens) * 100)}%)`
+            : `−${savedCount.toLocaleString()} tokens (saved $${savedCostVal.toFixed(2)})`;
         }
       }
     }
@@ -3340,7 +3340,7 @@ ${renderedRaw}
         savingsZone.style.opacity = '1';
       }
       if (savingsText) {
-        savingsText.innerText = `−${saved.toLocaleString()} tokens (Saved $${savedCost.toFixed(2)})`;
+        savingsText.innerText = `−${saved.toLocaleString()} tokens (saved $${savedCost.toFixed(2)})`;
       }
 
       document.getElementById('skelOutput').innerHTML = `<div class="font-mono text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">${renderCodeLinesWithNumbers(skel, curLang, 1)}</div>`;
