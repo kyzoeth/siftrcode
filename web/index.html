@@ -3827,17 +3827,17 @@ ${renderedRaw}
 
   <!-- B2B Team Trial Modal -->
   <div id="trialModal" onclick="if(event.target===this) closeTrialModal()" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-zinc-950/75 backdrop-blur-sm transition-all duration-200">
-    <div class="relative w-full max-w-md max-h-[92vh] overflow-y-auto bg-white border border-zinc-200/90 rounded-lg shadow-2xl p-5 sm:p-6 space-y-3.5 animate-in fade-in zoom-in-95 duration-200">
+    <div class="relative w-full max-w-md max-h-[92vh] overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-xl shadow-2xl p-5 sm:p-6 flex flex-col gap-3.5 sm:gap-4 animate-in fade-in zoom-in-95 duration-200">
       
       <!-- Close Button -->
-      <button onclick="closeTrialModal()" aria-label="Close" class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800">
+      <button onclick="closeTrialModal()" aria-label="Close" class="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
 
       <!-- Modal Header -->
-      <div class="space-y-1 text-left pr-6">
-        <h3 class="text-xl sm:text-2xl font-normal text-zinc-900 tracking-tight font-serif leading-snug">Supercharge your team's coding agents</h3>
-        <p class="text-[11px] sm:text-xs text-zinc-500 font-sans leading-relaxed">
+      <div class="space-y-1 text-left pr-7">
+        <h3 class="text-xl sm:text-2xl font-normal text-ink tracking-tight font-serif leading-snug">Supercharge your team's coding agents</h3>
+        <p class="text-[11px] sm:text-xs text-ink-secondary font-sans leading-relaxed">
           Eliminate 90% token waste, slash agent latency from 45s to 4s, and sync synthesized interfaces across your engineers.
         </p>
       </div>
@@ -3846,13 +3846,13 @@ ${renderedRaw}
       <form id="trialForm" onsubmit="submitTrialForm(event)" class="space-y-3 text-left font-sans text-xs">
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Work Email *</label>
-          <input type="email" id="trialEmail" required placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-900 font-sans text-base sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
+          <input type="email" id="trialEmail" required placeholder="alex@company.com" class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:bg-white dark:focus:bg-zinc-900 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none font-sans text-base sm:text-xs transition" />
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div>
             <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Team Size</label>
-            <select id="trialTeamSize" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-800 font-sans text-base sm:text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
+            <select id="trialTeamSize" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 focus:bg-white dark:focus:bg-zinc-900 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none font-sans text-base sm:text-xs transition cursor-pointer">
               <option value="1-5 devs">1–5 engineers</option>
               <option value="5-20 devs" selected>5–20 engineers</option>
               <option value="20-50 devs">20–50 engineers</option>
@@ -3862,7 +3862,7 @@ ${renderedRaw}
 
           <div>
             <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Primary AI Agent</label>
-            <select id="trialAgent" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-800 font-sans text-base sm:text-xs bg-zinc-50/50 focus:bg-white transition cursor-pointer">
+            <select id="trialAgent" class="w-full px-2.5 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 focus:bg-white dark:focus:bg-zinc-900 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none font-sans text-base sm:text-xs transition cursor-pointer">
               <option value="Cursor" selected>Cursor</option>
               <option value="Claude Code">Claude Code</option>
               <option value="Antigravity">Antigravity</option>
@@ -3873,10 +3873,10 @@ ${renderedRaw}
 
         <div>
           <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Repository URL / Stack (Optional)</label>
-          <input type="text" id="trialRepo" placeholder="github.com/company/repo" class="w-full px-3 py-2 rounded-md border border-zinc-300 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-zinc-900 font-sans text-base sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50/50 focus:bg-white" />
+          <input type="text" id="trialRepo" placeholder="github.com/company/repo" class="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:bg-white dark:focus:bg-zinc-900 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none font-sans text-base sm:text-xs transition" />
         </div>
 
-        <div id="trialError" class="hidden text-[11px] text-rose-600 bg-rose-50 border border-rose-200 rounded-md p-2 font-sans"></div>
+        <div id="trialError" class="hidden text-[11px] text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/60 rounded-md p-2 font-sans"></div>
 
         <button type="submit" id="trialSubmitBtn" class="w-full py-2.5 rounded-md bg-[#D97757] hover:bg-[#C86241] text-white font-bold text-xs transition btn-press shadow-xs hover:shadow active:scale-[0.99] flex items-center justify-center gap-1.5 cursor-pointer">
           <span>Activate 14-Day Team Trial</span>
@@ -3892,12 +3892,12 @@ ${renderedRaw}
 
       <!-- Success State -->
       <div id="trialSuccess" class="hidden space-y-3.5 text-center py-1">
-        <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mx-auto text-lg font-bold shadow-xs">
+        <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 rounded-lg flex items-center justify-center mx-auto text-lg font-bold shadow-xs">
           ✓
         </div>
         <div class="space-y-1">
-          <h4 class="text-lg font-bold text-zinc-900 dark:text-zinc-100">You're on the priority onboarding list!</h4>
-          <p class="text-xs text-zinc-600 dark:text-zinc-400 max-w-xs mx-auto font-sans leading-relaxed" id="trialSuccessMsg">
+          <h4 class="text-lg font-bold text-ink">You're on the priority onboarding list!</h4>
+          <p class="text-xs text-ink-secondary max-w-xs mx-auto font-sans leading-relaxed" id="trialSuccessMsg">
             We've registered your team. Check your work email shortly for your trial activation key and team cache access.
           </p>
         </div>
@@ -3908,7 +3908,7 @@ ${renderedRaw}
             <code>npx siftrcode audit</code>
           </div>
         </div>
-        <button onclick="closeTrialModal()" class="w-full py-2 rounded-md bg-zinc-900 text-white font-medium text-xs hover:bg-zinc-800 transition cursor-pointer">
+        <button onclick="closeTrialModal()" class="w-full py-2 rounded-md bg-zinc-900 dark:bg-zinc-800 hover:bg-zinc-800 dark:hover:bg-zinc-700 text-white font-medium text-xs transition cursor-pointer">
           Done
         </button>
       </div>
