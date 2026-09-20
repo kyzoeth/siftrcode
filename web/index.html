@@ -118,7 +118,7 @@
     }
     html.dark .bg-dot-matrix {
       background-size: 32px 32px;
-      background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1.2px, transparent 1.2px) !important;
+      background-image: radial-gradient(rgba(217, 119, 87, 0.12) 1.2px, transparent 1.2px) !important;
     }
     html.dark .ambient-glow {
       opacity: 0.16;
@@ -254,7 +254,7 @@
     /* Dot Matrix Pattern Fallback */
     .bg-dot-matrix {
       background-size: 32px 32px;
-      background-image: radial-gradient(rgba(24, 24, 27, 0.09) 1.2px, transparent 1.2px);
+      background-image: radial-gradient(rgba(179, 78, 46, 0.11) 1.2px, transparent 1.2px);
     }
 
     /* Ambient Floating Auras */
@@ -3970,18 +3970,18 @@ ${renderedRaw}
             if (isDark) {
               if (excitation > 0.68) {
                 const glowAlpha = Math.min(0.55, 0.15 + (excitation - 0.68) * 1.25);
-                ctx.fillStyle = `rgba(147, 197, 253, ${glowAlpha})`;
+                ctx.fillStyle = `rgba(243, 156, 130, ${glowAlpha})`;
               } else {
                 const baseAlpha = (0.075 + excitation * 0.055);
-                ctx.fillStyle = `rgba(255, 255, 255, ${baseAlpha})`;
+                ctx.fillStyle = `rgba(217, 119, 87, ${baseAlpha * 1.15})`;
               }
             } else {
               if (excitation > 0.68) {
                 const glowAlpha = Math.min(0.52, 0.14 + (excitation - 0.68) * 1.2);
-                ctx.fillStyle = `rgba(29, 78, 216, ${glowAlpha})`;
+                ctx.fillStyle = `rgba(179, 78, 46, ${glowAlpha})`;
               } else {
                 const baseAlpha = (0.085 + excitation * 0.065);
-                ctx.fillStyle = `rgba(37, 99, 235, ${baseAlpha * 0.85})`;
+                ctx.fillStyle = `rgba(217, 119, 87, ${baseAlpha * 0.95})`;
               }
             }
 
