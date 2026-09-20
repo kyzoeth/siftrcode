@@ -9,6 +9,8 @@ import { auditRepository, formatAuditMarkdown } from '../core/auditor';
 import { runMcpServer } from '../mcp/server';
 import { runInstaller } from '../core/installer';
 import { JevClient } from '../jev/client';
+import { ContextEngine } from '../engine/context_engine';
+import { getResolutionName } from '../context/context_resolution';
 
 const program = new Command();
 
@@ -100,8 +102,107 @@ program
     console.log(chalk.gray('\nRestart Claude Code or Claude Desktop to activate SiftrCode tools.'));
   });
 
+// COMMAND: CONTEXT (Aliases: OPTIMIZE, PLAN) - SiftrCode V2
+program
+  .command('context <prompt> [directory]')
+  .alias('optimize')
+  .alias('plan')
+  .description('Generates an outcome-aware optimized context bundle for an AI coding task (SiftrCode V2)')
+  .option('-d, --dir <directory>', 'Target workspace directory (defaults to current working directory or positional directory argument)')
+  .option('-m, --model <agentModel>', 'Target agent model name (e.g. claude-3-5-sonnet, gpt-4o, cursor)', 'claude-3-5-sonnet-20241022')
+  .option('-a, --agent <agentKind>', 'Target agent environment adapter: claude_code, cursor, generic_mcp', 'claude_code')
+  .option('-p, --profile <budgetProfile>', 'Optimization profile: LEAN, BALANCED, THOROUGH', 'BALANCED')
+  .option('-b, --budget <tokens>', 'Explicit maximum token budget (e.g. 8000)', (v) => parseInt(v, 10))
+  .option('-c, --cost <usd>', 'Explicit economic cost ceiling in USD (e.g. 0.05)', (v) => parseFloat(v))
+  .option('-o, --output <file>', 'Save compiled agent context to disk (e.g. siftr_context.xml or siftr_context.md)')
+  .option('--json', 'Output full ContextPlan JSON to stdout')
+  .option('--verbose', 'Show detailed candidate ranking reasons and score breakdowns')
+  .action(async (prompt, directory, options) => {
+    const targetDir = path.resolve(options.dir || directory || process.cwd());
+    const startTime = Date.now();
+
+    try {
+      const result = await ContextEngine.optimizeWorkspace({
+        workspaceDir: targetDir,
+        prompt,
+        agentModel: options.model,
+        agentKind: options.agent,
+        budgetProfile: options.profile,
+        tokenBudget: options.budget,
+        maxCostUSD: options.cost,
+      });
+
+      const plan = result.plan;
+      const budgetPlan = plan.budgetPlan;
+
+      if (options.json) {
+        process.stdout.write(JSON.stringify(plan, null, 2) + '\n');
+        return;
+      }
+
+      if (options.output) {
+        const outPath = path.resolve(options.output);
+        fs.writeFileSync(outPath, result.contextString, 'utf-8');
+      }
+
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+      const allocatedUnits = plan.units.filter((u) => u.resolution > 0);
+      const fullUnits = allocatedUnits.filter((u) => u.resolution >= 4);
+      const skeletonUnits = allocatedUnits.filter((u) => u.resolution === 3);
+      const signatureUnits = allocatedUnits.filter((u) => u.resolution <= 2);
+
+      console.log(chalk.bold.green('⚡ [SiftrCode V2 ContextEngine]'), 'Context optimized for coding agent!');
+      console.log(chalk.gray(`├── Target Directory: ${targetDir}`));
+      console.log(chalk.gray(`├── Task Prompt:     "${chalk.cyan(prompt)}"`));
+      console.log(chalk.gray(`├── Agent Model:     ${options.model} (${options.agent})`));
+      console.log(chalk.gray(`├── Plan ID:         ${chalk.white(plan.planId)} (${elapsed}s)`));
+      console.log(chalk.white(`├── [Full Files]     ${chalk.cyan(fullUnits.length)} edit targets preserved at 100% full implementation`));
+      console.log(chalk.white(`├── [Skeletonized]   ${chalk.green(skeletonUnits.length)} dependencies compressed to AST interface skeletons`));
+      console.log(chalk.white(`└── [Signatures]     ${chalk.yellow(signatureUnits.length)} shallow headers`));
+
+      console.log('\n' + chalk.bold.yellow('📊 Token & Cost Optimization:'));
+      console.log(
+        chalk.white('   Original Volume:  ') +
+        chalk.red(`${budgetPlan.rawTotalTokens.toLocaleString()} tokens`) +
+        chalk.white(' ➔ Allocated: ') +
+        chalk.green(`${budgetPlan.totalTokens.toLocaleString()} tokens`) +
+        chalk.bold.green(` (-${budgetPlan.savingsPercentage.toFixed(1)}%)`)
+      );
+
+      console.log(
+        chalk.white('   Estimated Cost:   ') +
+        chalk.green(`$${budgetPlan.estimatedCostUSD.toFixed(4)} USD`) +
+        chalk.gray(` (Saved: ~$${budgetPlan.costSavedUSD.toFixed(4)} USD per turn)`)
+      );
+
+      console.log('\n' + chalk.bold.white('📦 Allocated Context Units:'));
+      for (const u of allocatedUnits) {
+        const resLabel = getResolutionName(u.resolution).toUpperCase();
+        const color = u.resolution >= 4 ? chalk.cyan : u.resolution === 3 ? chalk.green : chalk.yellow;
+        console.log(
+          chalk.gray(' • ') +
+          color(`[${resLabel.padEnd(9)}] `) +
+          chalk.bold(u.path || u.title) +
+          chalk.gray(` (${u.tokenEstimate} tokens)`) +
+          (options.verbose ? chalk.gray(` - ${u.reason}`) : '')
+        );
+      }
+
+      if (options.output) {
+        console.log('\n' + chalk.bold.green('✔ Context Saved: ') + chalk.underline(options.output));
+        console.log(chalk.gray(`Tip: Run: claude "Review @${path.basename(options.output)} and ${prompt}"`));
+      } else {
+        console.log(chalk.gray('\nTip: Use `-o siftr_context.xml` to save the formatted context bundle for your agent.'));
+      }
+    } catch (err: any) {
+      console.error(chalk.red('Error optimizing context:'), err.message);
+      process.exit(1);
+    }
+  });
+
 // COMMAND: PACK
 program
+
   .command('pack [directory]')
   .description('Compiles a repository into a token-pruned context pack (context.md)')
   .option('-f, --focus <task>', 'Task description or focus area (e.g., "checkout webhook race condition")')

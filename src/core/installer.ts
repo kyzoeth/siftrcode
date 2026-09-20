@@ -106,12 +106,15 @@ export function runInstaller(options: InstallerOptions = {}): InitResult {
         const siftrCmdContent = `# SiftrCode Context Optimization Slash Command (/siftr)
 
 When this command is invoked:
-1. If an argument (file path or directory) is provided (\`$ARGUMENTS\`):
-   - For a single file: Call the MCP tool \`siftr_skeleton\` with the file path to extract its public interface signatures, types, and exported symbols.
-   - For a directory: Call the MCP tool \`siftr_pack\` with the focus parameter set to \`$ARGUMENTS\` to generate an AST-pruned context pack.
-2. If no argument is provided:
+1. If a task description or prompt is provided (\`$ARGUMENTS\`):
+   - Call the MCP tool \`siftr_context\` with the prompt parameter set to \`$ARGUMENTS\` to generate an outcome-aware optimized context bundle.
+2. If a single file path is provided:
+   - Call the MCP tool \`siftr_skeleton\` with the file path to extract its public interface signatures, types, and exported symbols.
+3. If a directory path is provided:
+   - Call the MCP tool \`siftr_pack\` with the focus parameter set to \`$ARGUMENTS\` to generate an AST-pruned context pack.
+4. If no argument is provided:
    - Call the MCP tool \`siftr_audit\` to scan the repository for context bloat, dead weight, and estimate potential token savings.
-3. Present the synthesized interface contract concisely to the user, highlighting key exported interfaces, methods, and types.
+5. Present the synthesized interface contract concisely to the user, highlighting key exported interfaces, methods, and types.
 `;
         fs.writeFileSync(claudeSiftrCmdPath, siftrCmdContent, 'utf-8');
         rulesCreated.push('.claude/commands/siftr.md');
@@ -126,9 +129,11 @@ When this command is invoked:
 
 ## Context Optimization Rules
 When exploring, refactoring, or navigating code in this repository:
-- **Use SiftrCode MCP Tools**: Before loading large, full-text implementation files into the context window, call \`siftr_skeleton\` or \`siftr_pack\`.
+- **Use SiftrCode MCP Tools**: Before loading large, full-text implementation files into the context window, call \`siftr_context\`, \`siftr_skeleton\`, or \`siftr_pack\`.
+- **Task Context First**: Call \`siftr_context\` with the task prompt to get full implementations for edit targets and AST interface skeletons for dependencies.
 - **Interface First**: SiftrCode condenses internal method bodies and imperative routines while preserving 100% of interfaces, types, and exported signatures. This preserves reasoning depth and prevents context window exhaustion.
 - **Commands**:
+  - \`siftr_context\`: Generates outcome-aware context bundle for the active task.
   - \`/siftr <file>\`: Prunes a single file down to its type signatures.
   - \`/siftr <dir>\`: Packs a directory into an AST interface bundle.
   - \`siftr_audit\`: Evaluates repository bloat and potential token savings.
@@ -138,6 +143,7 @@ When exploring, refactoring, or navigating code in this repository:
       }
     } catch {}
   }
+
 
   // ==========================================
   // 2. CURSOR IDE TARGETS
@@ -159,7 +165,8 @@ When exploring, refactoring, or navigating code in this repository:
       if (!fs.existsSync(cursorRulesPath)) {
         const promptRule = `# SiftrCode Agent Prompt Optimization Rule
 When investigating, searching, or refactoring this codebase:
-- Prefer using SiftrCode MCP tools ('siftr_skeleton' or 'siftr_pack') before loading full raw source files into context.
+- Call \`siftr_context\` with the task prompt to produce an outcome-aware context bundle with full edit targets and AST dependency skeletons.
+- Prefer using SiftrCode MCP tools ('siftr_context', 'siftr_skeleton', or 'siftr_pack') before loading full raw source files into context.
 - SiftrCode condenses method bodies into clean interface contracts, slashing token overhead by 80-90% and preserving 100% of types and signatures.
 `;
         fs.writeFileSync(cursorRulesPath, promptRule, 'utf-8');
@@ -182,11 +189,13 @@ alwaysApply: true
 ---
 
 # SiftrCode Rules for Cursor
+- When working on a task, call \`siftr_context\` with your prompt to optimize context automatically.
 - When navigating large modules or exploring dependencies, invoke \`siftr_skeleton\` to inspect exported interfaces and types without loading bloated function bodies.
 - For multi-file refactoring or broad task planning, call \`siftr_pack\` with a focus prompt to build a condensed AST context pack.
 - This preserves Cursor's context window, eliminates attention dilution, and accelerates agent responses.
 `;
         fs.writeFileSync(cursorMdcPath, cursorMdcContent, 'utf-8');
+
         rulesCreated.push('.cursor/rules/siftrcode.mdc');
       }
     } catch {}

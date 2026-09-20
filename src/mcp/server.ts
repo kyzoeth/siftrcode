@@ -6,6 +6,8 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 import { skeletonizeFile } from '../skeleton/dispatcher';
 import { packRepository } from '../core/packer';
 import { auditRepository } from '../core/auditor';
+import { ContextEngine } from '../engine/context_engine';
+import { getResolutionName } from '../context/context_resolution';
 
 export async function runMcpServer() {
   const server = new Server(
@@ -92,9 +94,127 @@ export async function runMcpServer() {
               }
             }
           }
+        },
+        {
+          name: 'siftr_context',
+          description:
+            'Generates an outcome-aware optimized context bundle for an AI coding task. Discovers multi-channel candidates, ranks by evidence and graph proximity, protects edit targets at full resolution, degrades distant dependencies to AST skeletons, and strictly optimizes token and economic cost limits.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              prompt: {
+                type: 'string',
+                description: 'Developer task description, issue summary, or prompt'
+              },
+              directory: {
+                type: 'string',
+                description: 'Target workspace directory path (defaults to current working directory)'
+              },
+              agentModel: {
+                type: 'string',
+                description: 'Target LLM agent model name (e.g. claude-3-5-sonnet, gpt-4o, cursor)'
+              },
+              agentKind: {
+                type: 'string',
+                enum: ['claude_code', 'cursor', 'generic_mcp'],
+                description: 'Target agent environment adapter (defaults to claude_code)'
+              },
+              budgetProfile: {
+                type: 'string',
+                enum: ['LEAN', 'BALANCED', 'THOROUGH'],
+                description: 'Budget optimization profile (defaults to BALANCED)'
+              },
+              tokenBudget: {
+                type: 'number',
+                description: 'Explicit maximum token budget'
+              },
+              maxCostUSD: {
+                type: 'number',
+                description: 'Explicit maximum economic cost ceiling in USD'
+              },
+              includeContext: {
+                type: 'boolean',
+                description: 'Whether to return the compiled context text directly in the response (defaults to true)'
+              },
+              includePlan: {
+                type: 'boolean',
+                description: 'Whether to include the complete ContextPlan metadata object (defaults to true)'
+              }
+            },
+            required: ['prompt']
+          }
+        },
+        {
+          name: 'siftr_optimize',
+          description:
+            'Alias for siftr_context. Generates an outcome-aware optimized context bundle for an AI coding task.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              prompt: {
+                type: 'string',
+                description: 'Developer task description, issue summary, or prompt'
+              },
+              directory: {
+                type: 'string',
+                description: 'Target workspace directory path (defaults to current working directory)'
+              },
+              agentModel: {
+                type: 'string',
+                description: 'Target LLM agent model name (e.g. claude-3-5-sonnet, gpt-4o, cursor)'
+              },
+              agentKind: {
+                type: 'string',
+                enum: ['claude_code', 'cursor', 'generic_mcp'],
+                description: 'Target agent environment adapter (defaults to claude_code)'
+              },
+              budgetProfile: {
+                type: 'string',
+                enum: ['LEAN', 'BALANCED', 'THOROUGH'],
+                description: 'Budget optimization profile (defaults to BALANCED)'
+              },
+              tokenBudget: {
+                type: 'number',
+                description: 'Explicit maximum token budget'
+              },
+              maxCostUSD: {
+                type: 'number',
+                description: 'Explicit maximum economic cost ceiling in USD'
+              },
+              includeContext: {
+                type: 'boolean',
+                description: 'Whether to return the compiled context text directly in the response (defaults to true)'
+              }
+            },
+            required: ['prompt']
+          }
+        },
+        {
+          name: 'siftr_rank',
+          description:
+            'Evaluates and ranks candidate files/symbols for a task prompt with transparent heuristic scores, evidence coverage, graph proximity, and penalty breakdowns.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              prompt: {
+                type: 'string',
+                description: 'Developer task description or issue prompt'
+              },
+              directory: {
+                type: 'string',
+                description: 'Target workspace directory path (defaults to current working directory)'
+              },
+              limit: {
+                type: 'number',
+                description: 'Maximum number of ranked candidates to return (defaults to 20)'
+              }
+            },
+            required: ['prompt']
+          }
         }
       ]
     };
+
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -259,10 +379,122 @@ export async function runMcpServer() {
         };
       }
 
+      if (name === 'siftr_context' || name === 'siftr_optimize') {
+        const prompt = String(args?.prompt || '');
+        if (!prompt) {
+          return {
+            content: [{ type: 'text', text: 'Error: "prompt" parameter is required' }],
+            isError: true
+          };
+        }
+
+        const workspaceDir = (args?.directory as string) || process.cwd();
+        const agentModel = (args?.agentModel as string) || undefined;
+        const agentKind = (args?.agentKind as any) || undefined;
+        const budgetProfile = (args?.budgetProfile as any) || undefined;
+        const tokenBudget = typeof args?.tokenBudget === 'number' ? args.tokenBudget : undefined;
+        const maxCostUSD = typeof args?.maxCostUSD === 'number' ? args.maxCostUSD : undefined;
+        const includeContext = args?.includeContext !== false;
+        const includePlan = args?.includePlan !== false;
+
+        const result = await ContextEngine.optimizeWorkspace({
+          workspaceDir,
+          prompt,
+          agentModel,
+          agentKind,
+          budgetProfile,
+          tokenBudget,
+          maxCostUSD,
+        });
+
+        const plan = result.plan;
+        const allocatedUnits = plan.units.filter((u) => u.resolution > 0);
+
+        const responsePayload: any = {
+          planId: plan.planId,
+          taskId: plan.taskId,
+          totalRawTokens: plan.budgetPlan.rawTotalTokens,
+          allocatedTokens: plan.budgetPlan.totalTokens,
+          reductionRatio: `${plan.budgetPlan.savingsPercentage.toFixed(1)}%`,
+          estimatedCostUSD: `$${plan.budgetPlan.estimatedCostUSD.toFixed(4)}`,
+          costSavedUSD: `$${plan.budgetPlan.costSavedUSD.toFixed(4)}`,
+          allocatedUnitsCount: allocatedUnits.length,
+          units: allocatedUnits.map((u) => ({
+            path: u.path,
+            title: u.title,
+            resolution: u.resolution,
+            resolutionName: getResolutionName(u.resolution),
+            allocatedTokens: u.tokenEstimate,
+            reason: u.reason,
+          })),
+        };
+
+        if (includeContext) {
+          responsePayload.context = result.contextString;
+        }
+
+        if (includePlan) {
+          responsePayload.plan = plan;
+        }
+
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(responsePayload, null, 2)
+            }
+          ]
+        };
+      }
+
+      if (name === 'siftr_rank') {
+        const prompt = String(args?.prompt || '');
+        if (!prompt) {
+          return {
+            content: [{ type: 'text', text: 'Error: "prompt" parameter is required' }],
+            isError: true
+          };
+        }
+
+        const workspaceDir = (args?.directory as string) || process.cwd();
+        const limit = typeof args?.limit === 'number' ? args.limit : 20;
+
+        const rankResult = await ContextEngine.rankWorkspace({
+          workspaceDir,
+          prompt,
+          limit,
+        });
+
+        const responsePayload = {
+          taskId: rankResult.task.taskId,
+          totalCandidates: rankResult.totalCandidates,
+          returnedRankedCount: rankResult.ranked.length,
+          ranked: rankResult.ranked.map((rc) => ({
+            rank: rc.rank,
+            contextUnitId: rc.contextUnitId,
+            score: rc.finalScore,
+            primaryReason: rc.reasons[0] || 'relevance',
+            allReasons: rc.reasons,
+            scoreBreakdown: rc.scoreBreakdown,
+          })),
+        };
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(responsePayload, null, 2)
+            }
+          ]
+        };
+      }
+
       return {
         content: [{ type: 'text', text: `Unknown tool: ${name}` }],
         isError: true
       };
+
     } catch (err: any) {
       return {
         content: [{ type: 'text', text: `SiftrCode error: ${err.message}` }],

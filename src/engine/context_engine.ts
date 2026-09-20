@@ -8,17 +8,17 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { TaskContext } from '../context/task_context';
+import { TaskContext, createTaskContext } from '../context/task_context';
 import { ContextUnit, ContextUnitKind } from '../context/context_unit';
 import { ContextGraph } from '../graph/context_graph';
 import { GitGraphIntelligence } from '../graph/git_graph';
 import { FeatureCutoff } from '../learning/point_in_time_features';
 import { DataRights, createDefaultDataRights } from '../rights/data_rights';
-import { AgentAdapter, ClaudeCodeAdapter, ContextUnitResolved } from '../agents/agent_adapter';
+import { AgentAdapter, ClaudeCodeAdapter, CursorAdapter, GenericMcpAdapter, ContextUnitResolved, FormattedContext } from '../agents/agent_adapter';
 import { CandidateGenerator } from '../retrieval/candidate_generator';
 import { FeatureBuilderV1 } from '../ranking/feature_builder';
 import { ContextFeaturesV1 } from '../ranking/feature_schema';
-import { ContextRanker } from '../ranking/context_rank';
+import { ContextRanker, RankedCandidate } from '../ranking/context_rank';
 import { BundleComposer } from '../context/bundle_composer';
 import { BudgetSolver, BudgetLimits, BUDGET_PROFILES, BudgetProfileName } from '../context/budget_solver';
 import { ContextResolution } from '../context/context_resolution';
@@ -26,6 +26,12 @@ import { skeletonizeFile } from '../skeleton/dispatcher';
 import { createExposureDecision, ExposureDecision } from '../telemetry/exposure_decision';
 import { TrajectoryLogger } from '../telemetry/trajectory_event';
 import { ContextPlan, PlannedUnit } from './context_plan';
+import { WorkspaceManager } from '../workspace/workspace_manager';
+import { RepositoryIndexer } from '../indexing/repository_index';
+import { GraphBuilder } from '../graph/graph_builder';
+import { TaskEvidence, TaskEvidenceKind, UserPromptEvidence, DiffEvidence } from '../context/task_evidence';
+import { createAgentEnvironment } from '../agents/agent_environment';
+
 
 export interface ContextEngineOptions {
   repoRootDir?: string;
@@ -36,6 +42,48 @@ export interface ContextEngineOptions {
   dirtyPaths?: string[];
   seedUnitIds?: string[];
 }
+
+export interface OptimizeWorkspaceOptions {
+  workspaceDir: string;
+  prompt: string;
+  agentModel?: string;
+  agentKind?: 'claude_code' | 'cursor' | 'generic_mcp';
+  budgetProfile?: BudgetProfileName;
+  budgetLimits?: BudgetLimits;
+  tokenBudget?: number;
+  maxCostUSD?: number;
+  dataRights?: DataRights;
+  seedUnitIds?: string[];
+  dirtyPaths?: string[];
+  excludePatterns?: string[];
+  includePatterns?: string[];
+}
+
+export interface OptimizeWorkspaceResult {
+  plan: ContextPlan;
+  engine: ContextEngine;
+  units: ContextUnit[];
+  graph: ContextGraph;
+  task: TaskContext;
+  formattedContext: FormattedContext;
+  contextString: string;
+}
+
+
+export interface RankWorkspaceOptions {
+  workspaceDir: string;
+  prompt: string;
+  limit?: number;
+  excludePatterns?: string[];
+  includePatterns?: string[];
+}
+
+export interface RankWorkspaceResult {
+  task: TaskContext;
+  ranked: RankedCandidate[];
+  totalCandidates: number;
+}
+
 
 export class ContextEngine {
   private repoRootDir?: string;
@@ -284,4 +332,208 @@ export class ContextEngine {
         return '';
     }
   }
+
+  /**
+   * High-level orchestrator that indexes and optimizes context for a workspace directory.
+   */
+  public static async optimizeWorkspace(options: OptimizeWorkspaceOptions): Promise<OptimizeWorkspaceResult> {
+    const rootDir = path.resolve(options.workspaceDir || process.cwd());
+    const workspaceManager = new WorkspaceManager({ rootDir });
+    const snapshot = await workspaceManager.captureSnapshot();
+
+    const dirtyPaths: string[] = options.dirtyPaths ? [...options.dirtyPaths] : [];
+    try {
+      const statusOut = require('child_process').execSync('git status --porcelain', {
+        cwd: rootDir,
+        stdio: ['pipe', 'pipe', 'ignore'],
+        encoding: 'utf-8',
+      });
+      const lines = statusOut.split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.length > 3) {
+          const p = trimmed.slice(3).trim();
+          if (p) dirtyPaths.push(p);
+        }
+      }
+    } catch {
+      // Non-git directory
+    }
+
+    const indexer = new RepositoryIndexer();
+    const indexResult = await indexer.indexRepository(rootDir, {
+      workspaceSnapshotId: snapshot.workspaceSnapshotId,
+      excludePatterns: options.excludePatterns,
+      includePatterns: options.includePatterns,
+    });
+    const units = indexResult.units;
+
+    const graphBuilder = new GraphBuilder();
+    const graph = graphBuilder.buildGraph(units, { repoDir: rootDir });
+
+    const gitIntelligence = new GitGraphIntelligence({ repoDir: rootDir });
+
+    const kind = options.agentKind || (options.agentModel?.toLowerCase().includes('cursor') ? 'cursor' : 'claude_code');
+    let adapter: AgentAdapter;
+    if (kind === 'cursor') {
+      adapter = new CursorAdapter();
+    } else if (kind === 'generic_mcp') {
+      adapter = new GenericMcpAdapter();
+    } else {
+      adapter = new ClaudeCodeAdapter();
+    }
+
+    const taskId = `task_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    const userPromptEvidence: UserPromptEvidence = {
+      evidenceId: 'ev_' + crypto.randomUUID().slice(0, 8),
+      kind: TaskEvidenceKind.USER_PROMPT,
+      timestamp: new Date().toISOString(),
+      prompt: options.prompt,
+    };
+    const evidenceList: TaskEvidence[] = [userPromptEvidence];
+
+    if (dirtyPaths.length > 0) {
+      const diffEvidence: DiffEvidence = {
+        evidenceId: 'ev_' + crypto.randomUUID().slice(0, 8),
+        kind: TaskEvidenceKind.DIFF,
+        timestamp: new Date().toISOString(),
+        patchText: '',
+        changedFiles: dirtyPaths,
+      };
+      evidenceList.push(diffEvidence);
+    }
+
+    const task = createTaskContext({
+      taskId,
+      workspaceSnapshotId: snapshot.workspaceSnapshotId,
+      primaryPrompt: options.prompt,
+      evidence: evidenceList,
+      agentEnvironment: createAgentEnvironment({
+        agentProvider: kind === 'cursor' ? 'cursor' : 'anthropic',
+        agentVersion: '1.0.0',
+        model: options.agentModel || 'claude-3-5-sonnet-20241022',
+        harnessVersion: 'v2',
+        availableTools: ['read_file', 'edit_file'],
+      }),
+    });
+
+    let budgetLimits = options.budgetLimits;
+    if (!budgetLimits) {
+      const profile = options.budgetProfile || 'BALANCED';
+      const baseLimits = (profile !== 'CUSTOM' && (BUDGET_PROFILES as any)[profile])
+        ? (BUDGET_PROFILES as any)[profile]
+        : BUDGET_PROFILES.BALANCED;
+      const resolvedLimits: BudgetLimits = { ...baseLimits };
+      if (options.tokenBudget !== undefined) {
+        resolvedLimits.maxTokens = options.tokenBudget;
+      }
+      if (options.maxCostUSD !== undefined) {
+        resolvedLimits.maxCostUSD = options.maxCostUSD;
+      }
+      budgetLimits = resolvedLimits;
+    }
+
+    const engine = new ContextEngine({
+      repoRootDir: rootDir,
+      adapter,
+      dataRights: options.dataRights,
+      budgetProfile: options.budgetProfile,
+      budgetLimits,
+    });
+
+    const plan = engine.generatePlan({
+      task,
+      units,
+      graph,
+      gitIntelligence,
+      dirtyPaths,
+      seedUnitIds: options.seedUnitIds,
+    });
+
+    return {
+      plan,
+      engine,
+      units,
+      graph,
+      task,
+      formattedContext: plan.formattedContext,
+      contextString: plan.formattedContext.promptText,
+    };
+
+  }
+
+  /**
+   * Transparent candidate ranking for a workspace without composing final bundle.
+   */
+  public static async rankWorkspace(options: RankWorkspaceOptions): Promise<RankWorkspaceResult> {
+    const rootDir = path.resolve(options.workspaceDir || process.cwd());
+    const workspaceManager = new WorkspaceManager({ rootDir });
+    const snapshot = await workspaceManager.captureSnapshot();
+
+    const indexer = new RepositoryIndexer();
+    const indexResult = await indexer.indexRepository(rootDir, {
+      workspaceSnapshotId: snapshot.workspaceSnapshotId,
+      excludePatterns: options.excludePatterns,
+      includePatterns: options.includePatterns,
+    });
+    const units = indexResult.units;
+
+    const graphBuilder = new GraphBuilder();
+    const graph = graphBuilder.buildGraph(units, { repoDir: rootDir });
+    const gitIntelligence = new GitGraphIntelligence({ repoDir: rootDir });
+
+    const taskId = `task_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    const userPromptEvidence: UserPromptEvidence = {
+      evidenceId: 'ev_' + crypto.randomUUID().slice(0, 8),
+      kind: TaskEvidenceKind.USER_PROMPT,
+      timestamp: new Date().toISOString(),
+      prompt: options.prompt,
+    };
+
+    const task = createTaskContext({
+      taskId,
+      workspaceSnapshotId: snapshot.workspaceSnapshotId,
+      primaryPrompt: options.prompt,
+      evidence: [userPromptEvidence],
+      agentEnvironment: createAgentEnvironment({
+        agentProvider: 'anthropic',
+        agentVersion: '1.0.0',
+        model: 'claude-3-5-sonnet-20241022',
+        harnessVersion: 'v2',
+        availableTools: ['read_file', 'edit_file'],
+      }),
+    });
+
+    const generator = new CandidateGenerator();
+    const candidates = generator.generateCandidates(task, units, graph, gitIntelligence);
+
+    const unitsMap = new Map<string, ContextUnit>();
+    for (const u of units) unitsMap.set(u.id, u);
+
+    const featuresList: ContextFeaturesV1[] = [];
+    for (const cand of candidates) {
+      const u = unitsMap.get(cand.contextUnitId);
+      if (!u) continue;
+      const f = FeatureBuilderV1.buildFeatures({
+        candidate: cand,
+        unit: u,
+        task,
+        graph,
+        gitIntelligence,
+      });
+      featuresList.push(f);
+    }
+
+    const ranker = new ContextRanker();
+    const ranked = ranker.rank(featuresList);
+    const limit = options.limit || 20;
+
+    return {
+      task,
+      ranked: ranked.slice(0, limit),
+      totalCandidates: candidates.length,
+    };
+  }
 }
+
+

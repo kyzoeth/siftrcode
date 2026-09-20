@@ -27,6 +27,7 @@ export class GitGraphIntelligence {
   private historyWindow: number;
   private minSharedCommits: number;
   private minRelationship: number;
+  private historyCache = new Map<string, GitCommitInfo[]>();
 
   constructor(options: GitIntelligenceOptions) {
     this.repoDir = options.repoDir;
@@ -41,6 +42,10 @@ export class GitGraphIntelligence {
    */
   public getCommitHistory(cutoff?: FeatureCutoff, limit?: number): GitCommitInfo[] {
     const max = limit ?? this.historyWindow;
+    const cacheKey = `${cutoff?.timestamp || 'head'}_${max}`;
+    if (this.historyCache.has(cacheKey)) {
+      return this.historyCache.get(cacheKey)!;
+    }
 
     let untilArg = '';
     if (cutoff) {
@@ -60,8 +65,10 @@ export class GitGraphIntelligence {
         }
       );
     } catch {
+      this.historyCache.set(cacheKey, []);
       return [];
     }
+
 
     const commits: GitCommitInfo[] = [];
     const entries = rawLog.split('COMMIT:');
@@ -96,8 +103,10 @@ export class GitGraphIntelligence {
       });
     }
 
+    this.historyCache.set(cacheKey, commits);
     return commits;
   }
+
 
   /**
    * Calculates directional co-change statistic:

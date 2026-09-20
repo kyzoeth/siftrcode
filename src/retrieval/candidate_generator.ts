@@ -103,10 +103,22 @@ export class CandidateGenerator {
       }
 
       const seedUnits = units.filter((u) => candidateMap.has(u.id) && u.path);
+      const coChanges = gitIntel.extractCoChangePairs();
+      const coChangesByFrom = new Map<string, Array<{ fromPath: string; toPath: string; score: number }>>();
+
+      for (const pair of coChanges) {
+        const k = pair.fromPath.toLowerCase();
+        if (!coChangesByFrom.has(k)) {
+          coChangesByFrom.set(k, []);
+        }
+        coChangesByFrom.get(k)!.push(pair);
+      }
+
       for (const seed of seedUnits) {
-        const coChanges = gitIntel.extractCoChangePairs();
-        for (const pair of coChanges) {
-          if (seed.path && pair.fromPath.toLowerCase() === seed.path.toLowerCase()) {
+        if (!seed.path) continue;
+        const pairs = coChangesByFrom.get(seed.path.toLowerCase());
+        if (pairs) {
+          for (const pair of pairs) {
             const partnerUnitId = unitPathMap.get(pair.toPath.toLowerCase());
             if (partnerUnitId) {
               const c = getOrCreate(partnerUnitId);
@@ -119,6 +131,7 @@ export class CandidateGenerator {
         }
       }
     }
+
 
     // Convert to array and rank by multi-channel fusion score
     const candidates = Array.from(candidateMap.values());
