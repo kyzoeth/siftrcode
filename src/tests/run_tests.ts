@@ -15,7 +15,8 @@ const tests = [
   { name: 'V2 Heterogeneous ContextUnit Indexing Tests', file: 'test_indexing.js' },
   { name: 'V2 Engineering Context Graph & GraphBuilder Tests', file: 'test_context_graph.js' },
   { name: 'V2 Point-in-Time Git Intelligence & Co-Change Tests', file: 'test_git_intelligence.js' },
-  { name: 'V2 Security & Trust Plane Tests', file: 'test_security_plane.js' }
+  { name: 'V2 Security & Trust Plane Tests', file: 'test_security_plane.js' },
+  { name: 'V2 Multi-Channel Candidate Discovery & Recall Tests', file: 'test_candidate_discovery.js' }
 ];
 
 let failed = false;

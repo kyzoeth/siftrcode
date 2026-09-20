@@ -33,3 +33,8 @@ export * from './security/secret_filter';
 export * from './security/sandbox_policy';
 export * from './security/instruction_boundary';
 export * from './security/egress_policy';
+export * from './retrieval/candidate';
+export * from './retrieval/exact_retriever';
+export * from './retrieval/lexical_retriever';
+export * from './retrieval/stack_trace_retriever';
+export * from './retrieval/candidate_generator';
