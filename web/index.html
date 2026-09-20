@@ -1107,7 +1107,7 @@
                   <div id="econValPayloadSkel" class="text-xs sm:text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">9,800</div>
                   <div class="text-[10px] font-mono text-emerald-600/80 dark:text-emerald-400/80">tokens</div>
                 </div>
-                <div id="econBarPayloadSkel" class="w-full rounded-t bg-emerald-500 flex items-center justify-center shadow-2xs overflow-hidden" style="height: 10%; min-height: 22px;">
+                <div id="econBarPayloadSkel" class="w-full rounded-t bg-emerald-500 flex items-center justify-center shadow-2xs overflow-hidden" style="height: 14%;">
                   <span class="text-[9px] font-mono font-bold text-white uppercase tracking-wider">AST</span>
                 </div>
               </div>
@@ -1158,7 +1158,9 @@
               <!-- Bar 1: Without SiftrCode -->
               <div class="flex flex-col items-center justify-end h-full flex-1 max-w-[85px] sm:max-w-[110px] z-10">
                 <div class="mb-1.5 text-center">
-                  <div id="econValCostRaw" class="text-xs sm:text-sm font-mono font-bold text-rose-600 dark:text-rose-400">$412.50<span class="text-[10px] font-normal">/mo</span></div>
+                  <div class="text-xs sm:text-sm font-mono font-bold text-rose-600 dark:text-rose-400">
+                    <span id="econValCostRaw">$412.50</span><span class="text-[10px] font-normal">/mo</span>
+                  </div>
                   <div id="econValCostRawAnnual" class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">$4,950 / yr</div>
                 </div>
                 <div id="econBarCostRaw" class="w-full rounded-t bg-rose-500/90 dark:bg-rose-600 flex flex-col items-center justify-center p-1 shadow-2xs overflow-hidden" style="height: 72%;">
@@ -1170,11 +1172,13 @@
               <div class="flex flex-col items-center justify-end h-full flex-1 max-w-[85px] sm:max-w-[110px] z-10">
                 <div class="mb-1.5 text-center">
                   <span id="econPillCostSavings" class="inline-block text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/90 px-1.5 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 mb-0.5 transition-all duration-500">Save $380</span>
-                  <div id="econValCostSkel" class="text-xs sm:text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">$32.34<span class="text-[10px] font-normal">/mo</span></div>
+                  <div class="text-xs sm:text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    <span id="econValCostSkel">$32.34</span><span class="text-[10px] font-normal">/mo</span>
+                  </div>
                   <div id="econValCostSkelAnnual" class="text-[10px] font-mono text-emerald-600/80 dark:text-emerald-400/80">$388 / yr</div>
                 </div>
-                <div id="econBarCostSkel" class="w-full rounded-t bg-emerald-500 flex items-center justify-center shadow-2xs overflow-hidden" style="height: 10%; min-height: 22px;">
-                  <span class="text-[9px] font-mono font-bold text-white uppercase tracking-wider">$0.03</span>
+                <div id="econBarCostSkel" class="w-full rounded-t bg-emerald-500 flex items-center justify-center shadow-2xs overflow-hidden" style="height: 14%;">
+                  <span class="text-[9px] font-mono font-bold text-white uppercase tracking-wider">$0.03/turn</span>
                 </div>
               </div>
             </div>
@@ -3286,7 +3290,7 @@ ${renderedRaw}
       const el = elementId ? document.getElementById(elementId) : null;
       if (!el && !onTick) return;
       if (Math.abs(startVal - endVal) < 0.05) {
-        if (el) el.innerText = formatter(endVal);
+        if (el) el.innerHTML = formatter(endVal);
         if (onTick) onTick(endVal);
         return;
       }
@@ -3296,12 +3300,12 @@ ${renderedRaw}
         const progress = Math.min(1, elapsed / durationMs);
         const ease = 1 - Math.pow(1 - progress, 3);
         const current = startVal + (endVal - startVal) * ease;
-        if (el) el.innerText = formatter(current);
+        if (el) el.innerHTML = formatter(current);
         if (onTick) onTick(current);
         if (progress < 1) {
           requestAnimationFrame(tick);
         } else {
-          if (el) el.innerText = formatter(endVal);
+          if (el) el.innerHTML = formatter(endVal);
           if (onTick) onTick(endVal);
         }
       }
@@ -3585,9 +3589,9 @@ ${renderedRaw}
 
       if (valPayloadRaw) valPayloadRaw.innerText = '0';
       if (valPayloadSkel) valPayloadSkel.innerText = '0';
-      if (valCostRaw) valCostRaw.innerHTML = '$0.00<span class="text-[10px] font-normal">/mo</span>';
+      if (valCostRaw) valCostRaw.innerText = '$0.00';
       if (valCostRawAnnual) valCostRawAnnual.innerText = '$0 / yr';
-      if (valCostSkel) valCostSkel.innerHTML = '$0.00<span class="text-[10px] font-normal">/mo</span>';
+      if (valCostSkel) valCostSkel.innerText = '$0.00';
       if (valCostSkelAnnual) valCostSkelAnnual.innerText = '$0 / yr';
 
       // Force browser reflow
@@ -3603,18 +3607,18 @@ ${renderedRaw}
       barCostRaw.style.height = '72%';
 
       animateNumber('econValPayloadRaw', 0, 125000, duration, v => Math.round(v).toLocaleString());
-      animateNumber('econValCostRaw', 0, 412.5, duration, v => `$${v.toFixed(2)}<span class="text-[10px] font-normal">/mo</span>`);
+      animateNumber('econValCostRaw', 0, 412.5, duration, v => `$${v.toFixed(2)}`);
       animateNumber('econValCostRawAnnual', 0, 4950, duration, v => `$${Math.round(v).toLocaleString()} / yr`);
 
       // 2. SiftrCode AST bars animate with a 130ms stagger to emphasize the radical 92% compression
       setTimeout(() => {
         barPayloadSkel.style.transition = `height ${duration - 100}ms ${easeCurve}`;
         barCostSkel.style.transition = `height ${duration - 100}ms ${easeCurve}`;
-        barPayloadSkel.style.height = '10%';
-        barCostSkel.style.height = '10%';
+        barPayloadSkel.style.height = '14%';
+        barCostSkel.style.height = '14%';
 
         animateNumber('econValPayloadSkel', 0, 9800, duration - 100, v => Math.round(v).toLocaleString());
-        animateNumber('econValCostSkel', 0, 32.34, duration - 100, v => `$${v.toFixed(2)}<span class="text-[10px] font-normal">/mo</span>`);
+        animateNumber('econValCostSkel', 0, 32.34, duration - 100, v => `$${v.toFixed(2)}`);
         animateNumber('econValCostSkelAnnual', 0, 388, duration - 100, v => `$${Math.round(v).toLocaleString()} / yr`);
       }, 130);
 
