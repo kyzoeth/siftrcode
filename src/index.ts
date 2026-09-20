@@ -24,6 +24,7 @@ export * from './context/task_evidence';
 export * from './context/task_context';
 export * from './context/bundle_composer';
 export * from './context/resolution_rank';
+export * from './context/budget_solver';
 export * from './storage/sqlite_store';
 export * from './indexing/index_quality';
 export * from './indexing/repository_index';

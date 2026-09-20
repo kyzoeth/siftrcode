@@ -22,7 +22,8 @@ const tests = [
   { name: 'V2 Exposure-Aware Telemetry & Data Rights Tests', file: 'test_telemetry.js' },
   { name: 'V2 ContextRank (Transparent Candidate Ranker) Tests', file: 'test_context_rank.js' },
   { name: 'V2 BundleComposer (Submodular Synergy) Tests', file: 'test_bundle_composer.js' },
-  { name: 'V2 ResolutionRank (Variable-Resolution Safety) Tests', file: 'test_resolution_rank.js' }
+  { name: 'V2 ResolutionRank (Variable-Resolution Safety) Tests', file: 'test_resolution_rank.js' },
+  { name: 'V2 BudgetSolver (Token & Cost Optimization) Tests', file: 'test_budget_solver.js' }
 ];
 
 let failed = false;
