@@ -106,26 +106,6 @@
     @keyframes ci-live-blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.25; transform: scale(0.85); } }
     .ci-live-dot { animation: ci-live-blink 2.2s ease-in-out infinite; }
 
-    /* Architecture Diagram Flow Animations */
-    @keyframes flowDashes {
-      from { stroke-dashoffset: 48; }
-      to { stroke-dashoffset: 0; }
-    }
-    .anim-flow-red {
-      stroke: #D97757;
-      stroke-dasharray: 6 4;
-      animation: flowDashes 1.4s linear infinite;
-    }
-    .anim-flow-emerald {
-      stroke: #10B981;
-      stroke-dasharray: 6 4;
-      animation: flowDashes 1.4s linear infinite;
-    }
-    .anim-flow-split {
-      stroke: #E58B6E;
-      stroke-dasharray: 6 4;
-      animation: flowDashes 1.4s linear infinite;
-    }
     @keyframes pulseRing {
       0%, 100% { transform: scale(1); opacity: 0.9; }
       50% { transform: scale(1.08); opacity: 0.4; }
@@ -158,18 +138,6 @@
     .node-card.active-node, .node-highlight {
       border-color: #D97757 !important;
       box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.4), 0 8px 24px -4px rgba(217, 119, 87, 0.25) !important;
-    }
-
-    @keyframes flowDash {
-      to { stroke-dashoffset: -20; }
-    }
-    .flow-active-line {
-      stroke-dasharray: 5 5;
-      animation: flowDash 0.8s linear infinite;
-    }
-    .flow-drop-line {
-      stroke-dasharray: 4 4;
-      animation: flowDash 1.6s linear infinite reverse;
     }
   </style>
 </head>
@@ -344,9 +312,10 @@
           </div>
 
           <!-- Connector Down to Decision Gate -->
-          <div class="flex justify-center -my-2">
-            <svg class="w-6 h-8 text-zinc-400 dark:text-zinc-600" viewBox="0 0 24 32" fill="none">
-              <path d="M12 0v24m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flow-active-line text-[#D97757] dark:text-[#F39C82]" />
+          <div class="flex justify-center -my-2 select-none pointer-events-none" aria-hidden="true">
+            <svg class="w-4 h-6 text-zinc-300 dark:text-zinc-700" viewBox="0 0 16 24" fill="none">
+              <path d="M8 0V18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M4 14L8 18L12 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </div>
 
@@ -391,9 +360,10 @@
           </div>
 
           <!-- Connector Down to AST & Context Packer -->
-          <div class="flex justify-center -my-2">
-            <svg class="w-6 h-8 text-zinc-400 dark:text-zinc-600" viewBox="0 0 24 32" fill="none">
-              <path d="M12 0v24m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flow-active-line text-emerald-600 dark:text-emerald-500" />
+          <div class="flex justify-center -my-2 select-none pointer-events-none" aria-hidden="true">
+            <svg class="w-4 h-6 text-zinc-300 dark:text-zinc-700" viewBox="0 0 16 24" fill="none">
+              <path d="M8 0V18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M4 14L8 18L12 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </div>
 
@@ -423,9 +393,10 @@
           </div>
 
           <!-- Connector Down to Final Agent Payoff -->
-          <div class="flex justify-center -my-2">
-            <svg class="w-6 h-8 text-zinc-400 dark:text-zinc-600" viewBox="0 0 24 32" fill="none">
-              <path d="M12 0v24m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flow-active-line text-emerald-600 dark:text-emerald-400" />
+          <div class="flex justify-center -my-2 select-none pointer-events-none" aria-hidden="true">
+            <svg class="w-4 h-6 text-zinc-300 dark:text-zinc-700" viewBox="0 0 16 24" fill="none">
+              <path d="M8 0V18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M4 14L8 18L12 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </div>
 
