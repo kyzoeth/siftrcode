@@ -68,6 +68,7 @@ import {
 } from '../providers/judgment/typesafe/jev_budget';
 import {
   FakeSystemOneClient,
+  TypeSafeSystemOneClient,
   SystemOneEvaluationRequest,
   SystemOneEvaluationResponse,
 } from '../providers/judgment/typesafe/typesafe_client';
@@ -1880,7 +1881,131 @@ export async function runRegressionTests() {
     console.log('  ✔ Suite 12 passed: Sanctioned TrainingExporter route, exportId lineage, and Migrations 11 & 12 verified\n');
   }
 
-  console.log('🎉 ALL TWELVE REGRESSION SUITES PASSED CLEANLY!\n');
+  // =========================================================================
+  // Suite 13: WorkspaceSnapshot Equality, Retry Budgeting & Railway Path Smoke Verification
+  // =========================================================================
+  {
+    console.log('--- Suite 13: WorkspaceSnapshot Equality, Retry Budgeting & Railway Path Smoke Verification ---');
+    const store = new SqliteStore(':memory:');
+
+    // 1. WorkspaceSnapshot Equality in generatePlan()
+    const engine = new ContextEngine({ sqliteStore: store });
+    const snapshotA = createWorkspaceSnapshot({
+      repositories: [
+        {
+          repositoryId: 'test_repo',
+          baseCommitSha: 'commit_a',
+          trackedTreeHash: 'tree_a',
+          dirtyPatchHash: 'clean',
+        },
+      ],
+    });
+    const snapshotB = createWorkspaceSnapshot({
+      repositories: [
+        {
+          repositoryId: 'test_repo',
+          baseCommitSha: 'commit_b',
+          trackedTreeHash: 'tree_b',
+          dirtyPatchHash: 'clean',
+        },
+      ],
+    });
+
+    const env = createAgentEnvironment({
+      agentProvider: 'anthropic',
+      agentVersion: '1.0',
+      model: 'claude-3-7-sonnet',
+      harnessVersion: '1.0',
+      availableTools: ['View', 'Edit', 'Bash'],
+    });
+
+    const taskMismatch = createTaskContext({
+      taskId: 'task_snapshot_mismatch',
+      sessionId: 'sess_suite13_mismatch',
+      primaryPrompt: 'Fix auth bug',
+      workspaceSnapshotId: snapshotA.workspaceSnapshotId,
+      agentEnvironment: env,
+    });
+
+    // Mismatched snapshot must throw WORKSPACE_SNAPSHOT_MISMATCH
+    assert.throws(
+      () => engine.generatePlan({ task: taskMismatch, units: [], snapshot: snapshotB }),
+      (err: any) => {
+        assert.strictEqual(err.code, 'WORKSPACE_SNAPSHOT_MISMATCH');
+        assert.ok(err.message.includes('does not match WorkspaceSnapshot id'));
+        return true;
+      },
+      'generatePlan must reject task whose workspaceSnapshotId does not match snapshot.workspaceSnapshotId'
+    );
+
+    // Matching snapshot succeeds and records consistent workspaceSnapshotId
+    const taskMatch = createTaskContext({
+      taskId: 'task_snapshot_match',
+      sessionId: 'sess_suite13_match',
+      primaryPrompt: 'Fix auth bug',
+      workspaceSnapshotId: snapshotA.workspaceSnapshotId,
+      agentEnvironment: env,
+    });
+    const plan = engine.generatePlan({ task: taskMatch, units: [], snapshot: snapshotA });
+    assert.strictEqual(plan.workspaceSnapshotId, snapshotA.workspaceSnapshotId);
+
+    // Omitting workspaceSnapshotId auto-populates from snapshot
+    const taskAuto = createTaskContext({
+      taskId: 'task_snapshot_auto',
+      sessionId: 'sess_suite13_auto',
+      primaryPrompt: 'Fix auth bug',
+      workspaceSnapshotId: '',
+      agentEnvironment: env,
+    });
+    const planAuto = engine.generatePlan({ task: taskAuto, units: [], snapshot: snapshotA });
+    assert.strictEqual(planAuto.workspaceSnapshotId, snapshotA.workspaceSnapshotId);
+    assert.strictEqual(taskAuto.workspaceSnapshotId, snapshotA.workspaceSnapshotId);
+
+    // 2. Provider Retries Configuration
+    // In smoke mode, maxRetries: 0 eliminates hidden retries ensuring strictly 1:1 call-to-budget mapping
+    const smokeClient = new TypeSafeSystemOneClient({
+      apiKey: 'test_key_smoke_dummy',
+      retry: { maxRetries: 0 },
+    });
+    assert.strictEqual(smokeClient.options.retry?.maxRetries, 0, 'TypeSafeSystemOneClient must accept maxRetries: 0 for smoke budgeting');
+
+    // 3. Application/Railway Path DataRights Verification
+    const origRemote = process.env.SIFTR_JEV_REMOTE_PROCESSING;
+    try {
+      // With SIFTR_JEV_REMOTE_PROCESSING='true', ContextEngine with omitted dataRights derives remoteProcessingAllowed=true
+      process.env.SIFTR_JEV_REMOTE_PROCESSING = 'true';
+      const railwayEngine = new ContextEngine({ sqliteStore: store });
+      const derivedRights = railwayEngine.getDataRights();
+      assert.strictEqual(derivedRights.remoteProcessingAllowed, true, 'Railway path must enable remote processing via SIFTR_JEV_REMOTE_PROCESSING');
+      assert.strictEqual(
+        isRemoteProcessingPermitted(derivedRights, DataClass.PATH),
+        true,
+        'Remote path processing must be permitted on Railway path'
+      );
+      assert.strictEqual(
+        isRemoteProcessingPermitted(derivedRights, DataClass.TASK_PROMPT),
+        true,
+        'Remote task prompt processing must be permitted on Railway path'
+      );
+
+      // Without SIFTR_JEV_REMOTE_PROCESSING, default rights must have remoteProcessingAllowed=false
+      delete process.env.SIFTR_JEV_REMOTE_PROCESSING;
+      const localEngine = new ContextEngine({ sqliteStore: store });
+      const localRights = localEngine.getDataRights();
+      assert.strictEqual(localRights.remoteProcessingAllowed, false, 'Default engine without env var must have remoteProcessingAllowed=false');
+    } finally {
+      if (origRemote !== undefined) {
+        process.env.SIFTR_JEV_REMOTE_PROCESSING = origRemote;
+      } else {
+        delete process.env.SIFTR_JEV_REMOTE_PROCESSING;
+      }
+    }
+
+    store.close();
+    console.log('  ✔ Suite 13 passed: WorkspaceSnapshot equality, retry budgeting, and Railway path smoke verified\n');
+  }
+
+  console.log('🎉 ALL THIRTEEN REGRESSION SUITES PASSED CLEANLY!\n');
 }
 
 if (require.main === module) {

@@ -18,6 +18,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import * as crypto from 'crypto';
 import { SqliteStore } from '../storage/sqlite_store';
 import { ContextEngine } from '../engine/context_engine';
@@ -405,22 +406,28 @@ function computeMRR(rankedIds: string[], targetIds: Set<string>): number {
 // High-Fidelity Evaluator for Real Repositories
 function createRealPilotClient(
   unitsMap: Map<string, ContextUnit>,
-  options: { useLive?: boolean; apiKey?: string } = {}
+  options: { useLive?: boolean; apiKey?: string; isSmoke?: boolean } = {}
 ): SystemOneClient {
   const isLive = options.useLive ?? (process.env.JEV_LIVE === 'true' || process.argv.includes('--live'));
+  const isSmoke = options.isSmoke ?? process.argv.includes('--smoke');
   const apiKey = options.apiKey || process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY;
 
   if (isLive) {
     if (!apiKey) {
       throw new Error('Live JEV evaluation requested (--live), but no API key was provided (set TYPESAFE_API_KEY or JEV_API_KEY).');
     }
-    console.log('  [Pilot] Using live TypeSafeSystemOneClient (TypeSafe key configured: true)');
-    const liveClient = new TypeSafeSystemOneClient({ apiKey, timeoutMs: 15000 });
+    console.log(`  [Pilot] Using live TypeSafeSystemOneClient (TypeSafe key configured: true, retries: ${isSmoke ? 'DISABLED (smoke)' : 'default'})`);
+    const liveClient = new TypeSafeSystemOneClient({
+      apiKey,
+      timeoutMs: 15000,
+      retry: isSmoke ? { maxRetries: 0 } : undefined,
+    });
 
     return {
       async evaluate(req: SystemOneEvaluationRequest): Promise<SystemOneEvaluationResponse> {
         let attempts = 0;
-        const maxAttempts = 3;
+        // In smoke mode, strictly disable retries (maxAttempts = 1) so calls consume the exact 5-call budget
+        const maxAttempts = isSmoke ? 1 : 3;
         while (attempts < maxAttempts) {
           try {
             return await liveClient.evaluate(req);
@@ -533,7 +540,7 @@ export async function runTypeSafeJevPilotStudy(options: {
   console.log('================================================================\n');
 
   const rootDir = process.cwd();
-  const tempDir = path.join(rootDir, 'temp_jev_pilot_' + Date.now());
+  const tempDir = path.join(os.tmpdir(), 'temp_jev_pilot_' + Date.now());
   fs.mkdirSync(tempDir, { recursive: true });
   const dbPath = path.join(tempDir, 'pilot_telemetry.sqlite');
   const store = new SqliteStore(dbPath);
@@ -586,6 +593,45 @@ export async function runTypeSafeJevPilotStudy(options: {
   const siftrGit = new GitGraphIntelligence({ repoDir: rootDir });
   console.log(`  ✔ SiftrCode indexed (LOCAL_FIRST_PARTY): ${siftrUnits.length} units, ${siftrGraph.getAllNodes().length} graph nodes\n`);
 
+  // Canonical WorkspaceSnapshots for each evaluated repository
+  const repoSnapshots: Record<PilotRepoKind, WorkspaceSnapshot> = {
+    express: createWorkspaceSnapshot({
+      repositories: [
+        {
+          repositoryId: 'express',
+          baseCommitSha: 'commit_express_pilot',
+          trackedTreeHash: 'tree_express_pilot',
+          dirtyPatchHash: 'clean',
+        },
+      ],
+    }),
+    fastapi: createWorkspaceSnapshot({
+      repositories: [
+        {
+          repositoryId: 'fastapi',
+          baseCommitSha: 'commit_fastapi_pilot',
+          trackedTreeHash: 'tree_fastapi_pilot',
+          dirtyPatchHash: 'clean',
+        },
+      ],
+    }),
+    siftrcode: createWorkspaceSnapshot({
+      repositories: [
+        {
+          repositoryId: 'siftrcode',
+          baseCommitSha: 'commit_siftrcode_pilot',
+          trackedTreeHash: 'tree_siftrcode_pilot',
+          dirtyPatchHash: 'clean',
+        },
+      ],
+    }),
+  };
+
+  // Align all indexed units' workspaceSnapshotId with canonical snapshots
+  for (const u of expressUnits) u.workspaceSnapshotId = repoSnapshots.express.workspaceSnapshotId;
+  for (const u of fastapiUnits) u.workspaceSnapshotId = repoSnapshots.fastapi.workspaceSnapshotId;
+  for (const u of siftrUnits) u.workspaceSnapshotId = repoSnapshots.siftrcode.workspaceSnapshotId;
+
   // Combined master units map for evaluation
   const masterUnitsMap = new Map<string, ContextUnit>();
   for (const u of [...expressUnits, ...fastapiUnits, ...siftrUnits]) {
@@ -593,7 +639,7 @@ export async function runTypeSafeJevPilotStudy(options: {
   }
 
   // Create TypeSafe client & runner
-  const client = createRealPilotClient(masterUnitsMap, { useLive: isLive, apiKey: options.apiKey });
+  const client = createRealPilotClient(masterUnitsMap, { useLive: isLive, apiKey: options.apiKey, isSmoke });
   const runner = new JevShadowRunner({
     client,
     mode: JevMode.SHADOW,
@@ -690,10 +736,12 @@ export async function runTypeSafeJevPilotStudy(options: {
       },
     ];
 
+    const repoSnapshot = repoSnapshots[taskSpec.repo];
+
     const task = createTaskContext({
       taskId: taskSpec.taskId,
       sessionId: `session_pilot_${idx + 1}`,
-      workspaceSnapshotId: `snapshot_pilot_${taskSpec.repo}`,
+      workspaceSnapshotId: repoSnapshot.workspaceSnapshotId,
       primaryPrompt: taskSpec.prompt,
       agentEnvironment: createAgentEnvironment({
         agentProvider: 'benchmark_harness',
@@ -723,41 +771,79 @@ export async function runTypeSafeJevPilotStudy(options: {
       }
     }
 
-    // Engine with JEV shadow runner enabled
-    const shadowEngine = new ContextEngine({
-      repoRootDir,
-      sqliteStore: store,
-      jevShadowRunner: runner,
-      enableJevShadow: true,
-      dataRights: jevPermittedRights,
-    });
+    // In smoke mode, test the application/Railway path on Task 5 (last task of smoke)
+    const isRailwayPathTask = isSmoke && idx === selectedTasks.length - 1;
+    let shadowEngine: ContextEngine;
+    let origRemoteProcessingEnv: string | undefined;
+
+    if (isRailwayPathTask) {
+      // Exercise Railway/Application path: SIFTR_JEV_REMOTE_PROCESSING set in environment,
+      // and dataRights intentionally OMITTED from ContextEngine options.
+      origRemoteProcessingEnv = process.env.SIFTR_JEV_REMOTE_PROCESSING;
+      process.env.SIFTR_JEV_REMOTE_PROCESSING = 'true';
+
+      shadowEngine = new ContextEngine({
+        repoRootDir,
+        sqliteStore: store,
+        jevShadowRunner: runner,
+        enableJevShadow: true,
+        // dataRights intentionally omitted to verify resolveApplicationDataRights()
+      });
+
+      // Verify that ContextEngine resolved remoteProcessingAllowed: true
+      if (shadowEngine.getDataRights().remoteProcessingAllowed !== true) {
+        throw new Error(
+          'Railway path verification failed: Expected ContextEngine to resolve remoteProcessingAllowed: true from SIFTR_JEV_REMOTE_PROCESSING'
+        );
+      }
+    } else {
+      // Engine with JEV shadow runner enabled
+      shadowEngine = new ContextEngine({
+        repoRootDir,
+        sqliteStore: store,
+        jevShadowRunner: runner,
+        enableJevShadow: true,
+        dataRights: jevPermittedRights,
+      });
+    }
 
     // Engine WITHOUT JEV (baseline for bit-for-bit invariance verification)
     const baselineEngine = new ContextEngine({
       repoRootDir,
       sqliteStore: store,
       enableJevShadow: false,
-      dataRights: jevPermittedRights,
+      dataRights: isRailwayPathTask ? undefined : jevPermittedRights,
     });
 
-    // Generate baseline plan
+    // Generate baseline plan with canonical snapshot
     const baselinePlan = baselineEngine.generatePlan({
       task,
       units: repoUnits,
       graph: repoGraph,
       gitIntelligence: repoGit,
+      snapshot: repoSnapshot,
     });
 
-    // Generate shadow plan
+    // Generate shadow plan with canonical snapshot
     const shadowPlan = shadowEngine.generatePlan({
       task,
       units: repoUnits,
       graph: repoGraph,
       gitIntelligence: repoGit,
+      snapshot: repoSnapshot,
     });
 
     // Await JEV shadow signals
     const signals = (await shadowPlan.jevPromise) || [];
+
+    if (isRailwayPathTask) {
+      if (origRemoteProcessingEnv !== undefined) {
+        process.env.SIFTR_JEV_REMOTE_PROCESSING = origRemoteProcessingEnv;
+      } else {
+        delete process.env.SIFTR_JEV_REMOTE_PROCESSING;
+      }
+      console.log(`    ✔ [Railway Path Verification] Task ${idx + 1} verified SIFTR_JEV_REMOTE_PROCESSING application path (dataRights omitted)`);
+    }
 
     // Canonical JevCallTracker accounting
     const tracker = runner.getLastTracker();
@@ -1067,6 +1153,34 @@ export async function runTypeSafeJevPilotStudy(options: {
   console.log(`[Lineage Verification] Mismatched Decision AgentEnvironment IDs: ${mismatchedDecisionAgentEnvs.count}`);
   if (mismatchedDecisionAgentEnvs.count > 0) {
     throw new Error(`Lineage failure: Found ${mismatchedDecisionAgentEnvs.count} decision observations with mismatched agentEnvironmentId`);
+  }
+
+  // Verify zero mismatched WorkspaceSnapshot IDs between context plans and sessions
+  const mismatchedPlanSnapshots = (store as any).db.prepare(`
+    SELECT COUNT(*) as count 
+    FROM context_plans p 
+    JOIN sessions s ON json_extract(p.raw_json, '$.sessionId') = s.session_id 
+    WHERE p.snapshot_id != s.initial_snapshot_id
+       OR p.snapshot_id IS NULL
+       OR p.snapshot_id = ''
+  `).get() as { count: number };
+  console.log(`[Lineage Verification] Mismatched Plan WorkspaceSnapshot IDs: ${mismatchedPlanSnapshots.count}`);
+  if (mismatchedPlanSnapshots.count > 0) {
+    throw new Error(`Lineage failure: Found ${mismatchedPlanSnapshots.count} context plans with mismatched workspaceSnapshotId`);
+  }
+
+  // Verify zero mismatched WorkspaceSnapshot IDs between JEV judgments and sessions
+  const mismatchedJevSnapshots = (store as any).db.prepare(`
+    SELECT COUNT(*) as count 
+    FROM jev_shadow_judgments j 
+    JOIN sessions s ON j.session_id = s.session_id 
+    WHERE j.workspace_snapshot_id != s.initial_snapshot_id
+       OR j.workspace_snapshot_id IS NULL
+       OR j.workspace_snapshot_id = ''
+  `).get() as { count: number };
+  console.log(`[Lineage Verification] Mismatched JEV WorkspaceSnapshot IDs: ${mismatchedJevSnapshots.count}`);
+  if (mismatchedJevSnapshots.count > 0) {
+    throw new Error(`Lineage failure: Found ${mismatchedJevSnapshots.count} JEV signals with mismatched workspaceSnapshotId`);
   }
 
   // Close SQLite store connection and cleanup temp dir

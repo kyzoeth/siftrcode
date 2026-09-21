@@ -14,12 +14,23 @@ import { createDefaultDataRights } from '../rights/data_rights';
 import { ClaudeCodeAdapter } from '../agents/agent_adapter';
 import { ContextResolution } from '../context/context_resolution';
 import { TrustLevel } from '../security/trust';
+import { createWorkspaceSnapshot } from '../workspace/workspace_snapshot';
 
 console.log('🧪 Testing ContextEngine End-to-End Pipeline (Phase 16)...\n');
 
 // 1. Setup Realistic Units
-const snapshotId = 'snap_w0';
 const repoId = 'repo_e2e';
+const snapshot = createWorkspaceSnapshot({
+  repositories: [
+    {
+      repositoryId: repoId,
+      baseCommitSha: 'commit_e2e',
+      trackedTreeHash: 'tree_e2e',
+      dirtyPatchHash: 'clean',
+    },
+  ],
+});
+const snapshotId = snapshot.workspaceSnapshotId;
 
 const unitWebhook: ContextUnit = {
   id: generateSymbolUnitId(repoId, 'src/webhook.ts', 'WebhookHandler', SymbolKind.CLASS),
@@ -206,6 +217,7 @@ const plan: ContextPlan = engine.generatePlan({
   task,
   units: allUnits,
   graph,
+  snapshot,
 });
 
 assert.ok(plan.planId.startsWith('cplan_'));

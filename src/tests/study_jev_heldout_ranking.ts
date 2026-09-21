@@ -1174,6 +1174,44 @@ export async function runHeldOutRankingStudy(options: {
   const siftrGit = new GitGraphIntelligence({ repoDir: rootDir });
   console.log(`  ✔ SiftrCode (LOCAL_FIRST_PARTY): ${siftrUnits.length} units, ${siftrGraph.getAllNodes().length} graph nodes`);
 
+  // Canonical WorkspaceSnapshots for each evaluated repository
+  const repoSnapshots: Record<'express' | 'fastapi' | 'siftrcode', WorkspaceSnapshot> = {
+    express: createWorkspaceSnapshot({
+      repositories: [
+        {
+          repositoryId: 'express',
+          baseCommitSha: 'commit_express_heldout',
+          trackedTreeHash: 'tree_express_heldout',
+          dirtyPatchHash: 'clean',
+        },
+      ],
+    }),
+    fastapi: createWorkspaceSnapshot({
+      repositories: [
+        {
+          repositoryId: 'fastapi',
+          baseCommitSha: 'commit_fastapi_heldout',
+          trackedTreeHash: 'tree_fastapi_heldout',
+          dirtyPatchHash: 'clean',
+        },
+      ],
+    }),
+    siftrcode: createWorkspaceSnapshot({
+      repositories: [
+        {
+          repositoryId: 'siftrcode',
+          baseCommitSha: 'commit_siftrcode_heldout',
+          trackedTreeHash: 'tree_siftrcode_heldout',
+          dirtyPatchHash: 'clean',
+        },
+      ],
+    }),
+  };
+
+  for (const u of expressUnits) u.workspaceSnapshotId = repoSnapshots.express.workspaceSnapshotId;
+  for (const u of fastapiUnits) u.workspaceSnapshotId = repoSnapshots.fastapi.workspaceSnapshotId;
+  for (const u of siftrUnits) u.workspaceSnapshotId = repoSnapshots.siftrcode.workspaceSnapshotId;
+
   // Master map for prompt-aware evaluation
   const masterUnitsMap = new Map<string, ContextUnit>();
   for (const u of [...expressUnits, ...fastapiUnits, ...siftrUnits]) {
@@ -1246,10 +1284,11 @@ export async function runHeldOutRankingStudy(options: {
       repoGit = siftrGit;
     }
 
+    const repoSnapshot = repoSnapshots[taskSpec.repo];
     const task = createTaskContext({
       taskId: taskSpec.taskId,
       sessionId: `session_${taskSpec.taskId}`,
-      workspaceSnapshotId: `snapshot_${taskSpec.repo}`,
+      workspaceSnapshotId: repoSnapshot.workspaceSnapshotId,
       primaryPrompt: taskSpec.prompt,
       agentEnvironment: createAgentEnvironment({ model: 'claude-3-5-sonnet' }),
       evidence: [
@@ -1323,7 +1362,7 @@ export async function runHeldOutRankingStudy(options: {
       enableJevShadow: false,
       dataRights: permittedRights,
     });
-    const planA = engineNoJev.generatePlan({ task, units: repoUnits, graph: repoGraph, gitIntelligence: repoGit });
+    const planA = engineNoJev.generatePlan({ task, units: repoUnits, graph: repoGraph, gitIntelligence: repoGit, snapshot: repoSnapshot });
 
     const shadowRunner = new JevShadowRunner({
       client,
@@ -1344,7 +1383,7 @@ export async function runHeldOutRankingStudy(options: {
       jevShadowRunner: shadowRunner,
       dataRights: permittedRights,
     });
-    const planB = engineWithShadow.generatePlan({ task, units: repoUnits, graph: repoGraph, gitIntelligence: repoGit });
+    const planB = engineWithShadow.generatePlan({ task, units: repoUnits, graph: repoGraph, gitIntelligence: repoGit, snapshot: repoSnapshot });
 
     // Await shadow JEV signals
     const signals: JevSignalV1[] = (await planB.jevPromise) || [];

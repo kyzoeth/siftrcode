@@ -157,6 +157,10 @@ export class ContextEngine {
     }
   }
 
+  public getDataRights(): DataRights {
+    return this.dataRights;
+  }
+
   /**
    * Authoritative session management: retrieves an existing active session or creates and persists a new one.
    * Enforces agentEnvironmentId and taskId lineage consistency (Sections 5-7).
@@ -663,6 +667,19 @@ export class ContextEngine {
       throw sessionErr;
     }
 
+    // Enforce WorkspaceSnapshot equality: TaskContext.workspaceSnapshotId must match WorkspaceSnapshot.workspaceSnapshotId
+    if (task.workspaceSnapshotId && task.workspaceSnapshotId !== snapshot.workspaceSnapshotId) {
+      const snapshotErr = new Error(
+        `WORKSPACE_SNAPSHOT_MISMATCH: TaskContext "${task.taskId}" workspaceSnapshotId "${task.workspaceSnapshotId}" does not match WorkspaceSnapshot id "${snapshot.workspaceSnapshotId}".`
+      );
+      (snapshotErr as any).code = 'WORKSPACE_SNAPSHOT_MISMATCH';
+      throw snapshotErr;
+    }
+
+    if (!task.workspaceSnapshotId) {
+      task.workspaceSnapshotId = snapshot.workspaceSnapshotId;
+    }
+
     // ContextEngine authoritatively retrieves and validates active SiftrSession
     const session = this.getOrCreateSession({
       sessionId: task.sessionId,
@@ -672,11 +689,12 @@ export class ContextEngine {
     });
     const effectiveSessionId = session.sessionId;
 
-    // Immediately bind effectiveSessionId to TaskContext so there is never a sessionless task downstream
+    // Immediately bind effectiveSessionId and workspaceSnapshotId to TaskContext
     task.sessionId = effectiveSessionId;
     const boundTask: TaskContext = {
       ...task,
       sessionId: effectiveSessionId,
+      workspaceSnapshotId: snapshot.workspaceSnapshotId,
     };
 
     const decisionObservations: CandidateDecisionObservation[] = [];

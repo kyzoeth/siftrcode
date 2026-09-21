@@ -39,6 +39,13 @@ export interface TypeSafeSystemOneClientOptions {
   baseURL?: string;
   defaultModel?: string;
   timeoutMs?: number;
+  retry?: {
+    maxRetries?: number;
+    backoffInitialMs?: number;
+    backoffMaxMs?: number;
+    backoffJitter?: number;
+    [key: string]: any;
+  };
 }
 
 /**
@@ -46,6 +53,7 @@ export interface TypeSafeSystemOneClientOptions {
  */
 export class TypeSafeSystemOneClient implements SystemOneClient {
   private client: TypeSafeClient;
+  public readonly options: TypeSafeSystemOneClientOptions;
 
   constructor(options: TypeSafeSystemOneClientOptions = {}) {
     const apiKey = options.apiKey || process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY;
@@ -53,11 +61,14 @@ export class TypeSafeSystemOneClient implements SystemOneClient {
       throw new Error('TYPESAFE_API_KEY or JEV_API_KEY is required to initialize TypeSafeSystemOneClient');
     }
 
+    this.options = { ...options, apiKey };
+
     this.client = new TypeSafeClient({
       apiKey,
       baseURL: options.baseURL || process.env.TYPESAFE_BASE_URL,
       defaultModel: options.defaultModel || process.env.TYPESAFE_DEFAULT_MODEL || 'jev-latest',
       timeout: options.timeoutMs ?? 10000,
+      retry: options.retry,
     });
   }
 
