@@ -175,7 +175,6 @@ export function isOperationPermitted(
  * In accordance with Section 78: customer proprietary source != training data.
  */
 export function createDefaultDataRights(overrides: Partial<DataRights> = {}): DataRights {
-  const operationRights = overrides.operationRights || createDefaultOperationRightsPolicy();
   return {
     remoteProcessingAllowed: false,
     telemetryAllowed: true,
@@ -190,12 +189,18 @@ export function createDefaultDataRights(overrides: Partial<DataRights> = {}): Da
     derivedNumericFeaturesAllowed: true,
     trajectoryRetentionAllowed: false,
     retentionDays: 30,
-    operationRights,
     ...overrides,
   };
 }
 
 export function isDataClassPermitted(rights: DataRights, dataClass: DataClass): boolean {
+  // Authoritative check across every durable write:
+  // operationRights.*.retention.local takes precedence over legacy flat flags
+  if (rights.operationRights && rights.operationRights[dataClass]?.retention?.local !== undefined) {
+    return rights.operationRights[dataClass].retention.local;
+  }
+
+  // Legacy flat flags as backward-compatible fallback
   switch (dataClass) {
     case DataClass.RAW_SOURCE:
       return rights.rawSourceRetentionAllowed;

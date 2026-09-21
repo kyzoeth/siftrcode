@@ -152,7 +152,9 @@ export interface TrainingEvidenceRecord {
   tenantId?: string;
   features: ContextFeaturesV1;
   semanticRelevance?: number;
-  readEvidence: { wasRead: boolean; readCount?: number; confidence: number };
+  exposure?: { wasExposed: boolean; resolution?: ContextResolution; policyId?: string };
+  observabilityLevel?: string;
+  readEvidence: { wasRead: boolean | null; readCount?: number; confidence: number };
   editEvidence: { wasEdited: boolean; editCount?: number; confidence: number };
   testEvidence: { testsPassed?: boolean; regressionTestsPassed?: boolean; confidence: number };
   rootCauseEvidence: { isRootCause?: boolean; confidence: number };
@@ -174,7 +176,9 @@ export function createTrainingEvidenceRecord(params: {
   tenantId?: string;
   features: ContextFeaturesV1;
   semanticRelevance?: number;
-  readEvidence?: { wasRead: boolean; readCount?: number; confidence: number };
+  exposure?: { wasExposed: boolean; resolution?: ContextResolution; policyId?: string };
+  observabilityLevel?: string;
+  readEvidence?: { wasRead: boolean | null; readCount?: number; confidence: number };
   editEvidence?: { wasEdited: boolean; editCount?: number; confidence: number };
   testEvidence?: { testsPassed?: boolean; regressionTestsPassed?: boolean; confidence: number };
   rootCauseEvidence?: { isRootCause?: boolean; confidence: number };
@@ -210,6 +214,10 @@ export function createTrainingEvidenceRecord(params: {
     createdAt: exportedAt,
   });
 
+  const defaultRead = params.exposure && !params.exposure.wasExposed
+    ? null
+    : (params.observabilityLevel === 'SIFTR_CALLS_ONLY' || params.observabilityLevel === 'PARTIAL_AGENT_TRACE' ? null : false);
+
   return {
     evidenceId,
     datasetVersion: params.datasetVersion,
@@ -219,7 +227,9 @@ export function createTrainingEvidenceRecord(params: {
     tenantId: params.tenantId,
     features: params.features,
     semanticRelevance: params.semanticRelevance,
-    readEvidence: params.readEvidence || { wasRead: false, confidence: 0.5 },
+    exposure: params.exposure,
+    observabilityLevel: params.observabilityLevel,
+    readEvidence: params.readEvidence || { wasRead: defaultRead, confidence: 0.5 },
     editEvidence: params.editEvidence || { wasEdited: false, confidence: 0.5 },
     testEvidence: params.testEvidence || { confidence: 0.5 },
     rootCauseEvidence: params.rootCauseEvidence || { confidence: 0.5 },
@@ -238,7 +248,7 @@ export function createTrainingEvidenceRecord(params: {
 export function deriveBinaryTrainingRow(evidence: TrainingEvidenceRecord): TrainingRow {
   const isPositive =
     evidence.editEvidence.wasEdited ||
-    (evidence.verifiedOutcomeAssociation.verifiedSuccess === true && evidence.readEvidence.wasRead);
+    (evidence.verifiedOutcomeAssociation.verifiedSuccess === true && evidence.readEvidence.wasRead === true);
 
   const confidence = Math.max(
     evidence.editEvidence.confidence,
@@ -246,9 +256,22 @@ export function deriveBinaryTrainingRow(evidence: TrainingEvidenceRecord): Train
     evidence.readEvidence.confidence
   );
 
-  const outcomeLabel: ResolvedOutcomeLabel = isPositive
-    ? 'POSITIVE'
-    : (evidence.readEvidence.wasRead ? 'UNKNOWN' : 'UNEXPOSED_UNKNOWN');
+  let outcomeLabel: ResolvedOutcomeLabel = 'UNKNOWN';
+  if (isPositive) {
+    outcomeLabel = 'POSITIVE';
+  } else if (evidence.exposure && !evidence.exposure.wasExposed) {
+    outcomeLabel = 'UNEXPOSED_UNKNOWN';
+  } else if (
+    evidence.observabilityLevel === 'SIFTR_CALLS_ONLY' ||
+    evidence.observabilityLevel === 'PARTIAL_AGENT_TRACE' ||
+    evidence.readEvidence.wasRead === null
+  ) {
+    outcomeLabel = 'UNKNOWN';
+  } else if (evidence.verifiedOutcomeAssociation.verifiedSuccess === true) {
+    outcomeLabel = 'WEAK_NEGATIVE';
+  } else {
+    outcomeLabel = 'UNKNOWN';
+  }
 
   return {
     rowId: `trow_${evidence.evidenceId}`,
@@ -269,23 +292,46 @@ export function deriveBinaryTrainingRow(evidence: TrainingEvidenceRecord): Train
 
 /**
  * Derives a graded relevance integer label (0 to 4) for listwise/pairwise rankers (ContextRank).
+ * Returns null for unexposed, unobserved, or unverified items (tri-state, preventing false negative grade 0).
  */
 export function deriveRankingTrainingExample(evidence: TrainingEvidenceRecord): {
-  relevanceGrade: number; // 0 = distractor, 1 = unread, 2 = read, 3 = critical dependency, 4 = causal edit target
+  relevanceGrade: number | null; // null = UNKNOWN / UNEXPOSED / UNOBSERVED; 0 = distractor, 1 = unread, 2 = read, 3 = critical dependency, 4 = causal edit target
   confidence: number;
 } {
+  // 1. Positive interactions: edits and reads
   if (evidence.editEvidence.wasEdited && evidence.verifiedOutcomeAssociation.verifiedSuccess) {
     return { relevanceGrade: 4, confidence: evidence.editEvidence.confidence };
   }
   if (evidence.editEvidence.wasEdited) {
     return { relevanceGrade: 3, confidence: evidence.editEvidence.confidence };
   }
-  if (evidence.readEvidence.wasRead && evidence.verifiedOutcomeAssociation.verifiedSuccess) {
+  if (evidence.readEvidence.wasRead === true && evidence.verifiedOutcomeAssociation.verifiedSuccess) {
     return { relevanceGrade: 2, confidence: evidence.readEvidence.confidence };
   }
-  if (evidence.readEvidence.wasRead) {
+  if (evidence.readEvidence.wasRead === true) {
     return { relevanceGrade: 1, confidence: evidence.readEvidence.confidence };
   }
-  return { relevanceGrade: 0, confidence: 0.6 };
+
+  // 2. Unexposed or unobserved candidates: NEVER automatically turn into relevance grade 0!
+  if (evidence.exposure && !evidence.exposure.wasExposed) {
+    return { relevanceGrade: null, confidence: 0.0 };
+  }
+  if (
+    evidence.observabilityLevel === 'SIFTR_CALLS_ONLY' ||
+    evidence.observabilityLevel === 'PARTIAL_AGENT_TRACE' ||
+    evidence.readEvidence.wasRead === null
+  ) {
+    return { relevanceGrade: null, confidence: 0.0 };
+  }
+
+  // 3. Confirmed negative distractor (relevance grade 0):
+  // ONLY supported when candidate was exposed under FULL_TOOL_TRACE / HARNESS_NATIVE,
+  // confirmed unread and unedited, and the task SUCCEEDED.
+  if (evidence.verifiedOutcomeAssociation.verifiedSuccess === true) {
+    return { relevanceGrade: 0, confidence: 0.6 };
+  }
+
+  // If task failed or outcome is unverified, candidate remains UNKNOWN (null)
+  return { relevanceGrade: null, confidence: 0.0 };
 }
 

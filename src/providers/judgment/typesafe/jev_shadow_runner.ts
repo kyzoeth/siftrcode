@@ -233,9 +233,9 @@ export class JevShadowRunner {
           return;
         }
 
-        // 3. Pre-flight check: Call budget (Part XI Section 28 - increment BEFORE attempting work)
-        const canCall = tracker.recordCallAttempt();
-        if (!canCall) {
+        // 3. Pre-flight check: Call budget (Part XI Section 28)
+        if (!tracker.canAttemptCall()) {
+          tracker.recordBudgetSkipped();
           signals.push(
             createJevSignalV1({
               taskId: task.taskId,
@@ -301,7 +301,7 @@ export class JevShadowRunner {
                 candidate: {
                   contextUnitId: unit.id,
                   kind: unit.kind,
-                  title: sanitized.fields.title || unit.title,
+                  title: sanitized.fields.title || (unit.kind === ContextUnitKind.CODE_SYMBOL ? '[REDACTED_SYMBOL]' : '[REDACTED]'),
                   path: sanitized.fields.path,
                   signature: sanitized.fields.signature,
                 },
@@ -327,6 +327,11 @@ export class JevShadowRunner {
                 }
               }
 
+              // Record attempt right before remote dispatch
+              if (!tracker.recordCallAttempt()) {
+                throw new Error('BUDGET_EXHAUSTED: maxCallsPerTask limit reached');
+              }
+
               // Invoke SystemOneClient
               return await this.client!.evaluate({
                 state: candidateState as any,
@@ -335,11 +340,12 @@ export class JevShadowRunner {
             }
           );
 
-          tracker.recordCallSuccess();
           const latencyMs = Date.now() - startTime;
 
           // Validate response structure
-          if (!result || !result.answers || typeof result.answers !== 'object') {
+          const hasAnswers = result && result.answers && typeof result.answers === 'object';
+          if (!hasAnswers) {
+            tracker.recordCallFailure();
             signals.push(
               createJevSignalV1({
                 taskId: task.taskId,
@@ -363,6 +369,7 @@ export class JevShadowRunner {
             return;
           }
 
+          tracker.recordCallSuccess();
           signals.push(
             createJevSignalV1({
               taskId: task.taskId,
@@ -383,7 +390,6 @@ export class JevShadowRunner {
             })
           );
         } catch (err: any) {
-          tracker.recordCallFailure();
           const latencyMs = Date.now() - startTime;
           const msg = (err?.message || '').toLowerCase();
           const errName = (err?.name || '').toLowerCase();
@@ -394,17 +400,23 @@ export class JevShadowRunner {
             tracker.recordRightsDenied();
           } else if (msg.includes('trust') || msg.includes('untrusted')) {
             fallbackReason = JevFallbackReason.TRUST_DENIED;
-          } else if (
-            errName.includes('timeout') ||
-            msg.includes('timeout') ||
-            msg.includes('timed out') ||
-            msg.includes('abort')
-          ) {
-            fallbackReason = JevFallbackReason.TIMEOUT;
-          } else if (msg.includes('rate') || msg.includes('429') || err?.status === 429) {
-            fallbackReason = JevFallbackReason.RATE_LIMITED;
-          } else if (msg.includes('malformed') || msg.includes('syntax') || msg.includes('parse')) {
-            fallbackReason = JevFallbackReason.MALFORMED_RESPONSE;
+          } else if (msg.includes('budget_exhausted')) {
+            fallbackReason = JevFallbackReason.BUDGET_EXHAUSTED;
+            tracker.recordBudgetSkipped();
+          } else {
+            tracker.recordCallFailure();
+            if (
+              errName.includes('timeout') ||
+              msg.includes('timeout') ||
+              msg.includes('timed out') ||
+              msg.includes('abort')
+            ) {
+              fallbackReason = JevFallbackReason.TIMEOUT;
+            } else if (msg.includes('rate') || msg.includes('429') || err?.status === 429) {
+              fallbackReason = JevFallbackReason.RATE_LIMITED;
+            } else if (msg.includes('malformed') || msg.includes('syntax') || msg.includes('parse')) {
+              fallbackReason = JevFallbackReason.MALFORMED_RESPONSE;
+            }
           }
 
           signals.push(

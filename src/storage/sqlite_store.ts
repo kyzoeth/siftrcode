@@ -28,7 +28,7 @@ import { JevSignalV1 } from '../providers/judgment/typesafe/jev_signal';
 import { SourceProvenance } from '../rights/source_provenance';
 import { TrainingRow, TrainingEvidenceRecord } from '../learning/lineage';
 import { DeletionAuditRecord } from '../rights/deletion_manager';
-import { DataRights, createDefaultDataRights } from '../rights/data_rights';
+import { DataRights, createDefaultDataRights, DataClass, isDataClassPermitted } from '../rights/data_rights';
 import {
   sanitizeContextPlanForPersistence,
   sanitizeContextUnitForPersistence,
@@ -1168,7 +1168,7 @@ export class SqliteStore {
 
   public saveTrajectoryEvents(events: TrajectoryEvent[], sessionId?: string, snapshotId?: string, rights?: DataRights): void {
     if (events.length === 0) return;
-    if (rights && rights.trajectoryRetentionAllowed === false) {
+    if (rights && !isDataClassPermitted(rights, DataClass.TRAJECTORY)) {
       return;
     }
 
@@ -1660,7 +1660,7 @@ export class SqliteStore {
   public saveJevShadowJudgments(signals: JevSignalV1[], rights?: DataRights): void {
     if (signals.length === 0) return;
 
-    const allowNumeric = rights ? (rights.derivedNumericFeaturesAllowed !== false) : true;
+    const allowNumeric = rights ? isDataClassPermitted(rights, DataClass.NUMERIC_FEATURE) : true;
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO jev_shadow_judgments (

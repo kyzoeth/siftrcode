@@ -8,6 +8,7 @@ import {
 } from '../telemetry/candidate_observation';
 import { CandidateDecisionObservation } from '../telemetry/decision_observation';
 import { OutcomeEvidence } from '../telemetry/outcome_evidence';
+import { isExposedV2 } from '../telemetry/exposure_decision';
 import { TrainingEvidenceRecord, createTrainingEvidenceRecord } from './lineage';
 
 export interface BuildObservationOptions {
@@ -135,8 +136,23 @@ export class DatasetBuilder {
     rightsReference?: string;
   }): TrainingEvidenceRecord {
     const { decision, behavior, outcomeEvidence } = params;
+    const wasExposed = isExposedV2(decision.exposureDecision);
+    const obsLevel = decision.observabilityLevel;
     const read = behavior?.read === true;
     const edited = behavior?.edited === true;
+
+    let wasRead: boolean | null = null;
+    if (wasExposed) {
+      if (read) {
+        wasRead = true;
+      } else if (obsLevel === 'FULL_TOOL_TRACE' || obsLevel === 'HARNESS_NATIVE') {
+        wasRead = false;
+      } else {
+        wasRead = null; // Unobserved under limited trace
+      }
+    } else {
+      wasRead = null; // Unexposed
+    }
 
     return createTrainingEvidenceRecord({
       datasetVersion: params.datasetVersion || 'v2.0.0-evidence',
@@ -147,10 +163,16 @@ export class DatasetBuilder {
       tenantId: params.tenantId,
       features: decision.features,
       semanticRelevance: decision.features.heuristicScore,
+      exposure: {
+        wasExposed,
+        resolution: decision.exposureDecision.resolution,
+        policyId: decision.exposureDecision.policyId,
+      },
+      observabilityLevel: obsLevel,
       readEvidence: {
-        wasRead: read,
+        wasRead,
         readCount: read ? 1 : 0,
-        confidence: read ? 0.95 : 0.7,
+        confidence: read ? 0.95 : (wasRead === false ? 0.8 : 0.5),
       },
       editEvidence: {
         wasEdited: edited,

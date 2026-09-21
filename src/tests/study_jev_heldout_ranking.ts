@@ -1364,15 +1364,23 @@ export async function runHeldOutRankingStudy(options: {
     const probObj = { semRel: [] as number[], impNeed: [] as number[], editTarget: [] as number[], rootCause: [] as number[] };
 
     for (const sig of signals) {
-      const sem = sig.semanticRelevanceProbability ?? 0.3;
-      const imp = sig.implementationNeededProbability ?? 0.25;
-      const edit = sig.likelyEditTargetProbability ?? 0.2;
-      const root = sig.likelyRootCauseProbability ?? 0.2;
+      // Invariant: Stop substituting fixed JEV probabilities for missing answers in the held-out study.
+      if (
+        sig.fallbackReason !== undefined ||
+        sig.semanticRelevanceProbability === null
+      ) {
+        continue;
+      }
+
+      const sem = sig.semanticRelevanceProbability;
+      const imp = sig.implementationNeededProbability ?? 0.0;
+      const edit = sig.likelyEditTargetProbability ?? 0.0;
+      const root = sig.likelyRootCauseProbability ?? 0.0;
 
       probObj.semRel.push(sem);
-      probObj.impNeed.push(imp);
-      probObj.editTarget.push(edit);
-      probObj.rootCause.push(root);
+      if (sig.implementationNeededProbability !== null) probObj.impNeed.push(imp);
+      if (sig.likelyEditTargetProbability !== null) probObj.editTarget.push(edit);
+      if (sig.likelyRootCauseProbability !== null) probObj.rootCause.push(root);
 
       judgmentsMap.set(sig.contextUnitId, {
         candidateUnitId: sig.contextUnitId,
