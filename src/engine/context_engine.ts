@@ -23,7 +23,7 @@ import { BundleComposer } from '../context/bundle_composer';
 import { BudgetSolver, BudgetLimits, BUDGET_PROFILES, BudgetProfileName } from '../context/budget_solver';
 import { ContextResolution } from '../context/context_resolution';
 import { ResolutionRanker } from '../context/resolution_rank';
-import { createExposureDecision, ExposureDecision } from '../telemetry/exposure_decision';
+import { createExposureDecision, createExposureDecisionV2, ExposureDecision, ExposureDecisionV2 } from '../telemetry/exposure_decision';
 import { TrajectoryLogger } from '../telemetry/trajectory_event';
 import { ContextPlan, PlannedUnit } from './context_plan';
 import { WorkspaceManager } from '../workspace/workspace_manager';
@@ -415,7 +415,11 @@ export class ContextEngine {
 
     // 9. Telemetry: Record Exposure Decisions & Trajectory Log
     const exposureDecisions: ExposureDecision[] = [];
+    const exposureDecisionsV2: ExposureDecisionV2[] = [];
     const recordedUnitIds = new Set<string>();
+
+    const policyId = 'siftr-deterministic';
+    const policyVersion = '2.1.0';
 
     for (let i = 0; i < rankedCandidates.length; i++) {
       const rc = rankedCandidates[i];
@@ -428,6 +432,23 @@ export class ContextEngine {
         exposureCostTokens: planned ? planned.tokenEstimate : 0,
       });
       exposureDecisions.push(decision);
+
+      const decisionV2 = createExposureDecisionV2({
+        contextUnitId: rc.contextUnitId,
+        eligibleForSelection: true,
+        selected: planned !== undefined,
+        candidateRank: i + 1,
+        finalBundleRank: planned ? plannedUnits.indexOf(planned) + 1 : undefined,
+        resolution: planned ? planned.resolution : ContextResolution.OMIT,
+        actualTokenCost: planned ? planned.tokenEstimate : 0,
+        contextPlanId: planId,
+        policyId,
+        policyVersion,
+        selectionProbability: planned ? 1.0 : undefined,
+        timestamp: createdAt,
+      });
+      exposureDecisionsV2.push(decisionV2);
+
       recordedUnitIds.add(rc.contextUnitId);
     }
 
@@ -439,10 +460,27 @@ export class ContextEngine {
           createExposureDecision({
             contextUnitId: u.id,
             exposureResolution: ContextResolution.OMIT,
-            exposureRank: nextRank++,
+            exposureRank: nextRank,
             exposureCostTokens: 0,
           })
         );
+        exposureDecisionsV2.push(
+          createExposureDecisionV2({
+            contextUnitId: u.id,
+            eligibleForSelection: false,
+            selected: false,
+            candidateRank: undefined,
+            finalBundleRank: undefined,
+            resolution: ContextResolution.OMIT,
+            actualTokenCost: 0,
+            contextPlanId: planId,
+            policyId,
+            policyVersion,
+            selectionProbability: undefined,
+            timestamp: createdAt,
+          })
+        );
+        nextRank++;
         recordedUnitIds.add(u.id);
       }
     }
@@ -455,6 +493,8 @@ export class ContextEngine {
       savingsPercentage: budgetPlan.savingsPercentage,
       costSavedUSD: budgetPlan.costSavedUSD,
       overflowReason,
+      policyId,
+      policyVersion,
     });
 
     return {
@@ -464,6 +504,9 @@ export class ContextEngine {
       units: plannedUnits,
       formattedContext,
       exposureDecisions,
+      exposureDecisionsV2,
+      policyId,
+      policyVersion,
       dataRights: this.dataRights,
       actualRenderedTokens,
       overflowReason,
