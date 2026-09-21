@@ -7,6 +7,7 @@ export enum DataClass {
   RAW_SOURCE = 'RAW_SOURCE',
   SOURCE_SNIPPET = 'SOURCE_SNIPPET',
   SYMBOL_NAME = 'SYMBOL_NAME',
+  SYMBOL_METADATA = 'SYMBOL_METADATA',
   PATH = 'PATH',
   TASK_PROMPT = 'TASK_PROMPT',
   EMBEDDING = 'EMBEDDING',
@@ -73,6 +74,11 @@ export function createDefaultOperationRightsPolicy(
       training: false,
     },
     [DataClass.SYMBOL_NAME]: {
+      processing: { local: true, remote: false },
+      retention: { local: false, remote: false },
+      training: false,
+    },
+    [DataClass.SYMBOL_METADATA]: {
       processing: { local: true, remote: false },
       retention: { local: false, remote: false },
       training: false,
@@ -192,6 +198,7 @@ export function isDataClassPermitted(rights: DataRights, dataClass: DataClass): 
     case DataClass.SOURCE_SNIPPET:
       return rights.sourceSnippetRetentionAllowed;
     case DataClass.SYMBOL_NAME:
+    case DataClass.SYMBOL_METADATA:
       return rights.symbolMetadataAllowed;
     case DataClass.PATH:
       return rights.symbolMetadataAllowed;
@@ -214,4 +221,23 @@ export function isDataClassPermitted(rights: DataRights, dataClass: DataClass): 
     default:
       return false;
   }
+}
+
+/**
+ * Creates DataRights permitting remote processing for JEV candidate evaluation
+ * while strictly prohibiting remote retention and model training (Directive Section 15).
+ */
+export function createJevPermittedDataRights(overrides: Partial<DataRights> = {}): DataRights {
+  const jevPolicy = createDefaultOperationRightsPolicy({
+    [DataClass.TASK_PROMPT]: { processing: { local: true, remote: true } },
+    [DataClass.SYMBOL_NAME]: { processing: { local: true, remote: true } },
+    [DataClass.SYMBOL_METADATA]: { processing: { local: true, remote: true } },
+    [DataClass.PATH]: { processing: { local: true, remote: true } },
+  });
+
+  return createDefaultDataRights({
+    remoteProcessingAllowed: true,
+    operationRights: jevPolicy,
+    ...overrides,
+  });
 }

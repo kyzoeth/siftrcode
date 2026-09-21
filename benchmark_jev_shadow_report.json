@@ -1,0 +1,116 @@
+{
+  "timestamp": "2026-09-21T04:09:32.148Z",
+  "totalTasks": 140,
+  "taskTypeCounts": {
+    "BUG_FIX": 35,
+    "TEST_FAILURE": 35,
+    "FEATURE_ADDITION": 35,
+    "REFACTOR": 35
+  },
+  "signalStats": {
+    "semanticRelevance": {
+      "mean": 0.3466,
+      "std": 0.2009,
+      "median": 0.2937,
+      "min": 0.15,
+      "max": 0.9692,
+      "p95": 0.8838
+    },
+    "implementationNeeded": {
+      "mean": 0.2791,
+      "std": 0.2166,
+      "median": 0.2168,
+      "min": 0.1,
+      "max": 0.9798,
+      "p95": 0.9109
+    },
+    "likelyEditTarget": {
+      "mean": 0.1999,
+      "std": 0.2118,
+      "median": 0.1368,
+      "min": 0.05,
+      "max": 0.9681,
+      "p95": 0.864
+    },
+    "likelyRootCause": {
+      "mean": 0.17,
+      "std": 0.2108,
+      "median": 0.1077,
+      "min": 0.0401,
+      "max": 0.9594,
+      "p95": 0.8535
+    }
+  },
+  "oracleCorrelations": {
+    "editTargetCorrelation": 0.7474,
+    "rootCauseCorrelation": 0.772,
+    "relevanceCorrelation": 0.7802
+  },
+  "rankingMetrics": {
+    "deterministicBaseline": {
+      "ndcg5": 1,
+      "ndcg10": 1,
+      "recall5": 1,
+      "recall10": 1,
+      "recall20": 1,
+      "mrr": 1
+    },
+    "shadowAugmentedAblation": {
+      "ndcg5": 1,
+      "ndcg10": 1,
+      "recall5": 1,
+      "recall10": 1,
+      "recall20": 1,
+      "mrr": 1
+    },
+    "relativeImprovementPct": {
+      "ndcg10": 0,
+      "recall10": 0,
+      "mrr": 0
+    },
+    "stratifiedByTaskType": {
+      "BUG_FIX": {
+        "baselineNdcg10": 1,
+        "augmentedNdcg10": 1,
+        "baselineRecall10": 1,
+        "augmentedRecall10": 1
+      },
+      "TEST_FAILURE": {
+        "baselineNdcg10": 1,
+        "augmentedNdcg10": 1,
+        "baselineRecall10": 1,
+        "augmentedRecall10": 1
+      },
+      "FEATURE_ADDITION": {
+        "baselineNdcg10": 1,
+        "augmentedNdcg10": 1,
+        "baselineRecall10": 1,
+        "augmentedRecall10": 1
+      },
+      "REFACTOR": {
+        "baselineNdcg10": 1,
+        "augmentedNdcg10": 1,
+        "baselineRecall10": 1,
+        "augmentedRecall10": 1
+      }
+    }
+  },
+  "operationalMetrics": {
+    "totalJevCallsAttempted": 2800,
+    "totalJevCallsCompleted": 2800,
+    "callsPerTaskMean": 20,
+    "callsPerTaskMax": 20,
+    "latencyMs": {
+      "mean": 26.8954,
+      "p50": 27,
+      "p90": 36.1,
+      "p95": 38,
+      "p99": 39
+    },
+    "peakConcurrencyObserved": 4,
+    "redactionCount": 0,
+    "fallbackCount": 0,
+    "fallbackRatePct": 0,
+    "planInvarianceVerified": true
+  }
+}

@@ -9,7 +9,7 @@ import { packRepository } from '../core/packer';
 import { auditRepository } from '../core/auditor';
 import { ContextEngine } from '../engine/context_engine';
 import { getResolutionName, ContextResolution } from '../context/context_resolution';
-import { resolveSafeWorkspacePath } from '../workspace/workspace_source_reader';
+import { resolveSafeWorkspacePath, DefaultWorkspaceSourceReader } from '../workspace/workspace_source_reader';
 import { createOutcomeEvidence } from '../telemetry/outcome_evidence';
 import { createDefaultDataRights } from '../rights/data_rights';
 import { SqliteStore } from '../storage/sqlite_store';
@@ -20,8 +20,17 @@ import { TrustLevel } from '../security/trust';
 import { createSiftrSession, SiftrSession, SiftrSessionStatus } from '../telemetry/siftr_session';
 import { createContextExpansionEvent, ExpansionReason } from '../telemetry/expansion_event';
 import { createProviderUsageEvent } from '../token/provider_usage';
+import { createFinalContextAllocation } from '../token/final_allocation';
 import { createAgentEnvironment } from '../agents/agent_environment';
 import { ContextPlan } from '../engine/context_plan';
+import {
+  SiftrContextSchema,
+  SiftrExpandSchema,
+  SiftrOutcomeSchema,
+  SiftrSessionSchema,
+  SiftrRankSchema,
+  zodToJsonSchema,
+} from './schemas';
 
 export function createMcpServer(): Server {
   const server = new Server(
@@ -531,19 +540,46 @@ export function createMcpServer(): Server {
         }
 
         const workspaceDir = (args?.directory as string) || process.cwd();
-        const inputTaskId = args?.taskId ? String(args.taskId) : undefined;
-        const inputSessionId = args?.sessionId ? String(args.sessionId) : undefined;
-        let resolvedTaskId = inputTaskId;
-        if (!resolvedTaskId && inputSessionId) {
-          const sqlitePath = path.join(workspaceDir, '.siftr', 'observations.sqlite');
-          if (fs.existsSync(sqlitePath)) {
-            const lookupStore = new SqliteStore(sqlitePath);
-            const sess = lookupStore.getSiftrSession(inputSessionId);
-            if (sess) {
-              resolvedTaskId = sess.taskId;
-            }
+        const siftrDir = path.join(workspaceDir, '.siftr');
+        if (!fs.existsSync(siftrDir)) {
+          fs.mkdirSync(siftrDir, { recursive: true });
+        }
+        const sqlitePath = path.join(siftrDir, 'observations.sqlite');
+        const sessionStore = new SqliteStore(sqlitePath);
+
+        let inputSessionId = args?.sessionId ? String(args.sessionId) : undefined;
+        let resolvedTaskId = args?.taskId ? String(args.taskId) : undefined;
+
+        // Auto-create session if omitted (Milestone Part XVI Section 42)
+        if (!inputSessionId) {
+          const workspaceManager = new WorkspaceManager({ rootDir: workspaceDir });
+          const snapshot = await workspaceManager.captureSnapshot();
+          sessionStore.saveSnapshot(snapshot);
+
+          const autoTaskId = resolvedTaskId || `task_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+          resolvedTaskId = autoTaskId;
+
+          const env = createAgentEnvironment({
+            model: (args?.agentModel as string) || 'unknown',
+            agentProvider: 'unknown',
+          });
+
+          const autoSession = createSiftrSession({
+            taskId: autoTaskId,
+            agentEnvironmentId: env.systemConfigurationHash,
+            initialWorkspaceSnapshotId: snapshot.workspaceSnapshotId,
+            latestWorkspaceSnapshotId: snapshot.workspaceSnapshotId,
+            status: 'ACTIVE',
+          });
+          sessionStore.saveSiftrSession(autoSession);
+          inputSessionId = autoSession.sessionId;
+        } else if (!resolvedTaskId) {
+          const sess = sessionStore.getSiftrSession(inputSessionId);
+          if (sess) {
+            resolvedTaskId = sess.taskId;
           }
         }
+
         const agentModel = (args?.agentModel as string) || undefined;
         const agentKind = (args?.agentKind as any) || undefined;
         const budgetProfile = (args?.budgetProfile as any) || undefined;
@@ -569,10 +605,13 @@ export function createMcpServer(): Server {
 
         // Persist canonical FinalContextAllocation (Final Closure Directive Section 48)
         if (result.sqliteStore) {
-          result.sqliteStore.saveFinalContextAllocation({
+          result.sqliteStore.saveFinalContextAllocation(createFinalContextAllocation({
             planId: plan.planId,
             workspaceSnapshotId: plan.workspaceSnapshotId || 'snapshot_init',
             totalEstimatedTokens: plan.actualRenderedTokens || plan.estimatedRenderedTokens || 0,
+            renderedEstimatedTokens: plan.actualRenderedTokens || plan.estimatedRenderedTokens || 0,
+            allocatedEstimatedTokens: plan.budgetPlan.totalTokens,
+            budgetLimitTokens: plan.budgetPlan.totalTokens,
             budgetTokens: plan.budgetPlan.totalTokens,
             overflow: Boolean(plan.overflowReason),
             tokenizerMethod: plan.tokenEstimationMethod || 'HEURISTIC_CHARS',
@@ -584,7 +623,7 @@ export function createMcpServer(): Server {
               materializerVersion: DefaultContextUnitMaterializer.VERSION,
             })),
             recordedAt: new Date().toISOString(),
-          });
+          }));
         }
 
         const responsePayload: any = {
@@ -980,30 +1019,18 @@ export function createMcpServer(): Server {
           }
 
           const snapshotUnits = store.getContextUnitsBySnapshot(snapshot.workspaceSnapshotId);
-          let unit = snapshotUnits.find((u) => u.id === contextUnitId);
+          let unit = snapshotUnits.find((u) => u.id === contextUnitId) || store.getContextUnit(contextUnitId);
           if (!unit) {
-            unit = {
-              id: contextUnitId,
-              kind: ContextUnitKind.CODE_SYMBOL,
-              workspaceSnapshotId: snapshot.workspaceSnapshotId,
-              repositoryId: 'root',
-              path: plannedUnit.path || '',
-              title: plannedUnit.title,
-              provenance: {
-                sourceType: 'file',
-                sourceUri: plannedUnit.path || '',
-                extractedBy: 'siftr-engine',
-                timestamp: new Date().toISOString(),
-              },
-              trustLevel: TrustLevel.FIRST_PARTY_CODE,
-              metadata: {},
+            return {
+              content: [{ type: 'text', text: `Error: ERROR_CONTEXT_UNIT_NOT_FOUND - ContextUnit "${contextUnitId}" was not found in snapshot "${snapshot.workspaceSnapshotId}" or store. Expansion rejected.` }],
+              isError: true,
             };
           }
 
           const targetResolution = targetResolutionStr === 'full' ? ContextResolution.FULL : ContextResolution.BODY;
 
-          // Section 10: Use the exact same materializer as ContextEngine
-          const materializer = new DefaultContextUnitMaterializer();
+          // Section 10 & 39: Use canonical materializer with workspace source reader
+          const materializer = new DefaultContextUnitMaterializer(new DefaultWorkspaceSourceReader(workspaceDir));
           const materialized = materializer.materializeSync(unit, targetResolution, snapshot);
 
           let fallbackReason: string | undefined = undefined;
@@ -1144,23 +1171,9 @@ export function createMcpServer(): Server {
             }
           }
 
-          if (!session && inputSessionId) {
-            session = {
-              sessionId: inputSessionId,
-              taskId: inputTaskId || 'unknown',
-              agentEnvironmentId: 'unknown',
-              initialWorkspaceSnapshotId: 'snapshot_init',
-              latestWorkspaceSnapshotId: 'snapshot_init',
-              status: 'COMPLETED',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              endedAt: new Date().toISOString(),
-            };
-          }
-
           if (!session) {
             return {
-              content: [{ type: 'text', text: 'Error: Session not found to end.' }],
+              content: [{ type: 'text', text: `Error: ERROR_SESSION_NOT_FOUND - SiftrSession "${inputSessionId || inputTaskId || 'unknown'}" was not found in storage. Cannot end non-existent session.` }],
               isError: true,
             };
           }
@@ -1192,6 +1205,12 @@ export function createMcpServer(): Server {
         let session: SiftrSession | undefined;
         if (inputSessionId) {
           session = store.getSiftrSession(inputSessionId);
+          if (!session) {
+            return {
+              content: [{ type: 'text', text: `Error: ERROR_SESSION_NOT_FOUND - SiftrSession "${inputSessionId}" was not found in storage.` }],
+              isError: true,
+            };
+          }
         }
 
         const taskId = session?.taskId || inputTaskId;

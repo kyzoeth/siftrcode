@@ -44,7 +44,8 @@ const tests = [
   { name: 'V2 Learning Plane Runtime & Decision Observations (PR 0.4) Tests', file: 'test_learning_plane_runtime.js' },
   { name: 'V2 Token Accounting Semantics & Closure Gate (PR 0.5) Tests', file: 'test_token_accounting_semantics.js' },
   { name: 'V2 Audit Remediation Closure (PR 0.6) Tests', file: 'test_audit_remediation_closure.js' },
-  { name: 'V2 MCP Learning Loop & Lineage Integrity E2E (PR F7) Tests', file: 'test_mcp_learning_loop_e2e.js' }
+  { name: 'V2 MCP Learning Loop & Lineage Integrity E2E (PR F7) Tests', file: 'test_mcp_learning_loop_e2e.js' },
+  { name: 'V2 JEV Shadow Integration & Learning-Loop Closure (PR J6) Tests', file: 'test_jev_shadow_closure.js' }
 ];
 
 

@@ -10,6 +10,7 @@ import { ExposureDecision, ExposureDecisionV2 } from '../telemetry/exposure_deci
 import { CandidateDecisionObservation } from '../telemetry/decision_observation';
 import { DataRights } from '../rights/data_rights';
 import { TokenEstimationMethod } from '../token/tokenizer_registry';
+import { JevSignalV1 } from '../providers/judgment/typesafe/jev_signal';
 
 export interface PlannedUnit {
   contextUnitId: string;
@@ -43,6 +44,8 @@ export interface ContextPlan {
   tokenSafetyMargin?: number;
   overflowReason?: string;
   replanningAttempts?: number;
+  jevSignals?: JevSignalV1[];
+  jevPromise?: Promise<JevSignalV1[]>;
   createdAt: string;
 }
 

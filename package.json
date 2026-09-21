@@ -19,6 +19,7 @@
     "start": "node dist/bin/siftrcode.js",
     "serve": "node dist/server/web.js",
     "test": "node dist/tests/run_tests.js",
+    "benchmark:jev": "node dist/tests/benchmark_jev_shadow_study.js",
     "prepublishOnly": "npm run build && npm test"
   },
   "engines": {
@@ -49,13 +50,15 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1",
+    "@typesafe-ai/sdk": "^0.6.0",
     "chalk": "^4.1.2",
     "commander": "^12.1.0",
     "glob": "^10.4.5",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@types/node": "^22.13.1",
-    "@types/chalk": "^2.2.0"
+    "@types/chalk": "^2.2.0",
+    "@types/node": "^22.13.1"
   }
 }

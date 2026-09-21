@@ -24,6 +24,7 @@ import { SiftrSession, SiftrSessionStatus, createSiftrSession } from '../telemet
 import { ContextExpansionEvent } from '../telemetry/expansion_event';
 import { FinalContextAllocation } from '../token/final_allocation';
 import { ProviderUsageEvent } from '../token/provider_usage';
+import { JevSignalV1 } from '../providers/judgment/typesafe/jev_signal';
 import { SourceProvenance } from '../rights/source_provenance';
 import { TrainingRow, TrainingEvidenceRecord } from '../learning/lineage';
 import { DeletionAuditRecord } from '../rights/deletion_manager';
@@ -36,6 +37,7 @@ export { SiftrSession, SiftrSessionStatus } from '../telemetry/siftr_session';
 export { ContextExpansionEvent } from '../telemetry/expansion_event';
 export { FinalContextAllocation } from '../token/final_allocation';
 export { ProviderUsageEvent } from '../token/provider_usage';
+export { JevSignalV1 } from '../providers/judgment/typesafe/jev_signal';
 
 export interface StoredGraphEdge {
   fromUnitId: string;
@@ -460,6 +462,38 @@ const MIGRATIONS: Migration[] = [
       );
 
       CREATE INDEX IF NOT EXISTS idx_provider_usage_session ON provider_usage_events(session_id);
+    `,
+  },
+  {
+    version: 9,
+    name: '009_jev_shadow_judgments',
+    sql: `
+      CREATE TABLE IF NOT EXISTS jev_shadow_judgments (
+        signal_id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        session_id TEXT,
+        workspace_snapshot_id TEXT NOT NULL,
+        context_unit_id TEXT NOT NULL,
+        context_plan_id TEXT,
+        provider TEXT NOT NULL,
+        model TEXT,
+        question_set_version TEXT NOT NULL,
+        semantic_relevance_probability REAL,
+        implementation_needed_probability REAL,
+        likely_edit_target_probability REAL,
+        likely_root_cause_probability REAL,
+        latency_ms INTEGER NOT NULL,
+        input_tokens INTEGER,
+        request_id TEXT,
+        redaction_applied INTEGER NOT NULL,
+        fallback_reason TEXT,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_jev_shadow_task ON jev_shadow_judgments(task_id);
+      CREATE INDEX IF NOT EXISTS idx_jev_shadow_unit ON jev_shadow_judgments(context_unit_id);
+      CREATE INDEX IF NOT EXISTS idx_jev_shadow_session ON jev_shadow_judgments(session_id);
+      CREATE INDEX IF NOT EXISTS idx_jev_shadow_plan ON jev_shadow_judgments(context_plan_id);
     `,
   },
 ];
@@ -1592,6 +1626,80 @@ export class SqliteStore {
       cachedInputTokens: r.cached_input_tokens ?? undefined,
       costUsd: r.cost_usd ?? undefined,
       timestamp: r.timestamp,
+    }));
+  }
+
+  // ==========================================
+  // JEV Shadow Judgment Operations (Milestone PR J5)
+  // ==========================================
+
+  public saveJevShadowJudgments(signals: JevSignalV1[]): void {
+    if (signals.length === 0) return;
+
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO jev_shadow_judgments (
+        signal_id, task_id, session_id, workspace_snapshot_id, context_unit_id,
+        context_plan_id, provider, model, question_set_version,
+        semantic_relevance_probability, implementation_needed_probability,
+        likely_edit_target_probability, likely_root_cause_probability,
+        latency_ms, input_tokens, request_id, redaction_applied,
+        fallback_reason, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const sig of signals) {
+      const signalId = sig.requestId || `sig_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      stmt.run(
+        signalId,
+        sig.taskId,
+        sig.sessionId || null,
+        sig.workspaceSnapshotId,
+        sig.contextUnitId,
+        sig.contextPlanId || null,
+        sig.provider,
+        sig.model || null,
+        sig.questionSetVersion,
+        sig.semanticRelevanceProbability !== null ? sig.semanticRelevanceProbability : null,
+        sig.implementationNeededProbability !== null ? sig.implementationNeededProbability : null,
+        sig.likelyEditTargetProbability !== null ? sig.likelyEditTargetProbability : null,
+        sig.likelyRootCauseProbability !== null ? sig.likelyRootCauseProbability : null,
+        sig.latencyMs,
+        sig.inputTokens ?? null,
+        sig.requestId || null,
+        sig.redactionApplied ? 1 : 0,
+        sig.fallbackReason || null,
+        sig.createdAt
+      );
+    }
+  }
+
+  public listJevShadowJudgments(taskIdOrSnapshotId: string): JevSignalV1[] {
+    const rows = this.db.prepare(`
+      SELECT * FROM jev_shadow_judgments 
+      WHERE task_id = ? OR workspace_snapshot_id = ?
+      ORDER BY created_at ASC
+    `).all(taskIdOrSnapshotId, taskIdOrSnapshotId) as any[];
+
+    return rows.map((r) => ({
+      schemaVersion: 'jev-signal-v1',
+      taskId: r.task_id,
+      sessionId: r.session_id || undefined,
+      workspaceSnapshotId: r.workspace_snapshot_id,
+      contextUnitId: r.context_unit_id,
+      contextPlanId: r.context_plan_id || undefined,
+      provider: 'typesafe-jev',
+      model: r.model || null,
+      questionSetVersion: r.question_set_version,
+      semanticRelevanceProbability: r.semantic_relevance_probability !== null ? Number(r.semantic_relevance_probability) : null,
+      implementationNeededProbability: r.implementation_needed_probability !== null ? Number(r.implementation_needed_probability) : null,
+      likelyEditTargetProbability: r.likely_edit_target_probability !== null ? Number(r.likely_edit_target_probability) : null,
+      likelyRootCauseProbability: r.likely_root_cause_probability !== null ? Number(r.likely_root_cause_probability) : null,
+      latencyMs: r.latency_ms,
+      inputTokens: r.input_tokens || undefined,
+      requestId: r.request_id || undefined,
+      redactionApplied: Boolean(r.redaction_applied),
+      fallbackReason: r.fallback_reason || undefined,
+      createdAt: r.created_at,
     }));
   }
 

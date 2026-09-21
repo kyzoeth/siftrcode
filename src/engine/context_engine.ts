@@ -13,7 +13,7 @@ import { ContextUnit, ContextUnitKind } from '../context/context_unit';
 import { ContextGraph } from '../graph/context_graph';
 import { GitGraphIntelligence } from '../graph/git_graph';
 import { FeatureCutoff } from '../learning/point_in_time_features';
-import { DataRights, createDefaultDataRights } from '../rights/data_rights';
+import { DataRights, createDefaultDataRights, createJevPermittedDataRights } from '../rights/data_rights';
 import { AgentAdapter, ClaudeCodeAdapter, CursorAdapter, GenericMcpAdapter, ContextUnitResolved, FormattedContext } from '../agents/agent_adapter';
 import { CandidateGenerator } from '../retrieval/candidate_generator';
 import { FeatureBuilderV1 } from '../ranking/feature_builder';
@@ -38,6 +38,10 @@ import { TokenCostEstimator, DefaultTokenCostEstimator, ResolutionOption } from 
 import { defaultTokenizerRegistry } from '../token/tokenizer_registry';
 import { SqliteStore } from '../storage/sqlite_store';
 import { CandidateDecisionObservation, createCandidateDecisionObservation } from '../telemetry/decision_observation';
+import { createFinalContextAllocation, FinalContextAllocationItem } from '../token/final_allocation';
+import { RepositoryTrustPolicy, RepositoryOrigin } from '../security/trust';
+import { JevShadowRunner } from '../providers/judgment/typesafe/jev_shadow_runner';
+import { JevMode } from '../providers/judgment/typesafe/jev_signal';
 
 export { WorkspaceChangedError, isWorkspaceChangedError } from '../workspace/workspace_snapshot';
 
@@ -53,6 +57,8 @@ export interface ContextEngineOptions {
   tokenCostEstimator?: TokenCostEstimator;
   sqliteStore?: SqliteStore;
   maxReplanningRetries?: number;
+  jevShadowRunner?: JevShadowRunner;
+  enableJevShadow?: boolean;
 }
 
 export interface OptimizeWorkspaceOptions {
@@ -72,7 +78,10 @@ export interface OptimizeWorkspaceOptions {
   dirtyPaths?: string[];
   excludePatterns?: string[];
   includePatterns?: string[];
+  repositoryTrustPolicy?: RepositoryTrustPolicy;
   maxReplanningRetries?: number;
+  jevShadowRunner?: JevShadowRunner;
+  enableJevShadow?: boolean;
 }
 
 export interface OptimizeWorkspaceResult {
@@ -116,11 +125,15 @@ export class ContextEngine {
   private materializer: ContextUnitMaterializer;
   private tokenCostEstimator: TokenCostEstimator;
   private sqliteStore?: SqliteStore;
+  private jevShadowRunner?: JevShadowRunner;
 
   constructor(options: ContextEngineOptions = {}) {
     this.repoRootDir = options.repoRootDir;
     this.adapter = options.adapter || new ClaudeCodeAdapter();
-    this.dataRights = options.dataRights || createDefaultDataRights();
+    const defaultRights = (options.enableJevShadow || options.jevShadowRunner)
+      ? createJevPermittedDataRights()
+      : createDefaultDataRights();
+    this.dataRights = options.dataRights || defaultRights;
     this.budgetProfile = options.budgetProfile || 'BALANCED';
     this.budgetLimits = options.budgetLimits || (
       this.budgetProfile !== 'CUSTOM' ? BUDGET_PROFILES[this.budgetProfile] : { maxTokens: 16000 }
@@ -131,6 +144,14 @@ export class ContextEngine {
     });
     this.tokenCostEstimator = options.tokenCostEstimator || new DefaultTokenCostEstimator(this.materializer);
     this.sqliteStore = options.sqliteStore;
+
+    if (options.jevShadowRunner) {
+      this.jevShadowRunner = options.jevShadowRunner;
+    } else if (options.enableJevShadow || process.env.SIFTR_JEV_ENABLED === 'true' || process.env.TYPESAFE_API_KEY) {
+      this.jevShadowRunner = new JevShadowRunner({
+        sqliteStore: this.sqliteStore,
+      });
+    }
   }
 
   /**
@@ -646,9 +667,16 @@ export class ContextEngine {
       createdAt,
     };
 
-    // If a persistent store is configured and telemetry is allowed, persist all runtime and learning records (Closure PR 0.4)
+    // If a persistent store is configured and telemetry is allowed, persist all runtime and learning records (Closure PR 0.4 & Milestone PR J1)
     if (this.sqliteStore && this.dataRights.telemetryAllowed !== false) {
       try {
+        // Section 37: Persist rights-safe ContextUnit metadata at indexing/optimization time
+        const rightsSafeUnits = units.map((u) => ({
+          ...u,
+          metadata: { ...u.metadata },
+        }));
+        this.sqliteStore.saveContextUnits(rightsSafeUnits);
+
         this.sqliteStore.saveSnapshot(snapshot);
         this.sqliteStore.saveTaskContext(task);
         this.sqliteStore.saveContextPlan(contextPlan, snapshot.workspaceSnapshotId);
@@ -664,12 +692,87 @@ export class ContextEngine {
           snapshot.workspaceSnapshotId,
           this.dataRights
         );
+
+        // Sections 45-48: Persist FinalContextAllocation with 3-stage resolution lineage
+        const allocationItems: FinalContextAllocationItem[] = plannedUnits.map((pu) => {
+          const u = unitsMap.get(pu.contextUnitId);
+          const f = featuresMap.get(pu.contextUnitId);
+          const rankerRes = (u && f) ? resRanker.allocateResolution(u, f, false, 1.0).resolution : pu.resolution;
+          const budgetedRes = budgetPlan.allocations.find((a) => a.contextUnitId === pu.contextUnitId)?.resolution || pu.resolution;
+          return {
+            contextUnitId: pu.contextUnitId,
+            rankerResolution: rankerRes,
+            budgetedResolution: budgetedRes,
+            finalResolution: pu.resolution,
+            plannedResolution: budgetedRes,
+            actualResolution: pu.resolution,
+            estimatedTokens: pu.tokenEstimate,
+            materializerVersion: 'DefaultContextUnitMaterializer@1.0.0',
+          };
+        });
+
+        const finalAllocation = createFinalContextAllocation({
+          planId: contextPlan.planId,
+          workspaceSnapshotId: snapshot.workspaceSnapshotId,
+          items: allocationItems,
+          budgetLimitTokens: this.budgetLimits.maxTokens,
+          allocatedEstimatedTokens: reconciledBudgetPlan.totalTokens,
+          renderedEstimatedTokens: estimatedRenderedTokens,
+          tokenizerMethod: detailedEstimate.method,
+          overflow: Boolean(overflowReason),
+        });
+
+        this.sqliteStore.saveFinalContextAllocation(finalAllocation);
       } catch (storeErr) {
         console.warn('[ContextEngine] Failed to persist local learning records:', storeErr);
       }
     }
 
+    // Milestone Part V: Execute JEV in SHADOW mode if configured (never mutates ContextPlan)
+    if (this.jevShadowRunner && this.jevShadowRunner.getMode() === JevMode.SHADOW) {
+      const shadowPromise = this.jevShadowRunner
+        .evaluate({
+          task,
+          workspaceSnapshot: snapshot,
+          rankedCandidates,
+          units,
+          graph,
+          featuresMap,
+          dataRights: this.dataRights,
+          contextPlanId: planId,
+        })
+        .then((signals) => {
+          contextPlan.jevSignals = signals;
+          return signals;
+        })
+        .catch((shadowErr) => {
+          console.warn('[ContextEngine] JEV shadow evaluation error:', shadowErr);
+          return [];
+        });
+      contextPlan.jevPromise = shadowPromise;
+    }
+
     return contextPlan;
+  }
+
+  /**
+   * Generates a ContextPlan and awaits shadow JEV evaluation if enabled.
+   */
+  public async generatePlanAsync(params: {
+    task: TaskContext;
+    units: ContextUnit[];
+    graph?: ContextGraph;
+    gitIntelligence?: GitGraphIntelligence;
+    featureCutoff?: FeatureCutoff;
+    dirtyPaths?: string[];
+    seedUnitIds?: string[];
+    snapshot?: WorkspaceSnapshot;
+  }): Promise<ContextPlan> {
+    const plan = this.generatePlan(params);
+    if (plan.jevPromise) {
+      await plan.jevPromise;
+    }
+    return plan;
   }
 
   /**
@@ -711,6 +814,7 @@ export class ContextEngine {
           workspaceSnapshotId: snapshot.workspaceSnapshotId,
           excludePatterns: options.excludePatterns,
           includePatterns: options.includePatterns,
+          trustPolicy: options.repositoryTrustPolicy,
         });
         const units = indexResult.units;
 
@@ -849,9 +953,11 @@ export class ContextEngine {
           budgetLimits,
           materializer,
           sqliteStore: store,
+          jevShadowRunner: options.jevShadowRunner,
+          enableJevShadow: options.enableJevShadow,
         });
 
-        const plan = engine.generatePlan({
+        const plan = await engine.generatePlanAsync({
           task,
           units,
           graph,
