@@ -478,6 +478,7 @@ export async function runRegressionTests() {
       editEvidence: { wasEdited: false, confidence: 0.5 },
       verifiedOutcomeAssociation: { verifiedSuccess: null, confidence: 0.35 },
       sourceObservationIds: ['obs_null_1'],
+      exportId: 'texport_ev_suite2',
       rightsReference: 'rights_null_1',
     });
 
@@ -1462,6 +1463,68 @@ export async function runRegressionTests() {
     assert.strictEqual(decObsList[0].sessionId, plan.sessionId, 'Decision observations must carry matching sessionId');
 
     store.close();
+
+    // 4. Invariant: Direct ContextEngine.optimizeWorkspace call with no session produces 100% consistent session lineage
+    // result.task.sessionId == result.plan.sessionId == decision.sessionId == JEV signal.sessionId == persisted session.sessionId
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'siftr_opt_test_'));
+    const dummySrc = path.join(tempDir, 'src');
+    fs.mkdirSync(dummySrc, { recursive: true });
+    fs.writeFileSync(path.join(dummySrc, 'core.ts'), 'export function authenticate(user: string): boolean { return true; }\n');
+
+    const shadowRunner = new JevShadowRunner({
+      mode: JevMode.SHADOW,
+      client: new FakeSystemOneClient(async () => ({
+        model: 'typesafe-one-preview',
+        answers: {
+          semanticRelevance: { noul: 0.9 },
+          implementationNeeded: { noul: 0.8 },
+          likelyEditTarget: { noul: 0.85 },
+          likelyRootCause: { noul: 0.7 },
+        },
+        usage: { input_tokens: 100, output_tokens: 20 },
+      })),
+      budget: { maxCandidates: 5, maxCallsPerTask: 5, maxConcurrency: 2 },
+    });
+
+    const optResult = await ContextEngine.optimizeWorkspace({
+      workspaceDir: tempDir,
+      prompt: 'Authenticate user safely',
+      jevShadowRunner: shadowRunner,
+      enableJevShadow: true,
+      dataRights: createJevPermittedDataRights(),
+    });
+
+    assert.ok(optResult.task.sessionId, 'optResult.task must have an authoritative sessionId');
+    assert.strictEqual(optResult.task.sessionId, optResult.plan.sessionId, 'task.sessionId == plan.sessionId');
+    assert.ok(optResult.plan.decisionObservations && optResult.plan.decisionObservations.length >= 1, 'At least one decision observation');
+    assert.strictEqual(
+      optResult.plan.decisionObservations![0].sessionId,
+      optResult.task.sessionId,
+      'decision.sessionId == task.sessionId'
+    );
+
+    if (optResult.plan.jevPromise) {
+      await optResult.plan.jevPromise;
+    }
+    assert.ok(optResult.plan.jevSignals && optResult.plan.jevSignals.length >= 1, 'At least one JEV signal');
+    assert.strictEqual(
+      optResult.plan.jevSignals![0].sessionId,
+      optResult.task.sessionId,
+      'JEV signal.sessionId == task.sessionId'
+    );
+
+    const persistedSession = (optResult.engine as any).sqliteStore.getSiftrSession(optResult.task.sessionId);
+    assert.ok(persistedSession !== undefined, 'Session must be persisted in SQLite');
+    assert.strictEqual(persistedSession?.sessionId, optResult.task.sessionId, 'persisted session.sessionId == task.sessionId');
+
+    // Clean up tempDir
+    try {
+      (optResult.engine as any).sqliteStore?.close();
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    } catch {
+      // Ignore cleanup error
+    }
+
     console.log('  ✔ Suite 10 passed: Mandatory session enforcement and ContextEngine session management verified\n');
   }
 
@@ -1636,8 +1699,74 @@ export async function runRegressionTests() {
     store.saveTrainingRows(exportResult.rows);
     assert.strictEqual(store.listTrainingRows({ exportId: exportResult.exportId }).length, 1);
 
+    // 5. TrainingEvidenceRecord: Migration 12 applied
+    const mig12 = applied.find((m) => m.version === 12);
+    assert.ok(mig12 !== undefined, 'Migration 012_training_evidence_records_export_id must be applied');
+    assert.strictEqual(mig12?.name, '012_training_evidence_records_export_id');
+
+    // 6. Direct persistence of unsanctioned evidence lacking exportId must be blocked
+    const unsanctionedEv = createTrainingEvidenceRecord({
+      datasetVersion: 'v2.0.0',
+      contextUnitId: 'src/core/auth.ts',
+      taskId: 'task_unsanctioned_ev',
+      sessionId: 'sess_unsanctioned_ev',
+      repository: 'test_repo',
+      features: dummyFeatures,
+      exposure: { wasExposed: true, resolution: ContextResolution.FULL },
+      readEvidence: { wasRead: true, confidence: 1.0 },
+      editEvidence: { wasEdited: false, confidence: 0.9 },
+      verifiedOutcomeAssociation: { verifiedSuccess: true, confidence: 1.0 },
+      sourceObservationIds: ['obs_raw_ev_1'],
+      rightsReference: 'rights_default',
+    });
+
+    assert.throws(
+      () => store.saveTrainingEvidenceRecords([unsanctionedEv]),
+      /UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE/,
+      'Direct persistence of unsanctioned training evidence record lacking exportId must throw UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE'
+    );
+
+    // 7. Evidence record with invalid exportId format must also be blocked
+    const invalidPrefixEv = { ...unsanctionedEv, exportId: 'texport_only_not_ev_123' };
+    assert.throws(
+      () => store.saveTrainingEvidenceRecords([invalidPrefixEv]),
+      /UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE/,
+      'Evidence record with non-texport_ev_ exportId must throw UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE'
+    );
+
+    // 8. Sanctioned TrainingExporter pipeline output persists cleanly
+    const evExportResult = exporter.exportTrainingEvidenceRecords(
+      [unsanctionedEv],
+      () => ({
+        dataRights: createDefaultDataRights({ trainingAllowed: true, trajectoryRetentionAllowed: true }),
+        provenance: allowedProv,
+        repository: 'test_repo',
+      }),
+      { datasetVersion: 'v2.0.0-export' }
+    );
+
+    assert.strictEqual(evExportResult.totalAccepted, 1);
+    assert.ok(evExportResult.exportId.startsWith('texport_ev_'), 'exportId must start with texport_ev_');
+    assert.strictEqual(evExportResult.records[0].exportId, evExportResult.exportId);
+
+    // Persist via sanctioned TrainingEvidenceExportResult
+    store.saveTrainingEvidenceRecords(evExportResult);
+
+    const savedEv = store.getTrainingEvidenceRecord(evExportResult.records[0].evidenceId);
+    assert.ok(savedEv !== undefined, 'Sanctioned training evidence record must be saved');
+    assert.strictEqual(savedEv?.exportId, evExportResult.exportId);
+
+    // Query via exportId filter
+    const filteredEvs = store.listTrainingEvidenceRecords({ exportId: evExportResult.exportId });
+    assert.strictEqual(filteredEvs.length, 1);
+    assert.strictEqual(filteredEvs[0].evidenceId, evExportResult.records[0].evidenceId);
+
+    // Persist via sanctioned records array directly
+    store.saveTrainingEvidenceRecords(evExportResult.records);
+    assert.strictEqual(store.listTrainingEvidenceRecords({ exportId: evExportResult.exportId }).length, 1);
+
     store.close();
-    console.log('  ✔ Suite 12 passed: Sanctioned TrainingExporter route, exportId lineage, and Migration 11 verified\n');
+    console.log('  ✔ Suite 12 passed: Sanctioned TrainingExporter route, exportId lineage, and Migrations 11 & 12 verified\n');
   }
 
   console.log('🎉 ALL TWELVE REGRESSION SUITES PASSED CLEANLY!\n');

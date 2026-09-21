@@ -25,6 +25,7 @@ import { WorkspaceManager } from '../workspace/workspace_manager';
 import { GraphBuilder } from '../graph/graph_builder';
 import { EnforcedEgressGateway } from '../security/egress_policy';
 import { DatasetBuilder } from '../learning/dataset_builder';
+import { TrainingExporter } from '../learning/training_exporter';
 import { createCandidateDecisionObservation } from '../telemetry/decision_observation';
 import { createExposureDecisionV2 } from '../telemetry/exposure_decision';
 import { createAgentEnvironment } from '../agents/agent_environment';
@@ -241,7 +242,7 @@ export class CriticalManager {
         regressionTestsPassed: true,
       }),
       repository: 'kyzoeth/siftrcode',
-      dataRights: createDefaultDataRights({ trainingAllowed: true }),
+      dataRights: createDefaultDataRights({ trainingAllowed: true, trajectoryRetentionAllowed: true }),
     });
 
     assertStrictEqual(evidenceRecord.contextUnitId, 'unit_target_1', 'Evidence contextUnitId matches');
@@ -258,8 +259,17 @@ export class CriticalManager {
     const rankingExample = deriveRankingTrainingExample(evidenceRecord);
     assertStrictEqual(rankingExample.relevanceGrade, 4, 'Derived relevance grade is 4 (causal edit target)');
 
-    // Persist and query from SqliteStore Migration 7
-    testStore.saveTrainingEvidenceRecords([evidenceRecord]);
+    // Persist and query from SqliteStore Migration 7 & 12 via sanctioned TrainingExporter
+    const exporter = new TrainingExporter();
+    const exportResult = exporter.exportTrainingEvidenceRecords(
+      [evidenceRecord],
+      () => ({
+        dataRights: createDefaultDataRights({ trainingAllowed: true, trajectoryRetentionAllowed: true }),
+        repository: 'kyzoeth/siftrcode',
+      }),
+      { datasetVersion: 'v2.1.0' }
+    );
+    testStore.saveTrainingEvidenceRecords(exportResult);
     const retrievedEv = testStore.getTrainingEvidenceRecord(evidenceRecord.evidenceId);
     assert(retrievedEv !== undefined, 'Retrieved TrainingEvidenceRecord from SQLite');
     assertStrictEqual(retrievedEv!.taskId, 'task_ml_1', 'Retrieved record taskId matches');

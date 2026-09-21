@@ -604,6 +604,13 @@ export class ContextEngine {
     });
     const effectiveSessionId = session.sessionId;
 
+    // Immediately bind effectiveSessionId to TaskContext so there is never a sessionless task downstream
+    task.sessionId = effectiveSessionId;
+    const boundTask: TaskContext = {
+      ...task,
+      sessionId: effectiveSessionId,
+    };
+
     const decisionObservations: CandidateDecisionObservation[] = [];
     for (let i = 0; i < rankedCandidates.length; i++) {
       const rc = rankedCandidates[i];
@@ -612,7 +619,7 @@ export class ContextEngine {
       if (feat && decV2) {
         decisionObservations.push(
           createCandidateDecisionObservation({
-            taskId: task.taskId,
+            taskId: boundTask.taskId,
             sessionId: effectiveSessionId,
             workspaceSnapshotId: snapshot.workspaceSnapshotId,
             contextUnitId: rc.contextUnitId,
@@ -626,7 +633,7 @@ export class ContextEngine {
             exposureDecision: decV2,
             policyId,
             policyVersion,
-            agentEnvironment: task.agentEnvironment,
+            agentEnvironment: boundTask.agentEnvironment,
             observabilityLevel: this.adapter.observabilityLevel,
           })
         );
@@ -693,11 +700,11 @@ export class ContextEngine {
     });
 
     const contextPlan: ContextPlan = {
-      taskId: task.taskId,
+      taskId: boundTask.taskId,
       planId,
       sessionId: effectiveSessionId,
       workspaceSnapshotId: snapshot.workspaceSnapshotId,
-      agentEnvironmentId: task.agentEnvironment.systemConfigurationHash,
+      agentEnvironmentId: boundTask.agentEnvironment.systemConfigurationHash,
       budgetPlan: reconciledBudgetPlan,
       units: plannedUnits,
       formattedContext,
@@ -728,17 +735,17 @@ export class ContextEngine {
 
         this.sqliteStore.saveSiftrSession(session);
         this.sqliteStore.saveSnapshot(snapshot);
-        this.sqliteStore.saveTaskContext(task, this.dataRights);
+        this.sqliteStore.saveTaskContext(boundTask, this.dataRights);
         this.sqliteStore.saveContextPlan(contextPlan, snapshot.workspaceSnapshotId);
         if (exposureDecisionsV2.length > 0) {
-          this.sqliteStore.saveExposureDecisions(exposureDecisionsV2, task.taskId);
+          this.sqliteStore.saveExposureDecisions(exposureDecisionsV2, boundTask.taskId);
         }
         if (decisionObservations.length > 0) {
           this.sqliteStore.saveCandidateDecisionObservations(decisionObservations, this.dataRights);
         }
         this.sqliteStore.saveTrajectoryEvents(
           trajectoryLogger.getEvents(),
-          undefined,
+          effectiveSessionId,
           snapshot.workspaceSnapshotId,
           this.dataRights
         );
@@ -782,7 +789,7 @@ export class ContextEngine {
     if (this.jevShadowRunner && this.jevShadowRunner.getMode() === JevMode.SHADOW) {
       const shadowPromise = this.jevShadowRunner
         .evaluate({
-          task,
+          task: boundTask,
           workspaceSnapshot: snapshot,
           rankedCandidates,
           units,
@@ -925,9 +932,66 @@ export class ContextEngine {
         const modelVal = options.agentModel || 'unknown';
         const availableTools = options.availableTools ? [...options.availableTools] : [];
 
+        let budgetLimits = options.budgetLimits;
+        if (!budgetLimits) {
+          const profile = options.budgetProfile || 'BALANCED';
+          const baseLimits = (profile !== 'CUSTOM' && (BUDGET_PROFILES as any)[profile])
+            ? (BUDGET_PROFILES as any)[profile]
+            : BUDGET_PROFILES.BALANCED;
+          const resolvedLimits: BudgetLimits = { ...baseLimits };
+          if (options.tokenBudget !== undefined) {
+            resolvedLimits.maxTokens = options.tokenBudget;
+          }
+          if (options.maxCostUSD !== undefined) {
+            resolvedLimits.maxCostUSD = options.maxCostUSD;
+          }
+          budgetLimits = resolvedLimits;
+        }
+
+        const materializer = new DefaultContextUnitMaterializer({
+          sourceReader,
+          throwOnWorkspaceChanged: true,
+        });
+
+        // Closure PR 0.4 & Milestone 14: Wire the Learning Plane and authoritative session into default runtime
+        let store: SqliteStore | undefined = undefined;
+        const telemetryAllowed = options.dataRights ? options.dataRights.telemetryAllowed : true;
+        if (telemetryAllowed !== false) {
+          try {
+            const siftrDir = path.join(rootDir, '.siftr');
+            if (!fs.existsSync(siftrDir)) {
+              fs.mkdirSync(siftrDir, { recursive: true });
+            }
+            const dbPath = path.join(siftrDir, 'observations.sqlite');
+            store = new SqliteStore(dbPath);
+          } catch {
+            // Non-fatal if local SQLite store cannot be initialized
+          }
+        }
+
+        const engine = new ContextEngine({
+          repoRootDir: rootDir,
+          adapter,
+          dataRights: options.dataRights,
+          budgetProfile: options.budgetProfile,
+          budgetLimits,
+          materializer,
+          sqliteStore: store,
+          jevShadowRunner: options.jevShadowRunner,
+          enableJevShadow: options.enableJevShadow,
+        });
+
+        // Authoritatively obtain/create active session so there is NEVER a sessionless task in the planning pipeline
+        const session = engine.getOrCreateSession({
+          sessionId: options.sessionId,
+          taskId,
+          agentEnvironmentId: modelVal,
+          snapshotId: snapshot.workspaceSnapshotId,
+        });
+
         const task = createTaskContext({
           taskId,
-          sessionId: options.sessionId,
+          sessionId: session.sessionId,
           workspaceSnapshotId: snapshot.workspaceSnapshotId,
           primaryPrompt: options.prompt,
           evidence: evidenceList,
@@ -956,55 +1020,6 @@ export class ContextEngine {
               },
             },
           }),
-        });
-
-        let budgetLimits = options.budgetLimits;
-        if (!budgetLimits) {
-          const profile = options.budgetProfile || 'BALANCED';
-          const baseLimits = (profile !== 'CUSTOM' && (BUDGET_PROFILES as any)[profile])
-            ? (BUDGET_PROFILES as any)[profile]
-            : BUDGET_PROFILES.BALANCED;
-          const resolvedLimits: BudgetLimits = { ...baseLimits };
-          if (options.tokenBudget !== undefined) {
-            resolvedLimits.maxTokens = options.tokenBudget;
-          }
-          if (options.maxCostUSD !== undefined) {
-            resolvedLimits.maxCostUSD = options.maxCostUSD;
-          }
-          budgetLimits = resolvedLimits;
-        }
-
-        const materializer = new DefaultContextUnitMaterializer({
-          sourceReader,
-          throwOnWorkspaceChanged: true,
-        });
-
-        // Closure PR 0.4: Wire the Learning Plane into the default runtime
-        let store: SqliteStore | undefined = undefined;
-        const telemetryAllowed = options.dataRights ? options.dataRights.telemetryAllowed : true;
-        if (telemetryAllowed !== false) {
-          try {
-            const siftrDir = path.join(rootDir, '.siftr');
-            if (!fs.existsSync(siftrDir)) {
-              fs.mkdirSync(siftrDir, { recursive: true });
-            }
-            const dbPath = path.join(siftrDir, 'observations.sqlite');
-            store = new SqliteStore(dbPath);
-          } catch {
-            // Non-fatal if local SQLite store cannot be initialized
-          }
-        }
-
-        const engine = new ContextEngine({
-          repoRootDir: rootDir,
-          adapter,
-          dataRights: options.dataRights,
-          budgetProfile: options.budgetProfile,
-          budgetLimits,
-          materializer,
-          sqliteStore: store,
-          jevShadowRunner: options.jevShadowRunner,
-          enableJevShadow: options.enableJevShadow,
         });
 
         const plan = await engine.generatePlanAsync({

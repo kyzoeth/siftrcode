@@ -27,7 +27,7 @@ import { ProviderUsageEvent } from '../token/provider_usage';
 import { JevSignalV1 } from '../providers/judgment/typesafe/jev_signal';
 import { SourceProvenance } from '../rights/source_provenance';
 import { TrainingRow, TrainingEvidenceRecord } from '../learning/lineage';
-import { TrainingExportResult } from '../learning/training_exporter';
+import { TrainingExportResult, TrainingEvidenceExportResult } from '../learning/training_exporter';
 import { DeletionAuditRecord } from '../rights/deletion_manager';
 import { DataRights, createDefaultDataRights, DataClass, isDataClassPermitted } from '../rights/data_rights';
 import {
@@ -523,6 +523,14 @@ const MIGRATIONS: Migration[] = [
     sql: `
       ALTER TABLE training_rows ADD COLUMN export_id TEXT;
       CREATE INDEX IF NOT EXISTS idx_trow_export ON training_rows(export_id);
+    `,
+  },
+  {
+    version: 12,
+    name: '012_training_evidence_records_export_id',
+    sql: `
+      ALTER TABLE training_evidence_records ADD COLUMN export_id TEXT;
+      CREATE INDEX IF NOT EXISTS idx_evrec_export ON training_evidence_records(export_id);
     `,
   },
 ];
@@ -2012,18 +2020,40 @@ export class SqliteStore {
   // TrainingEvidenceRecord Operations (Audit Section 13)
   // ==========================================
 
-  public saveTrainingEvidenceRecords(records: TrainingEvidenceRecord[]): void {
-    if (records.length === 0) return;
+  public saveTrainingEvidenceRecords(
+    input: TrainingEvidenceExportResult | TrainingEvidenceRecord[]
+  ): void {
+    const records = Array.isArray(input) ? input : input.records;
+    const batchExportId = Array.isArray(input) ? undefined : input.exportId;
+    if (!records || records.length === 0) return;
+
+    // Enforce that filtered TrainingExporter output is the only sanctioned route into persistent training evidence records
+    for (const rec of records) {
+      const effectiveExportId = rec.exportId || batchExportId;
+      if (
+        !effectiveExportId ||
+        typeof effectiveExportId !== 'string' ||
+        !effectiveExportId.startsWith('texport_ev_')
+      ) {
+        throw new Error(
+          `UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE: Record '${rec.evidenceId}' lacks a sanctioned TrainingExporter exportId. Direct persistence of un-exported or raw training evidence records is strictly prohibited.`
+        );
+      }
+    }
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO training_evidence_records (
         evidence_id, dataset_version, task_id, context_unit_id,
         repository, tenant_id, was_read, was_edited, verified_success,
-        rights_reference, raw_json, exported_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        rights_reference, export_id, raw_json, exported_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     for (const rec of records) {
+      const effectiveExportId = rec.exportId || batchExportId || null;
+      const recordToPersist =
+        effectiveExportId && !rec.exportId ? { ...rec, exportId: effectiveExportId } : rec;
+
       stmt.run(
         rec.evidenceId,
         rec.datasetVersion,
@@ -2035,11 +2065,13 @@ export class SqliteStore {
           ? (rec.readEvidence.wasRead ? 1 : 0)
           : null,
         rec.editEvidence.wasEdited ? 1 : 0,
-        rec.verifiedOutcomeAssociation.verifiedSuccess !== null && rec.verifiedOutcomeAssociation.verifiedSuccess !== undefined
+        rec.verifiedOutcomeAssociation.verifiedSuccess !== null &&
+          rec.verifiedOutcomeAssociation.verifiedSuccess !== undefined
           ? (rec.verifiedOutcomeAssociation.verifiedSuccess ? 1 : 0)
           : null,
         rec.rightsReference,
-        JSON.stringify(rec),
+        effectiveExportId,
+        JSON.stringify(recordToPersist),
         rec.exportedAt
       );
     }
@@ -2055,7 +2087,7 @@ export class SqliteStore {
   }
 
   public listTrainingEvidenceRecords(
-    filter: { datasetVersion?: string; repository?: string; taskId?: string } = {}
+    filter: { datasetVersion?: string; repository?: string; taskId?: string; exportId?: string } = {}
   ): TrainingEvidenceRecord[] {
     let sql = 'SELECT raw_json FROM training_evidence_records WHERE 1=1';
     const params: string[] = [];
@@ -2071,6 +2103,10 @@ export class SqliteStore {
     if (filter.taskId) {
       sql += ' AND task_id = ?';
       params.push(filter.taskId);
+    }
+    if (filter.exportId) {
+      sql += ' AND export_id = ?';
+      params.push(filter.exportId);
     }
 
     sql += ' ORDER BY exported_at ASC';

@@ -77,6 +77,7 @@ export interface PilotReport {
     totalCalls: number;
     meanCallsPerTask: number;
     peakConcurrency: number;
+    configuredMaxConcurrency?: number;
     latencySummary: MetricSummary;
   };
   distributions: {
@@ -444,7 +445,7 @@ function createRealPilotClient(
   let peakConcurrency = 0;
   let currentConcurrency = 0;
 
-  return new FakeSystemOneClient(async (req: SystemOneEvaluationRequest) => {
+  const fakeClient = new FakeSystemOneClient(async (req: SystemOneEvaluationRequest) => {
     currentConcurrency++;
     if (currentConcurrency > peakConcurrency) {
       peakConcurrency = currentConcurrency;
@@ -499,6 +500,9 @@ function createRealPilotClient(
       requestId: 'req_' + crypto.randomUUID().slice(0, 12),
     };
   });
+
+  (fakeClient as any).getPeakConcurrency = () => peakConcurrency;
+  return fakeClient;
 }
 
 // ---------------------------------------------------------------------------
@@ -507,6 +511,7 @@ function createRealPilotClient(
 export async function runTypeSafeJevPilotStudy(options: {
   useLive?: boolean;
   maxTasks?: number;
+  maxCallsPerTask?: number;
   apiKey?: string;
   verbose?: boolean;
 } = {}): Promise<PilotReport> {
@@ -514,6 +519,13 @@ export async function runTypeSafeJevPilotStudy(options: {
   const isSmoke = process.argv.includes('--smoke');
   const tasksArg = process.argv.find((a) => a.startsWith('--tasks='));
   const maxTasks = options.maxTasks ?? (tasksArg ? parseInt(tasksArg.split('=')[1], 10) : (isSmoke ? 5 : AUDITED_PILOT_TASKS.length));
+  const callsArg = process.argv.find((a) => a.startsWith('--max-calls='));
+  const envMaxCalls = process.env.SIFTR_JEV_MAX_CALLS ? parseInt(process.env.SIFTR_JEV_MAX_CALLS, 10) : undefined;
+  const maxCallsPerTask =
+    options.maxCallsPerTask ??
+    (callsArg ? parseInt(callsArg.split('=')[1], 10) : undefined) ??
+    envMaxCalls ??
+    (isSmoke ? 5 : 20);
   const verbose = options.verbose ?? (isSmoke || process.argv.includes('--verbose'));
 
   console.log('\n================================================================');
@@ -588,8 +600,8 @@ export async function runTypeSafeJevPilotStudy(options: {
     mode: JevMode.SHADOW,
     sqliteStore: store,
     budget: {
-      maxCandidates: 20,
-      maxCallsPerTask: 20,
+      maxCandidates: Math.min(maxCallsPerTask, 20),
+      maxCallsPerTask,
       maxConcurrency: 4,
       maxInputCharacters: 8000,
     },
@@ -684,7 +696,9 @@ export async function runTypeSafeJevPilotStudy(options: {
       sessionId: `session_pilot_${idx + 1}`,
       workspaceSnapshotId: `snapshot_pilot_${taskSpec.repo}`,
       primaryPrompt: taskSpec.prompt,
-      agentEnvironment: createAgentEnvironment({ model: 'claude-3-5-sonnet' }),
+      agentEnvironment: createAgentEnvironment({
+        agentProvider: 'benchmark_harness',
+      }),
       evidence: evidenceList,
     });
 
@@ -910,7 +924,8 @@ export async function runTypeSafeJevPilotStudy(options: {
     operational: {
       totalCalls: callsPerTask.reduce((a, b) => a + b, 0),
       meanCallsPerTask: computeStats(callsPerTask).mean,
-      peakConcurrency: 4,
+      peakConcurrency: typeof (client as any).getPeakConcurrency === 'function' ? (client as any).getPeakConcurrency() : 4,
+      configuredMaxConcurrency: 4,
       latencySummary: computeStats(latencies),
     },
     distributions: {
@@ -957,7 +972,7 @@ export async function runTypeSafeJevPilotStudy(options: {
   console.log(`Plan Invariance:         ${report.planInvarianceHolds ? 'PASSED (100% bit-for-bit identical)' : 'FAILED'}`);
   console.log(`Total JEV Calls:         ${report.operational.totalCalls}`);
   console.log(`Mean Calls / Task:       ${report.operational.meanCallsPerTask}`);
-  console.log(`Peak Concurrency:        ${report.operational.peakConcurrency} (Bound: 4)`);
+  console.log(`Peak Concurrency:        ${report.operational.peakConcurrency} (Configured Limit: ${report.operational.configuredMaxConcurrency || 4})`);
   console.log(`P50 Latency:             ${report.operational.latencySummary.median}ms (P95: ${report.operational.latencySummary.p95}ms)`);
   console.log('----------------------------------------------------------------');
   console.log('Continuous Probability Distributions:');
