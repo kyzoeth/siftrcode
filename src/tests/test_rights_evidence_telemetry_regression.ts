@@ -33,6 +33,7 @@ import { RightsFilter } from '../rights/rights_filter';
 import { ContextRanker } from '../ranking/context_rank';
 import { ContextResolution } from '../context/context_resolution';
 import {
+  ContextUnit,
   ContextUnitKind,
   CodeSymbolUnit,
   SymbolKind,
@@ -1961,6 +1962,33 @@ export async function runRegressionTests() {
     assert.strictEqual(planAuto.workspaceSnapshotId, snapshotA.workspaceSnapshotId);
     assert.strictEqual(taskAuto.workspaceSnapshotId, snapshotA.workspaceSnapshotId);
 
+    // Mismatched unit workspaceSnapshotId must throw WORKSPACE_SNAPSHOT_MISMATCH
+    const unitValid: ContextUnit = {
+      id: 'sym_auth_login',
+      kind: ContextUnitKind.CODE_SYMBOL,
+      workspaceSnapshotId: snapshotA.workspaceSnapshotId,
+      path: 'src/auth/login.ts',
+      title: 'Auth.login',
+      provenance: { sourceType: 'file' },
+      trustLevel: TrustLevel.FIRST_PARTY_CODE,
+      metadata: { content: 'export function login() {}' },
+    };
+    const unitMismatched: ContextUnit = {
+      ...unitValid,
+      id: 'sym_auth_other',
+      workspaceSnapshotId: 'ws_snap_other_mismatch',
+    };
+
+    assert.throws(
+      () => engine.generatePlan({ task: taskMatch, units: [unitMismatched], snapshot: snapshotA }),
+      (err: any) => {
+        assert.strictEqual(err.code, 'WORKSPACE_SNAPSHOT_MISMATCH');
+        assert.ok(err.message.includes('does not match WorkspaceSnapshot id'));
+        return true;
+      },
+      'generatePlan must reject unit whose workspaceSnapshotId does not match snapshot.workspaceSnapshotId'
+    );
+
     // 2. Provider Retries Configuration
     // In smoke mode, maxRetries: 0 eliminates hidden retries ensuring strictly 1:1 call-to-budget mapping
     const smokeClient = new TypeSafeSystemOneClient({
@@ -1969,30 +1997,119 @@ export async function runRegressionTests() {
     });
     assert.strictEqual(smokeClient.options.retry?.maxRetries, 0, 'TypeSafeSystemOneClient must accept maxRetries: 0 for smoke budgeting');
 
-    // 3. Application/Railway Path DataRights Verification
+    // 3. Application/Railway Path Integration Test (SIFTR_JEV_REMOTE_PROCESSING)
+    // Proves through normal application rights resolver:
+    // - SIFTR_JEV_REMOTE_PROCESSING=true -> provider call permitted
+    // - absent / false -> zero provider calls
     const origRemote = process.env.SIFTR_JEV_REMOTE_PROCESSING;
     try {
-      // With SIFTR_JEV_REMOTE_PROCESSING='true', ContextEngine with omitted dataRights derives remoteProcessingAllowed=true
-      process.env.SIFTR_JEV_REMOTE_PROCESSING = 'true';
-      const railwayEngine = new ContextEngine({ sqliteStore: store });
-      const derivedRights = railwayEngine.getDataRights();
-      assert.strictEqual(derivedRights.remoteProcessingAllowed, true, 'Railway path must enable remote processing via SIFTR_JEV_REMOTE_PROCESSING');
-      assert.strictEqual(
-        isRemoteProcessingPermitted(derivedRights, DataClass.PATH),
-        true,
-        'Remote path processing must be permitted on Railway path'
-      );
-      assert.strictEqual(
-        isRemoteProcessingPermitted(derivedRights, DataClass.TASK_PROMPT),
-        true,
-        'Remote task prompt processing must be permitted on Railway path'
-      );
+      let callCount = 0;
+      const testProviderClient = new FakeSystemOneClient(async () => {
+        callCount++;
+        return {
+          model: 'typesafe-one-preview',
+          answers: {
+            semanticRelevance: { noul: 0.82 },
+            implementationNeeded: { noul: 0.75 },
+            likelyEditTarget: { noul: 0.68 },
+            likelyRootCause: { noul: 0.55 },
+          },
+        };
+      });
 
-      // Without SIFTR_JEV_REMOTE_PROCESSING, default rights must have remoteProcessingAllowed=false
+      // Case 3A: SIFTR_JEV_REMOTE_PROCESSING=true -> Provider call permitted
+      process.env.SIFTR_JEV_REMOTE_PROCESSING = 'true';
+      callCount = 0;
+      const runnerPermitted = new JevShadowRunner({
+        client: testProviderClient,
+        mode: JevMode.SHADOW,
+        sqliteStore: store,
+      });
+      const enginePermitted = new ContextEngine({
+        sqliteStore: store,
+        jevShadowRunner: runnerPermitted,
+        enableJevShadow: true,
+        // Notice: dataRights omitted, resolving through application environment
+      });
+      assert.strictEqual(enginePermitted.getDataRights().remoteProcessingAllowed, true);
+
+      const taskPermitted = createTaskContext({
+        taskId: 'task_app_rights_perm',
+        sessionId: 'sess_app_rights_perm',
+        primaryPrompt: 'Fix login authentication vulnerability',
+        workspaceSnapshotId: snapshotA.workspaceSnapshotId,
+        agentEnvironment: env,
+      });
+      const planPermitted = enginePermitted.generatePlan({
+        task: taskPermitted,
+        units: [unitValid],
+        snapshot: snapshotA,
+      });
+      const signalsPermitted = await planPermitted.jevPromise;
+      assert.ok(signalsPermitted && signalsPermitted.length > 0, 'JEV shadow signals must be produced');
+      assert.ok(callCount > 0, `SIFTR_JEV_REMOTE_PROCESSING=true must permit provider calls (observed ${callCount})`);
+
+      // Case 3B: SIFTR_JEV_REMOTE_PROCESSING absent -> Zero provider calls
       delete process.env.SIFTR_JEV_REMOTE_PROCESSING;
-      const localEngine = new ContextEngine({ sqliteStore: store });
-      const localRights = localEngine.getDataRights();
-      assert.strictEqual(localRights.remoteProcessingAllowed, false, 'Default engine without env var must have remoteProcessingAllowed=false');
+      callCount = 0;
+      const runnerAbsent = new JevShadowRunner({
+        client: testProviderClient,
+        mode: JevMode.SHADOW,
+        sqliteStore: store,
+      });
+      const engineAbsent = new ContextEngine({
+        sqliteStore: store,
+        jevShadowRunner: runnerAbsent,
+        enableJevShadow: true,
+        // dataRights omitted
+      });
+      assert.strictEqual(engineAbsent.getDataRights().remoteProcessingAllowed, false);
+
+      const taskAbsent = createTaskContext({
+        taskId: 'task_app_rights_absent',
+        sessionId: 'sess_app_rights_absent',
+        primaryPrompt: 'Fix login authentication vulnerability',
+        workspaceSnapshotId: snapshotA.workspaceSnapshotId,
+        agentEnvironment: env,
+      });
+      const planAbsent = engineAbsent.generatePlan({
+        task: taskAbsent,
+        units: [unitValid],
+        snapshot: snapshotA,
+      });
+      await planAbsent.jevPromise;
+      assert.strictEqual(callCount, 0, `Absent SIFTR_JEV_REMOTE_PROCESSING must result in zero provider calls (observed ${callCount})`);
+
+      // Case 3C: SIFTR_JEV_REMOTE_PROCESSING=false -> Zero provider calls
+      process.env.SIFTR_JEV_REMOTE_PROCESSING = 'false';
+      callCount = 0;
+      const runnerFalse = new JevShadowRunner({
+        client: testProviderClient,
+        mode: JevMode.SHADOW,
+        sqliteStore: store,
+      });
+      const engineFalse = new ContextEngine({
+        sqliteStore: store,
+        jevShadowRunner: runnerFalse,
+        enableJevShadow: true,
+        // dataRights omitted
+      });
+      assert.strictEqual(engineFalse.getDataRights().remoteProcessingAllowed, false);
+
+      const taskFalse = createTaskContext({
+        taskId: 'task_app_rights_false',
+        sessionId: 'sess_app_rights_false',
+        primaryPrompt: 'Fix login authentication vulnerability',
+        workspaceSnapshotId: snapshotA.workspaceSnapshotId,
+        agentEnvironment: env,
+      });
+      const planFalse = engineFalse.generatePlan({
+        task: taskFalse,
+        units: [unitValid],
+        snapshot: snapshotA,
+      });
+      await planFalse.jevPromise;
+      assert.strictEqual(callCount, 0, `SIFTR_JEV_REMOTE_PROCESSING=false must result in zero provider calls (observed ${callCount})`);
     } finally {
       if (origRemote !== undefined) {
         process.env.SIFTR_JEV_REMOTE_PROCESSING = origRemote;

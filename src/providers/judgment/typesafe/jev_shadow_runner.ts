@@ -208,6 +208,25 @@ export class JevShadowRunner {
       this.budget
     );
 
+    // Enforce WorkspaceSnapshot equality: TaskContext and candidate ContextUnits must match workspaceSnapshot
+    if (task.workspaceSnapshotId && task.workspaceSnapshotId !== workspaceSnapshot.workspaceSnapshotId) {
+      const snapshotErr = new Error(
+        `WORKSPACE_SNAPSHOT_MISMATCH: TaskContext "${task.taskId}" workspaceSnapshotId "${task.workspaceSnapshotId}" does not match WorkspaceSnapshot id "${workspaceSnapshot.workspaceSnapshotId}".`
+      );
+      (snapshotErr as any).code = 'WORKSPACE_SNAPSHOT_MISMATCH';
+      throw snapshotErr;
+    }
+
+    for (const u of shadowUnits) {
+      if (u.workspaceSnapshotId && u.workspaceSnapshotId !== workspaceSnapshot.workspaceSnapshotId) {
+        const unitMismatchErr = new Error(
+          `WORKSPACE_SNAPSHOT_MISMATCH: ContextUnit "${u.id}" workspaceSnapshotId "${u.workspaceSnapshotId}" does not match WorkspaceSnapshot id "${workspaceSnapshot.workspaceSnapshotId}".`
+        );
+        (unitMismatchErr as any).code = 'WORKSPACE_SNAPSHOT_MISMATCH';
+        throw unitMismatchErr;
+      }
+    }
+
     const tracker = params.tracker || new JevCallTracker(this.budget);
     this.lastTracker = tracker;
     const semaphore = new Semaphore(this.budget.maxConcurrency);

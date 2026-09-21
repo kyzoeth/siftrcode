@@ -49,6 +49,7 @@ function createMockCodeSymbolUnit(params: {
   startLine: number;
   endLine: number;
   signature?: string;
+  workspaceSnapshotId?: string;
 }): CodeSymbolUnit {
   return {
     id: params.id,
@@ -61,7 +62,7 @@ function createMockCodeSymbolUnit(params: {
     endLine: params.endLine,
     signature: params.signature,
     contentHash: 'hash_' + params.id,
-    workspaceSnapshotId: 'snap_test',
+    workspaceSnapshotId: params.workspaceSnapshotId || 'snap_test',
     path: params.path,
     title: params.title,
     provenance: { sourceType: 'file' },
@@ -218,6 +219,10 @@ export async function runJevShadowClosureTests() {
         model: 'typesafe-one-preview',
       });
 
+      const snapshot = createWorkspaceSnapshot({
+        repositories: [{ repositoryId: 'root', baseCommitSha: 'HEAD', trackedTreeHash: 't1', dirtyPatchHash: 'clean' }],
+      });
+
       const unit = createMockCodeSymbolUnit({
         id: 'sym_math_sum',
         title: 'MathService.calculateSum',
@@ -227,10 +232,7 @@ export async function runJevShadowClosureTests() {
         startLine: 4,
         endLine: 7,
         signature: 'public calculateSum(a: number, b: number): number',
-      });
-
-      const snapshot = createWorkspaceSnapshot({
-        repositories: [{ repositoryId: 'root', baseCommitSha: 'HEAD', trackedTreeHash: 't1', dirtyPatchHash: 'clean' }],
+        workspaceSnapshotId: snapshot.workspaceSnapshotId,
       });
 
       const task = createTaskContext({
@@ -327,6 +329,10 @@ export async function runJevShadowClosureTests() {
       const secretApiKey = 'sk-proj-supersecretkey1234567890abcdef1234567890';
       const secretBearer = 'ghp_secrettokenvalue12345678901234567890';
 
+      const snapshot = createWorkspaceSnapshot({
+        repositories: [{ repositoryId: 'root', baseCommitSha: 'HEAD', trackedTreeHash: 't2', dirtyPatchHash: 'clean' }],
+      });
+
       const unitWithSecrets = createMockCodeSymbolUnit({
         id: 'sym_auth_secret',
         title: `authHandler with ${secretApiKey}`,
@@ -336,10 +342,7 @@ export async function runJevShadowClosureTests() {
         startLine: 1,
         endLine: 5,
         signature: `function authHandler(bearer = "${secretBearer}"): boolean`,
-      });
-
-      const snapshot = createWorkspaceSnapshot({
-        repositories: [{ repositoryId: 'root', baseCommitSha: 'HEAD', trackedTreeHash: 't2', dirtyPatchHash: 'clean' }],
+        workspaceSnapshotId: snapshot.workspaceSnapshotId,
       });
 
       const task = createTaskContext({
@@ -394,6 +397,10 @@ export async function runJevShadowClosureTests() {
         },
       };
 
+      const snapshot = createWorkspaceSnapshot({
+        repositories: [{ repositoryId: 'root', baseCommitSha: 'HEAD', trackedTreeHash: 't3', dirtyPatchHash: 'clean' }],
+      });
+
       const unit = createMockCodeSymbolUnit({
         id: 'sym_rights_test',
         title: 'MathService.calculateProduct',
@@ -403,10 +410,7 @@ export async function runJevShadowClosureTests() {
         startLine: 8,
         endLine: 11,
         signature: 'public calculateProduct(a: number, b: number): number',
-      });
-
-      const snapshot = createWorkspaceSnapshot({
-        repositories: [{ repositoryId: 'root', baseCommitSha: 'HEAD', trackedTreeHash: 't3', dirtyPatchHash: 'clean' }],
+        workspaceSnapshotId: snapshot.workspaceSnapshotId,
       });
 
       const task = createTaskContext({
@@ -478,6 +482,10 @@ export async function runJevShadowClosureTests() {
         budget: { maxCandidates: 20, maxCallsPerTask: 20 },
       });
 
+      const snapshot = createWorkspaceSnapshot({
+        repositories: [{ repositoryId: 'root', baseCommitSha: 'HEAD', trackedTreeHash: 't5', dirtyPatchHash: 'clean' }],
+      });
+
       const units: ContextUnit[] = [];
       const ranked: RankedCandidate[] = [];
       for (let i = 0; i < 40; i++) {
@@ -489,14 +497,11 @@ export async function runJevShadowClosureTests() {
           scope: '',
           startLine: 1,
           endLine: 5,
+          workspaceSnapshotId: snapshot.workspaceSnapshotId,
         });
         units.push(u);
         ranked.push(createMockRankedCandidate(u.id, i + 1, 1 - i * 0.02));
       }
-
-      const snapshot = createWorkspaceSnapshot({
-        repositories: [{ repositoryId: 'root', baseCommitSha: 'HEAD', trackedTreeHash: 't5', dirtyPatchHash: 'clean' }],
-      });
 
       const task = createTaskContext({
         taskId: 'task_budget_5',
@@ -543,6 +548,10 @@ export async function runJevShadowClosureTests() {
         budget: { maxCandidates: 12, maxCallsPerTask: 12, maxConcurrency: 4 },
       });
 
+      const snapshot = createWorkspaceSnapshot({
+        repositories: [{ repositoryId: 'root', baseCommitSha: 'HEAD', trackedTreeHash: 't6', dirtyPatchHash: 'clean' }],
+      });
+
       const units: ContextUnit[] = [];
       const ranked: RankedCandidate[] = [];
       for (let i = 0; i < 12; i++) {
@@ -554,14 +563,11 @@ export async function runJevShadowClosureTests() {
           scope: '',
           startLine: 1,
           endLine: 5,
+          workspaceSnapshotId: snapshot.workspaceSnapshotId,
         });
         units.push(u);
         ranked.push(createMockRankedCandidate(u.id, i + 1, 1 - i * 0.05));
       }
-
-      const snapshot = createWorkspaceSnapshot({
-        repositories: [{ repositoryId: 'root', baseCommitSha: 'HEAD', trackedTreeHash: 't6', dirtyPatchHash: 'clean' }],
-      });
 
       const task = createTaskContext({
         taskId: 'task_conc_6',
@@ -590,6 +596,10 @@ export async function runJevShadowClosureTests() {
     // ------------------------------------------------------------------------
     console.log('--- Test 7: Failure & Fallback Resilience Tests ---');
     {
+      const snapshot = createWorkspaceSnapshot({
+        repositories: [{ repositoryId: 'root', baseCommitSha: 'HEAD', trackedTreeHash: 't7', dirtyPatchHash: 'clean' }],
+      });
+
       const unit = createMockCodeSymbolUnit({
         id: 'sym_fail_test',
         title: 'FailTest',
@@ -598,10 +608,7 @@ export async function runJevShadowClosureTests() {
         scope: '',
         startLine: 1,
         endLine: 5,
-      });
-
-      const snapshot = createWorkspaceSnapshot({
-        repositories: [{ repositoryId: 'root', baseCommitSha: 'HEAD', trackedTreeHash: 't7', dirtyPatchHash: 'clean' }],
+        workspaceSnapshotId: snapshot.workspaceSnapshotId,
       });
 
       const task = createTaskContext({

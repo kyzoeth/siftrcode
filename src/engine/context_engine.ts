@@ -680,6 +680,17 @@ export class ContextEngine {
       task.workspaceSnapshotId = snapshot.workspaceSnapshotId;
     }
 
+    // Enforce WorkspaceSnapshot equality on input units
+    for (const u of units) {
+      if (u.workspaceSnapshotId && u.workspaceSnapshotId !== snapshot.workspaceSnapshotId) {
+        const unitMismatchErr = new Error(
+          `WORKSPACE_SNAPSHOT_MISMATCH: ContextUnit "${u.id}" workspaceSnapshotId "${u.workspaceSnapshotId}" does not match WorkspaceSnapshot id "${snapshot.workspaceSnapshotId}".`
+        );
+        (unitMismatchErr as any).code = 'WORKSPACE_SNAPSHOT_MISMATCH';
+        throw unitMismatchErr;
+      }
+    }
+
     // ContextEngine authoritatively retrieves and validates active SiftrSession
     const session = this.getOrCreateSession({
       sessionId: task.sessionId,

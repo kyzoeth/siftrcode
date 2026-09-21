@@ -22,6 +22,7 @@ import * as os from 'os';
 import * as crypto from 'crypto';
 import { SqliteStore } from '../storage/sqlite_store';
 import { ContextEngine } from '../engine/context_engine';
+import { ContextPlan } from '../engine/context_plan';
 import { RepositoryIndexer } from '../indexing/repository_index';
 import { GraphBuilder } from '../graph/graph_builder';
 import { GitGraphIntelligence } from '../graph/git_graph';
@@ -512,6 +513,75 @@ function createRealPilotClient(
   return fakeClient;
 }
 
+/**
+ * Normalizes the full decision plan by extracting all deterministic fields
+ * that define the plan's context, units, resolutions, contents, token budgets, and exposure decisions.
+ * Strips ephemeral/random identifiers (planId, timestamps, JEV promise) so true bit-for-bit invariance
+ * between baseline (JEV OFF) and shadow (JEV ON) runs can be verified via cryptographic hashing.
+ */
+export function normalizeFullDecisionPlan(plan: ContextPlan): Record<string, any> {
+  return {
+    taskId: plan.taskId,
+    workspaceSnapshotId: plan.workspaceSnapshotId,
+    agentEnvironmentId: plan.agentEnvironmentId,
+    budgetPlan: {
+      totalTokens: plan.budgetPlan?.totalTokens,
+      rawTotalTokens: plan.budgetPlan?.rawTotalTokens,
+      tokensSaved: plan.budgetPlan?.tokensSaved,
+      savingsPercentage: plan.budgetPlan?.savingsPercentage,
+      estimatedCostUSD: plan.budgetPlan?.estimatedCostUSD,
+      baselineCostUSD: plan.budgetPlan?.baselineCostUSD,
+      costSavedUSD: plan.budgetPlan?.costSavedUSD,
+      budgetProfile: plan.budgetPlan?.budgetProfile,
+      allocations: (plan.budgetPlan?.allocations || []).map((a) => ({
+        contextUnitId: a.contextUnitId,
+        resolution: a.resolution,
+        tokenCost: a.tokenCost,
+        rawTokens: a.rawTokens,
+        justification: a.justification,
+      })),
+    },
+    units: (plan.units || []).map((u) => ({
+      contextUnitId: u.contextUnitId,
+      title: u.title,
+      path: u.path,
+      resolution: u.resolution,
+      content: u.content,
+      tokenEstimate: u.tokenEstimate,
+      reason: u.reason,
+    })),
+    formattedContext: {
+      promptText: plan.formattedContext?.promptText,
+      tokenEstimate: plan.formattedContext?.tokenEstimate,
+      sections: (plan.formattedContext?.sections || []).map((s) => ({
+        title: s.title,
+        filePath: s.filePath,
+        resolution: s.resolution,
+        content: s.content,
+        unitId: s.unitId,
+      })),
+    },
+    exposureDecisions: (plan.exposureDecisions || []).map((e) => ({
+      contextUnitId: e.contextUnitId,
+      exposureResolution: e.exposureResolution,
+      exposureRank: e.exposureRank,
+      exposureCostTokens: e.exposureCostTokens,
+    })),
+    actualRenderedTokens: plan.actualRenderedTokens,
+    tokenEstimationMethod: plan.tokenEstimationMethod,
+    tokenSafetyMargin: plan.tokenSafetyMargin,
+  };
+}
+
+/**
+ * Computes deterministic SHA-256 hash of the normalized full decision plan.
+ */
+export function hashNormalizedDecisionPlan(plan: ContextPlan): string {
+  const normalized = normalizeFullDecisionPlan(plan);
+  const jsonStr = JSON.stringify(normalized);
+  return crypto.createHash('sha256').update(jsonStr).digest('hex');
+}
+
 // ---------------------------------------------------------------------------
 // Pilot Execution Engine
 // ---------------------------------------------------------------------------
@@ -545,55 +615,7 @@ export async function runTypeSafeJevPilotStudy(options: {
   const dbPath = path.join(tempDir, 'pilot_telemetry.sqlite');
   const store = new SqliteStore(dbPath);
 
-  // 1. Pre-index repositories
-  console.log('Indexing real repositories on disk...');
-
-  // Express
-  const expressDir = path.resolve(rootDir, 'benchmarks/express-repo');
-  const expressIndexer = new RepositoryIndexer();
-  const expressIndexResult = await expressIndexer.indexRepository(expressDir, {
-    trustPolicy: createDefaultRepositoryTrustPolicy({
-      repositoryId: 'express',
-      origin: RepositoryOrigin.CLONED_EXTERNAL,
-    }),
-  });
-  const expressUnits = expressIndexResult.units;
-  const expressGraph = new GraphBuilder().buildGraph(expressUnits, { repoDir: expressDir });
-  const expressGit = new GitGraphIntelligence({ repoDir: expressDir });
-  console.log(`  ✔ Express indexed (CLONED_EXTERNAL): ${expressUnits.length} units, ${expressGraph.getAllNodes().length} graph nodes`);
-
-  // FastAPI
-  const fastapiDir = path.resolve(rootDir, 'benchmarks/fastapi-repo');
-  const fastapiIndexer = new RepositoryIndexer();
-  const fastapiIndexResult = await fastapiIndexer.indexRepository(fastapiDir, {
-    includePatterns: ['fastapi/**'],
-    excludePatterns: ['**/tests/**', '**/docs/**', '**/docs_src/**'],
-    trustPolicy: createDefaultRepositoryTrustPolicy({
-      repositoryId: 'fastapi',
-      origin: RepositoryOrigin.CLONED_EXTERNAL,
-    }),
-  });
-  const fastapiUnits = fastapiIndexResult.units;
-  const fastapiGraph = new GraphBuilder().buildGraph(fastapiUnits, { repoDir: fastapiDir });
-  const fastapiGit = new GitGraphIntelligence({ repoDir: fastapiDir });
-  console.log(`  ✔ FastAPI indexed (CLONED_EXTERNAL): ${fastapiUnits.length} units, ${fastapiGraph.getAllNodes().length} graph nodes`);
-
-  // SiftrCode
-  const siftrIndexer = new RepositoryIndexer();
-  const siftrIndexResult = await siftrIndexer.indexRepository(rootDir, {
-    includePatterns: ['src/**'],
-    excludePatterns: ['**/node_modules/**', '**/dist/**', '**/temp_*/**', '**/benchmarks/**'],
-    trustPolicy: createDefaultRepositoryTrustPolicy({
-      repositoryId: 'siftrcode',
-      origin: RepositoryOrigin.LOCAL_FIRST_PARTY,
-    }),
-  });
-  const siftrUnits = siftrIndexResult.units;
-  const siftrGraph = new GraphBuilder().buildGraph(siftrUnits, { repoDir: rootDir });
-  const siftrGit = new GitGraphIntelligence({ repoDir: rootDir });
-  console.log(`  ✔ SiftrCode indexed (LOCAL_FIRST_PARTY): ${siftrUnits.length} units, ${siftrGraph.getAllNodes().length} graph nodes\n`);
-
-  // Canonical WorkspaceSnapshots for each evaluated repository
+  // Authoritative WorkspaceSnapshots for each evaluated repository
   const repoSnapshots: Record<PilotRepoKind, WorkspaceSnapshot> = {
     express: createWorkspaceSnapshot({
       repositories: [
@@ -627,10 +649,80 @@ export async function runTypeSafeJevPilotStudy(options: {
     }),
   };
 
-  // Align all indexed units' workspaceSnapshotId with canonical snapshots
-  for (const u of expressUnits) u.workspaceSnapshotId = repoSnapshots.express.workspaceSnapshotId;
-  for (const u of fastapiUnits) u.workspaceSnapshotId = repoSnapshots.fastapi.workspaceSnapshotId;
-  for (const u of siftrUnits) u.workspaceSnapshotId = repoSnapshots.siftrcode.workspaceSnapshotId;
+  // 1. Pre-index repositories using authoritative snapshot IDs
+  console.log('Indexing real repositories on disk with authoritative WorkspaceSnapshots...');
+
+  // Express
+  const expressDir = path.resolve(rootDir, 'benchmarks/express-repo');
+  const expressIndexer = new RepositoryIndexer();
+  const expressIndexResult = await expressIndexer.indexRepository(expressDir, {
+    repositoryId: 'express',
+    workspaceSnapshotId: repoSnapshots.express.workspaceSnapshotId,
+    trustPolicy: createDefaultRepositoryTrustPolicy({
+      repositoryId: 'express',
+      origin: RepositoryOrigin.CLONED_EXTERNAL,
+    }),
+  });
+  const expressUnits = expressIndexResult.units;
+  for (const u of expressUnits) {
+    if (u.workspaceSnapshotId !== repoSnapshots.express.workspaceSnapshotId) {
+      const err = new Error(`WORKSPACE_SNAPSHOT_MISMATCH: Express unit "${u.id}" workspaceSnapshotId "${u.workspaceSnapshotId}" does not match authoritative snapshot id "${repoSnapshots.express.workspaceSnapshotId}"`);
+      (err as any).code = 'WORKSPACE_SNAPSHOT_MISMATCH';
+      throw err;
+    }
+  }
+  const expressGraph = new GraphBuilder().buildGraph(expressUnits, { repoDir: expressDir });
+  const expressGit = new GitGraphIntelligence({ repoDir: expressDir });
+  console.log(`  ✔ Express indexed (CLONED_EXTERNAL): ${expressUnits.length} units, ${expressGraph.getAllNodes().length} graph nodes [snapshot: ${repoSnapshots.express.workspaceSnapshotId}]`);
+
+  // FastAPI
+  const fastapiDir = path.resolve(rootDir, 'benchmarks/fastapi-repo');
+  const fastapiIndexer = new RepositoryIndexer();
+  const fastapiIndexResult = await fastapiIndexer.indexRepository(fastapiDir, {
+    repositoryId: 'fastapi',
+    workspaceSnapshotId: repoSnapshots.fastapi.workspaceSnapshotId,
+    includePatterns: ['fastapi/**'],
+    excludePatterns: ['**/tests/**', '**/docs/**', '**/docs_src/**'],
+    trustPolicy: createDefaultRepositoryTrustPolicy({
+      repositoryId: 'fastapi',
+      origin: RepositoryOrigin.CLONED_EXTERNAL,
+    }),
+  });
+  const fastapiUnits = fastapiIndexResult.units;
+  for (const u of fastapiUnits) {
+    if (u.workspaceSnapshotId !== repoSnapshots.fastapi.workspaceSnapshotId) {
+      const err = new Error(`WORKSPACE_SNAPSHOT_MISMATCH: FastAPI unit "${u.id}" workspaceSnapshotId "${u.workspaceSnapshotId}" does not match authoritative snapshot id "${repoSnapshots.fastapi.workspaceSnapshotId}"`);
+      (err as any).code = 'WORKSPACE_SNAPSHOT_MISMATCH';
+      throw err;
+    }
+  }
+  const fastapiGraph = new GraphBuilder().buildGraph(fastapiUnits, { repoDir: fastapiDir });
+  const fastapiGit = new GitGraphIntelligence({ repoDir: fastapiDir });
+  console.log(`  ✔ FastAPI indexed (CLONED_EXTERNAL): ${fastapiUnits.length} units, ${fastapiGraph.getAllNodes().length} graph nodes [snapshot: ${repoSnapshots.fastapi.workspaceSnapshotId}]`);
+
+  // SiftrCode
+  const siftrIndexer = new RepositoryIndexer();
+  const siftrIndexResult = await siftrIndexer.indexRepository(rootDir, {
+    repositoryId: 'siftrcode',
+    workspaceSnapshotId: repoSnapshots.siftrcode.workspaceSnapshotId,
+    includePatterns: ['src/**'],
+    excludePatterns: ['**/node_modules/**', '**/dist/**', '**/temp_*/**', '**/benchmarks/**'],
+    trustPolicy: createDefaultRepositoryTrustPolicy({
+      repositoryId: 'siftrcode',
+      origin: RepositoryOrigin.LOCAL_FIRST_PARTY,
+    }),
+  });
+  const siftrUnits = siftrIndexResult.units;
+  for (const u of siftrUnits) {
+    if (u.workspaceSnapshotId !== repoSnapshots.siftrcode.workspaceSnapshotId) {
+      const err = new Error(`WORKSPACE_SNAPSHOT_MISMATCH: SiftrCode unit "${u.id}" workspaceSnapshotId "${u.workspaceSnapshotId}" does not match authoritative snapshot id "${repoSnapshots.siftrcode.workspaceSnapshotId}"`);
+      (err as any).code = 'WORKSPACE_SNAPSHOT_MISMATCH';
+      throw err;
+    }
+  }
+  const siftrGraph = new GraphBuilder().buildGraph(siftrUnits, { repoDir: rootDir });
+  const siftrGit = new GitGraphIntelligence({ repoDir: rootDir });
+  console.log(`  ✔ SiftrCode indexed (LOCAL_FIRST_PARTY): ${siftrUnits.length} units, ${siftrGraph.getAllNodes().length} graph nodes [snapshot: ${repoSnapshots.siftrcode.workspaceSnapshotId}]\n`);
 
   // Combined master units map for evaluation
   const masterUnitsMap = new Map<string, ContextUnit>();
@@ -693,7 +785,19 @@ export async function runTypeSafeJevPilotStudy(options: {
     REFACTOR: 0,
   };
 
-  const selectedTasks = AUDITED_PILOT_TASKS.slice(0, maxTasks);
+  const expressTasks = AUDITED_PILOT_TASKS.filter((t) => t.repo === 'express');
+  const fastapiTasks = AUDITED_PILOT_TASKS.filter((t) => t.repo === 'fastapi');
+  const siftrTasks = AUDITED_PILOT_TASKS.filter((t) => t.repo === 'siftrcode');
+
+  // Smoke selection: exactly 2 Express + 2 FastAPI + 1 SiftrCode (5 tasks total)
+  const selectedTasks = isSmoke
+    ? [
+        ...expressTasks.slice(0, 2),
+        ...fastapiTasks.slice(0, 2),
+        ...siftrTasks.slice(0, 1),
+      ]
+    : AUDITED_PILOT_TASKS.slice(0, maxTasks);
+
   console.log(`Executing pilot evaluation across ${selectedTasks.length} audited real tasks...`);
   const pilotStartTime = Date.now();
 
@@ -886,18 +990,12 @@ export async function runTypeSafeJevPilotStudy(options: {
       }
     }
 
-    // Verify 100% Plan Invariance
-    if (baselinePlan.units.length !== shadowPlan.units.length) {
+    // Verify Cryptographic Bit-for-Bit Plan Invariance via SHA-256 Hash Comparison
+    const baselineHash = hashNormalizedDecisionPlan(baselinePlan);
+    const shadowHash = hashNormalizedDecisionPlan(shadowPlan);
+    if (baselineHash !== shadowHash) {
       planInvarianceHolds = false;
-    } else {
-      for (let uIdx = 0; uIdx < baselinePlan.units.length; uIdx++) {
-        const bu = baselinePlan.units[uIdx];
-        const su = shadowPlan.units[uIdx];
-        if (bu.contextUnitId !== su.contextUnitId || bu.resolution !== su.resolution) {
-          planInvarianceHolds = false;
-          break;
-        }
-      }
+      console.warn(`    ⚠️ Plan mismatch on task ${taskSpec.taskId}: baseline hash ${baselineHash} != shadow hash ${shadowHash}`);
     }
 
     // Record distributions and ground-truth correlations
@@ -1072,8 +1170,8 @@ export async function runTypeSafeJevPilotStudy(options: {
   console.log('\n================================================================');
   console.log(`                     ${reportHeader}                      `);
   console.log('================================================================');
-  console.log(`Tasks Evaluated:         ${report.totalTasks} (Express: 10, FastAPI: 10, SiftrCode: 5)`);
-  console.log(`Plan Invariance:         ${report.planInvarianceHolds ? 'PASSED (100% bit-for-bit identical)' : 'FAILED'}`);
+  console.log(`Tasks Evaluated:         ${report.totalTasks} (Express: ${report.tasksPerRepo.express}, FastAPI: ${report.tasksPerRepo.fastapi}, SiftrCode: ${report.tasksPerRepo.siftrcode})`);
+  console.log(`Plan Invariance:         ${report.planInvarianceHolds ? 'PASSED (100% bit-for-bit decision plan SHA-256 hash match)' : 'FAILED'}`);
   console.log(`Total JEV Calls:         ${report.operational.totalCalls}`);
   console.log(`Mean Calls / Task:       ${report.operational.meanCallsPerTask}`);
   console.log(`Peak Concurrency:        ${report.operational.peakConcurrency} (Configured Limit: ${report.operational.configuredMaxConcurrency || 4})`);
