@@ -1,6 +1,6 @@
 {
   "schemaVersion": "siftrcode-v3-context-rank-eval-v1",
-  "evaluatedAt": "2026-09-21T21:32:10.958Z",
+  "evaluatedAt": "2026-09-21T22:07:37.308Z",
   "benchmarkVersion": "siftrbench-v1",
   "heldOutEpisodeCount": 33,
   "baselineMetrics": {
@@ -21,35 +21,35 @@
   },
   "learnedMetrics": {
     "totalTasks": 33,
-    "ndcg5": 0.5229,
-    "ndcg10": 0.5538,
-    "ndcg20": 0.5991,
-    "recall5": 0.6061,
-    "recall10": 0.697,
-    "recall20": 0.8788,
-    "recall50": 0.8788,
-    "mrr": 0.5212,
+    "ndcg5": 0.4816,
+    "ndcg10": 0.4816,
+    "ndcg20": 0.4896,
+    "recall5": 0.5758,
+    "recall10": 0.5758,
+    "recall20": 0.6061,
+    "recall50": 0.6667,
+    "mrr": 0.4541,
     "meanLatencyMs": 0.1,
-    "meanTokens": 7991,
-    "targetCoverage": 0.9091,
-    "preBudgetNdcg10": 0.5841,
-    "preBudgetRecall10": 0.7273
+    "meanTokens": 5909,
+    "targetCoverage": 0.6667,
+    "preBudgetNdcg10": 0.504,
+    "preBudgetRecall10": 0.5758
   },
   "perRepositoryBreakdown": {
     "express": {
       "taskCount": 12,
       "baselineNdcg10": 0.2718,
-      "learnedNdcg10": 0.2966,
-      "ndcg10Delta": 0.0248,
+      "learnedNdcg10": 0.1667,
+      "ndcg10Delta": -0.1051,
       "baselineRecall10": 0.3333,
-      "learnedRecall10": 0.5,
-      "recall10Delta": 0.1667
+      "learnedRecall10": 0.1667,
+      "recall10Delta": -0.1666
     },
     "fastapi": {
       "taskCount": 14,
       "baselineNdcg10": 0.4848,
-      "learnedNdcg10": 0.6227,
-      "ndcg10Delta": 0.1379,
+      "learnedNdcg10": 0.5901,
+      "ndcg10Delta": 0.1053,
       "baselineRecall10": 0.6429,
       "learnedRecall10": 0.7857,
       "recall10Delta": 0.1428
@@ -57,8 +57,8 @@
     "siftrcode": {
       "taskCount": 7,
       "baselineNdcg10": 0.8571,
-      "learnedNdcg10": 0.8571,
-      "ndcg10Delta": 0,
+      "learnedNdcg10": 0.8044,
+      "ndcg10Delta": -0.0527,
       "baselineRecall10": 0.8571,
       "learnedRecall10": 0.8571,
       "recall10Delta": 0
@@ -68,14 +68,14 @@
     "BUG_FIX": {
       "taskCount": 26,
       "baselineNdcg10": 0.4033,
-      "learnedNdcg10": 0.5225,
-      "ndcg10Delta": 0.1192
+      "learnedNdcg10": 0.4139,
+      "ndcg10Delta": 0.0106
     },
     "FEATURE_ADDITION": {
       "taskCount": 5,
       "baselineNdcg10": 0.7123,
-      "learnedNdcg10": 0.5385,
-      "ndcg10Delta": -0.1738
+      "learnedNdcg10": 0.6262,
+      "ndcg10Delta": -0.0861
     },
     "REFACTOR": {
       "taskCount": 2,
@@ -89,69 +89,69 @@
     "iterations": 2000,
     "randomSeed": 42,
     "ndcg10": {
-      "meanDelta": 0.0675,
+      "meanDelta": -0.0047,
       "medianDelta": 0,
-      "ciLower95": -0.01,
-      "ciUpper95": 0.1595,
-      "pValue": 0.105,
-      "wins": 6,
-      "ties": 25,
-      "losses": 2,
+      "ciLower95": -0.0981,
+      "ciUpper95": 0.0864,
+      "pValue": 0.909,
+      "wins": 5,
+      "ties": 24,
+      "losses": 4,
       "isStatisticallySignificant": false
     },
     "recall10": {
-      "meanDelta": 0.1212,
+      "meanDelta": 0,
       "medianDelta": 0,
-      "ciLower95": 0,
-      "ciUpper95": 0.2727,
-      "pValue": 0.118,
-      "wins": 5,
-      "ties": 27,
-      "losses": 1,
+      "ciLower95": -0.1212,
+      "ciUpper95": 0.1212,
+      "pValue": 1,
+      "wins": 2,
+      "ties": 29,
+      "losses": 2,
       "isStatisticallySignificant": false
     },
     "mrr": {
-      "meanDelta": 0.0642,
+      "meanDelta": -0.003,
       "medianDelta": 0,
-      "ciLower95": -0.0108,
-      "ciUpper95": 0.154,
-      "pValue": 0.099,
-      "wins": 13,
-      "ties": 18,
-      "losses": 2,
+      "ciLower95": -0.0891,
+      "ciUpper95": 0.0882,
+      "pValue": 0.924,
+      "wins": 6,
+      "ties": 23,
+      "losses": 4,
       "isStatisticallySignificant": false
     },
     "perRepoDeltas": {
       "express": {
-        "ndcg10Delta": 0.0248,
-        "recall10Delta": 0.1667,
-        "mrrDelta": 0.0098,
+        "ndcg10Delta": -0.1052,
+        "recall10Delta": -0.1667,
+        "mrrDelta": -0.0772,
         "taskCount": 12
       },
       "fastapi": {
-        "ndcg10Delta": 0.1379,
+        "ndcg10Delta": 0.1054,
         "recall10Delta": 0.1429,
-        "mrrDelta": 0.1429,
+        "mrrDelta": 0.0948,
         "taskCount": 14
       },
       "siftrcode": {
-        "ndcg10Delta": 0,
+        "ndcg10Delta": -0.0527,
         "recall10Delta": 0,
-        "mrrDelta": 0,
+        "mrrDelta": -0.0714,
         "taskCount": 7
       }
     },
     "perTypeDeltas": {
       "BUG_FIX": {
-        "ndcg10Delta": 0.1191,
-        "recall10Delta": 0.1923,
-        "mrrDelta": 0.1135,
+        "ndcg10Delta": 0.0106,
+        "recall10Delta": 0.0385,
+        "mrrDelta": 0.0044,
         "taskCount": 26
       },
       "FEATURE_ADDITION": {
-        "ndcg10Delta": -0.1738,
+        "ndcg10Delta": -0.0861,
         "recall10Delta": -0.2,
-        "mrrDelta": -0.1667,
+        "mrrDelta": -0.0426,
         "taskCount": 5
       },
       "REFACTOR": {
@@ -191,138 +191,138 @@
       "description": "Learned model without JEV continuous signals",
       "aggregate": {
         "totalTasks": 33,
-        "ndcg5": 0.5229,
-        "ndcg10": 0.5538,
-        "ndcg20": 0.5991,
-        "recall5": 0.6061,
-        "recall10": 0.697,
-        "recall20": 0.8788,
-        "recall50": 0.8788,
-        "mrr": 0.5212,
+        "ndcg5": 0.4816,
+        "ndcg10": 0.4816,
+        "ndcg20": 0.4896,
+        "recall5": 0.5758,
+        "recall10": 0.5758,
+        "recall20": 0.6061,
+        "recall50": 0.6667,
+        "mrr": 0.4541,
         "meanLatencyMs": 0,
-        "meanTokens": 7991,
-        "targetCoverage": 0.9091,
-        "preBudgetNdcg10": 0.5841,
-        "preBudgetRecall10": 0.7273
+        "meanTokens": 5909,
+        "targetCoverage": 0.6667,
+        "preBudgetNdcg10": 0.504,
+        "preBudgetRecall10": 0.5758
       },
-      "ndcg10DeltaOverV2": 0.0675,
-      "recall10DeltaOverV2": 0.1212,
-      "mrrDeltaOverV2": 0.0641
+      "ndcg10DeltaOverV2": -0.0047,
+      "recall10DeltaOverV2": 0,
+      "mrrDeltaOverV2": -0.003
     },
     {
       "variant": "learned_with_jev",
       "description": "Learned model with JEV continuous signals",
       "aggregate": {
         "totalTasks": 33,
-        "ndcg5": 0.5229,
-        "ndcg10": 0.5538,
-        "ndcg20": 0.5991,
-        "recall5": 0.6061,
-        "recall10": 0.697,
-        "recall20": 0.8788,
-        "recall50": 0.8788,
-        "mrr": 0.5212,
+        "ndcg5": 0.4816,
+        "ndcg10": 0.4816,
+        "ndcg20": 0.4896,
+        "recall5": 0.5758,
+        "recall10": 0.5758,
+        "recall20": 0.6061,
+        "recall50": 0.6667,
+        "mrr": 0.4541,
         "meanLatencyMs": 0,
-        "meanTokens": 7991,
-        "targetCoverage": 0.9091,
-        "preBudgetNdcg10": 0.5841,
-        "preBudgetRecall10": 0.7273
+        "meanTokens": 5909,
+        "targetCoverage": 0.6667,
+        "preBudgetNdcg10": 0.504,
+        "preBudgetRecall10": 0.5758
       },
-      "ndcg10DeltaOverV2": 0.0675,
-      "recall10DeltaOverV2": 0.1212,
-      "mrrDeltaOverV2": 0.0641
+      "ndcg10DeltaOverV2": -0.0047,
+      "recall10DeltaOverV2": 0,
+      "mrrDeltaOverV2": -0.003
     },
     {
       "variant": "learned_without_graph",
       "description": "Learned model without context graph topology",
       "aggregate": {
         "totalTasks": 33,
-        "ndcg5": 0.5229,
-        "ndcg10": 0.5538,
-        "ndcg20": 0.5991,
-        "recall5": 0.6061,
-        "recall10": 0.697,
-        "recall20": 0.8788,
-        "recall50": 0.8788,
-        "mrr": 0.5212,
+        "ndcg5": 0.4816,
+        "ndcg10": 0.4816,
+        "ndcg20": 0.4896,
+        "recall5": 0.5758,
+        "recall10": 0.5758,
+        "recall20": 0.6061,
+        "recall50": 0.6667,
+        "mrr": 0.4541,
         "meanLatencyMs": 0,
-        "meanTokens": 7991,
-        "targetCoverage": 0.9091,
-        "preBudgetNdcg10": 0.5841,
-        "preBudgetRecall10": 0.7273
+        "meanTokens": 5909,
+        "targetCoverage": 0.6667,
+        "preBudgetNdcg10": 0.504,
+        "preBudgetRecall10": 0.5758
       },
-      "ndcg10DeltaOverV2": 0.0675,
-      "recall10DeltaOverV2": 0.1212,
-      "mrrDeltaOverV2": 0.0641
+      "ndcg10DeltaOverV2": -0.0047,
+      "recall10DeltaOverV2": 0,
+      "mrrDeltaOverV2": -0.003
     },
     {
       "variant": "learned_without_git",
       "description": "Learned model without Git change/co-change signals",
       "aggregate": {
         "totalTasks": 33,
-        "ndcg5": 0.5229,
-        "ndcg10": 0.5538,
-        "ndcg20": 0.5991,
-        "recall5": 0.6061,
-        "recall10": 0.697,
-        "recall20": 0.8788,
-        "recall50": 0.8788,
-        "mrr": 0.5212,
+        "ndcg5": 0.4816,
+        "ndcg10": 0.4816,
+        "ndcg20": 0.4896,
+        "recall5": 0.5758,
+        "recall10": 0.5758,
+        "recall20": 0.6061,
+        "recall50": 0.6667,
+        "mrr": 0.4541,
         "meanLatencyMs": 0,
-        "meanTokens": 7991,
-        "targetCoverage": 0.9091,
-        "preBudgetNdcg10": 0.5841,
-        "preBudgetRecall10": 0.7273
+        "meanTokens": 5909,
+        "targetCoverage": 0.6667,
+        "preBudgetNdcg10": 0.504,
+        "preBudgetRecall10": 0.5758
       },
-      "ndcg10DeltaOverV2": 0.0675,
-      "recall10DeltaOverV2": 0.1212,
-      "mrrDeltaOverV2": 0.0641
+      "ndcg10DeltaOverV2": -0.0047,
+      "recall10DeltaOverV2": 0,
+      "mrrDeltaOverV2": -0.003
     },
     {
       "variant": "learned_without_runtime",
       "description": "Learned model without stack trace/test failure evidence",
       "aggregate": {
         "totalTasks": 33,
-        "ndcg5": 0.5229,
-        "ndcg10": 0.5538,
-        "ndcg20": 0.5991,
-        "recall5": 0.6061,
-        "recall10": 0.697,
-        "recall20": 0.8788,
-        "recall50": 0.8788,
-        "mrr": 0.5212,
+        "ndcg5": 0.4816,
+        "ndcg10": 0.4816,
+        "ndcg20": 0.4896,
+        "recall5": 0.5758,
+        "recall10": 0.5758,
+        "recall20": 0.6061,
+        "recall50": 0.6667,
+        "mrr": 0.4541,
         "meanLatencyMs": 0,
-        "meanTokens": 7991,
-        "targetCoverage": 0.9091,
-        "preBudgetNdcg10": 0.5841,
-        "preBudgetRecall10": 0.7273
+        "meanTokens": 5909,
+        "targetCoverage": 0.6667,
+        "preBudgetNdcg10": 0.504,
+        "preBudgetRecall10": 0.5758
       },
-      "ndcg10DeltaOverV2": 0.0675,
-      "recall10DeltaOverV2": 0.1212,
-      "mrrDeltaOverV2": 0.0641
+      "ndcg10DeltaOverV2": -0.0047,
+      "recall10DeltaOverV2": 0,
+      "mrrDeltaOverV2": -0.003
     },
     {
       "variant": "learned_full_model",
       "description": "Full structured learned model with all features",
       "aggregate": {
         "totalTasks": 33,
-        "ndcg5": 0.5229,
-        "ndcg10": 0.5538,
-        "ndcg20": 0.5991,
-        "recall5": 0.6061,
-        "recall10": 0.697,
-        "recall20": 0.8788,
-        "recall50": 0.8788,
-        "mrr": 0.5212,
+        "ndcg5": 0.4816,
+        "ndcg10": 0.4816,
+        "ndcg20": 0.4896,
+        "recall5": 0.5758,
+        "recall10": 0.5758,
+        "recall20": 0.6061,
+        "recall50": 0.6667,
+        "mrr": 0.4541,
         "meanLatencyMs": 0,
-        "meanTokens": 7991,
-        "targetCoverage": 0.9091,
-        "preBudgetNdcg10": 0.5841,
-        "preBudgetRecall10": 0.7273
+        "meanTokens": 5909,
+        "targetCoverage": 0.6667,
+        "preBudgetNdcg10": 0.504,
+        "preBudgetRecall10": 0.5758
       },
-      "ndcg10DeltaOverV2": 0.0675,
-      "recall10DeltaOverV2": 0.1212,
-      "mrrDeltaOverV2": 0.0641
+      "ndcg10DeltaOverV2": -0.0047,
+      "recall10DeltaOverV2": 0,
+      "mrrDeltaOverV2": -0.003
     }
   ]
 }

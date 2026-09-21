@@ -14,8 +14,19 @@ import {
 } from './gemini_tools';
 import { calculateModelCostUSD } from '../provider_pricing';
 
+export type AgentRunValidity =
+  | 'VALID'
+  | 'PROVIDER_FAILURE'
+  | 'QUOTA_FAILURE'
+  | 'AGENT_TIMEOUT'
+  | 'TOOL_FAILURE'
+  | 'WORKSPACE_FAILURE'
+  | 'VERIFIER_UNAVAILABLE'
+  | 'VERIFIER_ERROR';
+
 export interface GeminiAgentRunResult {
   completed: boolean;
+  runValidity: AgentRunValidity;
   turns: number;
   toolCallsCount: number;
   finalText: string;
@@ -23,7 +34,8 @@ export interface GeminiAgentRunResult {
   totalCandidateTokens: number;
   totalThoughtsTokens: number;
   totalTokens: number;
-  providerCostUSD: number;
+  providerCostUSD: number | null;
+  costStatus: 'VALID' | 'PRICING_UNAVAILABLE';
   wallClockLatencyMs: number;
   toolHistory: ToolExecutionResult[];
   verifiedSuccess: boolean | null;
@@ -162,31 +174,55 @@ export class GeminiCodingAgent {
       runError = err.message || String(err);
     }
 
-    // Execute verifier command if supplied
+    let runValidity: AgentRunValidity = 'VALID';
+    if (runError) {
+      const lower = runError.toLowerCase();
+      if (lower.includes('429') || lower.includes('quota') || lower.includes('resource_exhausted')) {
+        runValidity = 'QUOTA_FAILURE';
+      } else if (lower.includes('timeout') || lower.includes('etimedout')) {
+        runValidity = 'AGENT_TIMEOUT';
+      } else {
+        runValidity = 'PROVIDER_FAILURE';
+      }
+    }
+
+    // Execute verifier command ONLY IF agent run was valid and verifier is provided
     let verifiedSuccess: boolean | null = null;
     let verifierOutput: string | undefined;
 
-    if (options?.taskVerifierCommand) {
+    if (!options?.taskVerifierCommand) {
+      runValidity = 'VERIFIER_UNAVAILABLE';
+      verifiedSuccess = null;
+      verifierOutput = 'No task-specific verifier provided for episode.';
+    } else if (runValidity !== 'VALID') {
+      // Invariant: Provider or runtime failures must NEVER run the verifier
+      verifiedSuccess = null;
+      verifierOutput = `Verifier execution aborted due to agent/provider error: ${runValidity} (${runError})`;
+    } else {
       try {
         const verifierExec = this.sandbox.runCommand(options.taskVerifierCommand);
         verifiedSuccess = verifierExec.exitCode === 0;
         verifierOutput = `exitCode: ${verifierExec.exitCode}\nSTDOUT:\n${verifierExec.stdout}\nSTDERR:\n${verifierExec.stderr}`;
       } catch (verr: any) {
-        verifiedSuccess = false;
+        runValidity = 'VERIFIER_ERROR';
+        verifiedSuccess = null;
         verifierOutput = `Verifier execution exception: ${verr.message}`;
       }
     }
 
     const wallClockLatencyMs = Date.now() - startTime;
     const totalTokens = totalPromptTokens + totalCandidateTokens + totalThoughtsTokens;
-    const providerCostUSD = calculateModelCostUSD(
+    const costResult = calculateModelCostUSD(
       this.config.model,
       totalPromptTokens,
-      totalCandidateTokens + totalThoughtsTokens
+      totalCandidateTokens,
+      totalThoughtsTokens,
+      'standard'
     );
 
     return {
       completed,
+      runValidity,
       turns,
       toolCallsCount,
       finalText,
@@ -194,7 +230,8 @@ export class GeminiCodingAgent {
       totalCandidateTokens,
       totalThoughtsTokens,
       totalTokens,
-      providerCostUSD,
+      providerCostUSD: costResult.providerCostUSD,
+      costStatus: costResult.costStatus,
       wallClockLatencyMs,
       toolHistory,
       verifiedSuccess,

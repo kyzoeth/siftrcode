@@ -98,13 +98,20 @@ export async function runGeminiHarnessTests(): Promise<void> {
     console.log('\n--- 3. Provider Pricing Calculations ---');
     const cost = calculateModelCostUSD('gemini-3.6-flash', 1_000_000, 1_000_000);
     // 1M input ($0.10) + 1M output ($0.40) = $0.50
-    assert.strictEqual(cost, 0.50);
+    assert.strictEqual(cost.costStatus, 'VALID');
+    assert.strictEqual(cost.providerCostUSD, 0.50);
 
     const costSmall = calculateModelCostUSD('gemini-3.6-flash', 10_000, 2_000);
     // 10K / 1M * 0.10 = 0.0010 + 2K / 1M * 0.40 = 0.0008 = 0.0018
-    assert.strictEqual(costSmall, 0.0018);
+    assert.strictEqual(costSmall.costStatus, 'VALID');
+    assert.strictEqual(costSmall.providerCostUSD, 0.0018);
 
-    console.log('  ✔ Model pricing formulas validated exactly');
+    // Fail-closed test on unknown model
+    const unknownCost = calculateModelCostUSD('non-existent-model', 1000, 1000);
+    assert.strictEqual(unknownCost.costStatus, 'PRICING_UNAVAILABLE');
+    assert.strictEqual(unknownCost.providerCostUSD, null);
+
+    console.log('  ✔ Model pricing formulas and fail-closed behavior validated exactly');
 
     // -------------------------------------------------------------------------
     // 4. Multi-Turn Coding Agent Execution with Verifier
@@ -155,7 +162,8 @@ export async function runGeminiHarnessTests(): Promise<void> {
     assert.strictEqual(result.totalCandidateTokens, 90);
     assert.strictEqual(result.totalThoughtsTokens, 30);
     assert.strictEqual(result.totalTokens, 720);
-    assert.ok(result.providerCostUSD > 0);
+    assert.strictEqual(result.costStatus, 'VALID');
+    assert.ok(result.providerCostUSD !== null && result.providerCostUSD > 0);
     assert.strictEqual(
       fs.readFileSync(path.join(tmpWorkspace, 'src', 'solution.js'), 'utf8'),
       'module.exports = { solved: true };\n'

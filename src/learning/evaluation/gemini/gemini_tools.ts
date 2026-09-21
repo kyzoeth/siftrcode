@@ -253,6 +253,34 @@ export class GeminiWorkspaceSandbox {
       }
     }
 
+    // Strict command inspection: reject prohibited traversal, sensitive file access, and network
+    const forbiddenPatterns = [
+      /\.\.\//, // directory traversal
+      /\/etc\/passwd/, // system sensitive file
+      /\/etc\/shadow/,
+      /\$HOME/, // host home escape
+      /~[\/\s]/,
+      /\b(curl|wget|nc|netcat|ssh|scp|telnet|ping)\b/i, // network access
+    ];
+
+    for (const pattern of forbiddenPatterns) {
+      if (pattern.test(command)) {
+        return {
+          stdout: '',
+          stderr: `SecurityError: command execution rejected due to prohibited pattern: ${pattern}`,
+          exitCode: 126,
+        };
+      }
+    }
+
+    // Isolate HOME and TMPDIR to workspace boundary to prevent accessing host ~/.ssh or ~/.config
+    allowlistedEnv['HOME'] = this.workspaceRoot;
+    allowlistedEnv['TMPDIR'] = path.join(this.workspaceRoot, '.tmp');
+    // Disable outbound network by routing through non-existent loopback proxy
+    allowlistedEnv['http_proxy'] = 'http://127.0.0.1:0';
+    allowlistedEnv['https_proxy'] = 'http://127.0.0.1:0';
+    allowlistedEnv['all_proxy'] = 'http://127.0.0.1:0';
+
     try {
       const result = spawnSync('sh', ['-c', command], {
         cwd: this.workspaceRoot,

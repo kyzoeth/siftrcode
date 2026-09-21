@@ -15,6 +15,8 @@
 
 import { SiftrBenchEpisode } from '../../benchmark/siftrbench/episode_schema';
 
+import { AgentRunValidity } from './gemini/gemini_agent';
+
 export type GateDecision =
   | 'V3.1_PROMOTION_GATE_PASSED'
   | 'V3.1_FAILED_TO_BEAT_BASELINE'
@@ -23,12 +25,14 @@ export type GateDecision =
 export interface SingleTaskVerifiedRun {
   taskId: string;
   variant: 'V2_FROZEN' | 'V3_LEARNED';
+  runValidity?: AgentRunValidity;
   verifiedSuccess: boolean | null;
   wallClockLatencyMs: number;
   contextTokens: number;
   agentInputTokens: number;
   agentOutputTokens: number;
-  providerCostUSD: number;
+  providerCostUSD: number | null;
+  costStatus?: 'VALID' | 'PRICING_UNAVAILABLE';
   toolCalls: number;
   trajectoryLength: number;
   verifierResult: string;

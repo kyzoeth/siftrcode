@@ -1,83 +1,154 @@
 /**
- * Official Model Provider Pricing Definitions
+ * Official Model Provider Pricing Definitions & Accounting (Phase V3.1 - Phase 8)
  *
- * Tracks per-token input and output costs for calculating
- * Cost Per Verified Successful Task (CPVST).
+ * Implements strict, fail-closed per-token cost calculation based on official provider documentation.
+ *
+ * Invariants:
+ * 1. Fail Closed: Unknown model or unknown billing tier results in providerCostUSD = null and PRICING_UNAVAILABLE.
+ * 2. No Silent Fallbacks: Never guess pricing or substitute default models.
+ * 3. Thinking Tokens: Explicitly accounted and billed as output tokens according to official policy.
+ * 4. Provenance: Every price entry is tied to an official reference URL and effective date.
  */
 
-export interface ModelPricing {
-  provider: 'google' | 'openai' | 'anthropic';
+export type BillingTier = 'free' | 'standard' | 'priority' | 'batch' | 'unknown';
+
+export interface ProviderPricing {
+  provider: 'google';
   model: string;
-  inputCostPerMillionTokens: number;
-  outputCostPerMillionTokens: number;
-  effectiveDate: string;
+  billingTier: BillingTier;
+  effectiveFrom: string;
+  effectiveThrough?: string;
+  inputUSDPerMTok: number | null;
+  outputUSDPerMTok: number | null;
+  cachedInputUSDPerMTok?: number | null;
+  thinkingTokenTreatment: string;
+  sourceReference: string;
+  pricingVersion: string;
 }
 
-export const PROVIDER_PRICING: Record<string, ModelPricing> = {
-  'gemini-1.5-flash': {
-    provider: 'google',
-    model: 'gemini-1.5-flash',
-    inputCostPerMillionTokens: 0.075,
-    outputCostPerMillionTokens: 0.30,
-    effectiveDate: '2024-05-01',
-  },
-  'gemini-2.0-flash': {
-    provider: 'google',
-    model: 'gemini-2.0-flash',
-    inputCostPerMillionTokens: 0.10,
-    outputCostPerMillionTokens: 0.40,
-    effectiveDate: '2025-01-01',
-  },
-  'gemini-2.5-flash': {
-    provider: 'google',
-    model: 'gemini-2.5-flash',
-    inputCostPerMillionTokens: 0.10,
-    outputCostPerMillionTokens: 0.40,
-    effectiveDate: '2025-05-01',
-  },
-  'gemini-1.5-pro': {
-    provider: 'google',
-    model: 'gemini-1.5-pro',
-    inputCostPerMillionTokens: 1.25,
-    outputCostPerMillionTokens: 5.00,
-    effectiveDate: '2024-05-01',
-  },
-  'gemini-2.5-pro': {
-    provider: 'google',
-    model: 'gemini-2.5-pro',
-    inputCostPerMillionTokens: 1.25,
-    outputCostPerMillionTokens: 5.00,
-    effectiveDate: '2025-05-01',
-  },
-  'gemini-3.6-flash': {
+export const OFFICIAL_PROVIDER_PRICING: Record<string, ProviderPricing> = {
+  'gemini-3.6-flash:standard': {
     provider: 'google',
     model: 'gemini-3.6-flash',
-    inputCostPerMillionTokens: 0.10,
-    outputCostPerMillionTokens: 0.40,
-    effectiveDate: '2026-03-01',
+    billingTier: 'standard',
+    effectiveFrom: '2026-03-01',
+    inputUSDPerMTok: 0.10,
+    outputUSDPerMTok: 0.40,
+    cachedInputUSDPerMTok: 0.025,
+    thinkingTokenTreatment: 'billed_as_output_tokens',
+    sourceReference: 'https://ai.google.dev/pricing (Gemini 2.5/3.x Flash Tier, prompts <= 128k)',
+    pricingVersion: 'google-genai-2026-03',
   },
-  'gemini-3.7-flash': {
+  'gemini-3.7-flash:standard': {
     provider: 'google',
     model: 'gemini-3.7-flash',
-    inputCostPerMillionTokens: 0.10,
-    outputCostPerMillionTokens: 0.40,
-    effectiveDate: '2026-03-01',
+    billingTier: 'standard',
+    effectiveFrom: '2026-03-01',
+    inputUSDPerMTok: 0.10,
+    outputUSDPerMTok: 0.40,
+    cachedInputUSDPerMTok: 0.025,
+    thinkingTokenTreatment: 'billed_as_output_tokens',
+    sourceReference: 'https://ai.google.dev/pricing (Gemini Flash Tier, prompts <= 128k)',
+    pricingVersion: 'google-genai-2026-03',
+  },
+  'gemini-2.5-flash:standard': {
+    provider: 'google',
+    model: 'gemini-2.5-flash',
+    billingTier: 'standard',
+    effectiveFrom: '2025-05-01',
+    inputUSDPerMTok: 0.10,
+    outputUSDPerMTok: 0.40,
+    cachedInputUSDPerMTok: 0.025,
+    thinkingTokenTreatment: 'billed_as_output_tokens',
+    sourceReference: 'https://ai.google.dev/pricing (Gemini 2.5 Flash Tier, prompts <= 128k)',
+    pricingVersion: 'google-genai-2025-05',
+  },
+  'gemini-2.0-flash:standard': {
+    provider: 'google',
+    model: 'gemini-2.0-flash',
+    billingTier: 'standard',
+    effectiveFrom: '2025-01-01',
+    inputUSDPerMTok: 0.10,
+    outputUSDPerMTok: 0.40,
+    cachedInputUSDPerMTok: 0.025,
+    thinkingTokenTreatment: 'billed_as_output_tokens',
+    sourceReference: 'https://ai.google.dev/pricing (Gemini 2.0 Flash Tier, prompts <= 128k)',
+    pricingVersion: 'google-genai-2025-01',
+  },
+  'gemini-1.5-flash:standard': {
+    provider: 'google',
+    model: 'gemini-1.5-flash',
+    billingTier: 'standard',
+    effectiveFrom: '2024-05-01',
+    inputUSDPerMTok: 0.075,
+    outputUSDPerMTok: 0.30,
+    cachedInputUSDPerMTok: 0.01875,
+    thinkingTokenTreatment: 'billed_as_output_tokens',
+    sourceReference: 'https://ai.google.dev/pricing (Gemini 1.5 Flash Tier, prompts <= 128k)',
+    pricingVersion: 'google-genai-2024-05',
+  },
+  'gemini-2.5-pro:standard': {
+    provider: 'google',
+    model: 'gemini-2.5-pro',
+    billingTier: 'standard',
+    effectiveFrom: '2025-05-01',
+    inputUSDPerMTok: 1.25,
+    outputUSDPerMTok: 5.00,
+    cachedInputUSDPerMTok: 0.3125,
+    thinkingTokenTreatment: 'billed_as_output_tokens',
+    sourceReference: 'https://ai.google.dev/pricing (Gemini 2.5 Pro Tier, prompts <= 128k)',
+    pricingVersion: 'google-genai-2025-05',
+  },
+  'gemini-1.5-pro:standard': {
+    provider: 'google',
+    model: 'gemini-1.5-pro',
+    billingTier: 'standard',
+    effectiveFrom: '2024-05-01',
+    inputUSDPerMTok: 1.25,
+    outputUSDPerMTok: 5.00,
+    cachedInputUSDPerMTok: 0.3125,
+    thinkingTokenTreatment: 'billed_as_output_tokens',
+    sourceReference: 'https://ai.google.dev/pricing (Gemini 1.5 Pro Tier, prompts <= 128k)',
+    pricingVersion: 'google-genai-2024-05',
   },
 };
 
+export interface CostCalculationResult {
+  providerCostUSD: number | null;
+  costStatus: 'VALID' | 'PRICING_UNAVAILABLE';
+  pricingUsed?: ProviderPricing;
+}
+
 /**
  * Computes exact USD cost for a given token usage and model.
- * Note: Thoughts/reasoning tokens are billed as output tokens.
+ * Note: Thinking/reasoning tokens are billed as output tokens.
+ * Fail-Closed: If model or billing tier is unknown, returns null / PRICING_UNAVAILABLE.
  */
 export function calculateModelCostUSD(
   model: string,
   inputTokens: number,
   outputTokens: number,
-  thoughtsTokens: number = 0
-): number {
-  const pricing = PROVIDER_PRICING[model] ?? PROVIDER_PRICING['gemini-3.6-flash'];
+  thoughtsTokens: number = 0,
+  billingTier: BillingTier = 'standard'
+): CostCalculationResult {
+  const key = `${model}:${billingTier}`;
+  const pricing = OFFICIAL_PROVIDER_PRICING[key];
+
+  if (!pricing || pricing.inputUSDPerMTok === null || pricing.outputUSDPerMTok === null) {
+    return {
+      providerCostUSD: null,
+      costStatus: 'PRICING_UNAVAILABLE',
+    };
+  }
+
   const totalBillableOutput = outputTokens + thoughtsTokens;
-  const inputCost = (inputTokens / 1_000_000) * pricing.inputCostPerMillionTokens;
-  const outputCost = (totalBillableOutput / 1_000_000) * pricing.outputCostPerMillionTokens;
-  return Number((inputCost + outputCost).toFixed(6));
+  const inputCost = (inputTokens / 1_000_000) * pricing.inputUSDPerMTok;
+  const outputCost = (totalBillableOutput / 1_000_000) * pricing.outputUSDPerMTok;
+  const total = Number((inputCost + outputCost).toFixed(6));
+
+  return {
+    providerCostUSD: total,
+    costStatus: 'VALID',
+    pricingUsed: pricing,
+  };
 }

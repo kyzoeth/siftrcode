@@ -57,7 +57,8 @@ const tests = [
   { name: 'V3 Learned ContextRank Models, Fallback & Shadow Tests', file: 'test_v3_models_and_fallback.js' },
   { name: 'V3 Bootstrap Resampling & Verified Outcome Evaluation Tests', file: 'test_v3_bootstrap_and_eval.js' },
   { name: 'V3.1 Experimental Integrity Regressions Tests', file: 'test_v3_experimental_integrity_regressions.js' },
-  { name: 'V3.1 Gemini Agent Harness & Sandboxing Tests', file: 'test_gemini_harness.js' }
+  { name: 'V3.1 Gemini Agent Harness & Sandboxing Tests', file: 'test_gemini_harness.js' },
+  { name: 'V3.1 Gemini Execution Sandboxing Regressions Tests', file: 'test_gemini_sandboxing_regressions.js' }
 ];
 
 
