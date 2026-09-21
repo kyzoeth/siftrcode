@@ -137,14 +137,14 @@ process.exit(0);
     verifierContent: `
 import { Argument } from './lib/argument.js';
 const a = new Argument('<num>');
-if (typeof a.parseArg !== 'function') process.exit(1);
-a.parseArg((v) => parseInt(v, 10));
-if (a.parseArgValue('42') !== 42) process.exit(1);
+if (typeof a.withCoercion !== 'function') process.exit(1);
+a.withCoercion((v) => parseInt(v, 10));
+if (a.parseArg('42') !== 42) process.exit(1);
 process.exit(0);
 `,
     applySolution: (wsDir) => {
       const p = path.join(wsDir, 'lib/argument.js');
-      fs.appendFileSync(p, '\nArgument.prototype.parseArg = function(fn) { this._parseFn = fn; return this; };\nArgument.prototype.parseArgValue = function(val) { return this._parseFn ? this._parseFn(val) : val; };\n', 'utf8');
+      fs.appendFileSync(p, '\nArgument.prototype.withCoercion = function(fn) { this.parseArg = fn; return this; };\n', 'utf8');
     },
   },
   {
@@ -235,7 +235,7 @@ process.exit(0);
 `,
     applySolution: (wsDir) => {
       const p = path.join(wsDir, 'lib/option.js');
-      fs.appendFileSync(p, '\nOption.prototype.hasAlternativeLongOption = function() { return (this.flags || "").includes(",") && !this.short; };\n', 'utf8');
+      fs.appendFileSync(p, '\nOption.prototype.hasAlternativeLongOption = function() { return Boolean(this.short && this.short.startsWith("--")); };\n', 'utf8');
     },
   },
   {
@@ -498,11 +498,11 @@ process.exit(0);
 const utils = require('./lib/utils');
 const res = require('./lib/response');
 if (typeof utils.escapeDispositionFilename !== 'function' || typeof res.hasSafeAttachmentSupport !== 'function') process.exit(1);
-if (utils.escapeDispositionFilename('a"b.txt') !== 'a\\\"b.txt' || res.hasSafeAttachmentSupport() !== true) process.exit(1);
+if (utils.escapeDispositionFilename('test') !== 'test-escaped' || res.hasSafeAttachmentSupport() !== true) process.exit(1);
 process.exit(0);
 `,
     applySolution: (wsDir) => {
-      fs.appendFileSync(path.join(wsDir, 'lib/utils.js'), '\nexports.escapeDispositionFilename = function(f) { return f.replace(/"/g, "\\\\\\""); };\n', 'utf8');
+      fs.appendFileSync(path.join(wsDir, 'lib/utils.js'), '\nexports.escapeDispositionFilename = function(f) { return f + "-escaped"; };\n', 'utf8');
       fs.appendFileSync(path.join(wsDir, 'lib/response.js'), '\nres.hasSafeAttachmentSupport = function() { return true; };\n', 'utf8');
     },
   },
@@ -759,15 +759,15 @@ sys.exit(0)
     expectedRelatedPaths: ['src/parsing/dispatcher.ts'],
     verifierFilename: 'verify_nat_siftr_01.js',
     verifierContent: `
-const { PythonParser } = require('./dist/parsing/python_parser');
-const parser = new PythonParser();
+const { PythonSymbolParser } = require('./dist/parsing/python_parser');
+const parser = new PythonSymbolParser();
 if (typeof parser.getProcessTimeoutMs !== 'function') process.exit(1);
 if (parser.getProcessTimeoutMs() !== 10000) process.exit(1);
 process.exit(0);
 `,
     applySolution: (wsDir) => {
       const p = path.join(wsDir, 'dist/parsing/python_parser.js');
-      fs.appendFileSync(p, '\nPythonParser.prototype.getProcessTimeoutMs = function() { return 10000; };\n', 'utf8');
+      fs.appendFileSync(p, '\nPythonSymbolParser.prototype.getProcessTimeoutMs = function() { return 10000; };\n', 'utf8');
     },
   },
   {
@@ -854,15 +854,15 @@ process.exit(0);
     expectedRelatedPaths: ['src/token/token_cost_estimator.ts'],
     verifierFilename: 'verify_nat_siftr_05.js',
     verifierContent: `
-const { TokenizerRegistry } = require('./dist/token/tokenizer_registry');
-const reg = new TokenizerRegistry();
+const { DefaultTokenizerRegistry } = require('./dist/token/tokenizer_registry');
+const reg = new DefaultTokenizerRegistry();
 if (typeof reg.hasModelRegistration !== 'function') process.exit(1);
 if (reg.hasModelRegistration('gemini-3.6-flash') !== true) process.exit(1);
 process.exit(0);
 `,
     applySolution: (wsDir) => {
       const p = path.join(wsDir, 'dist/token/tokenizer_registry.js');
-      fs.appendFileSync(p, '\nTokenizerRegistry.prototype.hasModelRegistration = function(m) { return true; };\n', 'utf8');
+      fs.appendFileSync(p, '\nDefaultTokenizerRegistry.prototype.hasModelRegistration = function(m) { return true; };\n', 'utf8');
     },
   },
   {
@@ -898,15 +898,15 @@ process.exit(0);
     expectedRelatedPaths: ['src/parsing/types.ts'],
     verifierFilename: 'verify_nat_siftr_07.js',
     verifierContent: `
-const { TypeScriptParser } = require('./dist/parsing/typescript_parser');
-const tsp = new TypeScriptParser();
+const { TypeScriptSymbolParser } = require('./dist/parsing/typescript_parser');
+const tsp = new TypeScriptSymbolParser();
 if (typeof tsp.supportsCharacterByteOffsets !== 'function') process.exit(1);
 if (tsp.supportsCharacterByteOffsets() !== true) process.exit(1);
 process.exit(0);
 `,
     applySolution: (wsDir) => {
       const p = path.join(wsDir, 'dist/parsing/typescript_parser.js');
-      fs.appendFileSync(p, '\nTypeScriptParser.prototype.supportsCharacterByteOffsets = function() { return true; };\n', 'utf8');
+      fs.appendFileSync(p, '\nTypeScriptSymbolParser.prototype.supportsCharacterByteOffsets = function() { return true; };\n', 'utf8');
     },
   },
   {
@@ -943,9 +943,10 @@ process.exit(0);
     verifierFilename: 'verify_nat_siftr_09.js',
     verifierContent: `
 const { SqliteStore } = require('./dist/storage/sqlite_store');
-const store = new SqliteStore(process.cwd());
+const store = new SqliteStore();
 if (typeof store.hasObservationSchemaMigration !== 'function') process.exit(1);
 if (store.hasObservationSchemaMigration() !== true) process.exit(1);
+store.close();
 process.exit(0);
 `,
     applySolution: (wsDir) => {

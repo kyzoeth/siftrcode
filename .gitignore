@@ -14,6 +14,7 @@ data/*
 !data/siftrbench_v1_manifest.json
 !data/siftrbench_v1_splits.json
 !data/siftrbench_v3_1_final_holdout.json
+!data/siftrbench_v3_1_natural_holdout.json
 !data/learning_curve.json
 !data/models
 !data/models/*
@@ -21,3 +22,4 @@ data/*
 temp_*
 .env
 .env.*
+.v2-baseline-worktree/
