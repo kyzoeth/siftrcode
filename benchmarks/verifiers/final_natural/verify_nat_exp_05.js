@@ -1,5 +1,19 @@
-const express = require('./lib/express');
+
+const http = require("http");
+const express = require("./");
 const app = express();
-if (typeof app.normalizeRenderOptions !== 'function') process.exit(1);
-if (typeof app.normalizeRenderOptions(null) !== 'object' || Object.keys(app.normalizeRenderOptions(null)).length !== 0) process.exit(1);
-process.exit(0);
+app.use((req, res) => {
+  res.set("Transfer-Encoding", "chunked");
+  res.send("hello");
+});
+const server = app.listen(0, () => {
+  const port = server.address().port;
+  http.get("http://127.0.0.1:" + port, (res) => {
+    server.close();
+    if (!res.headers["etag"]) process.exit(1);
+    process.exit(0);
+  }).on("error", () => {
+    server.close();
+    process.exit(1);
+  });
+});

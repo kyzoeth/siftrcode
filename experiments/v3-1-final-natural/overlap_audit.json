@@ -1,8 +1,14 @@
 {
-  "auditTimestamp": "2026-09-21T22:57:01.985Z",
-  "totalNaturalTasks": 40,
-  "totalPriorTasksAudited": 155,
+  "auditedAt": "2026-09-21T23:39:56.564Z",
+  "totalNaturalTasksAudited": 40,
+  "datasetsAudited": [
+    "data/siftrbench_v1_manifest.json",
+    "data/siftrbench_v1_splits.json",
+    "data/siftrbench_v3_1_final_holdout.json",
+    "data/siftr_dataset_v1.json",
+    "data/pairwise_dataset_v1.json"
+  ],
   "collisionCount": 0,
-  "status": "CLEAN_ZERO_OVERLAP",
-  "collisions": []
+  "collisions": [],
+  "passed": true
 }

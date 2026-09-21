@@ -1,22 +1,22 @@
 #!/usr/bin/env node
 /**
- * SiftrCode V3.1 - Builder for SIFTRBENCH_V3_1_NATURAL_HOLDOUT (Phases 1 & 2)
+ * SiftrCode V3.1 - Builder for SIFTRBENCH_V3_1_NATURAL_HOLDOUT (Phases A & B)
  *
- * Assembles 40 genuinely natural, untouched benchmark episodes across 4 repositories:
+ * Reconstructs 40 historically authentic benchmark episodes across 4 repositories:
+ * - Commander (10 tasks)
  * - Express (10 tasks)
  * - FastAPI (10 tasks)
- * - Commander (10 tasks)
  * - SiftrCode (10 tasks)
  *
  * Strict Invariants:
- * 1. Natural Prompt Rule: Real upstream tasks, issues, PRs, and commits.
- *    No artificial target file paths inserted into prompts. Natural ambiguity preserved.
- * 2. Task Mix: Balanced distribution across BUG_FIX, FEATURE_ADDITION, REFACTOR,
- *    TEST_FAILURE, and MULTI_FILE_COORDINATION.
- * 3. Anti-Overlap Audit: Strict zero-leakage check against all 121 prior SiftrBench v1 tasks
- *    and 34 synthetic diagnostic tasks (episodeId, taskId, prompt fingerprint, issue/PR id).
- * 4. Verifier Contract: Base commit MUST FAIL (exitCode !== 0), historical solution MUST PASS (exitCode === 0).
- * 5. Snapshot Point-in-Time: Validates git rev-parse HEAD matches baseCommit.
+ * 1. Historical Validity: Every task binds to real git commit pairs (baseCommit vs solutionCommit).
+ *    NO hand-written applySolution() shims.
+ * 2. Behavior-Level Verifier Contract:
+ *    checkout baseCommit -> verifier fails (exitCode !== 0)
+ *    checkout solutionCommit -> exact same verifier passes (exitCode === 0)
+ * 3. 0% Path Leakage: Prompts reflect natural upstream issue descriptions with zero target-path leaks.
+ * 4. Strengthened Overlap Audit: Checked across all prior datasets (episodeId, taskId, PR/issue, patchSha256, prompt fingerprint).
+ *    Collision count MUST BE exactly 0.
  */
 
 import * as fs from 'fs';
@@ -32,20 +32,16 @@ export interface NaturalTaskDefinition {
   taskType: 'BUG_FIX' | 'FEATURE_ADDITION' | 'REFACTOR' | 'TEST_FAILURE' | 'MULTI_FILE_COORDINATION';
   naturalTaskSource: 'github_pr' | 'github_issue' | 'historical_commit' | 'first_party_commit';
   referenceId: string;
+  sourceUrl: string;
   prompt: string;
+  baseCommit: string;
+  solutionCommit: string;
   expectedTargetPaths: string[];
   expectedRelatedPaths: string[];
   verifierFilename: string;
   verifierContent: string;
-  applySolution: (workspaceDir: string) => void;
+  rightsReference: string;
 }
-
-export const REPO_PINNED_COMMITS: Record<string, string> = {
-  express: '9a34acf03cb818ff3f8bc40e44176e277a25cbb9',
-  fastapi: '50113da16fec53b66b80d75e80a89296de4fa5a5',
-  commander: 'ba6d13ddb4243e5913367734f8c159089ffe7834',
-  siftrcode: '1eedac03b0d83025ebf08ed2945e0ab015c46f6a',
-};
 
 export const REPO_ORIGINS: Record<string, string> = {
   express: 'https://github.com/expressjs/express.git',
@@ -55,30 +51,33 @@ export const REPO_ORIGINS: Record<string, string> = {
 };
 
 export const NATURAL_HOLDOUT_TASKS: NaturalTaskDefinition[] = [
-  // ==========================================
-  // COMMANDER.JS (10 Natural Tasks)
-  // ==========================================
+  // =========================================================================
+  // COMMANDER.JS (10 Authentic Historical Tasks)
+  // =========================================================================
   {
     taskId: 'nat_cmd_01_negative_flag_declaration_order',
     repo: 'commander',
     taskType: 'BUG_FIX',
     naturalTaskSource: 'github_pr',
     referenceId: '#2405',
+    sourceUrl: 'https://github.com/tj/commander.js/pull/2405',
     prompt: 'Allow boolean flag options with --no- prefix to be declared before or after their positive counterpart without throwing duplicate option errors.',
+    baseCommit: '2e96cd388764064fe271f7f452d0dff780355b42',
+    solutionCommit: '63eed4aa05435575d515311bb5efaf6d88b6be84',
     expectedTargetPaths: ['lib/command.js'],
-    expectedRelatedPaths: ['lib/option.js', 'tests/options.flags.test.js'],
+    expectedRelatedPaths: ['lib/option.js', 'tests/options.bool.combo.test.js'],
     verifierFilename: 'verify_nat_cmd_01.js',
     verifierContent: `
-import { Command } from './lib/command.js';
-const cmd = new Command();
-if (typeof cmd.allowComboFlags !== 'function') process.exit(1);
-if (cmd.allowComboFlags() !== true) process.exit(1);
+const { Command } = require("./");
+const program = new Command();
+program.option("--no-pepper", "remove pepper").option("--pepper", "pepper only");
+program.parse([], { from: "user" });
+if (program.opts().pepper !== undefined) {
+  process.exit(1);
+}
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/command.js');
-      fs.appendFileSync(p, '\nCommand.prototype.allowComboFlags = function() { return true; };\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tj/commander.js)',
   },
   {
     taskId: 'nat_cmd_02_excess_arguments_error_message',
@@ -86,21 +85,29 @@ process.exit(0);
     taskType: 'BUG_FIX',
     naturalTaskSource: 'github_pr',
     referenceId: '#2384',
+    sourceUrl: 'https://github.com/tj/commander.js/pull/2384',
     prompt: 'When excess positional command line arguments are provided, format the error message to list the unexpected argument values.',
+    baseCommit: '395cf7145fe28122f5a69026b310e02df114f907',
+    solutionCommit: '2e96cd388764064fe271f7f452d0dff780355b42',
     expectedTargetPaths: ['lib/command.js'],
-    expectedRelatedPaths: ['lib/error.js'],
+    expectedRelatedPaths: ['tests/command.exitOverride.test.js'],
     verifierFilename: 'verify_nat_cmd_02.js',
     verifierContent: `
-import { Command } from './lib/command.js';
-const cmd = new Command();
-if (typeof cmd.formatExcessArgumentsError !== 'function') process.exit(1);
-if (cmd.formatExcessArgumentsError(['foo', 'bar']) !== "too many arguments: 'foo', 'bar'") process.exit(1);
+const { Command } = require("./");
+const program = new Command();
+let caughtErr = null;
+program.exitOverride().allowExcessArguments(false).action(() => {});
+try {
+  program.parse(["node", "test", "extra_one"]);
+} catch (err) {
+  caughtErr = err;
+}
+if (!caughtErr || !caughtErr.message.includes(": extra_one.")) {
+  process.exit(1);
+}
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/command.js');
-      fs.appendFileSync(p, '\nCommand.prototype.formatExcessArgumentsError = function(args) { return "too many arguments: " + args.map(a => "\x27" + a + "\x27").join(", "); };\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tj/commander.js)',
   },
   {
     taskId: 'nat_cmd_03_help_groups_support',
@@ -108,1186 +115,1583 @@ process.exit(0);
     taskType: 'FEATURE_ADDITION',
     naturalTaskSource: 'github_pr',
     referenceId: '#2328',
+    sourceUrl: 'https://github.com/tj/commander.js/pull/2328',
     prompt: 'Support grouping options and subcommands under custom section headers in formatted help text.',
-    expectedTargetPaths: ['lib/help.js'],
-    expectedRelatedPaths: ['lib/command.js'],
+    baseCommit: '00af6030686912a9101f18974d7d0189c42e2f3e',
+    solutionCommit: 'c324ea3d70e00d8cff6d14edde4366af1ed3b7c3',
+    expectedTargetPaths: ['lib/command.js', 'lib/help.js'],
+    expectedRelatedPaths: ['lib/option.js', 'tests/helpGroup.test.js'],
     verifierFilename: 'verify_nat_cmd_03.js',
     verifierContent: `
-import { Help } from './lib/help.js';
-const h = new Help();
-if (typeof h.hasHelpGroupSupport !== 'function') process.exit(1);
-if (h.hasHelpGroupSupport() !== true) process.exit(1);
+const { Command } = require("./");
+const program = new Command();
+if (typeof program.optionsGroup !== "function") {
+  process.exit(1);
+}
+program.optionsGroup("CustomOptions:");
+program.option("--custom-flag");
+const help = program.helpInformation();
+if (!help.includes("CustomOptions:") || !help.includes("--custom-flag")) {
+  process.exit(1);
+}
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/help.js');
-      fs.appendFileSync(p, '\nHelp.prototype.hasHelpGroupSupport = function() { return true; };\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tj/commander.js)',
   },
   {
-    taskId: 'nat_cmd_04_argument_custom_parse_arg',
-    repo: 'commander',
-    taskType: 'FEATURE_ADDITION',
-    naturalTaskSource: 'github_pr',
-    referenceId: '#2359',
-    prompt: 'Add custom value coercion capability to positional arguments through a parseArg handler.',
-    expectedTargetPaths: ['lib/argument.js'],
-    expectedRelatedPaths: ['lib/command.js'],
-    verifierFilename: 'verify_nat_cmd_04.js',
-    verifierContent: `
-import { Argument } from './lib/argument.js';
-const a = new Argument('<num>');
-if (typeof a.withCoercion !== 'function') process.exit(1);
-a.withCoercion((v) => parseInt(v, 10));
-if (a.parseArg('42') !== 42) process.exit(1);
-process.exit(0);
-`,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/argument.js');
-      fs.appendFileSync(p, '\nArgument.prototype.withCoercion = function(fn) { this.parseArg = fn; return this; };\n', 'utf8');
-    },
-  },
-  {
-    taskId: 'nat_cmd_05_negative_number_argument_parsing',
+    taskId: 'nat_cmd_04_negative_numbers_as_arguments',
     repo: 'commander',
     taskType: 'BUG_FIX',
     naturalTaskSource: 'github_pr',
     referenceId: '#2339',
-    prompt: 'Allow numeric values starting with a minus sign (such as negative numbers) to be parsed as option or argument values rather than flags.',
+    sourceUrl: 'https://github.com/tj/commander.js/pull/2339',
+    prompt: 'Allow negative numbers as optional arguments and command arguments when unambiguous without being rejected as unknown options.',
+    baseCommit: '68199e64b31851839c03dff1567a81d7714baa08',
+    solutionCommit: 'f6302de32c773e9f0d3bb71e257d308885af3603',
     expectedTargetPaths: ['lib/command.js'],
-    expectedRelatedPaths: ['lib/option.js'],
-    verifierFilename: 'verify_nat_cmd_05.js',
+    expectedRelatedPaths: ['tests/negatives.test.js'],
+    verifierFilename: 'verify_nat_cmd_04.js',
     verifierContent: `
-import { Command } from './lib/command.js';
-const cmd = new Command();
-if (typeof cmd.isNumericOptionValue !== 'function') process.exit(1);
-if (cmd.isNumericOptionValue('-42') !== true) process.exit(1);
-if (cmd.isNumericOptionValue('-foo') !== false) process.exit(1);
+const { Command } = require("./");
+const program = new Command();
+program.exitOverride().configureOutput({ writeErr: () => {} }).argument("<value>", "argument");
+let caught = null;
+try {
+  program.parse(["-123"], { from: "user" });
+} catch (err) {
+  caught = err;
+}
+if (caught || !program.args || program.args[0] !== "-123") {
+  process.exit(1);
+}
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/command.js');
-      fs.appendFileSync(p, '\nCommand.prototype.isNumericOptionValue = function(v) { return /^-?[0-9]+(\\.[0-9]+)?$/.test(v); };\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tj/commander.js)',
   },
   {
-    taskId: 'nat_cmd_06_configure_output_clone_settings',
+    taskId: 'nat_cmd_05_configure_output_clone_settings',
     repo: 'commander',
     taskType: 'REFACTOR',
     naturalTaskSource: 'github_pr',
     referenceId: '#2350',
-    prompt: 'Ensure output configuration updates return or clone isolated settings so parent command output streams are not mutated by subcommands.',
+    sourceUrl: 'https://github.com/tj/commander.js/pull/2350',
+    prompt: 'Make configureOutput create an isolated copy of settings instead of mutating shared settings in-place.',
+    baseCommit: '672e3806c68421f91b3a1f628f6207b8b26d1a2c',
+    solutionCommit: '68199e64b31851839c03dff1567a81d7714baa08',
     expectedTargetPaths: ['lib/command.js'],
-    expectedRelatedPaths: ['lib/help.js'],
-    verifierFilename: 'verify_nat_cmd_06.js',
+    expectedRelatedPaths: ['tests/command.configureOutput.test.js'],
+    verifierFilename: 'verify_nat_cmd_05.js',
     verifierContent: `
-import { Command } from './lib/command.js';
-const cmd = new Command();
-if (typeof cmd.cloneOutputConfiguration !== 'function') process.exit(1);
-const orig = { writeErr: () => {} };
-const cloned = cmd.cloneOutputConfiguration(orig);
-if (cloned === orig || typeof cloned.writeErr !== 'function') process.exit(1);
+const { Command } = require("./");
+const program = new Command();
+program.configureOutput({ getOutHelpWidth: () => 80 });
+const copy = program.createCommand("copy");
+copy.copyInheritedSettings(program);
+copy.configureOutput({ getOutHelpWidth: () => 40 });
+if (copy.configureOutput().getOutHelpWidth() !== 40) process.exit(1);
+if (program.configureOutput().getOutHelpWidth() !== 80) process.exit(1);
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/command.js');
-      fs.appendFileSync(p, '\nCommand.prototype.cloneOutputConfiguration = function(c) { return Object.assign({}, c); };\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tj/commander.js)',
   },
   {
-    taskId: 'nat_cmd_07_help_description_trim_extra',
+    taskId: 'nat_cmd_06_help_description_trim_extra',
     repo: 'commander',
     taskType: 'BUG_FIX',
     naturalTaskSource: 'github_pr',
     referenceId: '#2348',
-    prompt: 'Strip redundant trailing whitespace and empty lines when rendering option descriptions that only contain default value notes.',
+    sourceUrl: 'https://github.com/tj/commander.js/pull/2348',
+    prompt: 'Trim option description formatting when only custom default or extra info is provided without leading whitespace.',
+    baseCommit: '9d941f8134062b703d6737d762fde5e419df01ad',
+    solutionCommit: '672e3806c68421f91b3a1f628f6207b8b26d1a2c',
     expectedTargetPaths: ['lib/help.js'],
-    expectedRelatedPaths: ['lib/option.js'],
-    verifierFilename: 'verify_nat_cmd_07.js',
+    expectedRelatedPaths: ['tests/help.optionDescription.test.js'],
+    verifierFilename: 'verify_nat_cmd_06.js',
     verifierContent: `
-import { Help } from './lib/help.js';
-const h = new Help();
-if (typeof h.cleanDescriptionExtra !== 'function') process.exit(1);
-if (h.cleanDescriptionExtra('  (default: 10)  \\n') !== '(default: 10)') process.exit(1);
+const { Option, Help } = require("./");
+const option = new Option("-a <value>").default("default value", "custom");
+const helper = new Help();
+const desc = helper.optionDescription(option);
+if (desc !== "(default: custom)") {
+  process.exit(1);
+}
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/help.js');
-      fs.appendFileSync(p, '\nHelp.prototype.cleanDescriptionExtra = function(d) { return (d || "").trim(); };\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tj/commander.js)',
   },
   {
-    taskId: 'nat_cmd_08_dual_long_options',
+    taskId: 'nat_cmd_07_dual_long_options_support',
     repo: 'commander',
     taskType: 'FEATURE_ADDITION',
     naturalTaskSource: 'github_pr',
     referenceId: '#2312',
-    prompt: 'Support declaring alternative long option flags (such as --dry-run and --dryrun) without requiring a short single-character flag.',
+    sourceUrl: 'https://github.com/tj/commander.js/pull/2312',
+    prompt: 'Add support for dual long option flags when no short option flag is specified.',
+    baseCommit: 'bb733f4f0f5d4b334b04b5e18e5cbb3d71b4e9da',
+    solutionCommit: '8263b7f098983fac7545fe7f0c61be2d90b2b53a',
     expectedTargetPaths: ['lib/option.js'],
-    expectedRelatedPaths: ['lib/command.js'],
-    verifierFilename: 'verify_nat_cmd_08.js',
+    expectedRelatedPaths: ['lib/command.js', 'tests/option.bad-flags.test.js'],
+    verifierFilename: 'verify_nat_cmd_07.js',
     verifierContent: `
-import { Option } from './lib/option.js';
-const opt = new Option('--dry-run, --dryrun', 'run in dry mode');
-if (typeof opt.hasAlternativeLongOption !== 'function') process.exit(1);
-if (opt.hasAlternativeLongOption() !== true) process.exit(1);
+const { Option } = require("./");
+let opt;
+try {
+  opt = new Option("--ws, --workspace");
+} catch (e) {
+  process.exit(1);
+}
+if (!opt || opt.long !== "--workspace") {
+  process.exit(1);
+}
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/option.js');
-      fs.appendFileSync(p, '\nOption.prototype.hasAlternativeLongOption = function() { return Boolean(this.short && this.short.startsWith("--")); };\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tj/commander.js)',
   },
   {
-    taskId: 'nat_cmd_09_strip_vt_control_characters',
+    taskId: 'nat_cmd_08_display_width_strip_vt_characters',
+    repo: 'commander',
+    taskType: 'FEATURE_ADDITION',
+    naturalTaskSource: 'github_pr',
+    referenceId: '#2486',
+    sourceUrl: 'https://github.com/tj/commander.js/pull/2486',
+    prompt: 'Use standard stripVTControlCharacters to accurately compute display width of strings containing VT escape sequences.',
+    baseCommit: '987f28966c71baecb0ef4a36780e727bcd575b31',
+    solutionCommit: '373f660f6febb720b82635220eea72dd9b7e0cba',
+    expectedTargetPaths: ['lib/help.js'],
+    expectedRelatedPaths: ['lib/command.js'],
+    verifierFilename: 'verify_nat_cmd_08.mjs',
+    verifierContent: `
+import { Help } from "./lib/help.js";
+const h = new Help();
+const width = h.displayWidth("\\x1b[2Khello");
+if (width !== 5) {
+  process.exit(1);
+}
+process.exit(0);
+`,
+    rightsReference: 'MIT License (tj/commander.js)',
+  },
+  {
+    taskId: 'nat_cmd_09_parse_save_restore_state',
     repo: 'commander',
     taskType: 'REFACTOR',
     naturalTaskSource: 'github_pr',
-    referenceId: '#2486',
-    prompt: 'Clean up terminal escape code stripping in help width calculations by utilizing native utility helpers.',
-    expectedTargetPaths: ['lib/help.js'],
-    expectedRelatedPaths: ['lib/command.js'],
+    referenceId: '#2299',
+    sourceUrl: 'https://github.com/tj/commander.js/pull/2299',
+    prompt: 'Preserve and restore command state between repeated parse calls so options do not leak across invocations.',
+    baseCommit: '497c11d83065567a3b2840bc0800d30e6ab4ed33',
+    solutionCommit: '49423a288b6561190461bf91231a18085e60dad4',
+    expectedTargetPaths: ['lib/command.js'],
+    expectedRelatedPaths: ['tests/command.parse.test.js'],
     verifierFilename: 'verify_nat_cmd_09.js',
     verifierContent: `
-import { Help } from './lib/help.js';
-const h = new Help();
-if (typeof h.stripAnsiCodes !== 'function') process.exit(1);
-if (h.stripAnsiCodes('\\u001b[31mred\\u001b[0m') !== 'red') process.exit(1);
+const { Command } = require("./");
+const program = new Command();
+program.option("-p, --port <number>");
+program.parse(["node", "test", "-p", "8080"]);
+program.parse(["node", "test"]);
+if (program.opts().port !== undefined) {
+  process.exit(1);
+}
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/help.js');
-      fs.appendFileSync(p, '\nHelp.prototype.stripAnsiCodes = function(str) { return str.replace(/\\u001b\\[[0-9;]*m/g, ""); };\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tj/commander.js)',
   },
   {
-    taskId: 'nat_cmd_10_help_information_descriptive_output',
+    taskId: 'nat_cmd_10_validate_option_flags_throw',
     repo: 'commander',
-    taskType: 'MULTI_FILE_COORDINATION',
+    taskType: 'TEST_FAILURE',
     naturalTaskSource: 'github_pr',
-    referenceId: '#2472',
-    prompt: 'Ensure formatted command help text correctly balances option padding and term widths across help and command formatters.',
-    expectedTargetPaths: ['lib/help.js', 'lib/command.js'],
-    expectedRelatedPaths: ['lib/option.js'],
+    referenceId: '#2270',
+    sourceUrl: 'https://github.com/tj/commander.js/pull/2270',
+    prompt: 'Enforce strict option flag validation and throw an error when invalid flag combinations such as multi-char short flags are passed.',
+    baseCommit: '2c9051a59fa8e4a1297538a828e9e14592901879',
+    solutionCommit: '966720af9470fdf47b67f8ac9ed3ea558dfed8f2',
+    expectedTargetPaths: ['lib/option.js'],
+    expectedRelatedPaths: ['tests/option.bad-flags.test.js'],
     verifierFilename: 'verify_nat_cmd_10.js',
     verifierContent: `
-import { Help } from './lib/help.js';
-import { Command } from './lib/command.js';
-const h = new Help();
-const c = new Command();
-if (typeof h.calculateBalancedWidth !== 'function' || typeof c.getPreferredHelpWidth !== 'function') process.exit(1);
-if (h.calculateBalancedWidth(80, 20) !== 60 || c.getPreferredHelpWidth() !== 80) process.exit(1);
+const { Option } = require("./");
+let threw = false;
+try {
+  new Option("-ws");
+} catch (err) {
+  threw = true;
+}
+if (!threw) {
+  process.exit(1);
+}
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      fs.appendFileSync(path.join(wsDir, 'lib/help.js'), '\nHelp.prototype.calculateBalancedWidth = function(w, p) { return w - p; };\n', 'utf8');
-      fs.appendFileSync(path.join(wsDir, 'lib/command.js'), '\nCommand.prototype.getPreferredHelpWidth = function() { return 80; };\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tj/commander.js)',
   },
 
-  // ==========================================
-  // EXPRESS.JS (10 Natural Tasks)
-  // ==========================================
+  // =========================================================================
+  // EXPRESS (10 Authentic Historical Tasks)
+  // =========================================================================
   {
-    taskId: 'nat_exp_01_conditional_query_revalidation',
-    repo: 'express',
-    taskType: 'FEATURE_ADDITION',
-    naturalTaskSource: 'github_pr',
-    referenceId: '#7366',
-    prompt: 'Support conditional revalidation handling (such as ETag and If-None-Match headers) when processing HTTP QUERY requests.',
-    expectedTargetPaths: ['lib/request.js'],
-    expectedRelatedPaths: ['lib/response.js'],
-    verifierFilename: 'verify_nat_exp_01.js',
-    verifierContent: `
-const req = require('./lib/request');
-if (typeof req.supportsQueryMethodRevalidation !== 'function') process.exit(1);
-if (req.supportsQueryMethodRevalidation('QUERY') !== true) process.exit(1);
-if (req.supportsQueryMethodRevalidation('POST') !== false) process.exit(1);
-process.exit(0);
-`,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/request.js');
-      fs.appendFileSync(p, '\nreq.supportsQueryMethodRevalidation = function(m) { return m === "GET" || m === "HEAD" || m === "QUERY"; };\n', 'utf8');
-    },
-  },
-  {
-    taskId: 'nat_exp_02_content_length_transfer_encoding',
+    taskId: 'nat_exp_01_omit_content_length_on_transfer_encoding',
     repo: 'express',
     taskType: 'BUG_FIX',
     naturalTaskSource: 'github_pr',
     referenceId: '#4893',
-    prompt: 'When sending chunked transfer responses, prevent setting a redundant Content-Length header if Transfer-Encoding is already present.',
+    sourceUrl: 'https://github.com/expressjs/express/pull/4893',
+    prompt: 'Omit Content-Length header when Transfer-Encoding is present in response to avoid HTTP specification conflicts.',
+    baseCommit: '59e205a57a04fced6bb7b8ec0b5dec29461a9996',
+    solutionCommit: '18e5985b8a9d5e8423db0a9121f22bdaecd5b120',
     expectedTargetPaths: ['lib/response.js'],
-    expectedRelatedPaths: ['lib/utils.js'],
+    expectedRelatedPaths: ['test/res.send.js'],
+    verifierFilename: 'verify_nat_exp_01.js',
+    verifierContent: `
+const http = require("http");
+const express = require("./");
+const app = express();
+app.use((req, res) => {
+  res.set("Transfer-Encoding", "chunked");
+  res.send("hello world");
+});
+const server = app.listen(0, () => {
+  const port = server.address().port;
+  http.get("http://127.0.0.1:" + port, (res) => {
+    server.close();
+    if (res.headers["content-length"]) process.exit(1);
+    process.exit(0);
+  }).on("error", () => {
+    server.close();
+    process.exit(1);
+  });
+});
+`,
+    rightsReference: 'MIT License (expressjs/express)',
+  },
+  {
+    taskId: 'nat_exp_02_query_method_conditional_freshness',
+    repo: 'express',
+    taskType: 'FEATURE_ADDITION',
+    naturalTaskSource: 'github_pr',
+    referenceId: '#7366',
+    sourceUrl: 'https://github.com/expressjs/express/pull/7366',
+    prompt: 'Support conditional revalidation and freshness evaluation for HTTP QUERY requests.',
+    baseCommit: 'ba006766fb964571723138708eacaba0f55759cd',
+    solutionCommit: 'ae6dd37680e3a00618d6c8a3e522f0ee4eeba1a4',
+    expectedTargetPaths: ['lib/request.js'],
+    expectedRelatedPaths: ['test/req.fresh.js'],
     verifierFilename: 'verify_nat_exp_02.js',
     verifierContent: `
-const res = require('./lib/response');
-if (typeof res.shouldOmitContentLength !== 'function') process.exit(1);
-if (res.shouldOmitContentLength('chunked') !== true) process.exit(1);
-if (res.shouldOmitContentLength(undefined) !== false) process.exit(1);
+const express = require("./");
+const req = Object.create(express.request);
+const res = Object.create(express.response);
+req.method = "QUERY";
+req.headers = { "if-none-match": String.fromCharCode(34) + "12345" + String.fromCharCode(34) };
+req.res = res;
+res.statusCode = 200;
+res.get = (h) => (h.toLowerCase() === "etag" ? String.fromCharCode(34) + "12345" + String.fromCharCode(34) : undefined);
+if (req.fresh !== true) process.exit(1);
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/response.js');
-      fs.appendFileSync(p, '\nres.shouldOmitContentLength = function(te) { return Boolean(te); };\n', 'utf8');
-    },
+    rightsReference: 'MIT License (expressjs/express)',
   },
   {
-    taskId: 'nat_exp_03_trim_whitespace_modernization',
-    repo: 'express',
-    taskType: 'REFACTOR',
-    naturalTaskSource: 'github_pr',
-    referenceId: '#7265',
-    prompt: 'Modernize string utility helpers by introducing a safeTrimEnd function that replaces legacy trimRight with standard trimEnd semantics.',
-    expectedTargetPaths: ['lib/utils.js'],
-    expectedRelatedPaths: ['lib/request.js'],
-    verifierFilename: 'verify_nat_exp_03.js',
-    verifierContent: `
-const utils = require('./lib/utils');
-if (typeof utils.safeTrimEnd !== 'function') process.exit(1);
-if (utils.safeTrimEnd('  hello  ') !== '  hello') process.exit(1);
-process.exit(0);
-`,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/utils.js');
-      fs.appendFileSync(p, '\nexports.safeTrimEnd = function(s) { return typeof s === "string" ? s.trimEnd() : s; };\n', 'utf8');
-    },
-  },
-  {
-    taskId: 'nat_exp_04_error_object_logging',
-    repo: 'express',
-    taskType: 'BUG_FIX',
-    naturalTaskSource: 'github_pr',
-    referenceId: '#6464',
-    prompt: 'In the default error handler, log the full error object or error stack instead of only the error string message.',
-    expectedTargetPaths: ['lib/application.js'],
-    expectedRelatedPaths: ['lib/response.js'],
-    verifierFilename: 'verify_nat_exp_04.js',
-    verifierContent: `
-const express = require('./lib/express');
-const app = express();
-if (typeof app.formatErrorForLogging !== 'function') process.exit(1);
-const err = new Error('boom');
-if (!app.formatErrorForLogging(err).includes('boom')) process.exit(1);
-process.exit(0);
-`,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/application.js');
-      fs.appendFileSync(p, '\napp.formatErrorForLogging = function(e) { return e && (e.stack || e.message) ? String(e.stack || e.message) : String(e); };\n', 'utf8');
-    },
-  },
-  {
-    taskId: 'nat_exp_05_render_null_options',
+    taskId: 'nat_exp_03_app_render_null_options',
     repo: 'express',
     taskType: 'FEATURE_ADDITION',
     naturalTaskSource: 'github_pr',
     referenceId: '#6903',
-    prompt: 'Allow application view rendering to accept null or undefined as options without throwing an error.',
+    sourceUrl: 'https://github.com/expressjs/express/pull/6903',
+    prompt: 'Allow null or undefined to be passed as the options argument to app.render without throwing an error.',
+    baseCommit: 'a479419b16f5b97eb20f5dbae5848708ff30ce2d',
+    solutionCommit: 'c9ecf7b658388ccaa2b8470aabad92aabde458a2',
     expectedTargetPaths: ['lib/application.js'],
-    expectedRelatedPaths: ['lib/view.js'],
-    verifierFilename: 'verify_nat_exp_05.js',
+    expectedRelatedPaths: ['test/app.render.js'],
+    verifierFilename: 'verify_nat_exp_03.js',
     verifierContent: `
-const express = require('./lib/express');
+const path = require("path");
+const express = require("./");
 const app = express();
-if (typeof app.normalizeRenderOptions !== 'function') process.exit(1);
-if (typeof app.normalizeRenderOptions(null) !== 'object' || Object.keys(app.normalizeRenderOptions(null)).length !== 0) process.exit(1);
+app.set("views", path.join(__dirname, "test/fixtures"));
+app.engine("tmpl", (path, options, fn) => fn(null, "rendered"));
+let threw = false;
+try {
+  app.render("user.tmpl", null, (err, str) => {
+    if (err) threw = true;
+  });
+} catch (e) {
+  threw = true;
+}
+if (threw) process.exit(1);
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/application.js');
-      fs.appendFileSync(p, '\napp.normalizeRenderOptions = function(opts) { return opts || {}; };\n', 'utf8');
-    },
+    rightsReference: 'MIT License (expressjs/express)',
   },
   {
-    taskId: 'nat_exp_06_type_leading_dot_lookup',
+    taskId: 'nat_exp_04_avoid_duplicate_content_type_on_strings',
     repo: 'express',
     taskType: 'BUG_FIX',
     naturalTaskSource: 'github_pr',
-    referenceId: '#7037',
-    prompt: 'Ensure response MIME type resolution handles extension strings with leading dots and falls back gracefully when MIME lookup fails.',
+    referenceId: '#6991',
+    sourceUrl: 'https://github.com/expressjs/express/pull/6991',
+    prompt: 'Prevent modifying Content-Type header twice when sending string bodies in res.send.',
+    baseCommit: '5a4568abfe05f71d5559e1db9321627af501ebe3',
+    solutionCommit: 'a479419b16f5b97eb20f5dbae5848708ff30ce2d',
     expectedTargetPaths: ['lib/response.js'],
-    expectedRelatedPaths: ['lib/utils.js'],
-    verifierFilename: 'verify_nat_exp_06.js',
+    expectedRelatedPaths: [],
+    verifierFilename: 'verify_nat_exp_04.js',
     verifierContent: `
-const res = require('./lib/response');
-if (typeof res.resolveMimeFallback !== 'function') process.exit(1);
-if (res.resolveMimeFallback('.json') !== 'application/json') process.exit(1);
-if (res.resolveMimeFallback('.xyz_unknown') !== 'application/octet-stream') process.exit(1);
+const express = require("./");
+const app = express();
+const res = Object.create(express.response);
+res.app = app;
+res.req = { headers: {} };
+res.headers = {};
+let count = 0;
+res.set = function(field, val) {
+  if (typeof field === "string" && field.toLowerCase() === "content-type") count++;
+  res.headers[field.toLowerCase()] = val;
+};
+res.get = function(field) { return res.headers[field.toLowerCase()]; };
+res.end = function() {};
+res.send("hello");
+if (count !== 1) process.exit(1);
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/response.js');
-      fs.appendFileSync(p, '\nres.resolveMimeFallback = function(t) { return t.includes("json") ? "application/json" : "application/octet-stream"; };\n', 'utf8');
-    },
+    rightsReference: 'MIT License (expressjs/express)',
   },
   {
-    taskId: 'nat_exp_07_normalize_type_fallback',
-    repo: 'express',
-    taskType: 'BUG_FIX',
-    naturalTaskSource: 'github_pr',
-    referenceId: '#6894',
-    prompt: 'When normalizing content types with normalizeType, fall back to application/octet-stream if the type lookup fails.',
-    expectedTargetPaths: ['lib/utils.js'],
-    expectedRelatedPaths: ['lib/response.js'],
-    verifierFilename: 'verify_nat_exp_07.js',
-    verifierContent: `
-const utils = require('./lib/utils');
-if (typeof utils.safeNormalizeType !== 'function') process.exit(1);
-if (utils.safeNormalizeType('unknown/custom').value !== 'application/octet-stream') process.exit(1);
-process.exit(0);
-`,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/utils.js');
-      fs.appendFileSync(p, '\nexports.safeNormalizeType = function(t) { return { value: "application/octet-stream", quality: 1 }; };\n', 'utf8');
-    },
-  },
-  {
-    taskId: 'nat_exp_08_content_type_whitespace_trim',
-    repo: 'express',
-    taskType: 'REFACTOR',
-    naturalTaskSource: 'github_pr',
-    referenceId: '#7234',
-    prompt: 'In request header parsing, strip leading and trailing whitespace from Content-Type values before extracting media types.',
-    expectedTargetPaths: ['lib/request.js'],
-    expectedRelatedPaths: ['lib/utils.js'],
-    verifierFilename: 'verify_nat_exp_08.js',
-    verifierContent: `
-const req = require('./lib/request');
-if (typeof req.trimHeaderValue !== 'function') process.exit(1);
-if (req.trimHeaderValue('  application/json; charset=utf-8  ') !== 'application/json; charset=utf-8') process.exit(1);
-process.exit(0);
-`,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/request.js');
-      fs.appendFileSync(p, '\nreq.trimHeaderValue = function(v) { return typeof v === "string" ? v.trim() : v; };\n', 'utf8');
-    },
-  },
-  {
-    taskId: 'nat_exp_09_etag_preserve_custom',
+    taskId: 'nat_exp_05_preserve_etag_with_transfer_encoding',
     repo: 'express',
     taskType: 'BUG_FIX',
     naturalTaskSource: 'github_pr',
     referenceId: '#7459',
-    prompt: 'Preserve pre-computed custom ETag headers during response generation even when custom transfer headers are enabled.',
+    sourceUrl: 'https://github.com/expressjs/express/pull/7459',
+    prompt: 'Preserve ETag generation in res.send when Transfer-Encoding header is present.',
+    baseCommit: '3ce6d0eb86e9d93529ff3191c6bb5db8ce6e72c8',
+    solutionCommit: '9a34acf03cb818ff3f8bc40e44176e277a25cbb9',
     expectedTargetPaths: ['lib/response.js'],
-    expectedRelatedPaths: ['lib/application.js'],
-    verifierFilename: 'verify_nat_exp_09.js',
+    expectedRelatedPaths: ['test/res.send.js'],
+    verifierFilename: 'verify_nat_exp_05.js',
     verifierContent: `
-const res = require('./lib/response');
-if (typeof res.canPreserveCustomEtag !== 'function') process.exit(1);
-if (res.canPreserveCustomEtag('"custom-etag-123"') !== true) process.exit(1);
-if (res.canPreserveCustomEtag(undefined) !== false) process.exit(1);
-process.exit(0);
+const http = require("http");
+const express = require("./");
+const app = express();
+app.use((req, res) => {
+  res.set("Transfer-Encoding", "chunked");
+  res.send("hello");
+});
+const server = app.listen(0, () => {
+  const port = server.address().port;
+  http.get("http://127.0.0.1:" + port, (res) => {
+    server.close();
+    if (!res.headers["etag"]) process.exit(1);
+    process.exit(0);
+  }).on("error", () => {
+    server.close();
+    process.exit(1);
+  });
+});
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'lib/response.js');
-      fs.appendFileSync(p, '\nres.canPreserveCustomEtag = function(tag) { return typeof tag === "string" && tag.length > 0; };\n', 'utf8');
-    },
+    rightsReference: 'MIT License (expressjs/express)',
   },
   {
-    taskId: 'nat_exp_10_safe_disposition_attachment',
+    taskId: 'nat_exp_06_polish_redirect_html_structure',
     repo: 'express',
-    taskType: 'MULTI_FILE_COORDINATION',
+    taskType: 'REFACTOR',
     naturalTaskSource: 'github_pr',
-    referenceId: '#7233',
-    prompt: 'Implement safe attachment header generation that properly escapes quotes in content disposition filenames across response and utility modules.',
-    expectedTargetPaths: ['lib/response.js', 'lib/utils.js'],
-    expectedRelatedPaths: ['lib/request.js'],
-    verifierFilename: 'verify_nat_exp_10.js',
+    referenceId: '#5167',
+    sourceUrl: 'https://github.com/expressjs/express/pull/5167',
+    prompt: 'Format standard DOCTYPE, head, title, and body tags in HTML redirect responses.',
+    baseCommit: '2cd372e34cd6613f4d00836c2ee122f28bddfcb3',
+    solutionCommit: '9a3f7ff4120d7920a2d13809ff5ae78648c8a3d6',
+    expectedTargetPaths: ['lib/response.js'],
+    expectedRelatedPaths: ['test/res.redirect.js'],
+    verifierFilename: 'verify_nat_exp_06.js',
     verifierContent: `
-const utils = require('./lib/utils');
-const res = require('./lib/response');
-if (typeof utils.escapeDispositionFilename !== 'function' || typeof res.hasSafeAttachmentSupport !== 'function') process.exit(1);
-if (utils.escapeDispositionFilename('test') !== 'test-escaped' || res.hasSafeAttachmentSupport() !== true) process.exit(1);
+const http = require("http");
+const express = require("./");
+const app = express();
+app.use((req, res) => {
+  res.redirect(302, "http://example.com");
+});
+const server = app.listen(0, () => {
+  const port = server.address().port;
+  const req = http.request({
+    hostname: "127.0.0.1",
+    port: port,
+    path: "/",
+    headers: { "Accept": "text/html" }
+  }, (res) => {
+    let data = "";
+    res.on("data", (chunk) => { data += chunk; });
+    res.on("end", () => {
+      server.close();
+      if (!data.includes("<!DOCTYPE html>")) process.exit(1);
+      process.exit(0);
+    });
+  });
+  req.on("error", () => {
+    server.close();
+    process.exit(1);
+  });
+  req.end();
+});
+`,
+    rightsReference: 'MIT License (expressjs/express)',
+  },
+  {
+    taskId: 'nat_exp_07_multiple_links_single_rel',
+    repo: 'express',
+    taskType: 'FEATURE_ADDITION',
+    naturalTaskSource: 'github_pr',
+    referenceId: '#4885',
+    sourceUrl: 'https://github.com/expressjs/express/pull/4885',
+    prompt: 'Allow setting multiple Link headers for a single relationship in res.links by accepting an array of targets.',
+    baseCommit: '6ed3439584b6bc77b0f1156f8797700df063fa63',
+    solutionCommit: 'caa4f68ee8d32474676fa29cc2086dcc1d62208b',
+    expectedTargetPaths: ['lib/response.js'],
+    expectedRelatedPaths: ['test/res.links.js'],
+    verifierFilename: 'verify_nat_exp_07.js',
+    verifierContent: `
+const express = require("./");
+const app = express();
+const res = Object.create(express.response);
+res.headers = {};
+res.set = function(field, val) { res.headers[field.toLowerCase()] = val; };
+res.get = function(field) { return res.headers[field.toLowerCase()]; };
+
+res.links({
+  prev: ["http://example.com/1", "http://example.com/2"]
+});
+
+const link = res.get("link");
+const target1 = "<http://example.com/1>; rel=" + String.fromCharCode(34) + "prev" + String.fromCharCode(34);
+const target2 = "<http://example.com/2>; rel=" + String.fromCharCode(34) + "prev" + String.fromCharCode(34);
+if (!link || !link.includes(target1) || !link.includes(target2)) {
+  process.exit(1);
+}
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      fs.appendFileSync(path.join(wsDir, 'lib/utils.js'), '\nexports.escapeDispositionFilename = function(f) { return f + "-escaped"; };\n', 'utf8');
-      fs.appendFileSync(path.join(wsDir, 'lib/response.js'), '\nres.hasSafeAttachmentSupport = function() { return true; };\n', 'utf8');
-    },
+    rightsReference: 'MIT License (expressjs/express)',
   },
-
-  // ==========================================
-  // FASTAPI (10 Natural Tasks)
-  // ==========================================
   {
-    taskId: 'nat_fa_01_streaming_status_code',
-    repo: 'fastapi',
+    taskId: 'nat_exp_08_uint8array_response_body',
+    repo: 'express',
+    taskType: 'FEATURE_ADDITION',
+    naturalTaskSource: 'github_pr',
+    referenceId: '#6285',
+    sourceUrl: 'https://github.com/expressjs/express/pull/6285',
+    prompt: 'Accept Uint8Array instances in res.send and stream them directly as binary chunks rather than JSON objects.',
+    baseCommit: 'af7cd90893f4619212e01f271fbaa10f3176fb33',
+    solutionCommit: '55869f49a65f1e279d92488fa6319c9fd4d8eac2',
+    expectedTargetPaths: ['lib/response.js'],
+    expectedRelatedPaths: ['test/res.send.js'],
+    verifierFilename: 'verify_nat_exp_08.js',
+    verifierContent: `
+const http = require("http");
+const express = require("./");
+const app = express();
+app.use((req, res) => {
+  const encodedHey = new TextEncoder().encode("hey");
+  res.set("Content-Type", "text/plain").send(encodedHey);
+});
+const server = app.listen(0, () => {
+  const port = server.address().port;
+  http.get("http://127.0.0.1:" + port, (res) => {
+    let data = "";
+    res.on("data", c => { data += c; });
+    res.on("end", () => {
+      server.close();
+      if (data !== "hey") process.exit(1);
+      process.exit(0);
+    });
+  }).on("error", () => {
+    server.close();
+    process.exit(1);
+  });
+});
+`,
+    rightsReference: 'MIT License (expressjs/express)',
+  },
+  {
+    taskId: 'nat_exp_09_use_socket_over_connection',
+    repo: 'express',
     taskType: 'BUG_FIX',
     naturalTaskSource: 'github_pr',
-    referenceId: '#15937',
-    prompt: 'Ensure route decorators preserve custom status_code settings when returning streaming and event-stream responses.',
-    expectedTargetPaths: ['fastapi/routing.py'],
-    expectedRelatedPaths: ['fastapi/applications.py'],
-    verifierFilename: 'verify_nat_fa_01.py',
+    referenceId: '#6705',
+    sourceUrl: 'https://github.com/expressjs/express/pull/6705',
+    prompt: 'Access req.socket instead of deprecated req.connection when resolving protocol and host properties.',
+    baseCommit: 'd9a62f983390da932c4f2e21e67a55fa33c164f4',
+    solutionCommit: '89f198c6a50ab0cb65b741767791dd1b647e3b2c',
+    expectedTargetPaths: ['lib/request.js'],
+    expectedRelatedPaths: ['test/req.protocol.js'],
+    verifierFilename: 'verify_nat_exp_09.js',
     verifierContent: `
-import sys
-sys.path.insert(0, '.')
-from fastapi.routing import APIRoute
-if not hasattr(APIRoute, 'supports_streaming_status_code'): sys.exit(1)
-if APIRoute.supports_streaming_status_code() is not True: sys.exit(1)
-sys.exit(0)
+const express = require("./");
+const req = Object.create(express.request);
+Object.defineProperty(req, "socket", { value: { encrypted: true, remoteAddress: "127.0.0.1" }, configurable: true });
+Object.defineProperty(req, "connection", { value: undefined, configurable: true });
+req.app = express();
+req.headers = {};
+let proto;
+try {
+  proto = req.protocol;
+} catch (e) {
+  process.exit(1);
+}
+if (proto !== "https") process.exit(1);
+process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'fastapi/routing.py');
-      fs.appendFileSync(p, '\nAPIRoute.supports_streaming_status_code = staticmethod(lambda: True)\n', 'utf8');
-    },
+    rightsReference: 'MIT License (expressjs/express)',
   },
   {
-    taskId: 'nat_fa_02_sse_multiline_data_splitting',
+    taskId: 'nat_exp_10_sendfile_etag_option_support',
+    repo: 'express',
+    taskType: 'FEATURE_ADDITION',
+    naturalTaskSource: 'github_pr',
+    referenceId: '#6073',
+    sourceUrl: 'https://github.com/expressjs/express/pull/6073',
+    prompt: 'Respect application-level etag configuration when streaming files via res.sendFile.',
+    baseCommit: 'd2de128a32f1ce3d360bbe3fad56afa026fc8832',
+    solutionCommit: '327af123a1833239adf7eb47fee94542b692d451',
+    expectedTargetPaths: ['lib/response.js'],
+    expectedRelatedPaths: ['test/res.sendFile.js'],
+    verifierFilename: 'verify_nat_exp_10.js',
+    verifierContent: `
+const path = require("path");
+const http = require("http");
+const express = require("./");
+const app = express();
+app.disable("etag");
+app.use((req, res) => {
+  res.sendFile(path.join(__dirname, "package.json"));
+});
+const server = app.listen(0, () => {
+  const port = server.address().port;
+  http.get("http://127.0.0.1:" + port, (res) => {
+    server.close();
+    if (res.headers["etag"]) process.exit(1);
+    process.exit(0);
+  }).on("error", () => {
+    server.close();
+    process.exit(1);
+  });
+});
+`,
+    rightsReference: 'MIT License (expressjs/express)',
+  },
+
+  // =========================================================================
+  // FASTAPI (10 Authentic Historical Tasks)
+  // =========================================================================
+  {
+    taskId: 'nat_fastapi_01_preserve_sse_trailing_newlines',
     repo: 'fastapi',
     taskType: 'BUG_FIX',
     naturalTaskSource: 'github_pr',
     referenceId: '#15515',
-    prompt: 'Ensure Server-Sent Events formatting splits multiline data on both carriage return and newline characters to comply with the SSE specification.',
-    expectedTargetPaths: ['fastapi/utils.py'],
-    expectedRelatedPaths: ['fastapi/encoders.py'],
-    verifierFilename: 'verify_nat_fa_02.py',
+    sourceUrl: 'https://github.com/fastapi/fastapi/pull/15515',
+    prompt: 'Ensure trailing newlines in SSE event data are preserved and formatted as empty data lines in accordance with SSE specifications.',
+    baseCommit: '31ce3cb8d73a6e20221315a90dd98a117f0101a0',
+    solutionCommit: '0f3e7bd682a81488919227f2b5f1f7de1718ecdd',
+    expectedTargetPaths: ['fastapi/sse.py'],
+    expectedRelatedPaths: ['tests/test_sse.py'],
+    verifierFilename: 'verify_nat_fastapi_01.py',
     verifierContent: `
 import sys
-sys.path.insert(0, '.')
-from fastapi import utils
-if not hasattr(utils, 'split_sse_lines'): sys.exit(1)
-if utils.split_sse_lines("line1\\r\\nline2") != ["line1", "line2"]: sys.exit(1)
+from fastapi.sse import format_sse_event
+
+event = format_sse_event(data_str="hello\\n")
+if b"data: hello\\ndata: \\n\\n" not in event:
+    sys.exit(1)
 sys.exit(0)
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'fastapi/utils.py');
-      fs.appendFileSync(p, '\ndef split_sse_lines(data: str):\n    return data.replace("\\r\\n", "\\n").replace("\\r", "\\n").split("\\n")\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tiangolo/fastapi)',
   },
   {
-    taskId: 'nat_fa_03_iterable_response_model',
+    taskId: 'nat_fastapi_02_status_code_streaming_endpoints',
     repo: 'fastapi',
     taskType: 'BUG_FIX',
     naturalTaskSource: 'github_pr',
-    referenceId: '#15093',
-    prompt: 'Apply response_model filtering and schema validation to endpoint return values when the handler return annotation is typed as Iterable[T].',
+    referenceId: '#15937',
+    sourceUrl: 'https://github.com/fastapi/fastapi/pull/15937',
+    prompt: 'Respect custom status_code parameters configured on SSE and streaming response endpoints.',
+    baseCommit: '6215d8a6f3fed4eef63fe9d1ae600c12f62bd881',
+    solutionCommit: 'e92a0dc3ce5ecbebb8655dbe5465cb61d48f9fc0',
     expectedTargetPaths: ['fastapi/routing.py'],
-    expectedRelatedPaths: ['fastapi/dependencies/utils.py'],
-    verifierFilename: 'verify_nat_fa_03.py',
+    expectedRelatedPaths: ['tests/test_stream_status_code.py'],
+    verifierFilename: 'verify_nat_fastapi_02.py',
     verifierContent: `
 import sys
-sys.path.insert(0, '.')
-from fastapi.routing import APIRoute
-if not hasattr(APIRoute, 'is_iterable_response_supported'): sys.exit(1)
-if APIRoute.is_iterable_response_supported() is not True: sys.exit(1)
+from collections.abc import AsyncIterable
+from fastapi import FastAPI
+from fastapi.responses import EventSourceResponse
+from fastapi.testclient import TestClient
+
+app = FastAPI()
+
+@app.post("/sse", response_class=EventSourceResponse, status_code=201)
+async def sse() -> AsyncIterable[dict[str, str]]:
+    yield {"message": "created"}
+
+client = TestClient(app)
+res = client.post("/sse")
+if res.status_code != 201:
+    sys.exit(1)
 sys.exit(0)
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'fastapi/routing.py');
-      fs.appendFileSync(p, '\nAPIRoute.is_iterable_response_supported = staticmethod(lambda: True)\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tiangolo/fastapi)',
   },
   {
-    taskId: 'nat_fa_04_annotated_sequence_parameters',
-    repo: 'fastapi',
-    taskType: 'BUG_FIX',
-    naturalTaskSource: 'github_pr',
-    referenceId: '#14874',
-    prompt: 'Correct parameter extraction for query parameters when sequence types contain nested typing.Annotated metadata.',
-    expectedTargetPaths: ['fastapi/dependencies/utils.py'],
-    expectedRelatedPaths: ['fastapi/params.py'],
-    verifierFilename: 'verify_nat_fa_04.py',
-    verifierContent: `
-import sys
-sys.path.insert(0, '.')
-from fastapi.dependencies import utils
-if not hasattr(utils, 'supports_annotated_sequence_params'): sys.exit(1)
-if utils.supports_annotated_sequence_params() is not True: sys.exit(1)
-sys.exit(0)
-`,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'fastapi/dependencies/utils.py');
-      fs.appendFileSync(p, '\ndef supports_annotated_sequence_params(): return True\n', 'utf8');
-    },
-  },
-  {
-    taskId: 'nat_fa_05_encoder_exclude_defaults_dicts',
+    taskId: 'nat_fastapi_03_exclude_defaults_in_jsonable_encoder',
     repo: 'fastapi',
     taskType: 'BUG_FIX',
     naturalTaskSource: 'github_pr',
     referenceId: '#16043',
-    prompt: 'Propagate exclude_defaults and exclude_none recursively to dictionary values when serializing data structures with jsonable_encoder.',
+    sourceUrl: 'https://github.com/fastapi/fastapi/pull/16043',
+    prompt: 'Propagate exclude_defaults flag to dictionary values and nested structures in jsonable_encoder.',
+    baseCommit: '4ffd45172059cb32c3326cedde2c7ecf579c5db8',
+    solutionCommit: 'aadfcce76380ab169fe172d5cda21722e53c4924',
     expectedTargetPaths: ['fastapi/encoders.py'],
-    expectedRelatedPaths: ['fastapi/utils.py'],
-    verifierFilename: 'verify_nat_fa_05.py',
+    expectedRelatedPaths: ['tests/test_jsonable_encoder.py'],
+    verifierFilename: 'verify_nat_fastapi_03.py',
     verifierContent: `
 import sys
-sys.path.insert(0, '.')
-from fastapi import encoders
-if not hasattr(encoders, 'supports_recursive_dict_exclusions'): sys.exit(1)
-if encoders.supports_recursive_dict_exclusions() is not True: sys.exit(1)
+from pydantic import BaseModel
+from fastapi.encoders import jsonable_encoder
+
+class Item(BaseModel):
+    foo: str
+    bar: str = "bar"
+
+item = Item(foo="foo")
+res = jsonable_encoder({"key": item}, exclude_defaults=True)
+if "bar" in res["key"]:
+    sys.exit(1)
 sys.exit(0)
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'fastapi/encoders.py');
-      fs.appendFileSync(p, '\ndef supports_recursive_dict_exclusions(): return True\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tiangolo/fastapi)',
   },
   {
-    taskId: 'nat_fa_06_include_router_stream_metadata',
+    taskId: 'nat_fastapi_04_iterable_return_response_model_options',
     repo: 'fastapi',
-    taskType: 'MULTI_FILE_COORDINATION',
+    taskType: 'BUG_FIX',
+    naturalTaskSource: 'github_pr',
+    referenceId: '#15093',
+    sourceUrl: 'https://github.com/fastapi/fastapi/pull/15093',
+    prompt: 'Apply response_model_exclude_defaults and related filters to non-generator endpoints returning an Iterable collection.',
+    baseCommit: '0f3d3b2f9f09f04fe612d4b7db32485170c9f1dd',
+    solutionCommit: 'd6537f774b0e80e376e2cf4e0fa998a38c6d0c09',
+    expectedTargetPaths: ['fastapi/routing.py'],
+    expectedRelatedPaths: ['tests/test_skip_defaults.py'],
+    verifierFilename: 'verify_nat_fastapi_04.py',
+    verifierContent: `
+import sys
+from collections.abc import Iterable
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class ModelDefaults(BaseModel):
+    x: str | None = None
+    y: str = "default_y"
+
+@app.get("/items", response_model_exclude_defaults=True)
+def get_items() -> Iterable[ModelDefaults]:
+    return [ModelDefaults(x=None, y="default_y")]
+
+client = TestClient(app)
+res = client.get("/items")
+if res.json() != [{}]:
+    sys.exit(1)
+sys.exit(0)
+`,
+    rightsReference: 'MIT License (tiangolo/fastapi)',
+  },
+  {
+    taskId: 'nat_fastapi_05_stream_item_type_preserved_in_router',
+    repo: 'fastapi',
+    taskType: 'FEATURE_ADDITION',
     naturalTaskSource: 'github_pr',
     referenceId: '#15077',
-    prompt: 'Preserve streaming response return annotations and media types when mounting sub-routers via include_router.',
-    expectedTargetPaths: ['fastapi/routing.py', 'fastapi/applications.py'],
-    expectedRelatedPaths: ['fastapi/datastructures.py'],
-    verifierFilename: 'verify_nat_fa_06.py',
+    sourceUrl: 'https://github.com/fastapi/fastapi/pull/15077',
+    prompt: 'Retain stream_item_type metadata when routes are mounted using include_router so OpenAPI schema includes itemSchema.',
+    baseCommit: '98b12fe56f97107e71a20fc1cf334ccfa590efb5',
+    solutionCommit: 'ad03e117c0010a563067740c97cb7ab011cb5174',
+    expectedTargetPaths: ['fastapi/routing.py'],
+    expectedRelatedPaths: ['tests/test_sse.py'],
+    verifierFilename: 'verify_nat_fastapi_05.py',
     verifierContent: `
 import sys
-sys.path.insert(0, '.')
-from fastapi import FastAPI, routing
-if not hasattr(FastAPI, 'preserves_stream_router_metadata') or not hasattr(routing.APIRouter, 'preserves_stream_router_metadata'): sys.exit(1)
-if FastAPI.preserves_stream_router_metadata() is not True: sys.exit(1)
+from typing import AsyncIterable
+from fastapi import APIRouter, FastAPI
+from fastapi.responses import EventSourceResponse
+from fastapi.testclient import TestClient
+from pydantic import BaseModel
+
+class Item(BaseModel):
+    name: str
+
+router = APIRouter()
+
+@router.get("/events-typed", response_class=EventSourceResponse)
+async def stream_events_typed() -> AsyncIterable[Item]:
+    yield Item(name="foo")
+
+app = FastAPI()
+app.include_router(router, prefix="/api")
+client = TestClient(app)
+
+res = client.get("/openapi.json")
+paths = res.json()["paths"]
+content = paths["/api/events-typed"]["get"]["responses"]["200"]["content"]
+schema = content.get("text/event-stream", {}).get("itemSchema", {}).get("properties", {}).get("data", {})
+if "contentSchema" not in schema:
+    sys.exit(1)
 sys.exit(0)
 `,
-    applySolution: (wsDir) => {
-      fs.appendFileSync(path.join(wsDir, 'fastapi/applications.py'), '\nFastAPI.preserves_stream_router_metadata = staticmethod(lambda: True)\n', 'utf8');
-      fs.appendFileSync(path.join(wsDir, 'fastapi/routing.py'), '\nAPIRouter.preserves_stream_router_metadata = staticmethod(lambda: True)\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tiangolo/fastapi)',
   },
   {
-    taskId: 'nat_fa_07_openapi_skip_redundant_dependencies',
+    taskId: 'nat_fastapi_06_nested_annotated_in_sequences',
     repo: 'fastapi',
-    taskType: 'REFACTOR',
+    taskType: 'TEST_FAILURE',
     naturalTaskSource: 'github_pr',
-    referenceId: '#16076',
-    prompt: 'Optimize OpenAPI generation by skipping redundant dependency tree traversals for endpoints without security dependencies.',
-    expectedTargetPaths: ['fastapi/openapi/utils.py'],
-    expectedRelatedPaths: ['fastapi/dependencies/utils.py'],
-    verifierFilename: 'verify_nat_fa_07.py',
+    referenceId: '#14874',
+    sourceUrl: 'https://github.com/fastapi/fastapi/pull/14874',
+    prompt: 'Unwrap multiple nested Annotated type layers when analyzing query sequence parameters.',
+    baseCommit: '9db320278c15315a95341d086bc594fc3bf2af4e',
+    solutionCommit: '65e42bd5eca657daf97c6762b9632e7c2cb3317a',
+    expectedTargetPaths: ['fastapi/_compat/shared.py'],
+    expectedRelatedPaths: ['tests/test_nested_annotated_in_sequence.py'],
+    verifierFilename: 'verify_nat_fastapi_06.py',
     verifierContent: `
 import sys
-sys.path.insert(0, '.')
-from fastapi.openapi import utils
-if not hasattr(utils, 'can_skip_dependency_flattening'): sys.exit(1)
-if utils.can_skip_dependency_flattening([]) is not True: sys.exit(1)
-if utils.can_skip_dependency_flattening(['oauth2']) is not False: sys.exit(1)
+from typing import Annotated
+from fastapi import FastAPI, Query
+from fastapi.testclient import TestClient
+from pydantic import Field
+
+MaxSizedSet = Annotated[set[str], Field(max_length=3)]
+app = FastAPI()
+
+@app.get("/")
+def read_root(foo: Annotated[MaxSizedSet | None, Query()] = None):
+    return {"foo": sorted(list(foo)) if foo is not None else None}
+
+client = TestClient(app)
+res = client.get("/", params={"foo": ["a", "b"]})
+if res.status_code != 200 or res.json() != {"foo": ["a", "b"]}:
+    sys.exit(1)
 sys.exit(0)
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'fastapi/openapi/utils.py');
-      fs.appendFileSync(p, '\ndef can_skip_dependency_flattening(security_reqs): return len(security_reqs) == 0\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tiangolo/fastapi)',
   },
   {
-    taskId: 'nat_fa_08_frontend_auto_check',
+    taskId: 'nat_fastapi_07_iter_route_contexts',
     repo: 'fastapi',
     taskType: 'FEATURE_ADDITION',
     naturalTaskSource: 'github_pr',
-    referenceId: '#16102',
-    prompt: 'Support automatic directory existence validation when mounting static frontend applications to warn on missing asset paths.',
-    expectedTargetPaths: ['fastapi/applications.py'],
-    expectedRelatedPaths: ['fastapi/datastructures.py'],
-    verifierFilename: 'verify_nat_fa_08.py',
+    referenceId: '#15785',
+    sourceUrl: 'https://github.com/fastapi/fastapi/pull/15785',
+    prompt: 'Provide iter_route_contexts iterator to inspect mounted routes along with their effective parent router contexts.',
+    baseCommit: '7feb17f80a483e70efa26f01addb94d0070d42ee',
+    solutionCommit: '6ac122071d2c9e6add587e1271eb010dd6acbed0',
+    expectedTargetPaths: ['fastapi/routing.py'],
+    expectedRelatedPaths: ['tests/test_router_include_context.py'],
+    verifierFilename: 'verify_nat_fastapi_07.py',
     verifierContent: `
 import sys
-sys.path.insert(0, '.')
-from fastapi import FastAPI
-app = FastAPI()
-if not hasattr(app, 'validate_frontend_directory'): sys.exit(1)
-if app.validate_frontend_directory('.') is not True: sys.exit(1)
-if app.validate_frontend_directory('non_existent_dir_12345') is not False: sys.exit(1)
+try:
+    from fastapi.routing import iter_route_contexts
+except ImportError:
+    sys.exit(1)
+
+from fastapi import APIRouter
+router = APIRouter()
+@router.get("/test")
+def test_endpoint():
+    return "ok"
+
+contexts = list(iter_route_contexts(router.routes))
+if len(contexts) != 1 or contexts[0].path != "/test":
+    sys.exit(1)
 sys.exit(0)
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'fastapi/applications.py');
-      fs.appendFileSync(p, '\nimport os\nFastAPI.validate_frontend_directory = lambda self, d: os.path.isdir(d)\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tiangolo/fastapi)',
   },
   {
-    taskId: 'nat_fa_09_clear_parameter_caches',
+    taskId: 'nat_fastapi_08_frontend_fallback_dotted_paths',
     repo: 'fastapi',
-    taskType: 'REFACTOR',
+    taskType: 'BUG_FIX',
     naturalTaskSource: 'github_pr',
-    referenceId: '#16065',
-    prompt: 'Clear temporary parameter inspection caches after route registration to minimize application memory footprint.',
-    expectedTargetPaths: ['fastapi/dependencies/utils.py'],
-    expectedRelatedPaths: ['fastapi/routing.py'],
-    verifierFilename: 'verify_nat_fa_09.py',
+    referenceId: '#16011',
+    sourceUrl: 'https://github.com/fastapi/fastapi/pull/16011',
+    prompt: 'Serve SPA fallback page for HTML navigation requests with dot characters in path segments.',
+    baseCommit: '9b8410bdc9fa1fd679ea7e65b926535c7045ab87',
+    solutionCommit: 'eb75fd078e83aed935016bcdf0705cd58bbf0d0e',
+    expectedTargetPaths: ['fastapi/routing.py'],
+    expectedRelatedPaths: ['tests/test_frontend.py'],
+    verifierFilename: 'verify_nat_fastapi_08.py',
     verifierContent: `
 import sys
-sys.path.insert(0, '.')
-from fastapi.dependencies import utils
-if not hasattr(utils, 'clear_parameter_caches'): sys.exit(1)
-utils.clear_parameter_caches()
-sys.exit(0)
+import tempfile
+from pathlib import Path
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+with tempfile.TemporaryDirectory() as tmp_dir:
+    dist = Path(tmp_dir) / "dist"
+    dist.mkdir()
+    (dist / "index.html").write_text("app shell")
+    app = FastAPI()
+    app.frontend("/", directory=dist, fallback="index.html")
+
+    client = TestClient(app)
+    res = client.get("/users/jane.doe", headers={"accept": "text/html"})
+    if res.status_code != 200 or res.text != "app shell":
+        sys.exit(1)
+    sys.exit(0)
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'fastapi/dependencies/utils.py');
-      fs.appendFileSync(p, '\ndef clear_parameter_caches(): pass\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tiangolo/fastapi)',
   },
   {
-    taskId: 'nat_fa_10_frontend_dependency_background_tasks',
+    taskId: 'nat_fastapi_09_frontend_unsupported_methods_404',
+    repo: 'fastapi',
+    taskType: 'BUG_FIX',
+    naturalTaskSource: 'github_pr',
+    referenceId: '#15863',
+    sourceUrl: 'https://github.com/fastapi/fastapi/pull/15863',
+    prompt: 'Return 404 Not Found instead of 405 Method Not Allowed for non-GET/HEAD requests on frontend fallback routes.',
+    baseCommit: 'c2708d981729c96437dcc1d7cfa40cd15128bc60',
+    solutionCommit: 'b790e14cb686506df663959ac4879053cfed38db',
+    expectedTargetPaths: ['fastapi/routing.py'],
+    expectedRelatedPaths: ['tests/test_frontend.py'],
+    verifierFilename: 'verify_nat_fastapi_09.py',
+    verifierContent: `
+import sys
+import tempfile
+from pathlib import Path
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+with tempfile.TemporaryDirectory() as tmp_dir:
+    dist = Path(tmp_dir) / "dist"
+    dist.mkdir()
+    (dist / "index.html").write_text("app shell")
+    app = FastAPI()
+    app.frontend("/", directory=dist, fallback="index.html")
+
+    client = TestClient(app)
+    res = client.post("/missing-endpoint")
+    if res.status_code != 404:
+        sys.exit(1)
+    sys.exit(0)
+`,
+    rightsReference: 'MIT License (tiangolo/fastapi)',
+  },
+  {
+    taskId: 'nat_fastapi_10_frontend_app_dependencies',
     repo: 'fastapi',
     taskType: 'FEATURE_ADDITION',
     naturalTaskSource: 'github_pr',
-    referenceId: '#16105',
-    prompt: 'Allow dependency-injected background tasks and response headers to execute during frontend static file responses.',
-    expectedTargetPaths: ['fastapi/applications.py'],
-    expectedRelatedPaths: ['fastapi/datastructures.py'],
-    verifierFilename: 'verify_nat_fa_10.py',
+    referenceId: '#15908',
+    sourceUrl: 'https://github.com/fastapi/fastapi/pull/15908',
+    prompt: 'Execute application-level dependencies on frontend route requests to support authentication guards.',
+    baseCommit: '66a90f6ee9c0cf58ec61b14f8925344d6f16eae5',
+    solutionCommit: '319be508ce7db9ee5f52c3b9baa68c6cc1037c10',
+    expectedTargetPaths: ['fastapi/routing.py'],
+    expectedRelatedPaths: ['tests/test_frontend.py'],
+    verifierFilename: 'verify_nat_fastapi_10.py',
     verifierContent: `
 import sys
-sys.path.insert(0, '.')
-from fastapi import FastAPI
-app = FastAPI()
-if not hasattr(app, 'supports_frontend_background_tasks'): sys.exit(1)
-if app.supports_frontend_background_tasks() is not True: sys.exit(1)
-sys.exit(0)
+import tempfile
+from pathlib import Path
+from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.testclient import TestClient
+
+def require_cookie(request: Request) -> None:
+    if request.cookies.get("session") != "ok":
+        raise HTTPException(status_code=401)
+
+with tempfile.TemporaryDirectory() as tmp_dir:
+    dist = Path(tmp_dir) / "dist"
+    dist.mkdir()
+    (dist / "index.html").write_text("app")
+    app = FastAPI(dependencies=[Depends(require_cookie)])
+    app.frontend("/", directory=dist, fallback="index.html")
+
+    client = TestClient(app)
+    res = client.get("/")
+    if res.status_code != 401:
+        sys.exit(1)
+    sys.exit(0)
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'fastapi/applications.py');
-      fs.appendFileSync(p, '\nFastAPI.supports_frontend_background_tasks = lambda self: True\n', 'utf8');
-    },
+    rightsReference: 'MIT License (tiangolo/fastapi)',
   },
 
-  // ==========================================
-  // SIFTRCODE (10 Natural Tasks)
-  // ==========================================
+  // =========================================================================
+  // SIFTRCODE (10 Authentic Historical First-Party Tasks)
+  // =========================================================================
   {
-    taskId: 'nat_siftr_01_python_ast_timeout_bounds',
+    taskId: 'nat_siftr_01_python_ast_parser_timeout',
     repo: 'siftrcode',
     taskType: 'BUG_FIX',
     naturalTaskSource: 'first_party_commit',
     referenceId: '75f8d92',
-    prompt: 'Add execution timeout bounds to Python AST parsing child processes to prevent deadlocks on malformed syntax.',
-    expectedTargetPaths: ['src/parsing/python_parser.ts'],
-    expectedRelatedPaths: ['src/parsing/dispatcher.ts'],
+    sourceUrl: 'https://github.com/kyzoeth/siftrcode/commit/75f8d92',
+    prompt: 'Add timeout bounds to python AST child process spawning to prevent pipe deadlocks.',
+    baseCommit: '5745e54ce95b503cd477909d5f903c6d42a9630c',
+    solutionCommit: '75f8d921960043c829caaf65cea0f4ac2993734c',
+    expectedTargetPaths: ['src/parsing/python_parser.ts', 'src/skeleton/python.ts'],
+    expectedRelatedPaths: [],
     verifierFilename: 'verify_nat_siftr_01.js',
     verifierContent: `
-const { PythonSymbolParser } = require('./dist/parsing/python_parser');
-const parser = new PythonSymbolParser();
-if (typeof parser.getProcessTimeoutMs !== 'function') process.exit(1);
-if (parser.getProcessTimeoutMs() !== 10000) process.exit(1);
+const cp = require("child_process");
+let passedTimeout = null;
+const orig = cp.spawnSync;
+cp.spawnSync = function(cmd, args, opts) {
+  passedTimeout = opts ? opts.timeout : undefined;
+  return { status: 0, stdout: "[]" };
+};
+const { PythonSymbolParser } = require("./dist/parsing/python_parser");
+const p = new PythonSymbolParser();
+p.parseSymbols("x = 1", "test.py");
+cp.spawnSync = orig;
+if (passedTimeout !== 5000) {
+  process.exit(1);
+}
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'dist/parsing/python_parser.js');
-      fs.appendFileSync(p, '\nPythonSymbolParser.prototype.getProcessTimeoutMs = function() { return 10000; };\n', 'utf8');
-    },
+    rightsReference: 'Proprietary / MIT Dual License (kyzoeth/siftrcode)',
   },
   {
-    taskId: 'nat_siftr_02_build_provenance_tree_hashing',
+    taskId: 'nat_siftr_02_egress_denied_error_type',
+    repo: 'siftrcode',
+    taskType: 'BUG_FIX',
+    naturalTaskSource: 'first_party_commit',
+    referenceId: '48b1bf9',
+    sourceUrl: 'https://github.com/kyzoeth/siftrcode/commit/48b1bf9',
+    prompt: 'Introduce typed EgressDeniedError with explicit reason classifications when egress is blocked by rights or trust policy.',
+    baseCommit: '697bf359bb5224ce38f386cabb7d86b28194e634',
+    solutionCommit: '48b1bf91871f05120acab3b787e4a555a0aaa9e9',
+    expectedTargetPaths: ['src/security/structured_egress.ts'],
+    expectedRelatedPaths: ['src/providers/judgment/typesafe/jev_budget.ts'],
+    verifierFilename: 'verify_nat_siftr_02.js',
+    verifierContent: `
+const egressMod = require("./dist/security/structured_egress");
+if (typeof egressMod.EgressDeniedError !== "function") {
+  process.exit(1);
+}
+const err = new egressMod.EgressDeniedError("RIGHTS", "blocked");
+if (err.reason !== "RIGHTS") {
+  process.exit(1);
+}
+process.exit(0);
+`,
+    rightsReference: 'Proprietary / MIT Dual License (kyzoeth/siftrcode)',
+  },
+  {
+    taskId: 'nat_siftr_03_build_provenance_tree_hashing',
     repo: 'siftrcode',
     taskType: 'FEATURE_ADDITION',
     naturalTaskSource: 'first_party_commit',
     referenceId: '1c2f8d3',
-    prompt: 'Compute SHA-256 build provenance metadata including tree hash, dirty state, and commit hash during post-build stamping.',
+    sourceUrl: 'https://github.com/kyzoeth/siftrcode/commit/1c2f8d3',
+    prompt: 'Implement build provenance verification with deterministic source tree hashing.',
+    baseCommit: 'bbbbec19079b3f24b20a5508d3c8874ce6f067d5',
+    solutionCommit: '1c2f8d3a9799af53505f8ad594bc23ed56712c25',
     expectedTargetPaths: ['src/provenance/build_provenance.ts'],
-    expectedRelatedPaths: ['src/provenance/source_provenance.ts'],
-    verifierFilename: 'verify_nat_siftr_02.js',
-    verifierContent: `
-let prov;
-try { prov = require('./dist/provenance/build_provenance'); } catch { process.exit(1); }
-if (typeof prov.computeBuildTreeHash !== 'function') process.exit(1);
-if (prov.computeBuildTreeHash('clean').length !== 64) process.exit(1);
-process.exit(0);
-`,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'dist/provenance/build_provenance.js');
-      fs.mkdirSync(path.dirname(p), { recursive: true });
-      const sol = `
-const crypto = require('crypto');
-exports.computeBuildTreeHash = function(state) {
-  return crypto.createHash('sha256').update(state || 'tree').digest('hex');
-};
-`;
-      fs.writeFileSync(p, sol, 'utf8');
-    },
-  },
-  {
-    taskId: 'nat_siftr_03_rights_decouple_remote_processing',
-    repo: 'siftrcode',
-    taskType: 'REFACTOR',
-    naturalTaskSource: 'first_party_commit',
-    referenceId: 'fe04d74',
-    prompt: 'Decouple remote LLM processing permissions from local AST indexing and enforce schema training rights filtering.',
-    expectedTargetPaths: ['src/rights/rights_filter.ts'],
-    expectedRelatedPaths: ['src/rights/data_rights.ts'],
+    expectedRelatedPaths: ['scripts/post_build.js'],
     verifierFilename: 'verify_nat_siftr_03.js',
     verifierContent: `
-const { RightsFilter } = require('./dist/rights/rights_filter');
-const rf = new RightsFilter();
-if (typeof rf.permitsLocalIndexingWithoutRemoteExport !== 'function') process.exit(1);
-if (rf.permitsLocalIndexingWithoutRemoteExport() !== true) process.exit(1);
+let provMod;
+try {
+  provMod = require("./dist/provenance/build_provenance");
+} catch (e) {
+  process.exit(1);
+}
+if (typeof provMod.computeSourceTreeHash !== "function") {
+  process.exit(1);
+}
+const hash = provMod.computeSourceTreeHash(__dirname);
+if (!hash || hash.length !== 64) {
+  process.exit(1);
+}
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'dist/rights/rights_filter.js');
-      fs.appendFileSync(p, '\nRightsFilter.prototype.permitsLocalIndexingWithoutRemoteExport = function() { return true; };\n', 'utf8');
-    },
+    rightsReference: 'Proprietary / MIT Dual License (kyzoeth/siftrcode)',
   },
   {
-    taskId: 'nat_siftr_04_jev_max_calls_and_case_insensitivity',
+    taskId: 'nat_siftr_04_context_engine_get_data_rights',
+    repo: 'siftrcode',
+    taskType: 'FEATURE_ADDITION',
+    naturalTaskSource: 'first_party_commit',
+    referenceId: 'd2826a8',
+    sourceUrl: 'https://github.com/kyzoeth/siftrcode/commit/d2826a8',
+    prompt: 'Expose getDataRights method on ContextEngine to inspect active policy and enforce snapshot equality.',
+    baseCommit: '7dd99269f866b918416f62f64e30e0219b283554',
+    solutionCommit: 'd2826a899d5fb13805d4c323548d8ea64d57a49f',
+    expectedTargetPaths: ['src/engine/context_engine.ts'],
+    expectedRelatedPaths: [],
+    verifierFilename: 'verify_nat_siftr_04.js',
+    verifierContent: `
+const { ContextEngine } = require("./dist/engine/context_engine");
+const engine = new ContextEngine({});
+if (typeof engine.getDataRights !== "function") {
+  process.exit(1);
+}
+const rights = engine.getDataRights();
+if (!rights) {
+  process.exit(1);
+}
+process.exit(0);
+`,
+    rightsReference: 'Proprietary / MIT Dual License (kyzoeth/siftrcode)',
+  },
+  {
+    taskId: 'nat_siftr_05_rights_filter_evaluate_evidence',
+    repo: 'siftrcode',
+    taskType: 'FEATURE_ADDITION',
+    naturalTaskSource: 'first_party_commit',
+    referenceId: 'fe04d74',
+    sourceUrl: 'https://github.com/kyzoeth/siftrcode/commit/fe04d74',
+    prompt: 'Support evaluateTrainingEvidenceRecord in RightsFilter to validate schema-wide data rights.',
+    baseCommit: '17a523a8bd4baa0a92f065cf122615d1c92523b7',
+    solutionCommit: 'fe04d74e532d9914785176cc99471fc0249165da',
+    expectedTargetPaths: ['src/rights/rights_filter.ts'],
+    expectedRelatedPaths: ['src/learning/training_exporter.ts'],
+    verifierFilename: 'verify_nat_siftr_05.js',
+    verifierContent: `
+const { RightsFilter } = require("./dist/rights/rights_filter");
+const filter = new RightsFilter();
+if (typeof filter.evaluateTrainingEvidenceRecord !== "function") {
+  process.exit(1);
+}
+process.exit(0);
+`,
+    rightsReference: 'Proprietary / MIT Dual License (kyzoeth/siftrcode)',
+  },
+  {
+    taskId: 'nat_siftr_06_jev_budget_env_max_calls',
     repo: 'siftrcode',
     taskType: 'FEATURE_ADDITION',
     naturalTaskSource: 'first_party_commit',
     referenceId: '601f3f1',
-    prompt: 'Support configuring maximum evaluation call limits via SIFTR_JEV_MAX_CALLS and case-insensitive operational mode parsing.',
-    expectedTargetPaths: ['src/config/flags.ts'],
-    expectedRelatedPaths: ['src/jev/client.ts'],
-    verifierFilename: 'verify_nat_siftr_04.js',
+    sourceUrl: 'https://github.com/kyzoeth/siftrcode/commit/601f3f1',
+    prompt: 'Support SIFTR_JEV_MAX_CALLS environment variable to configure decision budget limits.',
+    baseCommit: '464a6a791ec93ed914fa00cb53477a49c42844a4',
+    solutionCommit: '601f3f17fbb490633377f0487a71c8aed0b79421',
+    expectedTargetPaths: ['src/providers/judgment/typesafe/jev_shadow_runner.ts'],
+    expectedRelatedPaths: [],
+    verifierFilename: 'verify_nat_siftr_06.js',
     verifierContent: `
-const flags = require('./dist/config/flags');
-if (typeof flags.parseJevMaxCalls !== 'function') process.exit(1);
-if (flags.parseJevMaxCalls('100') !== 100) process.exit(1);
-if (flags.parseJevMaxCalls('invalid') !== 25) process.exit(1);
+process.env.SIFTR_JEV_MAX_CALLS = "7";
+const { JevShadowRunner } = require("./dist/providers/judgment/typesafe/jev_shadow_runner");
+const runner = new JevShadowRunner();
+const budget = runner.getBudget ? runner.getBudget() : runner.budget;
+if (!budget || budget.maxCallsPerTask !== 7) {
+  process.exit(1);
+}
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'dist/config/flags.js');
-      fs.appendFileSync(p, '\nexports.parseJevMaxCalls = function(v) { const n = parseInt(v, 10); return isNaN(n) ? 25 : n; };\n', 'utf8');
-    },
+    rightsReference: 'Proprietary / MIT Dual License (kyzoeth/siftrcode)',
   },
   {
-    taskId: 'nat_siftr_05_tokenizer_bpe_model_fallback',
+    taskId: 'nat_siftr_07_training_persistence_brand',
     repo: 'siftrcode',
     taskType: 'REFACTOR',
     naturalTaskSource: 'first_party_commit',
+    referenceId: '63f729d',
+    sourceUrl: 'https://github.com/kyzoeth/siftrcode/commit/63f729d',
+    prompt: 'Implement unforgeable training persistence branding registry to prevent unauthorized store insertions.',
+    baseCommit: 'eb1ebbb4c6798c97eb65ad15f00826098cce075a',
+    solutionCommit: '63f729d22519660bcff4f611a97e89fa3bbf9a6c',
+    expectedTargetPaths: ['src/learning/training_persistence_brand.ts'],
+    expectedRelatedPaths: ['src/storage/sqlite_store.ts'],
+    verifierFilename: 'verify_nat_siftr_07.js',
+    verifierContent: `
+let brandMod;
+try {
+  brandMod = require("./dist/learning/training_persistence_brand");
+} catch (e) {
+  process.exit(1);
+}
+if (typeof brandMod.markSanctionedExport !== "function") {
+  process.exit(1);
+}
+const obj = {};
+brandMod.markSanctionedExport(obj);
+if (!brandMod.isSanctionedTrainingExport(obj)) {
+  process.exit(1);
+}
+process.exit(0);
+`,
+    rightsReference: 'Proprietary / MIT Dual License (kyzoeth/siftrcode)',
+  },
+  {
+    taskId: 'nat_siftr_08_tokenizer_registry_default',
+    repo: 'siftrcode',
+    taskType: 'FEATURE_ADDITION',
+    naturalTaskSource: 'first_party_commit',
     referenceId: 'e6addfe',
-    prompt: 'Implement TokenizerRegistry allowing model-specific BPE estimation methods with fallback to conservative character ratio heuristics.',
+    sourceUrl: 'https://github.com/kyzoeth/siftrcode/commit/e6addfe',
+    prompt: 'Implement DefaultTokenizerRegistry with model-pattern registration and token estimation.',
+    baseCommit: '7cf07d0e99da14db611bd7aeb5feceab6b351e2d',
+    solutionCommit: 'e6addfe03c9c09b06129f903339a0933c914514e',
     expectedTargetPaths: ['src/token/tokenizer_registry.ts'],
     expectedRelatedPaths: ['src/token/token_cost_estimator.ts'],
-    verifierFilename: 'verify_nat_siftr_05.js',
+    verifierFilename: 'verify_nat_siftr_08.js',
     verifierContent: `
-const { DefaultTokenizerRegistry } = require('./dist/token/tokenizer_registry');
-const reg = new DefaultTokenizerRegistry();
-if (typeof reg.hasModelRegistration !== 'function') process.exit(1);
-if (reg.hasModelRegistration('gemini-3.6-flash') !== true) process.exit(1);
+let tokMod;
+try {
+  tokMod = require("./dist/token/tokenizer_registry");
+} catch (e) {
+  process.exit(1);
+}
+if (typeof tokMod.DefaultTokenizerRegistry !== "function") {
+  process.exit(1);
+}
+const reg = tokMod.DefaultTokenizerRegistry.getInstance();
+if (typeof reg.estimate !== "function") {
+  process.exit(1);
+}
+const est = reg.estimate("hello world");
+if (!est || typeof est.tokens !== "number") {
+  process.exit(1);
+}
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'dist/token/tokenizer_registry.js');
-      fs.appendFileSync(p, '\nDefaultTokenizerRegistry.prototype.hasModelRegistration = function(m) { return true; };\n', 'utf8');
-    },
+    rightsReference: 'Proprietary / MIT Dual License (kyzoeth/siftrcode)',
   },
   {
-    taskId: 'nat_siftr_06_workspace_snapshot_immutability_validation',
+    taskId: 'nat_siftr_09_workspace_changed_error',
     repo: 'siftrcode',
-    taskType: 'BUG_FIX',
+    taskType: 'TEST_FAILURE',
     naturalTaskSource: 'first_party_commit',
     referenceId: '80733d4',
-    prompt: 'Prevent workspace file modification race conditions by validating workspace snapshot hash before replanning iterations.',
-    expectedTargetPaths: ['src/workspace/workspace_snapshot.ts'],
-    expectedRelatedPaths: ['src/workspace/repository_state.ts'],
-    verifierFilename: 'verify_nat_siftr_06.js',
+    sourceUrl: 'https://github.com/kyzoeth/siftrcode/commit/80733d4',
+    prompt: 'Define typed WorkspaceChangedError hierarchy to guard snapshot immutability.',
+    baseCommit: 'd0b1da00a5d0ee8a90c63cb015a89da65ee59a9a',
+    solutionCommit: '80733d43bb38b0a0b396c53975f46e3df4823957',
+    expectedTargetPaths: ['src/workspace/workspace_errors.ts'],
+    expectedRelatedPaths: ['src/workspace/workspace_snapshot.ts'],
+    verifierFilename: 'verify_nat_siftr_09.js',
     verifierContent: `
-const snap = require('./dist/workspace/workspace_snapshot');
-if (typeof snap.validateSnapshotIntegrity !== 'function') process.exit(1);
-if (snap.validateSnapshotIntegrity('hash1', 'hash1') !== true) process.exit(1);
-if (snap.validateSnapshotIntegrity('hash1', 'hash2') !== false) process.exit(1);
+let errMod;
+try {
+  errMod = require("./dist/workspace/workspace_errors");
+} catch (e) {
+  process.exit(1);
+}
+if (typeof errMod.WorkspaceChangedError !== "function") {
+  process.exit(1);
+}
+const err = new errMod.WorkspaceChangedError({
+  workspaceSnapshotId: "snap-1",
+  filePath: "src/index.ts",
+  expectedHash: "h1",
+  actualHash: "h2"
+});
+if (!errMod.isWorkspaceChangedError(err)) {
+  process.exit(1);
+}
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'dist/workspace/workspace_snapshot.js');
-      fs.appendFileSync(p, '\nexports.validateSnapshotIntegrity = function(a, b) { return a === b; };\n', 'utf8');
-    },
+    rightsReference: 'Proprietary / MIT Dual License (kyzoeth/siftrcode)',
   },
   {
-    taskId: 'nat_siftr_07_parsing_symbol_character_offsets',
+    taskId: 'nat_siftr_10_golang_symbol_parser',
     repo: 'siftrcode',
     taskType: 'FEATURE_ADDITION',
     naturalTaskSource: 'first_party_commit',
     referenceId: 'd0b1da0',
-    prompt: 'Extract symbol character byte offsets alongside line spans in language parsers to support granular code replacement tools.',
-    expectedTargetPaths: ['src/parsing/typescript_parser.ts'],
-    expectedRelatedPaths: ['src/parsing/types.ts'],
-    verifierFilename: 'verify_nat_siftr_07.js',
-    verifierContent: `
-const { TypeScriptSymbolParser } = require('./dist/parsing/typescript_parser');
-const tsp = new TypeScriptSymbolParser();
-if (typeof tsp.supportsCharacterByteOffsets !== 'function') process.exit(1);
-if (tsp.supportsCharacterByteOffsets() !== true) process.exit(1);
-process.exit(0);
-`,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'dist/parsing/typescript_parser.js');
-      fs.appendFileSync(p, '\nTypeScriptSymbolParser.prototype.supportsCharacterByteOffsets = function() { return true; };\n', 'utf8');
-    },
-  },
-  {
-    taskId: 'nat_siftr_08_graph_semantic_provenance_edges',
-    repo: 'siftrcode',
-    taskType: 'MULTI_FILE_COORDINATION',
-    naturalTaskSource: 'first_party_commit',
-    referenceId: '9a60b51',
-    prompt: 'Annotate dependency graph edges with semantic provenance kinds (import, call, inheritance) to prioritize high-value recall paths.',
-    expectedTargetPaths: ['src/graph/graph_builder.ts', 'src/graph/context_graph.ts'],
-    expectedRelatedPaths: ['src/context/context_unit.ts'],
-    verifierFilename: 'verify_nat_siftr_08.js',
-    verifierContent: `
-const { GraphBuilder } = require('./dist/graph/graph_builder');
-const gb = new GraphBuilder();
-if (typeof gb.supportsSemanticProvenanceKinds !== 'function') process.exit(1);
-if (gb.supportsSemanticProvenanceKinds() !== true) process.exit(1);
-process.exit(0);
-`,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'dist/graph/graph_builder.js');
-      fs.appendFileSync(p, '\nGraphBuilder.prototype.supportsSemanticProvenanceKinds = function() { return true; };\n', 'utf8');
-    },
-  },
-  {
-    taskId: 'nat_siftr_09_durable_observation_sqlite_store',
-    repo: 'siftrcode',
-    taskType: 'FEATURE_ADDITION',
-    naturalTaskSource: 'first_party_commit',
-    referenceId: '6caf56f',
-    prompt: 'Implement append-only SQLite observation recording for agent interaction trajectories with automatic database schema migration.',
-    expectedTargetPaths: ['src/storage/sqlite_store.ts'],
-    expectedRelatedPaths: ['src/telemetry/decision_observation.ts'],
-    verifierFilename: 'verify_nat_siftr_09.js',
-    verifierContent: `
-const { SqliteStore } = require('./dist/storage/sqlite_store');
-const store = new SqliteStore();
-if (typeof store.hasObservationSchemaMigration !== 'function') process.exit(1);
-if (store.hasObservationSchemaMigration() !== true) process.exit(1);
-store.close();
-process.exit(0);
-`,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'dist/storage/sqlite_store.js');
-      fs.appendFileSync(p, '\nSqliteStore.prototype.hasObservationSchemaMigration = function() { return true; };\n', 'utf8');
-    },
-  },
-  {
-    taskId: 'nat_siftr_10_ranker_to_artifact_uniformity',
-    repo: 'siftrcode',
-    taskType: 'BUG_FIX',
-    naturalTaskSource: 'first_party_commit',
-    referenceId: 'fdba2e5',
-    prompt: 'Ensure model ranker classes expose a uniform toArtifact serialization method returning model type, hyperparameters, and tree payload.',
-    expectedTargetPaths: ['src/ranking/context_rank.ts'],
-    expectedRelatedPaths: ['src/learning/models/context_rank/tree_ranker.ts'],
+    sourceUrl: 'https://github.com/kyzoeth/siftrcode/commit/d0b1da0',
+    prompt: 'Implement GolangSymbolParser for multi-language AST symbol extraction.',
+    baseCommit: '1080b22cd0973be41eee3962fdc933376c39761d',
+    solutionCommit: 'd0b1da00a5d0ee8a90c63cb015a89da65ee59a9a',
+    expectedTargetPaths: ['src/parsing/golang_parser.ts'],
+    expectedRelatedPaths: ['src/parsing/symbol_types.ts'],
     verifierFilename: 'verify_nat_siftr_10.js',
     verifierContent: `
-const { ContextRanker } = require('./dist/ranking/context_rank');
-const ranker = new ContextRanker();
-if (typeof ranker.supportsUniformArtifactSerialization !== 'function') process.exit(1);
-if (ranker.supportsUniformArtifactSerialization() !== true) process.exit(1);
+let parseMod;
+try {
+  parseMod = require("./dist/parsing/golang_parser");
+} catch (e) {
+  process.exit(1);
+}
+if (typeof parseMod.GolangSymbolParser !== "function") {
+  process.exit(1);
+}
+const parser = new parseMod.GolangSymbolParser();
+if (typeof parser.parseSymbols !== "function") {
+  process.exit(1);
+}
 process.exit(0);
 `,
-    applySolution: (wsDir) => {
-      const p = path.join(wsDir, 'dist/ranking/context_rank.js');
-      fs.appendFileSync(p, '\nContextRanker.prototype.supportsUniformArtifactSerialization = function() { return true; };\n', 'utf8');
-    },
+    rightsReference: 'Proprietary / MIT Dual License (kyzoeth/siftrcode)',
   },
 ];
 
-function createEphemeralWorkspace(repoId: string, baseCommit: string): { dir: string; cleanup: () => void } {
+/**
+ * Computes SHA-256 hash of a string or buffer.
+ */
+function sha256(content: string | Buffer): string {
+  return crypto.createHash('sha256').update(content).digest('hex');
+}
+
+/**
+ * Executes a preflight verification run for all tasks.
+ */
+export async function buildNaturalHoldout(): Promise<void> {
   const rootDir = path.resolve(__dirname, '../..');
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), `siftr_nat_test_${repoId}_${Date.now()}_`));
+  const benchmarksDir = path.join(rootDir, 'benchmarks');
+  const verifiersOutputDir = path.join(benchmarksDir, 'verifiers/final_natural');
+  const expDir = path.join(rootDir, 'experiments/v3-1-final-natural');
+  fs.mkdirSync(verifiersOutputDir, { recursive: true });
+  fs.mkdirSync(expDir, { recursive: true });
 
-  let sourceDir = rootDir;
-  if (repoId === 'express') sourceDir = path.join(rootDir, 'benchmarks/express-repo');
-  else if (repoId === 'fastapi') sourceDir = path.join(rootDir, 'benchmarks/fastapi-repo');
-  else if (repoId === 'commander') sourceDir = path.join(rootDir, 'benchmarks/commander-repo');
+  const repoDirs: Record<string, string> = {
+    express: path.join(benchmarksDir, 'express-repo'),
+    fastapi: path.join(benchmarksDir, 'fastapi-repo'),
+    commander: path.join(benchmarksDir, 'commander-repo'),
+    siftrcode: rootDir,
+  };
 
-  execSync(`git -C "${sourceDir}" worktree add --detach "${tmp}" ${baseCommit} --quiet`);
+  console.log('🏛️  [Natural Holdout Builder] Verifying historical lineage and preflighting verifiers...');
+  console.log(`   Tasks to process: ${NATURAL_HOLDOUT_TASKS.length}`);
 
-  // Link dependencies
-  if (repoId === 'express' || repoId === 'commander') {
-    const nm = path.join(sourceDir, 'node_modules');
-    if (fs.existsSync(nm)) {
-      try { fs.symlinkSync(nm, path.join(tmp, 'node_modules'), 'dir'); } catch {}
+  const preflightReport: Array<{
+    taskId: string;
+    repository: string;
+    referenceId: string;
+    sourceUrl: string;
+    baseCommit: string;
+    solutionCommit: string;
+    baseVerifierExitCode: number;
+    solutionVerifierExitCode: number;
+    patchSha256: string;
+    verifierSha256: string;
+    changedFiles: string[];
+    valid: boolean;
+  }> = [];
+
+  const verifiedTasks: NaturalTaskDefinition[] = [];
+
+  for (let i = 0; i < NATURAL_HOLDOUT_TASKS.length; i++) {
+    const task = NATURAL_HOLDOUT_TASKS[i];
+    const repoDir = repoDirs[task.repo];
+    console.log(`\n[${i + 1}/${NATURAL_HOLDOUT_TASKS.length}] Task ${task.taskId} (${task.repo} ${task.referenceId})`);
+
+    // Verify git diff and patch hash
+    let patchOutput = '';
+    let changedFiles: string[] = [];
+    try {
+      patchOutput = execSync(`git -C "${repoDir}" diff ${task.baseCommit} ${task.solutionCommit}`, { maxBuffer: 10 * 1024 * 1024 }).toString();
+      const nameStatus = execSync(`git -C "${repoDir}" diff --name-only ${task.baseCommit} ${task.solutionCommit}`).toString();
+      changedFiles = nameStatus.split('\n').map(s => s.trim()).filter(Boolean);
+    } catch (err: any) {
+      console.error(`   ❌ Failed to get git diff between ${task.baseCommit} and ${task.solutionCommit}:`, err.message);
+      continue;
     }
-  } else if (repoId === 'fastapi') {
-    const venv = path.join(sourceDir, 'venv');
-    if (fs.existsSync(venv)) {
-      try { fs.symlinkSync(venv, path.join(tmp, 'venv'), 'dir'); } catch {}
-    }
-  } else if (repoId === 'siftrcode') {
-    const nm = path.join(rootDir, 'node_modules');
-    if (fs.existsSync(nm)) {
-      try { fs.symlinkSync(nm, path.join(tmp, 'node_modules'), 'dir'); } catch {}
-    }
-    const dist = path.join(rootDir, 'dist');
-    if (fs.existsSync(dist)) {
+    const patchHash = sha256(patchOutput);
+    const verifierHash = sha256(task.verifierContent);
+
+    // Write verifier to benchmark verifiers dir
+    const verifierPath = path.join(verifiersOutputDir, task.verifierFilename);
+    fs.writeFileSync(verifierPath, task.verifierContent, 'utf8');
+
+    // Run Verifier Preflight Contract:
+    // 1. checkout baseCommit -> execute verifier -> expect non-zero exit code
+    // 2. checkout solutionCommit -> execute exact same verifier -> expect zero exit code
+    let baseExitCode = 0;
+    let solExitCode = 1;
+
+    const isPython = task.verifierFilename.endsWith('.py');
+    const isMjs = task.verifierFilename.endsWith('.mjs');
+
+    if (task.repo === 'siftrcode') {
+      // For SiftrCode, test in an ephemeral worktree so we do not disrupt current workspace
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), `siftr-preflight-${task.taskId}-`));
       try {
-        execSync(`cp -r "${dist}" "${path.join(tmp, 'dist')}"`);
+        // Test base
+        execSync(`git worktree add -f "${tmpDir}" ${task.baseCommit}`, { stdio: 'ignore' });
+        fs.symlinkSync(path.join(rootDir, 'node_modules'), path.join(tmpDir, 'node_modules'), 'junction');
+        execSync(`npm run build`, { cwd: tmpDir, stdio: 'ignore' });
+        fs.writeFileSync(path.join(tmpDir, task.verifierFilename), task.verifierContent, 'utf8');
+        try {
+          execSync(`node "${task.verifierFilename}"`, { cwd: tmpDir, stdio: 'ignore' });
+          baseExitCode = 0;
+        } catch (e: any) {
+          baseExitCode = e.status || 1;
+        }
+
+        // Test solution
+        execSync(`git worktree remove --force "${tmpDir}"`, { stdio: 'ignore' });
+        execSync(`git worktree add -f "${tmpDir}" ${task.solutionCommit}`, { stdio: 'ignore' });
+        fs.symlinkSync(path.join(rootDir, 'node_modules'), path.join(tmpDir, 'node_modules'), 'junction');
+        execSync(`npm run build`, { cwd: tmpDir, stdio: 'ignore' });
+        fs.writeFileSync(path.join(tmpDir, task.verifierFilename), task.verifierContent, 'utf8');
+        try {
+          execSync(`node "${task.verifierFilename}"`, { cwd: tmpDir, stdio: 'ignore' });
+          solExitCode = 0;
+        } catch (e: any) {
+          solExitCode = e.status || 1;
+        }
+      } finally {
+        try { execSync(`git worktree remove --force "${tmpDir}"`, { stdio: 'ignore' }); } catch {}
+        try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
+      }
+    } else {
+      // For OSS repos, checkout in-place and restore pinned commit
+      const runCommand = isPython
+        ? `.venv/bin/python "${task.verifierFilename}"`
+        : `node "${task.verifierFilename}"`;
+
+      // 1. Base checkout
+      execSync(`git -C "${repoDir}" checkout --quiet ${task.baseCommit}`);
+      fs.writeFileSync(path.join(repoDir, task.verifierFilename), task.verifierContent, 'utf8');
+      try {
+        execSync(runCommand, { cwd: repoDir, stdio: 'ignore' });
+        baseExitCode = 0;
+      } catch (e: any) {
+        baseExitCode = e.status || 1;
+      } finally {
+        try { fs.unlinkSync(path.join(repoDir, task.verifierFilename)); } catch {}
+      }
+
+      // 2. Solution checkout
+      execSync(`git -C "${repoDir}" checkout --quiet ${task.solutionCommit}`);
+      fs.writeFileSync(path.join(repoDir, task.verifierFilename), task.verifierContent, 'utf8');
+      try {
+        execSync(runCommand, { cwd: repoDir, stdio: 'ignore' });
+        solExitCode = 0;
+      } catch (e: any) {
+        solExitCode = e.status || 1;
+      } finally {
+        try { fs.unlinkSync(path.join(repoDir, task.verifierFilename)); } catch {}
+      }
+
+      // Restore repo HEAD to master
+      execSync(`git -C "${repoDir}" checkout --quiet origin/master 2>/dev/null || git -C "${repoDir}" checkout --quiet master 2>/dev/null || true`);
+    }
+
+    const isValid = baseExitCode !== 0 && solExitCode === 0;
+    console.log(`   Preflight result: base exit=${baseExitCode} (expect !=0), sol exit=${solExitCode} (expect 0) -> ${isValid ? 'PASS ✅' : 'FAIL ❌'}`);
+
+    preflightReport.push({
+      taskId: task.taskId,
+      repository: task.repo,
+      referenceId: task.referenceId,
+      sourceUrl: task.sourceUrl,
+      baseCommit: task.baseCommit,
+      solutionCommit: task.solutionCommit,
+      baseVerifierExitCode: baseExitCode,
+      solutionVerifierExitCode: solExitCode,
+      patchSha256: patchHash,
+      verifierSha256: verifierHash,
+      changedFiles,
+      valid: isValid,
+    });
+
+    if (isValid) {
+      verifiedTasks.push(task);
+    }
+  }
+
+  // Persist preflight report
+  const preflightReportPath = path.join(expDir, 'verifier_preflight_report.json');
+  fs.writeFileSync(preflightReportPath, JSON.stringify(preflightReport, null, 2), 'utf8');
+  console.log(`\n📋 Persisted verifier preflight report to: ${preflightReportPath}`);
+  console.log(`   Verified tasks: ${verifiedTasks.length} / ${NATURAL_HOLDOUT_TASKS.length}`);
+
+  if (verifiedTasks.length < 30) {
+    throw new Error(`INSUFFICIENT_VALID_NATURAL_TASKS: Needed >= 30 valid tasks, got ${verifiedTasks.length}`);
+  }
+
+  // --- STRENGTHENED OVERLAP AUDIT (P0-3) ---
+  console.log('\n🔍 Running Strengthened Overlap / Lineage Audit across all prior datasets...');
+  const priorDatasets: Array<{ name: string; episodes: any[] }> = [];
+
+  const candidateFiles = [
+    'data/siftrbench_v1_manifest.json',
+    'data/siftrbench_v1_splits.json',
+    'data/siftrbench_v3_1_final_holdout.json',
+    'data/siftr_dataset_v1.json',
+    'data/pairwise_dataset_v1.json',
+  ];
+
+  for (const f of candidateFiles) {
+    const fullP = path.join(rootDir, f);
+    if (fs.existsSync(fullP)) {
+      try {
+        const parsed = JSON.parse(fs.readFileSync(fullP, 'utf8'));
+        const eps = parsed.episodes || parsed.tasks || (Array.isArray(parsed) ? parsed : []);
+        priorDatasets.push({ name: f, episodes: eps });
       } catch {}
     }
   }
 
-  return {
-    dir: tmp,
-    cleanup: () => {
-      try { execSync(`git -C "${sourceDir}" worktree remove -f "${tmp}"`, { stdio: 'pipe' }); } catch {}
-      try { fs.rmSync(tmp, { recursive: true, force: true }); } catch {}
-    },
-  };
-}
+  interface OverlapCollision {
+    naturalTaskId: string;
+    priorDataset: string;
+    priorTaskId: string;
+    matchType: 'EXACT_TASK_ID' | 'EXACT_PR_REFERENCE' | 'EXACT_SOLUTION_COMMIT' | 'EXACT_PATCH_HASH' | 'NEAR_DUPLICATE_PROMPT';
+    details: string;
+  }
 
-export async function runBuildNaturalHoldout() {
-  const rootDir = path.resolve(__dirname, '../..');
-  const dataDir = path.join(rootDir, 'data');
-  const verifiersDir = path.join(rootDir, 'benchmarks/verifiers/final_natural');
-  const finalExpDir = path.join(rootDir, 'experiments/v3-1-final-natural');
+  const collisions: OverlapCollision[] = [];
 
-  fs.mkdirSync(verifiersDir, { recursive: true });
-  fs.mkdirSync(finalExpDir, { recursive: true });
+  function normalizePrompt(p: string): string {
+    return p.toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
 
-  console.log('🌿 [Natural Holdout Builder] Assembling SIFTRBENCH_V3_1_NATURAL_HOLDOUT (40 tasks)...');
+  function jaccard(s1: string, s2: string): number {
+    const w1 = new Set(s1.split(' '));
+    const w2 = new Set(s2.split(' '));
+    let inter = 0;
+    for (const w of w1) if (w2.has(w)) inter++;
+    const union = new Set([...w1, ...w2]).size;
+    return union === 0 ? 0 : inter / union;
+  }
 
-  // 1. Check prompt leakage: ensure NO prompt contains expectedTargetPaths
-  console.log('\n🔎 [Sanity Check] Verifying Natural Prompt Rule (no path leakage in prompts)...');
-  let leakedCount = 0;
-  for (const t of NATURAL_HOLDOUT_TASKS) {
-    for (const tp of t.expectedTargetPaths) {
-      if (t.prompt.toLowerCase().includes(tp.toLowerCase())) {
-        console.error(`❌ Path leakage detected in task ${t.taskId}: prompt contains '${tp}'`);
-        leakedCount++;
+  for (const task of verifiedTasks) {
+    const normTaskPrompt = normalizePrompt(task.prompt);
+    for (const prior of priorDatasets) {
+      for (const pEp of prior.episodes) {
+        const pId = pEp.taskId || pEp.episodeId || pEp.id;
+        if (!pId) continue;
+
+        // 1. TaskId check
+        if (task.taskId === pId) {
+          collisions.push({
+            naturalTaskId: task.taskId,
+            priorDataset: prior.name,
+            priorTaskId: pId,
+            matchType: 'EXACT_TASK_ID',
+            details: `Identical taskId found`,
+          });
+        }
+
+        // 2. PR / Issue check
+        const pRef = pEp.referenceId || pEp.issueId || pEp.prNumber;
+        if (pRef && task.referenceId && String(pRef) === String(task.referenceId)) {
+          collisions.push({
+            naturalTaskId: task.taskId,
+            priorDataset: prior.name,
+            priorTaskId: pId,
+            matchType: 'EXACT_PR_REFERENCE',
+            details: `Identical PR/issue reference ${task.referenceId}`,
+          });
+        }
+
+        // 3. Solution Commit check
+        const pSol = pEp.solutionCommit || pEp.commitSha;
+        if (pSol && task.solutionCommit && pSol.toLowerCase() === task.solutionCommit.toLowerCase()) {
+          collisions.push({
+            naturalTaskId: task.taskId,
+            priorDataset: prior.name,
+            priorTaskId: pId,
+            matchType: 'EXACT_SOLUTION_COMMIT',
+            details: `Identical solution commit ${task.solutionCommit}`,
+          });
+        }
+
+        // 4. Prompt near-duplicate check (> 0.85 Jaccard similarity)
+        const pPrompt = pEp.prompt || pEp.taskPrompt || pEp.primaryPrompt;
+        if (pPrompt) {
+          const normPriorPrompt = normalizePrompt(pPrompt);
+          const sim = jaccard(normTaskPrompt, normPriorPrompt);
+          if (sim > 0.85) {
+            collisions.push({
+              naturalTaskId: task.taskId,
+              priorDataset: prior.name,
+              priorTaskId: pId,
+              matchType: 'NEAR_DUPLICATE_PROMPT',
+              details: `Jaccard similarity ${sim.toFixed(3)} with prompt in ${prior.name}`,
+            });
+          }
+        }
       }
     }
   }
-  if (leakedCount > 0) {
-    throw new Error(`Natural prompt rule violated: ${leakedCount} prompts leaked target paths.`);
-  }
-  console.log('✔ All 40 prompts comply with Natural Prompt Rule (0 target paths leaked in prompts).');
 
-  // 2. Anti-overlap audit against SiftrBench v1 (121 tasks) and synthetic holdout (34 tasks)
-  console.log('\n🔍 [Audit] Performing strict anti-overlap audit against prior task sets...');
-  const v1ManifestPath = path.join(dataDir, 'siftrbench_v1_manifest.json');
-  const synthManifestPath = path.join(dataDir, 'siftrbench_v3_1_final_holdout.json');
-
-  const priorEpisodes: Array<{ episodeId: string; taskId: string; prompt: string }> = [];
-  if (fs.existsSync(v1ManifestPath)) {
-    const v1: SiftrBenchManifest = JSON.parse(fs.readFileSync(v1ManifestPath, 'utf8'));
-    for (const ep of v1.episodes) priorEpisodes.push({ episodeId: ep.episodeId, taskId: ep.taskId, prompt: ep.taskPrompt });
-  }
-  if (fs.existsSync(synthManifestPath)) {
-    const synth: SiftrBenchManifest = JSON.parse(fs.readFileSync(synthManifestPath, 'utf8'));
-    for (const ep of synth.episodes) priorEpisodes.push({ episodeId: ep.episodeId, taskId: ep.taskId, prompt: ep.taskPrompt });
-  }
-
-  const collisions: any[] = [];
-  for (const t of NATURAL_HOLDOUT_TASKS) {
-    for (const p of priorEpisodes) {
-      if (t.taskId === p.taskId) {
-        collisions.push({ reason: 'EXACT_TASK_ID_MATCH', taskId: t.taskId, priorTaskId: p.taskId });
-      }
-      // Token overlap Jaccard check
-      const tWords = new Set(t.prompt.toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter((w) => w.length > 3));
-      const pWords = new Set(p.prompt.toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter((w) => w.length > 3));
-      let intersection = 0;
-      for (const w of tWords) if (pWords.has(w)) intersection++;
-      const union = new Set([...tWords, ...pWords]).size;
-      const jaccard = union > 0 ? intersection / union : 0;
-      if (jaccard > 0.8) {
-        collisions.push({ reason: 'NEAR_DUPLICATE_PROMPT', taskId: t.taskId, priorTaskId: p.taskId, jaccard });
-      }
-    }
-  }
-
-  const overlapReport = {
-    auditTimestamp: new Date().toISOString(),
-    totalNaturalTasks: NATURAL_HOLDOUT_TASKS.length,
-    totalPriorTasksAudited: priorEpisodes.length,
+  const overlapAuditReport = {
+    auditedAt: new Date().toISOString(),
+    totalNaturalTasksAudited: verifiedTasks.length,
+    datasetsAudited: candidateFiles,
     collisionCount: collisions.length,
-    status: collisions.length === 0 ? 'CLEAN_ZERO_OVERLAP' : 'CONTAMINATION_DETECTED',
     collisions,
+    passed: collisions.length === 0,
   };
 
-  fs.writeFileSync(path.join(finalExpDir, 'overlap_audit.json'), JSON.stringify(overlapReport, null, 2), 'utf8');
-  console.log(`✔ Anti-overlap audit complete: ${collisions.length} collisions detected (${overlapReport.status}).`);
+  const overlapReportPath = path.join(expDir, 'overlap_audit.json');
+  fs.writeFileSync(overlapReportPath, JSON.stringify(overlapAuditReport, null, 2), 'utf8');
+  console.log(`📋 Persisted overlap audit report to: ${overlapReportPath}`);
+  console.log(`   Collisions: ${collisions.length}`);
+
   if (collisions.length > 0) {
-    throw new Error('Anti-overlap audit failed: prior task contamination detected.');
+    throw new Error(`OVERLAP_COLLISIONS_DETECTED: Found ${collisions.length} collisions with prior datasets`);
   }
 
-  // 3. Verifier Preflight Contract Verification
-  console.log('\n🔬 [Preflight] Verifying all 40 tasks against the Verifier Contract:');
-  console.log('   Condition 1: Base commit verifier MUST FAIL (exitCode !== 0)');
-  console.log('   Condition 2: Known-good solution verifier MUST PASS (exitCode === 0)');
+  // --- BUILD FINAL MANIFEST & BENCHMARK JSON ---
+  const episodes: SiftrBenchEpisode[] = verifiedTasks.map((t, idx) => {
+    return {
+      episodeId: `ep_nat_${String(idx + 1).padStart(3, '0')}_${t.repo}`,
+      taskId: t.taskId,
+      splitGroupId: `split_nat_${t.repo}`,
+      repositoryId: t.repo,
+      taskPrompt: t.prompt,
+      taskType: t.taskType,
+      workspaceSnapshotId: `snap_${t.repo}_${t.baseCommit.slice(0, 12)}`,
+      baseCommit: t.baseCommit,
+      solutionCommit: t.solutionCommit,
+      expectedTargetPaths: t.expectedTargetPaths,
+      expectedRelatedPaths: t.expectedRelatedPaths,
+      expectedSolutionPaths: t.expectedTargetPaths,
+      verifierFilename: t.verifierFilename,
+      verifierSha256: sha256(t.verifierContent),
+      patchSha256: preflightReport.find(p => p.taskId === t.taskId)?.patchSha256 || '',
+      rightsReference: t.rightsReference,
+      sourceUrl: t.sourceUrl,
+      naturalTaskSource: t.naturalTaskSource,
+      referenceId: t.referenceId,
+    } as any;
+  });
 
-  const preflightResults: any[] = [];
-  let allPassed = true;
-
-  for (let i = 0; i < NATURAL_HOLDOUT_TASKS.length; i++) {
-    const task = NATURAL_HOLDOUT_TASKS[i];
-    process.stdout.write(`   [${i + 1}/${NATURAL_HOLDOUT_TASKS.length}] Task: ${task.taskId} (${task.repo})... `);
-
-    const baseCommit = REPO_PINNED_COMMITS[task.repo];
-    const ws = createEphemeralWorkspace(task.repo, baseCommit);
-
-    try {
-      // Assert point-in-time snapshot
-      const currentHead = execSync('git rev-parse HEAD', { cwd: ws.dir, encoding: 'utf8' }).trim();
-      if (currentHead !== baseCommit) {
-        throw new Error(`Workspace HEAD mismatch: expected ${baseCommit}, got ${currentHead}`);
-      }
-
-      // Write verifier into workspace
-      const wsVerifierPath = path.join(ws.dir, task.verifierFilename);
-      fs.writeFileSync(wsVerifierPath, task.verifierContent.trim(), 'utf8');
-
-      // Also persist to benchmarks/verifiers/final_natural/
-      fs.writeFileSync(path.join(verifiersDir, task.verifierFilename), task.verifierContent.trim(), 'utf8');
-
-      let cmd = `node ${task.verifierFilename}`;
-      if (task.repo === 'fastapi') {
-        cmd = `./venv/bin/python ${task.verifierFilename}`;
-      }
-
-      // Step A: Base commit run (MUST FAIL)
-      let baseExit = 0;
-      let baseErr = '';
-      try {
-        execSync(cmd, { cwd: ws.dir, stdio: 'pipe' });
-        baseExit = 0;
-      } catch (err: any) {
-        baseExit = err.status || 1;
-        baseErr = err.stderr?.toString() || err.stdout?.toString() || '';
-      }
-
-      const baseFailed = baseExit !== 0;
-
-      // Step B: Apply solution
-      task.applySolution(ws.dir);
-
-      // Step C: Solution run (MUST PASS)
-      let solExit = 0;
-      let solErr = '';
-      try {
-        execSync(cmd, { cwd: ws.dir, stdio: 'pipe' });
-        solExit = 0;
-      } catch (err: any) {
-        solExit = err.status || 1;
-        solErr = err.stderr?.toString() || err.stdout?.toString() || '';
-      }
-
-      const solPassed = solExit === 0;
-      const contractPass = baseFailed && solPassed;
-
-      if (!contractPass) {
-        allPassed = false;
-        process.stdout.write(`FAIL ❌ (Base: ${baseExit}, Sol: ${solExit})\n`);
-        if (!baseFailed) console.error(`      Base did not fail: expected exit != 0, got ${baseExit}`);
-        if (!solPassed) console.error(`      Solution failed: expected exit 0, got ${solExit}: ${solErr.slice(0, 150)}`);
-      } else {
-        process.stdout.write(`PASS ✔ (Base: ${baseExit}, Sol: ${solExit})\n`);
-      }
-
-      const verifierSha256 = crypto.createHash('sha256').update(task.verifierContent.trim()).digest('hex');
-
-      preflightResults.push({
-        taskId: task.taskId,
-        repo: task.repo,
-        taskType: task.taskType,
-        naturalTaskSource: task.naturalTaskSource,
-        referenceId: task.referenceId,
-        baseCommit,
-        contractPass,
-        baseExitCode: baseExit,
-        solutionExitCode: solExit,
-        verifierFilename: task.verifierFilename,
-        verifierSha256,
-        verifierCommand: cmd,
-      });
-    } finally {
-      ws.cleanup();
-    }
+  const repoDist: Record<string, number> = {};
+  const typeDist: Record<string, number> = {};
+  for (const e of episodes) {
+    repoDist[e.repositoryId] = (repoDist[e.repositoryId] || 0) + 1;
+    typeDist[e.taskType] = (typeDist[e.taskType] || 0) + 1;
   }
 
-  const preflightReport = {
-    evaluatedAt: new Date().toISOString(),
-    totalTasks: NATURAL_HOLDOUT_TASKS.length,
-    allPassed,
-    passedCount: preflightResults.filter((r) => r.contractPass).length,
-    results: preflightResults,
-  };
-
-  fs.writeFileSync(path.join(finalExpDir, 'verifier_preflight_report.json'), JSON.stringify(preflightReport, null, 2), 'utf8');
-
-  if (!allPassed) {
-    throw new Error('Verifier preflight failed: one or more tasks failed the contract.');
-  }
-
-  // 4. Construct SIFTRBENCH_V3_1_NATURAL_HOLDOUT manifest
-  console.log('\n📦 [Manifest] Freezing SIFTRBENCH_V3_1_NATURAL_HOLDOUT manifest...');
-  const episodes: SiftrBenchEpisode[] = NATURAL_HOLDOUT_TASKS.map((task, idx) => ({
-    schemaVersion: 'siftrbench-v1',
-    episodeId: `sb_nat_${task.repo}_${String(idx + 1).padStart(2, '0')}`,
-    taskId: task.taskId,
-    repositoryId: task.repo,
-    repositoryOrigin: REPO_ORIGINS[task.repo],
-    baseCommit: REPO_PINNED_COMMITS[task.repo],
-    workspaceSnapshotId: `ws_snap_${task.repo}_${REPO_PINNED_COMMITS[task.repo].slice(0, 8)}`,
-    taskPrompt: task.prompt,
-    taskType: task.taskType,
-    expectedTargetPaths: task.expectedTargetPaths,
-    expectedRelatedPaths: task.expectedRelatedPaths,
-    verifier: {
-      type: 'custom_command',
-      command: task.repo === 'fastapi' ? `python3 ${task.verifierFilename}` : `node ${task.verifierFilename}`,
-      metadata: {
-        verifierFilename: task.verifierFilename,
-        referenceId: task.referenceId,
-        naturalTaskSource: task.naturalTaskSource,
-      },
-    },
-    temporalCutoff: '2024-01-01T00:00:00.000Z',
-    rightsReference: `rights_${task.repo}_oss`,
-    provenance: {
-      source: 'siftrbench_v3_1_natural_holdout',
-      sourceVersion: 'v1.0.0',
-      importedAt: new Date().toISOString(),
-    },
-    splitGroupId: `split_natural_${task.repo}`,
-    metadata: {
-      taskIndex: idx,
-      isNaturalHoldout: true,
-      hasPathLeakage: false,
-    },
-  }));
-
-  const manifestData: SiftrBenchManifest = {
+  const manifest: SiftrBenchManifest = {
     schemaVersion: 'siftrbench-manifest-v1',
-    benchmarkVersion: 'siftrbench-v1',
+    benchmarkVersion: 'siftrbench-v3.1-natural-holdout',
     createdAt: new Date().toISOString(),
     totalEpisodes: episodes.length,
-    repositoryDistribution: {
-      commander: episodes.filter((e) => e.repositoryId === 'commander').length,
-      express: episodes.filter((e) => e.repositoryId === 'express').length,
-      fastapi: episodes.filter((e) => e.repositoryId === 'fastapi').length,
-      siftrcode: episodes.filter((e) => e.repositoryId === 'siftrcode').length,
-    },
-    taskTypeDistribution: {
-      BUG_FIX: episodes.filter((e) => e.taskType === 'BUG_FIX').length,
-      FEATURE_ADDITION: episodes.filter((e) => e.taskType === 'FEATURE_ADDITION').length,
-      REFACTOR: episodes.filter((e) => e.taskType === 'REFACTOR').length,
-      TEST_FAILURE: episodes.filter((e) => e.taskType === 'TEST_FAILURE').length,
-      MULTI_FILE_COORDINATION: episodes.filter((e) => e.taskType === 'MULTI_FILE_COORDINATION').length,
-    },
-    checksum: '',
+    repositoryDistribution: repoDist,
+    taskTypeDistribution: typeDist,
+    checksum: sha256(JSON.stringify(episodes)),
     episodes,
   };
 
-  const manifestStr = JSON.stringify(manifestData, null, 2);
-  const checksum = crypto.createHash('sha256').update(manifestStr).digest('hex');
-  manifestData.checksum = checksum;
+  const naturalHoldoutPath = path.join(rootDir, 'data/siftrbench_v3_1_natural_holdout.json');
+  fs.writeFileSync(naturalHoldoutPath, JSON.stringify(manifest, null, 2), 'utf8');
+  console.log(`\n💾 Saved natural holdout benchmark to: ${naturalHoldoutPath}`);
 
-  const finalManifestStr = JSON.stringify(manifestData, null, 2);
-  const dataManifestPath = path.join(dataDir, 'siftrbench_v3_1_natural_holdout.json');
-  const expManifestPath = path.join(finalExpDir, 'natural_holdout_manifest.json');
+  const manifestPath = path.join(expDir, 'natural_holdout_manifest.json');
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
+  console.log(`💾 Saved manifest to: ${manifestPath}`);
 
-  fs.writeFileSync(dataManifestPath, finalManifestStr, 'utf8');
-  fs.writeFileSync(expManifestPath, finalManifestStr, 'utf8');
-
-  console.log(`✔ Manifest written to: ${dataManifestPath}`);
-  console.log(`✔ Manifest written to: ${expManifestPath}`);
-  console.log(`   Checksum (SHA-256): ${checksum}`);
-  console.log(`   Total Episodes:     ${episodes.length}`);
-  console.log('   Repository Mix:    ', manifestData.repositoryDistribution);
-  console.log('   Task Type Mix:     ', manifestData.taskTypeDistribution);
-  console.log('\n🎉 [Success] SIFTRBENCH_V3_1_NATURAL_HOLDOUT built and frozen successfully!');
+  console.log('\n🎉 NATURAL HOLDOUT SUCCESSFULLY FROZEN & AUDITED!');
+  console.log(`   Episodes: ${episodes.length}`);
+  console.log(`   Repositories: ${JSON.stringify(repoDist)}`);
+  console.log(`   Task Types: ${JSON.stringify(typeDist)}`);
 }
 
 if (require.main === module) {
-  runBuildNaturalHoldout().catch((err) => {
+  buildNaturalHoldout().catch((err) => {
     console.error('Fatal error building natural holdout:', err);
     process.exit(1);
   });

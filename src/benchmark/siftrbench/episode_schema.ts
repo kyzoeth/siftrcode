@@ -59,7 +59,7 @@ export interface SiftrBenchEpisode {
 
 export interface SiftrBenchManifest {
   schemaVersion: 'siftrbench-manifest-v1';
-  benchmarkVersion: 'siftrbench-v1';
+  benchmarkVersion: 'siftrbench-v1' | string;
   createdAt: string;
   totalEpisodes: number;
   repositoryDistribution: Record<string, number>;

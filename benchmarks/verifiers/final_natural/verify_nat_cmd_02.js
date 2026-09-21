@@ -1,5 +1,14 @@
-import { Command } from './lib/command.js';
-const cmd = new Command();
-if (typeof cmd.formatExcessArgumentsError !== 'function') process.exit(1);
-if (cmd.formatExcessArgumentsError(['foo', 'bar']) !== "too many arguments: 'foo', 'bar'") process.exit(1);
+
+const { Command } = require("./");
+const program = new Command();
+let caughtErr = null;
+program.exitOverride().allowExcessArguments(false).action(() => {});
+try {
+  program.parse(["node", "test", "extra_one"]);
+} catch (err) {
+  caughtErr = err;
+}
+if (!caughtErr || !caughtErr.message.includes(": extra_one.")) {
+  process.exit(1);
+}
 process.exit(0);

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "siftrbench-manifest-v1",
-  "benchmarkVersion": "siftrbench-v1",
-  "createdAt": "2026-09-21T22:58:02.535Z",
+  "benchmarkVersion": "siftrbench-v3.1-natural-holdout",
+  "createdAt": "2026-09-21T23:39:56.565Z",
   "totalEpisodes": 40,
   "repositoryDistribution": {
     "commander": 10,
@@ -10,1578 +10,1091 @@
     "siftrcode": 10
   },
   "taskTypeDistribution": {
-    "BUG_FIX": 17,
-    "FEATURE_ADDITION": 11,
-    "REFACTOR": 8,
-    "TEST_FAILURE": 0,
-    "MULTI_FILE_COORDINATION": 4
+    "BUG_FIX": 16,
+    "FEATURE_ADDITION": 17,
+    "REFACTOR": 4,
+    "TEST_FAILURE": 3
   },
-  "checksum": "ce00e4a26ef645da6599951a510dea6d642bec735c1de98c35133829d9c6234d",
+  "checksum": "9957dcbc7f52597e5496bfbe9203a0aec529f30f4a17e03aff531dfb2b3fe5f9",
   "episodes": [
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_commander_01",
+      "episodeId": "ep_nat_001_commander",
       "taskId": "nat_cmd_01_negative_flag_declaration_order",
+      "splitGroupId": "split_nat_commander",
       "repositoryId": "commander",
-      "repositoryOrigin": "https://github.com/tj/commander.js.git",
-      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
-      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
       "taskPrompt": "Allow boolean flag options with --no- prefix to be declared before or after their positive counterpart without throwing duplicate option errors.",
       "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_commander_2e96cd388764",
+      "baseCommit": "2e96cd388764064fe271f7f452d0dff780355b42",
+      "solutionCommit": "63eed4aa05435575d515311bb5efaf6d88b6be84",
       "expectedTargetPaths": [
         "lib/command.js"
       ],
       "expectedRelatedPaths": [
         "lib/option.js",
-        "tests/options.flags.test.js"
+        "tests/options.bool.combo.test.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_cmd_01.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_cmd_01.js",
-          "referenceId": "#2405",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_commander_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_commander",
-      "metadata": {
-        "taskIndex": 0,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "lib/command.js"
+      ],
+      "verifierFilename": "verify_nat_cmd_01.js",
+      "verifierSha256": "7cf7019ed6552c2cc1bf40940917f0af885763450e66e7268c5ccb53122c010f",
+      "patchSha256": "bdded5ea9719d49dbda794b0163a8b91b827d566ba23f493a1f7c75a063e7dd4",
+      "rightsReference": "MIT License (tj/commander.js)",
+      "sourceUrl": "https://github.com/tj/commander.js/pull/2405",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#2405"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_commander_02",
+      "episodeId": "ep_nat_002_commander",
       "taskId": "nat_cmd_02_excess_arguments_error_message",
+      "splitGroupId": "split_nat_commander",
       "repositoryId": "commander",
-      "repositoryOrigin": "https://github.com/tj/commander.js.git",
-      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
-      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
       "taskPrompt": "When excess positional command line arguments are provided, format the error message to list the unexpected argument values.",
       "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_commander_395cf7145fe2",
+      "baseCommit": "395cf7145fe28122f5a69026b310e02df114f907",
+      "solutionCommit": "2e96cd388764064fe271f7f452d0dff780355b42",
       "expectedTargetPaths": [
         "lib/command.js"
       ],
       "expectedRelatedPaths": [
-        "lib/error.js"
+        "tests/command.exitOverride.test.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_cmd_02.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_cmd_02.js",
-          "referenceId": "#2384",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_commander_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_commander",
-      "metadata": {
-        "taskIndex": 1,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "lib/command.js"
+      ],
+      "verifierFilename": "verify_nat_cmd_02.js",
+      "verifierSha256": "fa2f5b076124e9b2640a757d7b049dae0a43d5a92dd778b3c1931f4cd816da81",
+      "patchSha256": "93ed0e40be62f435a88f1320e0e45bb558ea107ed6d650af5d8b59cf3b256a5a",
+      "rightsReference": "MIT License (tj/commander.js)",
+      "sourceUrl": "https://github.com/tj/commander.js/pull/2384",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#2384"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_commander_03",
+      "episodeId": "ep_nat_003_commander",
       "taskId": "nat_cmd_03_help_groups_support",
+      "splitGroupId": "split_nat_commander",
       "repositoryId": "commander",
-      "repositoryOrigin": "https://github.com/tj/commander.js.git",
-      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
-      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
       "taskPrompt": "Support grouping options and subcommands under custom section headers in formatted help text.",
       "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_commander_00af60306869",
+      "baseCommit": "00af6030686912a9101f18974d7d0189c42e2f3e",
+      "solutionCommit": "c324ea3d70e00d8cff6d14edde4366af1ed3b7c3",
       "expectedTargetPaths": [
+        "lib/command.js",
         "lib/help.js"
       ],
       "expectedRelatedPaths": [
-        "lib/command.js"
+        "lib/option.js",
+        "tests/helpGroup.test.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_cmd_03.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_cmd_03.js",
-          "referenceId": "#2328",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_commander_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_commander",
-      "metadata": {
-        "taskIndex": 2,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "lib/command.js",
+        "lib/help.js"
+      ],
+      "verifierFilename": "verify_nat_cmd_03.js",
+      "verifierSha256": "31ae38816cc5c591a8e4a5cadd70afa4a9e0d7877ea3a2df8307c9aecc57e872",
+      "patchSha256": "e01e851d8229e35f2d75a873d9056a9cf09799ff4b8ce4be7883c4f308be3b04",
+      "rightsReference": "MIT License (tj/commander.js)",
+      "sourceUrl": "https://github.com/tj/commander.js/pull/2328",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#2328"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_commander_04",
-      "taskId": "nat_cmd_04_argument_custom_parse_arg",
+      "episodeId": "ep_nat_004_commander",
+      "taskId": "nat_cmd_04_negative_numbers_as_arguments",
+      "splitGroupId": "split_nat_commander",
       "repositoryId": "commander",
-      "repositoryOrigin": "https://github.com/tj/commander.js.git",
-      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
-      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
-      "taskPrompt": "Add custom value coercion capability to positional arguments through a parseArg handler.",
-      "taskType": "FEATURE_ADDITION",
-      "expectedTargetPaths": [
-        "lib/argument.js"
-      ],
-      "expectedRelatedPaths": [
-        "lib/command.js"
-      ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_cmd_04.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_cmd_04.js",
-          "referenceId": "#2359",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_commander_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_commander",
-      "metadata": {
-        "taskIndex": 3,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
-    },
-    {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_commander_05",
-      "taskId": "nat_cmd_05_negative_number_argument_parsing",
-      "repositoryId": "commander",
-      "repositoryOrigin": "https://github.com/tj/commander.js.git",
-      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
-      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
-      "taskPrompt": "Allow numeric values starting with a minus sign (such as negative numbers) to be parsed as option or argument values rather than flags.",
+      "taskPrompt": "Allow negative numbers as optional arguments and command arguments when unambiguous without being rejected as unknown options.",
       "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_commander_68199e64b318",
+      "baseCommit": "68199e64b31851839c03dff1567a81d7714baa08",
+      "solutionCommit": "f6302de32c773e9f0d3bb71e257d308885af3603",
       "expectedTargetPaths": [
         "lib/command.js"
       ],
       "expectedRelatedPaths": [
-        "lib/option.js"
+        "tests/negatives.test.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_cmd_05.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_cmd_05.js",
-          "referenceId": "#2339",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_commander_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_commander",
-      "metadata": {
-        "taskIndex": 4,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "lib/command.js"
+      ],
+      "verifierFilename": "verify_nat_cmd_04.js",
+      "verifierSha256": "5e078bdb8ee220b9a9b8bfbbb23840c366781481f8dd602b3273191d9c592c9c",
+      "patchSha256": "2798e68057bf15425cce8ea0a959a977c093f3738888b8c34912ad757acc342a",
+      "rightsReference": "MIT License (tj/commander.js)",
+      "sourceUrl": "https://github.com/tj/commander.js/pull/2339",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#2339"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_commander_06",
-      "taskId": "nat_cmd_06_configure_output_clone_settings",
+      "episodeId": "ep_nat_005_commander",
+      "taskId": "nat_cmd_05_configure_output_clone_settings",
+      "splitGroupId": "split_nat_commander",
       "repositoryId": "commander",
-      "repositoryOrigin": "https://github.com/tj/commander.js.git",
-      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
-      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
-      "taskPrompt": "Ensure output configuration updates return or clone isolated settings so parent command output streams are not mutated by subcommands.",
+      "taskPrompt": "Make configureOutput create an isolated copy of settings instead of mutating shared settings in-place.",
       "taskType": "REFACTOR",
+      "workspaceSnapshotId": "snap_commander_672e3806c684",
+      "baseCommit": "672e3806c68421f91b3a1f628f6207b8b26d1a2c",
+      "solutionCommit": "68199e64b31851839c03dff1567a81d7714baa08",
       "expectedTargetPaths": [
         "lib/command.js"
       ],
       "expectedRelatedPaths": [
-        "lib/help.js"
+        "tests/command.configureOutput.test.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_cmd_06.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_cmd_06.js",
-          "referenceId": "#2350",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_commander_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_commander",
-      "metadata": {
-        "taskIndex": 5,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "lib/command.js"
+      ],
+      "verifierFilename": "verify_nat_cmd_05.js",
+      "verifierSha256": "4059a6c6384a49a9af5ad0a5f116c93531c87aa2adf83ef495591717940b4d9f",
+      "patchSha256": "87aeb8305ebd56132499796d603896464353abf27e22d7bd775ed512b3cc3699",
+      "rightsReference": "MIT License (tj/commander.js)",
+      "sourceUrl": "https://github.com/tj/commander.js/pull/2350",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#2350"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_commander_07",
-      "taskId": "nat_cmd_07_help_description_trim_extra",
+      "episodeId": "ep_nat_006_commander",
+      "taskId": "nat_cmd_06_help_description_trim_extra",
+      "splitGroupId": "split_nat_commander",
       "repositoryId": "commander",
-      "repositoryOrigin": "https://github.com/tj/commander.js.git",
-      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
-      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
-      "taskPrompt": "Strip redundant trailing whitespace and empty lines when rendering option descriptions that only contain default value notes.",
+      "taskPrompt": "Trim option description formatting when only custom default or extra info is provided without leading whitespace.",
       "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_commander_9d941f813406",
+      "baseCommit": "9d941f8134062b703d6737d762fde5e419df01ad",
+      "solutionCommit": "672e3806c68421f91b3a1f628f6207b8b26d1a2c",
       "expectedTargetPaths": [
         "lib/help.js"
       ],
       "expectedRelatedPaths": [
-        "lib/option.js"
+        "tests/help.optionDescription.test.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_cmd_07.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_cmd_07.js",
-          "referenceId": "#2348",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_commander_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_commander",
-      "metadata": {
-        "taskIndex": 6,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "lib/help.js"
+      ],
+      "verifierFilename": "verify_nat_cmd_06.js",
+      "verifierSha256": "491e0e6e9179d12a759353c173e37a653b2a756118d5ac5327f821c5ad05b040",
+      "patchSha256": "07b656fda57d97e21045a72802c9d50c0a920e148115182d12c2f98082281e08",
+      "rightsReference": "MIT License (tj/commander.js)",
+      "sourceUrl": "https://github.com/tj/commander.js/pull/2348",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#2348"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_commander_08",
-      "taskId": "nat_cmd_08_dual_long_options",
+      "episodeId": "ep_nat_007_commander",
+      "taskId": "nat_cmd_07_dual_long_options_support",
+      "splitGroupId": "split_nat_commander",
       "repositoryId": "commander",
-      "repositoryOrigin": "https://github.com/tj/commander.js.git",
-      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
-      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
-      "taskPrompt": "Support declaring alternative long option flags (such as --dry-run and --dryrun) without requiring a short single-character flag.",
+      "taskPrompt": "Add support for dual long option flags when no short option flag is specified.",
       "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_commander_bb733f4f0f5d",
+      "baseCommit": "bb733f4f0f5d4b334b04b5e18e5cbb3d71b4e9da",
+      "solutionCommit": "8263b7f098983fac7545fe7f0c61be2d90b2b53a",
       "expectedTargetPaths": [
         "lib/option.js"
       ],
       "expectedRelatedPaths": [
-        "lib/command.js"
+        "lib/command.js",
+        "tests/option.bad-flags.test.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_cmd_08.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_cmd_08.js",
-          "referenceId": "#2312",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_commander_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_commander",
-      "metadata": {
-        "taskIndex": 7,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "lib/option.js"
+      ],
+      "verifierFilename": "verify_nat_cmd_07.js",
+      "verifierSha256": "206e9060fac7a82d1e661ca2ea6c25100249c9a9c68a1cd5312f092c35286480",
+      "patchSha256": "a554b97a956a2b0ef0bf0d85b53b43b24bf1f0d1971bfbe318063d4458846dc9",
+      "rightsReference": "MIT License (tj/commander.js)",
+      "sourceUrl": "https://github.com/tj/commander.js/pull/2312",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#2312"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_commander_09",
-      "taskId": "nat_cmd_09_strip_vt_control_characters",
+      "episodeId": "ep_nat_008_commander",
+      "taskId": "nat_cmd_08_display_width_strip_vt_characters",
+      "splitGroupId": "split_nat_commander",
       "repositoryId": "commander",
-      "repositoryOrigin": "https://github.com/tj/commander.js.git",
-      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
-      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
-      "taskPrompt": "Clean up terminal escape code stripping in help width calculations by utilizing native utility helpers.",
+      "taskPrompt": "Use standard stripVTControlCharacters to accurately compute display width of strings containing VT escape sequences.",
+      "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_commander_987f28966c71",
+      "baseCommit": "987f28966c71baecb0ef4a36780e727bcd575b31",
+      "solutionCommit": "373f660f6febb720b82635220eea72dd9b7e0cba",
+      "expectedTargetPaths": [
+        "lib/help.js"
+      ],
+      "expectedRelatedPaths": [
+        "lib/command.js"
+      ],
+      "expectedSolutionPaths": [
+        "lib/help.js"
+      ],
+      "verifierFilename": "verify_nat_cmd_08.mjs",
+      "verifierSha256": "0b2fce814141933867b8a1c29e7c29c2aa435905ef81352ae5945bdb69691ed0",
+      "patchSha256": "1623d2ef8a13fd8187a846aff5152acee485d22f12ad0745dca040b300019866",
+      "rightsReference": "MIT License (tj/commander.js)",
+      "sourceUrl": "https://github.com/tj/commander.js/pull/2486",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#2486"
+    },
+    {
+      "episodeId": "ep_nat_009_commander",
+      "taskId": "nat_cmd_09_parse_save_restore_state",
+      "splitGroupId": "split_nat_commander",
+      "repositoryId": "commander",
+      "taskPrompt": "Preserve and restore command state between repeated parse calls so options do not leak across invocations.",
       "taskType": "REFACTOR",
+      "workspaceSnapshotId": "snap_commander_497c11d83065",
+      "baseCommit": "497c11d83065567a3b2840bc0800d30e6ab4ed33",
+      "solutionCommit": "49423a288b6561190461bf91231a18085e60dad4",
       "expectedTargetPaths": [
-        "lib/help.js"
-      ],
-      "expectedRelatedPaths": [
         "lib/command.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_cmd_09.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_cmd_09.js",
-          "referenceId": "#2486",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_commander_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_commander",
-      "metadata": {
-        "taskIndex": 8,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedRelatedPaths": [
+        "tests/command.parse.test.js"
+      ],
+      "expectedSolutionPaths": [
+        "lib/command.js"
+      ],
+      "verifierFilename": "verify_nat_cmd_09.js",
+      "verifierSha256": "7df82665f99580f6180a12220af1d7b5558274a236bce350840f79d3be82c02a",
+      "patchSha256": "d63acc18105a762c43eeda4b94f5642ae31d8f4d869a0a8676858b2ea1fadc7a",
+      "rightsReference": "MIT License (tj/commander.js)",
+      "sourceUrl": "https://github.com/tj/commander.js/pull/2299",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#2299"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_commander_10",
-      "taskId": "nat_cmd_10_help_information_descriptive_output",
+      "episodeId": "ep_nat_010_commander",
+      "taskId": "nat_cmd_10_validate_option_flags_throw",
+      "splitGroupId": "split_nat_commander",
       "repositoryId": "commander",
-      "repositoryOrigin": "https://github.com/tj/commander.js.git",
-      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
-      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
-      "taskPrompt": "Ensure formatted command help text correctly balances option padding and term widths across help and command formatters.",
-      "taskType": "MULTI_FILE_COORDINATION",
+      "taskPrompt": "Enforce strict option flag validation and throw an error when invalid flag combinations such as multi-char short flags are passed.",
+      "taskType": "TEST_FAILURE",
+      "workspaceSnapshotId": "snap_commander_2c9051a59fa8",
+      "baseCommit": "2c9051a59fa8e4a1297538a828e9e14592901879",
+      "solutionCommit": "966720af9470fdf47b67f8ac9ed3ea558dfed8f2",
       "expectedTargetPaths": [
-        "lib/help.js",
-        "lib/command.js"
-      ],
-      "expectedRelatedPaths": [
         "lib/option.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_cmd_10.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_cmd_10.js",
-          "referenceId": "#2472",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_commander_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_commander",
-      "metadata": {
-        "taskIndex": 9,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
-    },
-    {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_express_11",
-      "taskId": "nat_exp_01_conditional_query_revalidation",
-      "repositoryId": "express",
-      "repositoryOrigin": "https://github.com/expressjs/express.git",
-      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
-      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
-      "taskPrompt": "Support conditional revalidation handling (such as ETag and If-None-Match headers) when processing HTTP QUERY requests.",
-      "taskType": "FEATURE_ADDITION",
-      "expectedTargetPaths": [
-        "lib/request.js"
-      ],
       "expectedRelatedPaths": [
-        "lib/response.js"
+        "tests/option.bad-flags.test.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_exp_01.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_exp_01.js",
-          "referenceId": "#7366",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_express_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_express",
-      "metadata": {
-        "taskIndex": 10,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "lib/option.js"
+      ],
+      "verifierFilename": "verify_nat_cmd_10.js",
+      "verifierSha256": "30f8d3084dcdd9344e0d20c56fa3a6c47af17383d126977ee70a46381cf1b466",
+      "patchSha256": "de1196b81db7a7a98d19919b258a652c19b30a3e5c465efcc15a56c310a3faef",
+      "rightsReference": "MIT License (tj/commander.js)",
+      "sourceUrl": "https://github.com/tj/commander.js/pull/2270",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#2270"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_express_12",
-      "taskId": "nat_exp_02_content_length_transfer_encoding",
+      "episodeId": "ep_nat_011_express",
+      "taskId": "nat_exp_01_omit_content_length_on_transfer_encoding",
+      "splitGroupId": "split_nat_express",
       "repositoryId": "express",
-      "repositoryOrigin": "https://github.com/expressjs/express.git",
-      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
-      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
-      "taskPrompt": "When sending chunked transfer responses, prevent setting a redundant Content-Length header if Transfer-Encoding is already present.",
+      "taskPrompt": "Omit Content-Length header when Transfer-Encoding is present in response to avoid HTTP specification conflicts.",
       "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_express_59e205a57a04",
+      "baseCommit": "59e205a57a04fced6bb7b8ec0b5dec29461a9996",
+      "solutionCommit": "18e5985b8a9d5e8423db0a9121f22bdaecd5b120",
       "expectedTargetPaths": [
         "lib/response.js"
       ],
       "expectedRelatedPaths": [
-        "lib/utils.js"
+        "test/res.send.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_exp_02.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_exp_02.js",
-          "referenceId": "#4893",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_express_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_express",
-      "metadata": {
-        "taskIndex": 11,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "lib/response.js"
+      ],
+      "verifierFilename": "verify_nat_exp_01.js",
+      "verifierSha256": "d0026a5e9294b759cfbf00d0a04525d4eed7af88ecb6056afaeaee44e3d8c28c",
+      "patchSha256": "22c048a89d5d4fcb3000293708d31a0583bb71f2c01ebc3ac00bd2ec468c18fc",
+      "rightsReference": "MIT License (expressjs/express)",
+      "sourceUrl": "https://github.com/expressjs/express/pull/4893",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#4893"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_express_13",
-      "taskId": "nat_exp_03_trim_whitespace_modernization",
+      "episodeId": "ep_nat_012_express",
+      "taskId": "nat_exp_02_query_method_conditional_freshness",
+      "splitGroupId": "split_nat_express",
       "repositoryId": "express",
-      "repositoryOrigin": "https://github.com/expressjs/express.git",
-      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
-      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
-      "taskPrompt": "Modernize string utility helpers by introducing a safeTrimEnd function that replaces legacy trimRight with standard trimEnd semantics.",
-      "taskType": "REFACTOR",
+      "taskPrompt": "Support conditional revalidation and freshness evaluation for HTTP QUERY requests.",
+      "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_express_ba006766fb96",
+      "baseCommit": "ba006766fb964571723138708eacaba0f55759cd",
+      "solutionCommit": "ae6dd37680e3a00618d6c8a3e522f0ee4eeba1a4",
       "expectedTargetPaths": [
-        "lib/utils.js"
-      ],
-      "expectedRelatedPaths": [
         "lib/request.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_exp_03.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_exp_03.js",
-          "referenceId": "#7265",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_express_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_express",
-      "metadata": {
-        "taskIndex": 12,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedRelatedPaths": [
+        "test/req.fresh.js"
+      ],
+      "expectedSolutionPaths": [
+        "lib/request.js"
+      ],
+      "verifierFilename": "verify_nat_exp_02.js",
+      "verifierSha256": "03d9826f3fbdf6ce06a84ae976c0a8dae46154c85a085e84ee90cb0e2116ae7d",
+      "patchSha256": "03c54f101ec3d0b53a82a844da0b48b4147c60d9f3812de7ee9bc9679aa83890",
+      "rightsReference": "MIT License (expressjs/express)",
+      "sourceUrl": "https://github.com/expressjs/express/pull/7366",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#7366"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_express_14",
-      "taskId": "nat_exp_04_error_object_logging",
+      "episodeId": "ep_nat_013_express",
+      "taskId": "nat_exp_03_app_render_null_options",
+      "splitGroupId": "split_nat_express",
       "repositoryId": "express",
-      "repositoryOrigin": "https://github.com/expressjs/express.git",
-      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
-      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
-      "taskPrompt": "In the default error handler, log the full error object or error stack instead of only the error string message.",
-      "taskType": "BUG_FIX",
+      "taskPrompt": "Allow null or undefined to be passed as the options argument to app.render without throwing an error.",
+      "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_express_a479419b16f5",
+      "baseCommit": "a479419b16f5b97eb20f5dbae5848708ff30ce2d",
+      "solutionCommit": "c9ecf7b658388ccaa2b8470aabad92aabde458a2",
       "expectedTargetPaths": [
         "lib/application.js"
       ],
       "expectedRelatedPaths": [
-        "lib/response.js"
+        "test/app.render.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_exp_04.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_exp_04.js",
-          "referenceId": "#6464",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_express_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_express",
-      "metadata": {
-        "taskIndex": 13,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
-    },
-    {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_express_15",
-      "taskId": "nat_exp_05_render_null_options",
-      "repositoryId": "express",
-      "repositoryOrigin": "https://github.com/expressjs/express.git",
-      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
-      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
-      "taskPrompt": "Allow application view rendering to accept null or undefined as options without throwing an error.",
-      "taskType": "FEATURE_ADDITION",
-      "expectedTargetPaths": [
+      "expectedSolutionPaths": [
         "lib/application.js"
       ],
-      "expectedRelatedPaths": [
-        "lib/view.js"
-      ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_exp_05.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_exp_05.js",
-          "referenceId": "#6903",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_express_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_express",
-      "metadata": {
-        "taskIndex": 14,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "verifierFilename": "verify_nat_exp_03.js",
+      "verifierSha256": "daaf80f814df1288a1d0572a63a8bdf8087d4dccc14887c634ae1a0af7221879",
+      "patchSha256": "8b33bfd1a2d3bde92c5feec7117b00aec45060c9a6bdbb0fb8b244ac4554d8db",
+      "rightsReference": "MIT License (expressjs/express)",
+      "sourceUrl": "https://github.com/expressjs/express/pull/6903",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#6903"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_express_16",
-      "taskId": "nat_exp_06_type_leading_dot_lookup",
+      "episodeId": "ep_nat_014_express",
+      "taskId": "nat_exp_04_avoid_duplicate_content_type_on_strings",
+      "splitGroupId": "split_nat_express",
       "repositoryId": "express",
-      "repositoryOrigin": "https://github.com/expressjs/express.git",
-      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
-      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
-      "taskPrompt": "Ensure response MIME type resolution handles extension strings with leading dots and falls back gracefully when MIME lookup fails.",
+      "taskPrompt": "Prevent modifying Content-Type header twice when sending string bodies in res.send.",
       "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_express_5a4568abfe05",
+      "baseCommit": "5a4568abfe05f71d5559e1db9321627af501ebe3",
+      "solutionCommit": "a479419b16f5b97eb20f5dbae5848708ff30ce2d",
+      "expectedTargetPaths": [
+        "lib/response.js"
+      ],
+      "expectedRelatedPaths": [],
+      "expectedSolutionPaths": [
+        "lib/response.js"
+      ],
+      "verifierFilename": "verify_nat_exp_04.js",
+      "verifierSha256": "4edc2412e3c7dfafe9b11f01620fad31317c14b54a7c16d8b3f55752cea66fde",
+      "patchSha256": "74b070adf41a0cac2de572c2543278c6a935f0654bf7772824739dea20dcb390",
+      "rightsReference": "MIT License (expressjs/express)",
+      "sourceUrl": "https://github.com/expressjs/express/pull/6991",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#6991"
+    },
+    {
+      "episodeId": "ep_nat_015_express",
+      "taskId": "nat_exp_05_preserve_etag_with_transfer_encoding",
+      "splitGroupId": "split_nat_express",
+      "repositoryId": "express",
+      "taskPrompt": "Preserve ETag generation in res.send when Transfer-Encoding header is present.",
+      "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_express_3ce6d0eb86e9",
+      "baseCommit": "3ce6d0eb86e9d93529ff3191c6bb5db8ce6e72c8",
+      "solutionCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "expectedTargetPaths": [
         "lib/response.js"
       ],
       "expectedRelatedPaths": [
-        "lib/utils.js"
+        "test/res.send.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_exp_06.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_exp_06.js",
-          "referenceId": "#7037",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_express_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_express",
-      "metadata": {
-        "taskIndex": 15,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
-    },
-    {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_express_17",
-      "taskId": "nat_exp_07_normalize_type_fallback",
-      "repositoryId": "express",
-      "repositoryOrigin": "https://github.com/expressjs/express.git",
-      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
-      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
-      "taskPrompt": "When normalizing content types with normalizeType, fall back to application/octet-stream if the type lookup fails.",
-      "taskType": "BUG_FIX",
-      "expectedTargetPaths": [
-        "lib/utils.js"
-      ],
-      "expectedRelatedPaths": [
+      "expectedSolutionPaths": [
         "lib/response.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_exp_07.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_exp_07.js",
-          "referenceId": "#6894",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_express_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_express",
-      "metadata": {
-        "taskIndex": 16,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "verifierFilename": "verify_nat_exp_05.js",
+      "verifierSha256": "38406071f1552987d0496741c0050c6c7f54f5c358a5e3bf75a2694f470f213c",
+      "patchSha256": "b9057d951db76cc337eb5035a174957163e59b44ead7d9540ef7ee8ab084e8dc",
+      "rightsReference": "MIT License (expressjs/express)",
+      "sourceUrl": "https://github.com/expressjs/express/pull/7459",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#7459"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_express_18",
-      "taskId": "nat_exp_08_content_type_whitespace_trim",
+      "episodeId": "ep_nat_016_express",
+      "taskId": "nat_exp_06_polish_redirect_html_structure",
+      "splitGroupId": "split_nat_express",
       "repositoryId": "express",
-      "repositoryOrigin": "https://github.com/expressjs/express.git",
-      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
-      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
-      "taskPrompt": "In request header parsing, strip leading and trailing whitespace from Content-Type values before extracting media types.",
+      "taskPrompt": "Format standard DOCTYPE, head, title, and body tags in HTML redirect responses.",
       "taskType": "REFACTOR",
-      "expectedTargetPaths": [
-        "lib/request.js"
-      ],
-      "expectedRelatedPaths": [
-        "lib/utils.js"
-      ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_exp_08.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_exp_08.js",
-          "referenceId": "#7234",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_express_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_express",
-      "metadata": {
-        "taskIndex": 17,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
-    },
-    {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_express_19",
-      "taskId": "nat_exp_09_etag_preserve_custom",
-      "repositoryId": "express",
-      "repositoryOrigin": "https://github.com/expressjs/express.git",
-      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
-      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
-      "taskPrompt": "Preserve pre-computed custom ETag headers during response generation even when custom transfer headers are enabled.",
-      "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_express_2cd372e34cd6",
+      "baseCommit": "2cd372e34cd6613f4d00836c2ee122f28bddfcb3",
+      "solutionCommit": "9a3f7ff4120d7920a2d13809ff5ae78648c8a3d6",
       "expectedTargetPaths": [
         "lib/response.js"
       ],
       "expectedRelatedPaths": [
-        "lib/application.js"
+        "test/res.redirect.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_exp_09.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_exp_09.js",
-          "referenceId": "#7459",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_express_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_express",
-      "metadata": {
-        "taskIndex": 18,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "lib/response.js"
+      ],
+      "verifierFilename": "verify_nat_exp_06.js",
+      "verifierSha256": "768ff5df8c00a837ea68c165e2b47468d128b73b78dc8271ece138c68b3ba25d",
+      "patchSha256": "deaea4bbef246c72237ae97c5a401b2a5d361550f289a2e383dd87fb80bc0d7d",
+      "rightsReference": "MIT License (expressjs/express)",
+      "sourceUrl": "https://github.com/expressjs/express/pull/5167",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#5167"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_express_20",
-      "taskId": "nat_exp_10_safe_disposition_attachment",
+      "episodeId": "ep_nat_017_express",
+      "taskId": "nat_exp_07_multiple_links_single_rel",
+      "splitGroupId": "split_nat_express",
       "repositoryId": "express",
-      "repositoryOrigin": "https://github.com/expressjs/express.git",
-      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
-      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
-      "taskPrompt": "Implement safe attachment header generation that properly escapes quotes in content disposition filenames across response and utility modules.",
-      "taskType": "MULTI_FILE_COORDINATION",
+      "taskPrompt": "Allow setting multiple Link headers for a single relationship in res.links by accepting an array of targets.",
+      "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_express_6ed3439584b6",
+      "baseCommit": "6ed3439584b6bc77b0f1156f8797700df063fa63",
+      "solutionCommit": "caa4f68ee8d32474676fa29cc2086dcc1d62208b",
       "expectedTargetPaths": [
-        "lib/response.js",
-        "lib/utils.js"
+        "lib/response.js"
       ],
       "expectedRelatedPaths": [
-        "lib/request.js"
+        "test/res.links.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_exp_10.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_exp_10.js",
-          "referenceId": "#7233",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_express_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_express",
-      "metadata": {
-        "taskIndex": 19,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "lib/response.js"
+      ],
+      "verifierFilename": "verify_nat_exp_07.js",
+      "verifierSha256": "2728eb9b7151e1130475419ecfd0eee4d5e6108c131ed7f0254ae646babe1c34",
+      "patchSha256": "5b8f22e6662f35df4ac7fe1eafd934accea56d30fece3101329a38576d294794",
+      "rightsReference": "MIT License (expressjs/express)",
+      "sourceUrl": "https://github.com/expressjs/express/pull/4885",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#4885"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_fastapi_21",
-      "taskId": "nat_fa_01_streaming_status_code",
+      "episodeId": "ep_nat_018_express",
+      "taskId": "nat_exp_08_uint8array_response_body",
+      "splitGroupId": "split_nat_express",
+      "repositoryId": "express",
+      "taskPrompt": "Accept Uint8Array instances in res.send and stream them directly as binary chunks rather than JSON objects.",
+      "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_express_af7cd90893f4",
+      "baseCommit": "af7cd90893f4619212e01f271fbaa10f3176fb33",
+      "solutionCommit": "55869f49a65f1e279d92488fa6319c9fd4d8eac2",
+      "expectedTargetPaths": [
+        "lib/response.js"
+      ],
+      "expectedRelatedPaths": [
+        "test/res.send.js"
+      ],
+      "expectedSolutionPaths": [
+        "lib/response.js"
+      ],
+      "verifierFilename": "verify_nat_exp_08.js",
+      "verifierSha256": "784f85565df275f057b2cf5356d9d995e527962c04e7704b2d8622702127a6f1",
+      "patchSha256": "9c14c4df46816d7d6f7500c4b0d324189fe620715931e3cfea680b36b5698564",
+      "rightsReference": "MIT License (expressjs/express)",
+      "sourceUrl": "https://github.com/expressjs/express/pull/6285",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#6285"
+    },
+    {
+      "episodeId": "ep_nat_019_express",
+      "taskId": "nat_exp_09_use_socket_over_connection",
+      "splitGroupId": "split_nat_express",
+      "repositoryId": "express",
+      "taskPrompt": "Access req.socket instead of deprecated req.connection when resolving protocol and host properties.",
+      "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_express_d9a62f983390",
+      "baseCommit": "d9a62f983390da932c4f2e21e67a55fa33c164f4",
+      "solutionCommit": "89f198c6a50ab0cb65b741767791dd1b647e3b2c",
+      "expectedTargetPaths": [
+        "lib/request.js"
+      ],
+      "expectedRelatedPaths": [
+        "test/req.protocol.js"
+      ],
+      "expectedSolutionPaths": [
+        "lib/request.js"
+      ],
+      "verifierFilename": "verify_nat_exp_09.js",
+      "verifierSha256": "dfda10f3d140a6486c3493d0f27d722830c36642398765ca0688943e922d3405",
+      "patchSha256": "add3fde7e4a2c87d4b89912fb72451fe3a3d874b68d1328a5259eec9a56ea534",
+      "rightsReference": "MIT License (expressjs/express)",
+      "sourceUrl": "https://github.com/expressjs/express/pull/6705",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#6705"
+    },
+    {
+      "episodeId": "ep_nat_020_express",
+      "taskId": "nat_exp_10_sendfile_etag_option_support",
+      "splitGroupId": "split_nat_express",
+      "repositoryId": "express",
+      "taskPrompt": "Respect application-level etag configuration when streaming files via res.sendFile.",
+      "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_express_d2de128a32f1",
+      "baseCommit": "d2de128a32f1ce3d360bbe3fad56afa026fc8832",
+      "solutionCommit": "327af123a1833239adf7eb47fee94542b692d451",
+      "expectedTargetPaths": [
+        "lib/response.js"
+      ],
+      "expectedRelatedPaths": [
+        "test/res.sendFile.js"
+      ],
+      "expectedSolutionPaths": [
+        "lib/response.js"
+      ],
+      "verifierFilename": "verify_nat_exp_10.js",
+      "verifierSha256": "716b1010f74581011fcb0ee1d0d847ec284656320515a045a2bb712b70ff6e37",
+      "patchSha256": "8cd5b3ad5b1dda0e5a4f722407065cbe4f139cbbe0c5b0a573fc9b76d47b849f",
+      "rightsReference": "MIT License (expressjs/express)",
+      "sourceUrl": "https://github.com/expressjs/express/pull/6073",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#6073"
+    },
+    {
+      "episodeId": "ep_nat_021_fastapi",
+      "taskId": "nat_fastapi_01_preserve_sse_trailing_newlines",
+      "splitGroupId": "split_nat_fastapi",
       "repositoryId": "fastapi",
-      "repositoryOrigin": "https://github.com/tiangolo/fastapi.git",
-      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
-      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
-      "taskPrompt": "Ensure route decorators preserve custom status_code settings when returning streaming and event-stream responses.",
+      "taskPrompt": "Ensure trailing newlines in SSE event data are preserved and formatted as empty data lines in accordance with SSE specifications.",
       "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_fastapi_31ce3cb8d73a",
+      "baseCommit": "31ce3cb8d73a6e20221315a90dd98a117f0101a0",
+      "solutionCommit": "0f3e7bd682a81488919227f2b5f1f7de1718ecdd",
+      "expectedTargetPaths": [
+        "fastapi/sse.py"
+      ],
+      "expectedRelatedPaths": [
+        "tests/test_sse.py"
+      ],
+      "expectedSolutionPaths": [
+        "fastapi/sse.py"
+      ],
+      "verifierFilename": "verify_nat_fastapi_01.py",
+      "verifierSha256": "a14fa4aa990823ede3b68ee76da8b8ccf4745d5b0489060c625004f51fa7d960",
+      "patchSha256": "f7dd51993aa8c609ddef5f34633b927818a27917cad99a3109fc2bd554139f9a",
+      "rightsReference": "MIT License (tiangolo/fastapi)",
+      "sourceUrl": "https://github.com/fastapi/fastapi/pull/15515",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#15515"
+    },
+    {
+      "episodeId": "ep_nat_022_fastapi",
+      "taskId": "nat_fastapi_02_status_code_streaming_endpoints",
+      "splitGroupId": "split_nat_fastapi",
+      "repositoryId": "fastapi",
+      "taskPrompt": "Respect custom status_code parameters configured on SSE and streaming response endpoints.",
+      "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_fastapi_6215d8a6f3fe",
+      "baseCommit": "6215d8a6f3fed4eef63fe9d1ae600c12f62bd881",
+      "solutionCommit": "e92a0dc3ce5ecbebb8655dbe5465cb61d48f9fc0",
       "expectedTargetPaths": [
         "fastapi/routing.py"
       ],
       "expectedRelatedPaths": [
-        "fastapi/applications.py"
+        "tests/test_stream_status_code.py"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "python3 verify_nat_fa_01.py",
-        "metadata": {
-          "verifierFilename": "verify_nat_fa_01.py",
-          "referenceId": "#15937",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_fastapi_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_fastapi",
-      "metadata": {
-        "taskIndex": 20,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
-    },
-    {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_fastapi_22",
-      "taskId": "nat_fa_02_sse_multiline_data_splitting",
-      "repositoryId": "fastapi",
-      "repositoryOrigin": "https://github.com/tiangolo/fastapi.git",
-      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
-      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
-      "taskPrompt": "Ensure Server-Sent Events formatting splits multiline data on both carriage return and newline characters to comply with the SSE specification.",
-      "taskType": "BUG_FIX",
-      "expectedTargetPaths": [
-        "fastapi/utils.py"
-      ],
-      "expectedRelatedPaths": [
-        "fastapi/encoders.py"
-      ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "python3 verify_nat_fa_02.py",
-        "metadata": {
-          "verifierFilename": "verify_nat_fa_02.py",
-          "referenceId": "#15515",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_fastapi_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_fastapi",
-      "metadata": {
-        "taskIndex": 21,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
-    },
-    {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_fastapi_23",
-      "taskId": "nat_fa_03_iterable_response_model",
-      "repositoryId": "fastapi",
-      "repositoryOrigin": "https://github.com/tiangolo/fastapi.git",
-      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
-      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
-      "taskPrompt": "Apply response_model filtering and schema validation to endpoint return values when the handler return annotation is typed as Iterable[T].",
-      "taskType": "BUG_FIX",
-      "expectedTargetPaths": [
+      "expectedSolutionPaths": [
         "fastapi/routing.py"
       ],
-      "expectedRelatedPaths": [
-        "fastapi/dependencies/utils.py"
-      ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "python3 verify_nat_fa_03.py",
-        "metadata": {
-          "verifierFilename": "verify_nat_fa_03.py",
-          "referenceId": "#15093",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_fastapi_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_fastapi",
-      "metadata": {
-        "taskIndex": 22,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "verifierFilename": "verify_nat_fastapi_02.py",
+      "verifierSha256": "69dc4f1a651f925a4ce84a8d05eccb54aa1cc260edf914d54941aa26c11d1cdc",
+      "patchSha256": "7a04390e302b23663c6bec195cc75a2b22beeaae07d36bf879c53a7e15087b04",
+      "rightsReference": "MIT License (tiangolo/fastapi)",
+      "sourceUrl": "https://github.com/fastapi/fastapi/pull/15937",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#15937"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_fastapi_24",
-      "taskId": "nat_fa_04_annotated_sequence_parameters",
+      "episodeId": "ep_nat_023_fastapi",
+      "taskId": "nat_fastapi_03_exclude_defaults_in_jsonable_encoder",
+      "splitGroupId": "split_nat_fastapi",
       "repositoryId": "fastapi",
-      "repositoryOrigin": "https://github.com/tiangolo/fastapi.git",
-      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
-      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
-      "taskPrompt": "Correct parameter extraction for query parameters when sequence types contain nested typing.Annotated metadata.",
+      "taskPrompt": "Propagate exclude_defaults flag to dictionary values and nested structures in jsonable_encoder.",
       "taskType": "BUG_FIX",
-      "expectedTargetPaths": [
-        "fastapi/dependencies/utils.py"
-      ],
-      "expectedRelatedPaths": [
-        "fastapi/params.py"
-      ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "python3 verify_nat_fa_04.py",
-        "metadata": {
-          "verifierFilename": "verify_nat_fa_04.py",
-          "referenceId": "#14874",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_fastapi_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_fastapi",
-      "metadata": {
-        "taskIndex": 23,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
-    },
-    {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_fastapi_25",
-      "taskId": "nat_fa_05_encoder_exclude_defaults_dicts",
-      "repositoryId": "fastapi",
-      "repositoryOrigin": "https://github.com/tiangolo/fastapi.git",
-      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
-      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
-      "taskPrompt": "Propagate exclude_defaults and exclude_none recursively to dictionary values when serializing data structures with jsonable_encoder.",
-      "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_fastapi_4ffd45172059",
+      "baseCommit": "4ffd45172059cb32c3326cedde2c7ecf579c5db8",
+      "solutionCommit": "aadfcce76380ab169fe172d5cda21722e53c4924",
       "expectedTargetPaths": [
         "fastapi/encoders.py"
       ],
       "expectedRelatedPaths": [
-        "fastapi/utils.py"
+        "tests/test_jsonable_encoder.py"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "python3 verify_nat_fa_05.py",
-        "metadata": {
-          "verifierFilename": "verify_nat_fa_05.py",
-          "referenceId": "#16043",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_fastapi_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_fastapi",
-      "metadata": {
-        "taskIndex": 24,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "fastapi/encoders.py"
+      ],
+      "verifierFilename": "verify_nat_fastapi_03.py",
+      "verifierSha256": "6f53f76774d5b827adb8e0546cc88b43582fed858978504f9764024052303dc3",
+      "patchSha256": "f03012d1d31bd67ae20e646e0cd13e6aa58f047805482ece340ea10d00ef79fa",
+      "rightsReference": "MIT License (tiangolo/fastapi)",
+      "sourceUrl": "https://github.com/fastapi/fastapi/pull/16043",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#16043"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_fastapi_26",
-      "taskId": "nat_fa_06_include_router_stream_metadata",
+      "episodeId": "ep_nat_024_fastapi",
+      "taskId": "nat_fastapi_04_iterable_return_response_model_options",
+      "splitGroupId": "split_nat_fastapi",
       "repositoryId": "fastapi",
-      "repositoryOrigin": "https://github.com/tiangolo/fastapi.git",
-      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
-      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
-      "taskPrompt": "Preserve streaming response return annotations and media types when mounting sub-routers via include_router.",
-      "taskType": "MULTI_FILE_COORDINATION",
+      "taskPrompt": "Apply response_model_exclude_defaults and related filters to non-generator endpoints returning an Iterable collection.",
+      "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_fastapi_0f3d3b2f9f09",
+      "baseCommit": "0f3d3b2f9f09f04fe612d4b7db32485170c9f1dd",
+      "solutionCommit": "d6537f774b0e80e376e2cf4e0fa998a38c6d0c09",
       "expectedTargetPaths": [
-        "fastapi/routing.py",
-        "fastapi/applications.py"
-      ],
-      "expectedRelatedPaths": [
-        "fastapi/datastructures.py"
-      ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "python3 verify_nat_fa_06.py",
-        "metadata": {
-          "verifierFilename": "verify_nat_fa_06.py",
-          "referenceId": "#15077",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_fastapi_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_fastapi",
-      "metadata": {
-        "taskIndex": 25,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
-    },
-    {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_fastapi_27",
-      "taskId": "nat_fa_07_openapi_skip_redundant_dependencies",
-      "repositoryId": "fastapi",
-      "repositoryOrigin": "https://github.com/tiangolo/fastapi.git",
-      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
-      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
-      "taskPrompt": "Optimize OpenAPI generation by skipping redundant dependency tree traversals for endpoints without security dependencies.",
-      "taskType": "REFACTOR",
-      "expectedTargetPaths": [
-        "fastapi/openapi/utils.py"
-      ],
-      "expectedRelatedPaths": [
-        "fastapi/dependencies/utils.py"
-      ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "python3 verify_nat_fa_07.py",
-        "metadata": {
-          "verifierFilename": "verify_nat_fa_07.py",
-          "referenceId": "#16076",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_fastapi_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_fastapi",
-      "metadata": {
-        "taskIndex": 26,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
-    },
-    {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_fastapi_28",
-      "taskId": "nat_fa_08_frontend_auto_check",
-      "repositoryId": "fastapi",
-      "repositoryOrigin": "https://github.com/tiangolo/fastapi.git",
-      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
-      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
-      "taskPrompt": "Support automatic directory existence validation when mounting static frontend applications to warn on missing asset paths.",
-      "taskType": "FEATURE_ADDITION",
-      "expectedTargetPaths": [
-        "fastapi/applications.py"
-      ],
-      "expectedRelatedPaths": [
-        "fastapi/datastructures.py"
-      ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "python3 verify_nat_fa_08.py",
-        "metadata": {
-          "verifierFilename": "verify_nat_fa_08.py",
-          "referenceId": "#16102",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_fastapi_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_fastapi",
-      "metadata": {
-        "taskIndex": 27,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
-    },
-    {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_fastapi_29",
-      "taskId": "nat_fa_09_clear_parameter_caches",
-      "repositoryId": "fastapi",
-      "repositoryOrigin": "https://github.com/tiangolo/fastapi.git",
-      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
-      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
-      "taskPrompt": "Clear temporary parameter inspection caches after route registration to minimize application memory footprint.",
-      "taskType": "REFACTOR",
-      "expectedTargetPaths": [
-        "fastapi/dependencies/utils.py"
-      ],
-      "expectedRelatedPaths": [
         "fastapi/routing.py"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "python3 verify_nat_fa_09.py",
-        "metadata": {
-          "verifierFilename": "verify_nat_fa_09.py",
-          "referenceId": "#16065",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_fastapi_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_fastapi",
-      "metadata": {
-        "taskIndex": 28,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedRelatedPaths": [
+        "tests/test_skip_defaults.py"
+      ],
+      "expectedSolutionPaths": [
+        "fastapi/routing.py"
+      ],
+      "verifierFilename": "verify_nat_fastapi_04.py",
+      "verifierSha256": "7c1e928ff89079c40719fcb88d13245e194b9304ff5b8e91af3783552c836cf0",
+      "patchSha256": "d35370b7095a44c3b224f6af5d4776e6ea2151bf51779641e1c14117836a5cde",
+      "rightsReference": "MIT License (tiangolo/fastapi)",
+      "sourceUrl": "https://github.com/fastapi/fastapi/pull/15093",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#15093"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_fastapi_30",
-      "taskId": "nat_fa_10_frontend_dependency_background_tasks",
+      "episodeId": "ep_nat_025_fastapi",
+      "taskId": "nat_fastapi_05_stream_item_type_preserved_in_router",
+      "splitGroupId": "split_nat_fastapi",
       "repositoryId": "fastapi",
-      "repositoryOrigin": "https://github.com/tiangolo/fastapi.git",
-      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
-      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
-      "taskPrompt": "Allow dependency-injected background tasks and response headers to execute during frontend static file responses.",
+      "taskPrompt": "Retain stream_item_type metadata when routes are mounted using include_router so OpenAPI schema includes itemSchema.",
       "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_fastapi_98b12fe56f97",
+      "baseCommit": "98b12fe56f97107e71a20fc1cf334ccfa590efb5",
+      "solutionCommit": "ad03e117c0010a563067740c97cb7ab011cb5174",
       "expectedTargetPaths": [
-        "fastapi/applications.py"
+        "fastapi/routing.py"
       ],
       "expectedRelatedPaths": [
-        "fastapi/datastructures.py"
+        "tests/test_sse.py"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "python3 verify_nat_fa_10.py",
-        "metadata": {
-          "verifierFilename": "verify_nat_fa_10.py",
-          "referenceId": "#16105",
-          "naturalTaskSource": "github_pr"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_fastapi_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_fastapi",
-      "metadata": {
-        "taskIndex": 29,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "fastapi/routing.py"
+      ],
+      "verifierFilename": "verify_nat_fastapi_05.py",
+      "verifierSha256": "29a93fde0388a42d8917319b962b808c53ecb4e5467bf02940297c839c605f67",
+      "patchSha256": "f0dc4caca54b7a606afcce0bfa499dd806102083020d8cedf7e64415a676ecc7",
+      "rightsReference": "MIT License (tiangolo/fastapi)",
+      "sourceUrl": "https://github.com/fastapi/fastapi/pull/15077",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#15077"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_siftrcode_31",
-      "taskId": "nat_siftr_01_python_ast_timeout_bounds",
-      "repositoryId": "siftrcode",
-      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
-      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
-      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
-      "taskPrompt": "Add execution timeout bounds to Python AST parsing child processes to prevent deadlocks on malformed syntax.",
+      "episodeId": "ep_nat_026_fastapi",
+      "taskId": "nat_fastapi_06_nested_annotated_in_sequences",
+      "splitGroupId": "split_nat_fastapi",
+      "repositoryId": "fastapi",
+      "taskPrompt": "Unwrap multiple nested Annotated type layers when analyzing query sequence parameters.",
+      "taskType": "TEST_FAILURE",
+      "workspaceSnapshotId": "snap_fastapi_9db320278c15",
+      "baseCommit": "9db320278c15315a95341d086bc594fc3bf2af4e",
+      "solutionCommit": "65e42bd5eca657daf97c6762b9632e7c2cb3317a",
+      "expectedTargetPaths": [
+        "fastapi/_compat/shared.py"
+      ],
+      "expectedRelatedPaths": [
+        "tests/test_nested_annotated_in_sequence.py"
+      ],
+      "expectedSolutionPaths": [
+        "fastapi/_compat/shared.py"
+      ],
+      "verifierFilename": "verify_nat_fastapi_06.py",
+      "verifierSha256": "8c0b8daab30ab525372fe0be77394b5b0ce041f696871538fc067b25c3d6b3b6",
+      "patchSha256": "9ce8bb7e257ee18892e65d2fe3d8518fef93de2adf8eaa4060fc7f50e6a7e402",
+      "rightsReference": "MIT License (tiangolo/fastapi)",
+      "sourceUrl": "https://github.com/fastapi/fastapi/pull/14874",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#14874"
+    },
+    {
+      "episodeId": "ep_nat_027_fastapi",
+      "taskId": "nat_fastapi_07_iter_route_contexts",
+      "splitGroupId": "split_nat_fastapi",
+      "repositoryId": "fastapi",
+      "taskPrompt": "Provide iter_route_contexts iterator to inspect mounted routes along with their effective parent router contexts.",
+      "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_fastapi_7feb17f80a48",
+      "baseCommit": "7feb17f80a483e70efa26f01addb94d0070d42ee",
+      "solutionCommit": "6ac122071d2c9e6add587e1271eb010dd6acbed0",
+      "expectedTargetPaths": [
+        "fastapi/routing.py"
+      ],
+      "expectedRelatedPaths": [
+        "tests/test_router_include_context.py"
+      ],
+      "expectedSolutionPaths": [
+        "fastapi/routing.py"
+      ],
+      "verifierFilename": "verify_nat_fastapi_07.py",
+      "verifierSha256": "49c20370d43fbff7af3c6123e6faada2e3f80cde19a0742b5e32909c98b96c99",
+      "patchSha256": "1f171e32bbe59d8e1a5812f65bc9b033b6dc6a796f7c8cba2aac5cc0dbc4eb65",
+      "rightsReference": "MIT License (tiangolo/fastapi)",
+      "sourceUrl": "https://github.com/fastapi/fastapi/pull/15785",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#15785"
+    },
+    {
+      "episodeId": "ep_nat_028_fastapi",
+      "taskId": "nat_fastapi_08_frontend_fallback_dotted_paths",
+      "splitGroupId": "split_nat_fastapi",
+      "repositoryId": "fastapi",
+      "taskPrompt": "Serve SPA fallback page for HTML navigation requests with dot characters in path segments.",
       "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_fastapi_9b8410bdc9fa",
+      "baseCommit": "9b8410bdc9fa1fd679ea7e65b926535c7045ab87",
+      "solutionCommit": "eb75fd078e83aed935016bcdf0705cd58bbf0d0e",
       "expectedTargetPaths": [
-        "src/parsing/python_parser.ts"
+        "fastapi/routing.py"
       ],
       "expectedRelatedPaths": [
-        "src/parsing/dispatcher.ts"
+        "tests/test_frontend.py"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_siftr_01.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_siftr_01.js",
-          "referenceId": "75f8d92",
-          "naturalTaskSource": "first_party_commit"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_siftrcode_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_siftrcode",
-      "metadata": {
-        "taskIndex": 30,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "fastapi/routing.py"
+      ],
+      "verifierFilename": "verify_nat_fastapi_08.py",
+      "verifierSha256": "52f5f519c9992c570d80b58deeec96b88d9a41cca44c04d9a9b46eca6559c5b9",
+      "patchSha256": "5452809c5d10fdac7b34ea516e2e00bbfe4aacdd4d08af00c1c07d6c34c29357",
+      "rightsReference": "MIT License (tiangolo/fastapi)",
+      "sourceUrl": "https://github.com/fastapi/fastapi/pull/16011",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#16011"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_siftrcode_32",
-      "taskId": "nat_siftr_02_build_provenance_tree_hashing",
-      "repositoryId": "siftrcode",
-      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
-      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
-      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
-      "taskPrompt": "Compute SHA-256 build provenance metadata including tree hash, dirty state, and commit hash during post-build stamping.",
+      "episodeId": "ep_nat_029_fastapi",
+      "taskId": "nat_fastapi_09_frontend_unsupported_methods_404",
+      "splitGroupId": "split_nat_fastapi",
+      "repositoryId": "fastapi",
+      "taskPrompt": "Return 404 Not Found instead of 405 Method Not Allowed for non-GET/HEAD requests on frontend fallback routes.",
+      "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_fastapi_c2708d981729",
+      "baseCommit": "c2708d981729c96437dcc1d7cfa40cd15128bc60",
+      "solutionCommit": "b790e14cb686506df663959ac4879053cfed38db",
+      "expectedTargetPaths": [
+        "fastapi/routing.py"
+      ],
+      "expectedRelatedPaths": [
+        "tests/test_frontend.py"
+      ],
+      "expectedSolutionPaths": [
+        "fastapi/routing.py"
+      ],
+      "verifierFilename": "verify_nat_fastapi_09.py",
+      "verifierSha256": "1818e286e0fd50bcec9dfb122fe1c761ed8cff451cc65801c1592ee51420e272",
+      "patchSha256": "07845128750156ebce7f1b94036a65a24933eeb6da7d1ca801693b5a8fddce3f",
+      "rightsReference": "MIT License (tiangolo/fastapi)",
+      "sourceUrl": "https://github.com/fastapi/fastapi/pull/15863",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#15863"
+    },
+    {
+      "episodeId": "ep_nat_030_fastapi",
+      "taskId": "nat_fastapi_10_frontend_app_dependencies",
+      "splitGroupId": "split_nat_fastapi",
+      "repositoryId": "fastapi",
+      "taskPrompt": "Execute application-level dependencies on frontend route requests to support authentication guards.",
       "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_fastapi_66a90f6ee9c0",
+      "baseCommit": "66a90f6ee9c0cf58ec61b14f8925344d6f16eae5",
+      "solutionCommit": "319be508ce7db9ee5f52c3b9baa68c6cc1037c10",
+      "expectedTargetPaths": [
+        "fastapi/routing.py"
+      ],
+      "expectedRelatedPaths": [
+        "tests/test_frontend.py"
+      ],
+      "expectedSolutionPaths": [
+        "fastapi/routing.py"
+      ],
+      "verifierFilename": "verify_nat_fastapi_10.py",
+      "verifierSha256": "93c86620dc02c0754a7849af8d7d915f4e51332a36c00430a8c171b63528544e",
+      "patchSha256": "1485bac3f299b61f837ad976262a2b65b246e9acd8e373b9b491d86a87b170d8",
+      "rightsReference": "MIT License (tiangolo/fastapi)",
+      "sourceUrl": "https://github.com/fastapi/fastapi/pull/15908",
+      "naturalTaskSource": "github_pr",
+      "referenceId": "#15908"
+    },
+    {
+      "episodeId": "ep_nat_031_siftrcode",
+      "taskId": "nat_siftr_01_python_ast_parser_timeout",
+      "splitGroupId": "split_nat_siftrcode",
+      "repositoryId": "siftrcode",
+      "taskPrompt": "Add timeout bounds to python AST child process spawning to prevent pipe deadlocks.",
+      "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_siftrcode_5745e54ce95b",
+      "baseCommit": "5745e54ce95b503cd477909d5f903c6d42a9630c",
+      "solutionCommit": "75f8d921960043c829caaf65cea0f4ac2993734c",
+      "expectedTargetPaths": [
+        "src/parsing/python_parser.ts",
+        "src/skeleton/python.ts"
+      ],
+      "expectedRelatedPaths": [],
+      "expectedSolutionPaths": [
+        "src/parsing/python_parser.ts",
+        "src/skeleton/python.ts"
+      ],
+      "verifierFilename": "verify_nat_siftr_01.js",
+      "verifierSha256": "519db84b46ac33495867f34e3d222823c93a1fce6bbeb0a895960521ea456c2e",
+      "patchSha256": "67769cfa947939027c2cf53d1cb050b9bb1460a52e4b4246c161a9df5e940152",
+      "rightsReference": "Proprietary / MIT Dual License (kyzoeth/siftrcode)",
+      "sourceUrl": "https://github.com/kyzoeth/siftrcode/commit/75f8d92",
+      "naturalTaskSource": "first_party_commit",
+      "referenceId": "75f8d92"
+    },
+    {
+      "episodeId": "ep_nat_032_siftrcode",
+      "taskId": "nat_siftr_02_egress_denied_error_type",
+      "splitGroupId": "split_nat_siftrcode",
+      "repositoryId": "siftrcode",
+      "taskPrompt": "Introduce typed EgressDeniedError with explicit reason classifications when egress is blocked by rights or trust policy.",
+      "taskType": "BUG_FIX",
+      "workspaceSnapshotId": "snap_siftrcode_697bf359bb52",
+      "baseCommit": "697bf359bb5224ce38f386cabb7d86b28194e634",
+      "solutionCommit": "48b1bf91871f05120acab3b787e4a555a0aaa9e9",
+      "expectedTargetPaths": [
+        "src/security/structured_egress.ts"
+      ],
+      "expectedRelatedPaths": [
+        "src/providers/judgment/typesafe/jev_budget.ts"
+      ],
+      "expectedSolutionPaths": [
+        "src/security/structured_egress.ts"
+      ],
+      "verifierFilename": "verify_nat_siftr_02.js",
+      "verifierSha256": "40d0562018b2c95d3910e230b053f2c1d6f901b91d0349e558546eb491096c54",
+      "patchSha256": "37c2a28878b8f1a0fc0759166378c6e7617304f73d9e4fa339c618ed9f2e8491",
+      "rightsReference": "Proprietary / MIT Dual License (kyzoeth/siftrcode)",
+      "sourceUrl": "https://github.com/kyzoeth/siftrcode/commit/48b1bf9",
+      "naturalTaskSource": "first_party_commit",
+      "referenceId": "48b1bf9"
+    },
+    {
+      "episodeId": "ep_nat_033_siftrcode",
+      "taskId": "nat_siftr_03_build_provenance_tree_hashing",
+      "splitGroupId": "split_nat_siftrcode",
+      "repositoryId": "siftrcode",
+      "taskPrompt": "Implement build provenance verification with deterministic source tree hashing.",
+      "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_siftrcode_bbbbec19079b",
+      "baseCommit": "bbbbec19079b3f24b20a5508d3c8874ce6f067d5",
+      "solutionCommit": "1c2f8d3a9799af53505f8ad594bc23ed56712c25",
       "expectedTargetPaths": [
         "src/provenance/build_provenance.ts"
       ],
       "expectedRelatedPaths": [
-        "src/provenance/source_provenance.ts"
+        "scripts/post_build.js"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_siftr_02.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_siftr_02.js",
-          "referenceId": "1c2f8d3",
-          "naturalTaskSource": "first_party_commit"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_siftrcode_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_siftrcode",
-      "metadata": {
-        "taskIndex": 31,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "src/provenance/build_provenance.ts"
+      ],
+      "verifierFilename": "verify_nat_siftr_03.js",
+      "verifierSha256": "0253e65d5be6880b6f101afe18ab38eba321c98dfdf4e95c8b604292f88dcd7f",
+      "patchSha256": "825021895c7c5605dd587dacf49c7eb8f1b371f056ccd369eee660866a470b04",
+      "rightsReference": "Proprietary / MIT Dual License (kyzoeth/siftrcode)",
+      "sourceUrl": "https://github.com/kyzoeth/siftrcode/commit/1c2f8d3",
+      "naturalTaskSource": "first_party_commit",
+      "referenceId": "1c2f8d3"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_siftrcode_33",
-      "taskId": "nat_siftr_03_rights_decouple_remote_processing",
+      "episodeId": "ep_nat_034_siftrcode",
+      "taskId": "nat_siftr_04_context_engine_get_data_rights",
+      "splitGroupId": "split_nat_siftrcode",
       "repositoryId": "siftrcode",
-      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
-      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
-      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
-      "taskPrompt": "Decouple remote LLM processing permissions from local AST indexing and enforce schema training rights filtering.",
-      "taskType": "REFACTOR",
+      "taskPrompt": "Expose getDataRights method on ContextEngine to inspect active policy and enforce snapshot equality.",
+      "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_siftrcode_7dd99269f866",
+      "baseCommit": "7dd99269f866b918416f62f64e30e0219b283554",
+      "solutionCommit": "d2826a899d5fb13805d4c323548d8ea64d57a49f",
+      "expectedTargetPaths": [
+        "src/engine/context_engine.ts"
+      ],
+      "expectedRelatedPaths": [],
+      "expectedSolutionPaths": [
+        "src/engine/context_engine.ts"
+      ],
+      "verifierFilename": "verify_nat_siftr_04.js",
+      "verifierSha256": "d1f8aeb0bccde20a6eee41b670008fb451070b33ba4328aa7139db44c3a82ea4",
+      "patchSha256": "cd2be32ddf71f9bc7cf6f5d7087b82369dfc650e29902a1b3ce1380850e3f751",
+      "rightsReference": "Proprietary / MIT Dual License (kyzoeth/siftrcode)",
+      "sourceUrl": "https://github.com/kyzoeth/siftrcode/commit/d2826a8",
+      "naturalTaskSource": "first_party_commit",
+      "referenceId": "d2826a8"
+    },
+    {
+      "episodeId": "ep_nat_035_siftrcode",
+      "taskId": "nat_siftr_05_rights_filter_evaluate_evidence",
+      "splitGroupId": "split_nat_siftrcode",
+      "repositoryId": "siftrcode",
+      "taskPrompt": "Support evaluateTrainingEvidenceRecord in RightsFilter to validate schema-wide data rights.",
+      "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_siftrcode_17a523a8bd4b",
+      "baseCommit": "17a523a8bd4baa0a92f065cf122615d1c92523b7",
+      "solutionCommit": "fe04d74e532d9914785176cc99471fc0249165da",
       "expectedTargetPaths": [
         "src/rights/rights_filter.ts"
       ],
       "expectedRelatedPaths": [
-        "src/rights/data_rights.ts"
+        "src/learning/training_exporter.ts"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_siftr_03.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_siftr_03.js",
-          "referenceId": "fe04d74",
-          "naturalTaskSource": "first_party_commit"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_siftrcode_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_siftrcode",
-      "metadata": {
-        "taskIndex": 32,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "src/rights/rights_filter.ts"
+      ],
+      "verifierFilename": "verify_nat_siftr_05.js",
+      "verifierSha256": "75679db7ce3280885a203ed4c43adc6e880ad5cb800fda010648b70920dce017",
+      "patchSha256": "f29a0f62db6ad5125e4403530e5958a34226e36f9860d40ca0def950c3280155",
+      "rightsReference": "Proprietary / MIT Dual License (kyzoeth/siftrcode)",
+      "sourceUrl": "https://github.com/kyzoeth/siftrcode/commit/fe04d74",
+      "naturalTaskSource": "first_party_commit",
+      "referenceId": "fe04d74"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_siftrcode_34",
-      "taskId": "nat_siftr_04_jev_max_calls_and_case_insensitivity",
+      "episodeId": "ep_nat_036_siftrcode",
+      "taskId": "nat_siftr_06_jev_budget_env_max_calls",
+      "splitGroupId": "split_nat_siftrcode",
       "repositoryId": "siftrcode",
-      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
-      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
-      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
-      "taskPrompt": "Support configuring maximum evaluation call limits via SIFTR_JEV_MAX_CALLS and case-insensitive operational mode parsing.",
+      "taskPrompt": "Support SIFTR_JEV_MAX_CALLS environment variable to configure decision budget limits.",
       "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_siftrcode_464a6a791ec9",
+      "baseCommit": "464a6a791ec93ed914fa00cb53477a49c42844a4",
+      "solutionCommit": "601f3f17fbb490633377f0487a71c8aed0b79421",
       "expectedTargetPaths": [
-        "src/config/flags.ts"
+        "src/providers/judgment/typesafe/jev_shadow_runner.ts"
+      ],
+      "expectedRelatedPaths": [],
+      "expectedSolutionPaths": [
+        "src/providers/judgment/typesafe/jev_shadow_runner.ts"
+      ],
+      "verifierFilename": "verify_nat_siftr_06.js",
+      "verifierSha256": "791df3d586b1ca55268ed63bb315195faae78031e77ab3a30c9416e8fc232e48",
+      "patchSha256": "0adce38e91fa4722d5cb004d312e3e24a0bb77465a9cf2645e4a2f77bd4fe3ad",
+      "rightsReference": "Proprietary / MIT Dual License (kyzoeth/siftrcode)",
+      "sourceUrl": "https://github.com/kyzoeth/siftrcode/commit/601f3f1",
+      "naturalTaskSource": "first_party_commit",
+      "referenceId": "601f3f1"
+    },
+    {
+      "episodeId": "ep_nat_037_siftrcode",
+      "taskId": "nat_siftr_07_training_persistence_brand",
+      "splitGroupId": "split_nat_siftrcode",
+      "repositoryId": "siftrcode",
+      "taskPrompt": "Implement unforgeable training persistence branding registry to prevent unauthorized store insertions.",
+      "taskType": "REFACTOR",
+      "workspaceSnapshotId": "snap_siftrcode_eb1ebbb4c679",
+      "baseCommit": "eb1ebbb4c6798c97eb65ad15f00826098cce075a",
+      "solutionCommit": "63f729d22519660bcff4f611a97e89fa3bbf9a6c",
+      "expectedTargetPaths": [
+        "src/learning/training_persistence_brand.ts"
       ],
       "expectedRelatedPaths": [
-        "src/jev/client.ts"
+        "src/storage/sqlite_store.ts"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_siftr_04.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_siftr_04.js",
-          "referenceId": "601f3f1",
-          "naturalTaskSource": "first_party_commit"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_siftrcode_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_siftrcode",
-      "metadata": {
-        "taskIndex": 33,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "src/learning/training_persistence_brand.ts"
+      ],
+      "verifierFilename": "verify_nat_siftr_07.js",
+      "verifierSha256": "d6d59c26b4685b842c50c162392a9fba72879737f252f6571489f7b9601dd712",
+      "patchSha256": "ef81bd66dcbf72fa4aaad1f642b44d26369c829b957f2afb4d7ca8e023c78a06",
+      "rightsReference": "Proprietary / MIT Dual License (kyzoeth/siftrcode)",
+      "sourceUrl": "https://github.com/kyzoeth/siftrcode/commit/63f729d",
+      "naturalTaskSource": "first_party_commit",
+      "referenceId": "63f729d"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_siftrcode_35",
-      "taskId": "nat_siftr_05_tokenizer_bpe_model_fallback",
+      "episodeId": "ep_nat_038_siftrcode",
+      "taskId": "nat_siftr_08_tokenizer_registry_default",
+      "splitGroupId": "split_nat_siftrcode",
       "repositoryId": "siftrcode",
-      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
-      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
-      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
-      "taskPrompt": "Implement TokenizerRegistry allowing model-specific BPE estimation methods with fallback to conservative character ratio heuristics.",
-      "taskType": "REFACTOR",
+      "taskPrompt": "Implement DefaultTokenizerRegistry with model-pattern registration and token estimation.",
+      "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_siftrcode_7cf07d0e99da",
+      "baseCommit": "7cf07d0e99da14db611bd7aeb5feceab6b351e2d",
+      "solutionCommit": "e6addfe03c9c09b06129f903339a0933c914514e",
       "expectedTargetPaths": [
         "src/token/tokenizer_registry.ts"
       ],
       "expectedRelatedPaths": [
         "src/token/token_cost_estimator.ts"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_siftr_05.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_siftr_05.js",
-          "referenceId": "e6addfe",
-          "naturalTaskSource": "first_party_commit"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_siftrcode_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_siftrcode",
-      "metadata": {
-        "taskIndex": 34,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "expectedSolutionPaths": [
+        "src/token/tokenizer_registry.ts"
+      ],
+      "verifierFilename": "verify_nat_siftr_08.js",
+      "verifierSha256": "6b0f9c8ef1f7411e0744b8351789a792d850b34b4d6bbbdc78c8b79b029fee71",
+      "patchSha256": "1ff0999f2ede4bb22fb3653100c7ea0856a47ee69b152722db1083f0cd022d92",
+      "rightsReference": "Proprietary / MIT Dual License (kyzoeth/siftrcode)",
+      "sourceUrl": "https://github.com/kyzoeth/siftrcode/commit/e6addfe",
+      "naturalTaskSource": "first_party_commit",
+      "referenceId": "e6addfe"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_siftrcode_36",
-      "taskId": "nat_siftr_06_workspace_snapshot_immutability_validation",
+      "episodeId": "ep_nat_039_siftrcode",
+      "taskId": "nat_siftr_09_workspace_changed_error",
+      "splitGroupId": "split_nat_siftrcode",
       "repositoryId": "siftrcode",
-      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
-      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
-      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
-      "taskPrompt": "Prevent workspace file modification race conditions by validating workspace snapshot hash before replanning iterations.",
-      "taskType": "BUG_FIX",
+      "taskPrompt": "Define typed WorkspaceChangedError hierarchy to guard snapshot immutability.",
+      "taskType": "TEST_FAILURE",
+      "workspaceSnapshotId": "snap_siftrcode_d0b1da00a5d0",
+      "baseCommit": "d0b1da00a5d0ee8a90c63cb015a89da65ee59a9a",
+      "solutionCommit": "80733d43bb38b0a0b396c53975f46e3df4823957",
       "expectedTargetPaths": [
+        "src/workspace/workspace_errors.ts"
+      ],
+      "expectedRelatedPaths": [
         "src/workspace/workspace_snapshot.ts"
       ],
-      "expectedRelatedPaths": [
-        "src/workspace/repository_state.ts"
+      "expectedSolutionPaths": [
+        "src/workspace/workspace_errors.ts"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_siftr_06.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_siftr_06.js",
-          "referenceId": "80733d4",
-          "naturalTaskSource": "first_party_commit"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_siftrcode_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_siftrcode",
-      "metadata": {
-        "taskIndex": 35,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "verifierFilename": "verify_nat_siftr_09.js",
+      "verifierSha256": "da7a1a3388e82300c5af680b99ad15a1e1fa7b44bee2ed0e41f1eef24587fb31",
+      "patchSha256": "af9e535deed603ca250c5e623011e03094e4690514765d0e100dd64daacb08a4",
+      "rightsReference": "Proprietary / MIT Dual License (kyzoeth/siftrcode)",
+      "sourceUrl": "https://github.com/kyzoeth/siftrcode/commit/80733d4",
+      "naturalTaskSource": "first_party_commit",
+      "referenceId": "80733d4"
     },
     {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_siftrcode_37",
-      "taskId": "nat_siftr_07_parsing_symbol_character_offsets",
+      "episodeId": "ep_nat_040_siftrcode",
+      "taskId": "nat_siftr_10_golang_symbol_parser",
+      "splitGroupId": "split_nat_siftrcode",
       "repositoryId": "siftrcode",
-      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
-      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
-      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
-      "taskPrompt": "Extract symbol character byte offsets alongside line spans in language parsers to support granular code replacement tools.",
+      "taskPrompt": "Implement GolangSymbolParser for multi-language AST symbol extraction.",
       "taskType": "FEATURE_ADDITION",
+      "workspaceSnapshotId": "snap_siftrcode_1080b22cd097",
+      "baseCommit": "1080b22cd0973be41eee3962fdc933376c39761d",
+      "solutionCommit": "d0b1da00a5d0ee8a90c63cb015a89da65ee59a9a",
       "expectedTargetPaths": [
-        "src/parsing/typescript_parser.ts"
+        "src/parsing/golang_parser.ts"
       ],
       "expectedRelatedPaths": [
-        "src/parsing/types.ts"
+        "src/parsing/symbol_types.ts"
       ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_siftr_07.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_siftr_07.js",
-          "referenceId": "d0b1da0",
-          "naturalTaskSource": "first_party_commit"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_siftrcode_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_siftrcode",
-      "metadata": {
-        "taskIndex": 36,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
-    },
-    {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_siftrcode_38",
-      "taskId": "nat_siftr_08_graph_semantic_provenance_edges",
-      "repositoryId": "siftrcode",
-      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
-      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
-      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
-      "taskPrompt": "Annotate dependency graph edges with semantic provenance kinds (import, call, inheritance) to prioritize high-value recall paths.",
-      "taskType": "MULTI_FILE_COORDINATION",
-      "expectedTargetPaths": [
-        "src/graph/graph_builder.ts",
-        "src/graph/context_graph.ts"
+      "expectedSolutionPaths": [
+        "src/parsing/golang_parser.ts"
       ],
-      "expectedRelatedPaths": [
-        "src/context/context_unit.ts"
-      ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_siftr_08.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_siftr_08.js",
-          "referenceId": "9a60b51",
-          "naturalTaskSource": "first_party_commit"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_siftrcode_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_siftrcode",
-      "metadata": {
-        "taskIndex": 37,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
-    },
-    {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_siftrcode_39",
-      "taskId": "nat_siftr_09_durable_observation_sqlite_store",
-      "repositoryId": "siftrcode",
-      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
-      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
-      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
-      "taskPrompt": "Implement append-only SQLite observation recording for agent interaction trajectories with automatic database schema migration.",
-      "taskType": "FEATURE_ADDITION",
-      "expectedTargetPaths": [
-        "src/storage/sqlite_store.ts"
-      ],
-      "expectedRelatedPaths": [
-        "src/telemetry/decision_observation.ts"
-      ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_siftr_09.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_siftr_09.js",
-          "referenceId": "6caf56f",
-          "naturalTaskSource": "first_party_commit"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_siftrcode_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_siftrcode",
-      "metadata": {
-        "taskIndex": 38,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
-    },
-    {
-      "schemaVersion": "siftrbench-v1",
-      "episodeId": "sb_nat_siftrcode_40",
-      "taskId": "nat_siftr_10_ranker_to_artifact_uniformity",
-      "repositoryId": "siftrcode",
-      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
-      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
-      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
-      "taskPrompt": "Ensure model ranker classes expose a uniform toArtifact serialization method returning model type, hyperparameters, and tree payload.",
-      "taskType": "BUG_FIX",
-      "expectedTargetPaths": [
-        "src/ranking/context_rank.ts"
-      ],
-      "expectedRelatedPaths": [
-        "src/learning/models/context_rank/tree_ranker.ts"
-      ],
-      "verifier": {
-        "type": "custom_command",
-        "command": "node verify_nat_siftr_10.js",
-        "metadata": {
-          "verifierFilename": "verify_nat_siftr_10.js",
-          "referenceId": "fdba2e5",
-          "naturalTaskSource": "first_party_commit"
-        }
-      },
-      "temporalCutoff": "2024-01-01T00:00:00.000Z",
-      "rightsReference": "rights_siftrcode_oss",
-      "provenance": {
-        "source": "siftrbench_v3_1_natural_holdout",
-        "sourceVersion": "v1.0.0",
-        "importedAt": "2026-09-21T22:58:02.535Z"
-      },
-      "splitGroupId": "split_natural_siftrcode",
-      "metadata": {
-        "taskIndex": 39,
-        "isNaturalHoldout": true,
-        "hasPathLeakage": false
-      }
+      "verifierFilename": "verify_nat_siftr_10.js",
+      "verifierSha256": "45487533b8c922d854cc5b82edcd00411bddf382dae3942c95237b53e483602a",
+      "patchSha256": "2318f29a8f897abc3360106df44a60248de2e38de544b7cd6ad9a38e0b22f66a",
+      "rightsReference": "Proprietary / MIT Dual License (kyzoeth/siftrcode)",
+      "sourceUrl": "https://github.com/kyzoeth/siftrcode/commit/d0b1da0",
+      "naturalTaskSource": "first_party_commit",
+      "referenceId": "d0b1da0"
     }
   ]
 }

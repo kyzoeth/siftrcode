@@ -1,5 +1,9 @@
-import { Command } from './lib/command.js';
-const cmd = new Command();
-if (typeof cmd.allowComboFlags !== 'function') process.exit(1);
-if (cmd.allowComboFlags() !== true) process.exit(1);
+
+const { Command } = require("./");
+const program = new Command();
+program.option("--no-pepper", "remove pepper").option("--pepper", "pepper only");
+program.parse([], { from: "user" });
+if (program.opts().pepper !== undefined) {
+  process.exit(1);
+}
 process.exit(0);

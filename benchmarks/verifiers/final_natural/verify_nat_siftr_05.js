@@ -1,5 +1,7 @@
-const { DefaultTokenizerRegistry } = require('./dist/token/tokenizer_registry');
-const reg = new DefaultTokenizerRegistry();
-if (typeof reg.hasModelRegistration !== 'function') process.exit(1);
-if (reg.hasModelRegistration('gemini-3.6-flash') !== true) process.exit(1);
+
+const { RightsFilter } = require("./dist/rights/rights_filter");
+const filter = new RightsFilter();
+if (typeof filter.evaluateTrainingEvidenceRecord !== "function") {
+  process.exit(1);
+}
 process.exit(0);

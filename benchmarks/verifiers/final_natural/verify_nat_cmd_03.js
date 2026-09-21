@@ -1,5 +1,13 @@
-import { Help } from './lib/help.js';
-const h = new Help();
-if (typeof h.hasHelpGroupSupport !== 'function') process.exit(1);
-if (h.hasHelpGroupSupport() !== true) process.exit(1);
+
+const { Command } = require("./");
+const program = new Command();
+if (typeof program.optionsGroup !== "function") {
+  process.exit(1);
+}
+program.optionsGroup("CustomOptions:");
+program.option("--custom-flag");
+const help = program.helpInformation();
+if (!help.includes("CustomOptions:") || !help.includes("--custom-flag")) {
+  process.exit(1);
+}
 process.exit(0);

@@ -1,5 +1,19 @@
-const req = require('./lib/request');
-if (typeof req.supportsQueryMethodRevalidation !== 'function') process.exit(1);
-if (req.supportsQueryMethodRevalidation('QUERY') !== true) process.exit(1);
-if (req.supportsQueryMethodRevalidation('POST') !== false) process.exit(1);
-process.exit(0);
+
+const http = require("http");
+const express = require("./");
+const app = express();
+app.use((req, res) => {
+  res.set("Transfer-Encoding", "chunked");
+  res.send("hello world");
+});
+const server = app.listen(0, () => {
+  const port = server.address().port;
+  http.get("http://127.0.0.1:" + port, (res) => {
+    server.close();
+    if (res.headers["content-length"]) process.exit(1);
+    process.exit(0);
+  }).on("error", () => {
+    server.close();
+    process.exit(1);
+  });
+});

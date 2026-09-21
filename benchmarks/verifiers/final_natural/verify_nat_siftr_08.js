@@ -1,5 +1,19 @@
-const { GraphBuilder } = require('./dist/graph/graph_builder');
-const gb = new GraphBuilder();
-if (typeof gb.supportsSemanticProvenanceKinds !== 'function') process.exit(1);
-if (gb.supportsSemanticProvenanceKinds() !== true) process.exit(1);
+
+let tokMod;
+try {
+  tokMod = require("./dist/token/tokenizer_registry");
+} catch (e) {
+  process.exit(1);
+}
+if (typeof tokMod.DefaultTokenizerRegistry !== "function") {
+  process.exit(1);
+}
+const reg = tokMod.DefaultTokenizerRegistry.getInstance();
+if (typeof reg.estimate !== "function") {
+  process.exit(1);
+}
+const est = reg.estimate("hello world");
+if (!est || typeof est.tokens !== "number") {
+  process.exit(1);
+}
 process.exit(0);

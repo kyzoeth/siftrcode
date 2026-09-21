@@ -1,5 +1,10 @@
-import { Help } from './lib/help.js';
-const h = new Help();
-if (typeof h.stripAnsiCodes !== 'function') process.exit(1);
-if (h.stripAnsiCodes('\u001b[31mred\u001b[0m') !== 'red') process.exit(1);
+
+const { Command } = require("./");
+const program = new Command();
+program.option("-p, --port <number>");
+program.parse(["node", "test", "-p", "8080"]);
+program.parse(["node", "test"]);
+if (program.opts().port !== undefined) {
+  process.exit(1);
+}
 process.exit(0);

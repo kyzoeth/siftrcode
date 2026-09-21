@@ -1,7 +1,9 @@
-import { Command } from './lib/command.js';
-const cmd = new Command();
-if (typeof cmd.cloneOutputConfiguration !== 'function') process.exit(1);
-const orig = { writeErr: () => {} };
-const cloned = cmd.cloneOutputConfiguration(orig);
-if (cloned === orig || typeof cloned.writeErr !== 'function') process.exit(1);
+
+const { Option, Help } = require("./");
+const option = new Option("-a <value>").default("default value", "custom");
+const helper = new Help();
+const desc = helper.optionDescription(option);
+if (desc !== "(default: custom)") {
+  process.exit(1);
+}
 process.exit(0);
