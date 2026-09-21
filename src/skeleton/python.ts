@@ -11,7 +11,8 @@ export function skeletonizePython(code: string, filePath: string = 'file.py'): S
   const proc = spawnSync('python3', [scriptPath], {
     input: code,
     encoding: 'utf-8',
-    maxBuffer: 50 * 1024 * 1024 // 50MB
+    maxBuffer: 50 * 1024 * 1024, // 50MB
+    timeout: 5000,
   });
 
   let skeletonBody = code;

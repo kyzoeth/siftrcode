@@ -42,6 +42,7 @@ export class PythonSymbolParser implements LanguageSymbolParser {
         input: code,
         encoding: 'utf-8',
         maxBuffer: 50 * 1024 * 1024,
+        timeout: 5000,
       });
 
       if (proc.status === 0 && proc.stdout) {
