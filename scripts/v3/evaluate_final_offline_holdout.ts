@@ -246,7 +246,7 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
     }));
 
     const v2Ranked = v2DeterministicRanker.rank(v1Features);
-    const v2CandidateList = v2Ranked.map((r) => {
+    const v2CandidateList = v2Ranked.map((r: any) => {
       const pair = validCandidatePairs.find((p) => p.cand.contextUnitId === r.contextUnitId);
       return {
         contextUnitId: r.contextUnitId,
