@@ -162,9 +162,14 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
     }
 
     const taskCtx = createTaskContext({
+      taskId: ep.taskId,
       primaryPrompt: ep.taskPrompt,
-      workspaceRoot: repoPaths[repoKey],
-      agentEnvironment: createAgentEnvironment({ agentKind: 'generic_mcp' }),
+      workspaceSnapshotId: ep.workspaceSnapshotId,
+      agentEnvironment: createAgentEnvironment({
+        agentProvider: 'google',
+        model: 'gemini-3.6-flash',
+        harnessVersion: 'v3.1.0',
+      }),
     });
 
     const candidates = candGen.generateCandidates(
@@ -179,26 +184,22 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
     const unitMap = new Map<string, ContextUnit>();
     for (const u of repoData.units) unitMap.set(u.id, u);
 
-    const featuresList: ContextFeaturesV3_1[] = candidates.map((c) => {
-      const u = unitMap.get(c.contextUnitId) || {
-        id: c.contextUnitId,
-        kind: 'file' as any,
-        path: c.path || '',
-        uri: `file://${c.path || ''}`,
-        version: 1,
-        contentHash: '',
-      };
-      return FeatureBuilderV3_1.buildFeatures({
+    const validCandidatePairs: Array<{ cand: any; unit: ContextUnit; features: ContextFeaturesV3_1 }> = [];
+    for (const c of candidates) {
+      const u = unitMap.get(c.contextUnitId);
+      if (!u) continue;
+      const f = FeatureBuilderV3_1.buildFeatures({
         candidate: c,
         unit: u,
         task: taskCtx,
         graph: repoData.graph,
         gitIntelligence: repoData.gitInt,
       });
-    });
+      validCandidatePairs.push({ cand: c, unit: u, features: f });
+    }
 
     // --- V2 Frozen Deterministic Ranking ---
-    const v1Features: ContextFeaturesV1[] = featuresList.map((f) => ({
+    const v1Features: ContextFeaturesV1[] = validCandidatePairs.map(({ features: f }) => ({
       schemaVersion: 'v1',
       contextUnitId: f.contextUnitId,
       unitKind: f.unitKind,
@@ -229,10 +230,10 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
 
     const v2Ranked = v2DeterministicRanker.rank(v1Features);
     const v2CandidateList = v2Ranked.map((r) => {
-      const c = candidates.find((cand) => cand.contextUnitId === r.contextUnitId);
+      const pair = validCandidatePairs.find((p) => p.cand.contextUnitId === r.contextUnitId);
       return {
         contextUnitId: r.contextUnitId,
-        path: c?.path,
+        path: pair?.unit.path,
         tokenEstimate: r.features.tokenEstimate || 100,
       };
     });
@@ -246,14 +247,13 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
     v2TaskEvals.push(v2TaskEval);
 
     // --- V3 Learned GBDT Ranking ---
-    const v3Scored = featuresList.map((f) => {
+    const v3Scored = validCandidatePairs.map(({ cand, unit, features: f }) => {
       const vec = featuresToVector(f, true);
       const rawScore = v3TreeRanker.scoreVector(vec);
       const score = rawScore * 10.0 + f.heuristicScore * 0.1;
-      const c = candidates.find((cand) => cand.contextUnitId === f.contextUnitId);
       return {
-        contextUnitId: f.contextUnitId,
-        path: c?.path,
+        contextUnitId: cand.contextUnitId,
+        path: unit.path,
         score,
         tokenEstimate: f.tokenEstimate || 100,
       };
