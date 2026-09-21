@@ -341,13 +341,16 @@ SiftrCode is engineered for strict zero-egress compliance and provable data line
 
 ## 🧪 Verification & Test Suites
 
-SiftrCode enforces rigorous verification across 14 regression suites, comprehensive MCP end-to-end integration tests, and JEV shadow isolation gates:
+SiftrCode enforces rigorous verification across 15 test suites (51 sub-suites), comprehensive MCP end-to-end integration tests, and JEV shadow isolation gates:
 
 ```bash
-# Build the TypeScript project, AST extractors, and stamp build_info.json
+# Provision pinned benchmark repositories (Express @ 9a34acf, FastAPI @ 50113da)
+bash scripts/provision_benchmarks.sh
+
+# Build the TypeScript project, AST extractors, and stamp source-tree provenance
 npm run build
 
-# Run all 14 regression suites, MCP learning loop tests, and shadow closure gates
+# Run all 51 test suites, including in-process SystemOne mock tests & shadow closure gates
 npm test
 
 # Run the JEV shadow benchmark pilot study (hermetic offline smoke mode)
@@ -372,6 +375,7 @@ TYPESAFE_API_KEY="your-api-key" node dist/tests/pilot_jev_real_study.js --live -
 - **Suite 12**: Sanctioned `TrainingExporter` route & `exportId` lineage.
 - **Suite 13**: `WorkspaceSnapshot` equality, retry budgeting, and Railway application path smoke verification.
 - **Suite 14**: Aggregate live-provider operational metrics, metadata-only egress shape instrumentation, fail-closed continuous probability validation, and post-build stamping.
+- **Suite 15**: FINAL-3 remediation verification: in-process SystemOne mock, strict 4-head probability validation, SDK error classification, counted retry policy (Smoke: 1 retry for connection error only, 0 for 429; Pilot: 2 retries for connection/429), acceptance evaluation (`PASS_TO_30_TASK_PILOT` vs `FIX_AND_REPEAT_SMOKE`), lineage `LEFT JOIN` queries, source tree SHA-256 provenance gating, tri-state labels, and unforgeable training persistence brand.
 
 ---
 
