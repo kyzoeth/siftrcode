@@ -163,7 +163,7 @@ export interface TrainingEvidenceRecord {
   exposure?: { wasExposed: boolean; resolution?: ContextResolution; policyId?: string };
   observabilityLevel?: string;
   readEvidence: { wasRead: boolean | null; readCount?: number; confidence: number };
-  editEvidence: { wasEdited: boolean; editCount?: number; confidence: number };
+  editEvidence: { wasEdited: boolean | null; editCount?: number; confidence: number };
   testEvidence: { testsPassed?: boolean; regressionTestsPassed?: boolean; confidence: number };
   rootCauseEvidence: { isRootCause?: boolean; confidence: number };
   verifiedOutcomeAssociation: { verifiedSuccess: boolean | null; confidence: number };
@@ -188,7 +188,7 @@ export function createTrainingEvidenceRecord(params: {
   exposure?: { wasExposed: boolean; resolution?: ContextResolution; policyId?: string };
   observabilityLevel?: string;
   readEvidence?: { wasRead: boolean | null; readCount?: number; confidence: number };
-  editEvidence?: { wasEdited: boolean; editCount?: number; confidence: number };
+  editEvidence?: { wasEdited: boolean | null; editCount?: number; confidence: number };
   testEvidence?: { testsPassed?: boolean; regressionTestsPassed?: boolean; confidence: number };
   rootCauseEvidence?: { isRootCause?: boolean; confidence: number };
   verifiedOutcomeAssociation?: { verifiedSuccess?: boolean | null; confidence: number };
@@ -229,6 +229,10 @@ export function createTrainingEvidenceRecord(params: {
     ? null
     : (params.observabilityLevel === 'SIFTR_CALLS_ONLY' || params.observabilityLevel === 'PARTIAL_AGENT_TRACE' ? null : false);
 
+  const defaultEdited = params.exposure && !params.exposure.wasExposed
+    ? (params.observabilityLevel === 'FULL_TOOL_TRACE' || params.observabilityLevel === 'HARNESS_NATIVE' ? false : null)
+    : (params.observabilityLevel === 'SIFTR_CALLS_ONLY' || params.observabilityLevel === 'PARTIAL_AGENT_TRACE' ? null : false);
+
   return {
     evidenceId,
     datasetVersion: params.datasetVersion,
@@ -242,7 +246,7 @@ export function createTrainingEvidenceRecord(params: {
     exposure: params.exposure,
     observabilityLevel: params.observabilityLevel,
     readEvidence: params.readEvidence || { wasRead: defaultRead, confidence: 0.5 },
-    editEvidence: params.editEvidence || { wasEdited: false, confidence: 0.5 },
+    editEvidence: params.editEvidence || { wasEdited: defaultEdited, confidence: 0.5 },
     testEvidence: params.testEvidence || { confidence: 0.5 },
     rootCauseEvidence: params.rootCauseEvidence || { confidence: 0.5 },
     verifiedOutcomeAssociation: {

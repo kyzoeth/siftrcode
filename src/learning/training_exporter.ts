@@ -19,6 +19,7 @@ import { DataRights } from '../rights/data_rights';
 import { SourceProvenance } from '../rights/source_provenance';
 import { RightsFilter, RightsFilterConfig } from '../rights/rights_filter';
 import { TrainingRow, createTrainingRow, TrainingEvidenceRecord } from './lineage';
+import { markSanctionedExport } from './training_persistence_brand';
 
 export interface TrainingExportOptions {
   datasetVersion: string;
@@ -155,7 +156,7 @@ export class TrainingExporter {
       rows.push(trainingRow);
     }
 
-    return {
+    return markSanctionedExport({
       exportId,
       datasetVersion: options.datasetVersion,
       rows,
@@ -165,7 +166,7 @@ export class TrainingExporter {
       rejectionSummary,
       rejections,
       exportedAt,
-    };
+    }, rows);
   }
 
   /**
@@ -230,7 +231,7 @@ export class TrainingExporter {
       });
     }
 
-    return {
+    return markSanctionedExport({
       exportId,
       datasetVersion: options.datasetVersion,
       records,
@@ -240,6 +241,6 @@ export class TrainingExporter {
       rejectionSummary,
       rejections,
       exportedAt,
-    };
+    }, records);
   }
 }

@@ -485,18 +485,36 @@ export async function runRegressionTests() {
       rightsReference: 'rights_null_1',
     });
 
+    const exporterSuite2 = new TrainingExporter();
+    const sanctionedResult = exporterSuite2.exportTrainingEvidenceRecords(
+      [nullSuccessEvidence],
+      () => ({
+        dataRights: createDefaultDataRights({ trainingAllowed: true, trajectoryRetentionAllowed: true }),
+        provenance: createSourceProvenance({
+          origin: 'FIRST_PARTY',
+          license: 'PROPRIETARY',
+          provenanceId: 'prov_suite2',
+          repository: 'test-repo',
+          trainingPermission: 'ALLOWED',
+        }),
+        repository: 'test-repo',
+      }),
+      { datasetVersion: 'v2.0-test' }
+    );
+    const persistedRecord = sanctionedResult.records[0];
+
     assert.strictEqual(
-      nullSuccessEvidence.verifiedOutcomeAssociation.verifiedSuccess,
+      persistedRecord.verifiedOutcomeAssociation.verifiedSuccess,
       null,
       'TrainingEvidenceRecord must preserve verifiedSuccess as null (not undefined or false)'
     );
 
-    store2.saveTrainingEvidenceRecords([nullSuccessEvidence]);
+    store2.saveTrainingEvidenceRecords([persistedRecord]);
 
     // Inspect direct SQLite row
     const rawRow: any = (store2 as any).db
       .prepare('SELECT was_read, was_edited, verified_success, raw_json FROM training_evidence_records WHERE evidence_id = ?')
-      .get(nullSuccessEvidence.evidenceId);
+      .get(persistedRecord.evidenceId);
 
     assert.strictEqual(rawRow.verified_success, null, 'SQLite verified_success must be NULL (not 0 or false)');
     assert.strictEqual(rawRow.was_read, null, 'SQLite was_read must be NULL (not 0 or false)');
@@ -505,7 +523,7 @@ export async function runRegressionTests() {
     assert.strictEqual(parsed.verifiedOutcomeAssociation.verifiedSuccess, null, 'raw_json must preserve verifiedSuccess as null');
     assert.strictEqual(parsed.readEvidence.wasRead, null, 'raw_json must preserve wasRead as null');
 
-    const retrievedRec = store2.getTrainingEvidenceRecord(nullSuccessEvidence.evidenceId);
+    const retrievedRec = store2.getTrainingEvidenceRecord(persistedRecord.evidenceId);
     assert.strictEqual(retrievedRec?.verifiedOutcomeAssociation.verifiedSuccess, null, 'Retrieved record has verifiedSuccess = null');
 
     store2.close();
@@ -2134,6 +2152,9 @@ export async function runRegressionTests() {
       verbose: false,
     });
 
+    assert.strictEqual(report.mode, 'OFFLINE_SYNTHETIC', 'Offline mode must be OFFLINE_SYNTHETIC');
+    assert.strictEqual(report.recommendation, null, 'Offline recommendation must be null');
+    assert.strictEqual(report.requestedModel, 'synthetic-fake-client', 'Requested model must be synthetic-fake-client');
     assert.strictEqual(report.totalTasks, 5, 'Pilot smoke must evaluate exactly 5 tasks');
     assert.strictEqual(report.tasksPerRepo.express, 2, 'Stratified smoke must evaluate 2 Express tasks');
     assert.strictEqual(report.tasksPerRepo.fastapi, 2, 'Stratified smoke must evaluate 2 FastAPI tasks');

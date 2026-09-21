@@ -79,9 +79,12 @@ export class DatasetBuilder {
     const { decision } = options;
     const behavior: ObservedBehavior = options.behavior || {};
 
+    const verifiedSuccess = options.outcomeEvidence ? options.outcomeEvidence.verifiedSuccess : undefined;
     const taskSucceeded = options.taskSucceeded !== undefined
       ? options.taskSucceeded
-      : (options.outcomeEvidence ? options.outcomeEvidence.verifiedSuccess === true : undefined);
+      : (options.outcomeEvidence
+          ? (verifiedSuccess === true ? true : verifiedSuccess === false ? false : undefined)
+          : undefined);
 
     const { evidence, outcomeLabel } = computeLabelEvidence({
       exposure: decision.exposureDecision,
@@ -192,6 +195,15 @@ export class DatasetBuilder {
       wasRead = null; // Unexposed
     }
 
+    let wasEdited: boolean | null = null;
+    if (edited) {
+      wasEdited = true;
+    } else if (obsLevel === 'FULL_TOOL_TRACE' || obsLevel === 'HARNESS_NATIVE') {
+      wasEdited = false;
+    } else {
+      wasEdited = null; // Unexposed or unobserved under limited trace
+    }
+
     return createTrainingEvidenceRecord({
       datasetVersion: params.datasetVersion || 'v2.0.0-evidence',
       contextUnitId: decision.contextUnitId,
@@ -213,9 +225,9 @@ export class DatasetBuilder {
         confidence: read ? 0.95 : (wasRead === false ? 0.8 : 0.5),
       },
       editEvidence: {
-        wasEdited: edited,
+        wasEdited,
         editCount: edited ? 1 : 0,
-        confidence: edited ? 0.99 : 0.8,
+        confidence: edited ? 0.99 : (wasEdited === false ? 0.8 : 0.5),
       },
       testEvidence: {
         testsPassed: outcomeEvidence?.publicTestsPassed,

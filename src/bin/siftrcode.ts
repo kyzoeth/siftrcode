@@ -333,14 +333,34 @@ program
     }
   });
 
+// COMMAND: DOCTOR
+program
+  .command('doctor')
+  .description('Diagnose local environment, build provenance, and API credential configuration')
+  .action(() => {
+    const hasKey = Boolean(process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY);
+    console.log(chalk.bold.cyan('🩺 [SiftrCode Doctor] Checking system configuration...'));
+    console.log(` • Node version:   ${process.version}`);
+    console.log(` • API credential: ${hasKey ? chalk.green('provided via environment') : chalk.yellow('not provided (local heuristic)')}`);
+    if (!hasKey) {
+      console.log(chalk.gray(`   To configure remote TypeSafe JEV processing, run: export TYPESAFE_API_KEY=...`));
+    }
+  });
+
 // COMMAND: TRIAGE (Alias: JEV)
 program
   .command('triage <file>')
   .alias('jev')
-  .description('Evaluates a source file against a developer task using Jev Relevance Gating')
+  .description('Evaluates a source file against a developer task using Jev Relevance Gating (run `siftr doctor` for setup diagnostics, or `export TYPESAFE_API_KEY=...` to configure credentials)')
   .requiredOption('-t, --task <prompt>', 'Developer task prompt (e.g. "fix JWT expiration bug in auth middleware")')
-  .option('--key <apiKey>', 'Jev / TypeSafe API key (defaults to JEV_API_KEY or TYPESAFE_API_KEY env var)')
+  .option('--key <apiKey>', 'Jev / TypeSafe API key (defaults to TYPESAFE_API_KEY or JEV_API_KEY env var)')
   .option('--endpoint <url>', 'Jev API endpoint URL', 'https://api.typesafe.ai/v1/decisions')
+  .addHelpText('after', `
+Diagnostics & Credentials:
+  Run \`siftr doctor\` to check environment configuration and credential status.
+  To configure your remote JEV API key:
+    export TYPESAFE_API_KEY=...
+`)
   .action(async (file, options) => {
     const fullPath = path.resolve(file);
     if (!fs.existsSync(fullPath)) {
@@ -352,14 +372,18 @@ program
     const skeleton = skeletonizeFile(rawContent, file);
     const jev = new JevClient(options.key, options.endpoint);
 
-    const activeKey = options.key || process.env.JEV_API_KEY || process.env.TYPESAFE_API_KEY;
-    const maskedKey = activeKey ? activeKey.slice(0, 4) + '...' + activeKey.slice(-4) : null;
+    const credentialStatus = options.key
+      ? 'provided via --key'
+      : (process.env.JEV_API_KEY || process.env.TYPESAFE_API_KEY)
+        ? 'provided via environment'
+        : 'not provided (local heuristic)';
+    const hasCredential = Boolean(options.key || process.env.JEV_API_KEY || process.env.TYPESAFE_API_KEY);
 
     console.log(chalk.bold.magenta('⚡ [Jev Relevance Gate]'), 'Evaluating file causality...');
     console.log(chalk.gray(`├── Target File:    ${chalk.white(file)}`));
     console.log(chalk.gray(`├── Task Prompt:    "${chalk.cyan(options.task)}"`));
     console.log(chalk.gray(`├── Extracted AST:  ${skeleton.symbols.length} symbols [${skeleton.symbols.slice(0, 6).join(', ')}${skeleton.symbols.length > 6 ? ', ...' : ''}]`));
-    console.log(chalk.gray(`├── API Credential: ${maskedKey ? chalk.green('Configured (' + maskedKey + ')') : chalk.yellow('Not set (Using deterministic local heuristic)')}`));
+    console.log(chalk.gray(`├── API Credential: ${hasCredential ? chalk.green(credentialStatus) : chalk.yellow(credentialStatus)}`));
     console.log(chalk.gray(`└── Endpoint:       ${chalk.gray(options.endpoint)}\n`));
 
     const startTime = Date.now();

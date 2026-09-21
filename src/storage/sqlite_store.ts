@@ -28,6 +28,7 @@ import { JevSignalV1 } from '../providers/judgment/typesafe/jev_signal';
 import { SourceProvenance } from '../rights/source_provenance';
 import { TrainingRow, TrainingEvidenceRecord } from '../learning/lineage';
 import { TrainingExportResult, TrainingEvidenceExportResult } from '../learning/training_exporter';
+import { isSanctionedTrainingExport } from '../learning/training_persistence_brand';
 import { DeletionAuditRecord } from '../rights/deletion_manager';
 import { DataRights, createDefaultDataRights, DataClass, isDataClassPermitted } from '../rights/data_rights';
 import {
@@ -1842,12 +1843,19 @@ export class SqliteStore {
     const batchExportId = Array.isArray(input) ? undefined : input.exportId;
     if (!rows || rows.length === 0) return;
 
-    // Enforce that filtered TrainingExporter output is the only sanctioned route into persistent training rows
-    for (const r of rows) {
-      const effectiveExportId = r.exportId || batchExportId;
-      if (!effectiveExportId || typeof effectiveExportId !== 'string' || !effectiveExportId.startsWith('texport_')) {
+    // Enforce that filtered TrainingExporter output is the only sanctioned route into persistent training rows (Section 7.3)
+    if (Array.isArray(input)) {
+      for (const r of rows) {
+        if (!isSanctionedTrainingExport(r)) {
+          throw new Error(
+            `UNSANCTIONED_TRAINING_ROW_PERSISTENCE: Row '${r.rowId}' lacks an unforgeable TrainingExporter brand. Direct persistence of un-exported or forged training rows is strictly prohibited.`
+          );
+        }
+      }
+    } else {
+      if (!isSanctionedTrainingExport(input)) {
         throw new Error(
-          `UNSANCTIONED_TRAINING_ROW_PERSISTENCE: Row '${r.rowId}' lacks a sanctioned TrainingExporter exportId. Direct persistence of un-exported or raw training rows is strictly prohibited.`
+          `UNSANCTIONED_TRAINING_ROW_PERSISTENCE: TrainingExportResult lacks an unforgeable TrainingExporter brand. Direct persistence of un-exported or forged training rows is strictly prohibited.`
         );
       }
     }
@@ -2037,16 +2045,19 @@ export class SqliteStore {
     const batchExportId = Array.isArray(input) ? undefined : input.exportId;
     if (!records || records.length === 0) return;
 
-    // Enforce that filtered TrainingExporter output is the only sanctioned route into persistent training evidence records
-    for (const rec of records) {
-      const effectiveExportId = rec.exportId || batchExportId;
-      if (
-        !effectiveExportId ||
-        typeof effectiveExportId !== 'string' ||
-        !effectiveExportId.startsWith('texport_ev_')
-      ) {
+    // Enforce that filtered TrainingExporter output is the only sanctioned route into persistent training evidence records (Section 7.3)
+    if (Array.isArray(input)) {
+      for (const rec of records) {
+        if (!isSanctionedTrainingExport(rec)) {
+          throw new Error(
+            `UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE: Record '${rec.evidenceId}' lacks an unforgeable TrainingExporter brand. Direct persistence of un-exported or forged training evidence records is strictly prohibited.`
+          );
+        }
+      }
+    } else {
+      if (!isSanctionedTrainingExport(input)) {
         throw new Error(
-          `UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE: Record '${rec.evidenceId}' lacks a sanctioned TrainingExporter exportId. Direct persistence of un-exported or raw training evidence records is strictly prohibited.`
+          `UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE: TrainingEvidenceExportResult lacks an unforgeable TrainingExporter brand. Direct persistence of un-exported or forged training evidence records is strictly prohibited.`
         );
       }
     }
