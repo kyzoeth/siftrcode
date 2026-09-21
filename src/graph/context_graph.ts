@@ -133,11 +133,13 @@ export class ContextGraph {
 
   /**
    * Explores the neighborhood of a node up to maxHops.
+   * Supports directional traversal: 'outgoing' (default), 'incoming', or 'both'.
    */
   public getNeighborhood(
     startNodeId: string,
     maxHops: number = 2,
-    edgeKinds?: EdgeKind[]
+    edgeKinds?: EdgeKind[],
+    direction: 'outgoing' | 'incoming' | 'both' = 'outgoing'
   ): Array<{ nodeId: string; distance: number; path: EdgeKind[] }> {
     if (!this.nodes.has(startNodeId)) return [];
 
@@ -155,12 +157,28 @@ export class ContextGraph {
 
       if (current.dist >= maxHops) continue;
 
-      const edges = this.getOutgoing(current.id, edgeKinds);
-      for (const edge of edges) {
+      const outgoingEdges = direction === 'outgoing' || direction === 'both'
+        ? this.getOutgoing(current.id, edgeKinds)
+        : [];
+      for (const edge of outgoingEdges) {
         if (!visited.has(edge.to)) {
           visited.add(edge.to);
           queue.push({
             id: edge.to,
+            dist: current.dist + 1,
+            path: [...current.path, edge.kind],
+          });
+        }
+      }
+
+      const incomingEdges = direction === 'incoming' || direction === 'both'
+        ? this.getIncoming(current.id, edgeKinds)
+        : [];
+      for (const edge of incomingEdges) {
+        if (!visited.has(edge.from)) {
+          visited.add(edge.from);
+          queue.push({
+            id: edge.from,
             dist: current.dist + 1,
             path: [...current.path, edge.kind],
           });

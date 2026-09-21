@@ -31,6 +31,7 @@ export * from './indexing/repository_index';
 export * from './graph/context_graph';
 export * from './graph/graph_builder';
 export * from './graph/git_graph';
+export * from './graph/scip_indexer';
 export * from './learning/point_in_time_features';
 export * from './security/secret_filter';
 export * from './security/sandbox_policy';

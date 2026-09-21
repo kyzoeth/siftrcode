@@ -1,6 +1,6 @@
 import { ContextUnit } from '../context/context_unit';
 import { TaskContext } from '../context/task_context';
-import { ContextGraph } from '../graph/context_graph';
+import { ContextGraph, EdgeKind } from '../graph/context_graph';
 import { GitGraphIntelligence } from '../graph/git_graph';
 import { Candidate, createInitialCandidate, computeRecallAtK } from './candidate';
 import { ExactRetriever } from './exact_retriever';
@@ -14,9 +14,34 @@ export interface CandidateRecallMetrics {
   recallAt200: number;
 }
 
+export interface RecallAblationStep {
+  name: string;
+  edgeKinds?: EdgeKind[];
+  candidateCount: number;
+  metrics: CandidateRecallMetrics;
+}
+
+export interface RecallAblationReport {
+  taskId: string;
+  steps: RecallAblationStep[];
+  upliftSummary: {
+    baselineRecallAt20: number;
+    fullGraphRecallAt20: number;
+    upliftAt20: number;
+    baselineRecallAt50: number;
+    fullGraphRecallAt50: number;
+    upliftAt50: number;
+    baselineRecallAt100: number;
+    fullGraphRecallAt100: number;
+    upliftAt100: number;
+  };
+}
+
 export interface CandidateGeneratorOptions {
   maxGraphHops?: number;
   maxCandidates?: number;
+  edgeKinds?: EdgeKind[];
+  traversalDirection?: 'outgoing' | 'incoming' | 'both';
 }
 
 export class CandidateGenerator {
@@ -77,15 +102,16 @@ export class CandidateGenerator {
     if (graph) {
       const seeds = Array.from(candidateMap.keys());
       const maxHops = options.maxGraphHops ?? 2;
+      const direction = options.traversalDirection ?? 'both';
 
       for (const seedId of seeds) {
-        const neighbors = graph.getNeighborhood(seedId, maxHops);
+        const neighbors = graph.getNeighborhood(seedId, maxHops, options.edgeKinds, direction);
         for (const neighbor of neighbors) {
           const c = getOrCreate(neighbor.nodeId);
           if (c.graphDistance === undefined || neighbor.distance < c.graphDistance) {
             c.graphDistance = neighbor.distance;
           }
-          if (neighbor.path.includes('TESTS' as any)) {
+          if (neighbor.path.includes(EdgeKind.TESTS)) {
             c.testRelationship = true;
           }
           if (!c.retrievalSources.includes('graph')) {
@@ -150,6 +176,98 @@ export class CandidateGenerator {
       recallAt50: computeRecallAtK(candidates, groundTruthIds, 50),
       recallAt100: computeRecallAtK(candidates, groundTruthIds, 100),
       recallAt200: computeRecallAtK(candidates, groundTruthIds, 200),
+    };
+  }
+
+  /**
+   * Evaluates Candidate Recall across edge ablations (Section 34):
+   * 1. Lexical baseline (no graph traversal)
+   * 2. Lexical + Import graph
+   * 3. + CALLS
+   * 4. + REFERENCES
+   * 5. + TYPE_USES (Full graph)
+   * Demonstrates empirical recall uplift before incorporating graph complexity.
+   */
+  public evaluateRecallAblation(
+    task: TaskContext,
+    units: ContextUnit[],
+    graph: ContextGraph,
+    groundTruthIds: string[],
+    gitIntel?: GitGraphIntelligence
+  ): RecallAblationReport {
+    const ablationConfigs: Array<{ name: string; edgeKinds?: EdgeKind[]; useGraph: boolean }> = [
+      { name: 'lexical_baseline', edgeKinds: [], useGraph: false },
+      {
+        name: 'lexical_plus_imports',
+        edgeKinds: [EdgeKind.IMPORTS, EdgeKind.CONTAINS, EdgeKind.DECLARED_IN],
+        useGraph: true,
+      },
+      {
+        name: 'plus_calls',
+        edgeKinds: [EdgeKind.IMPORTS, EdgeKind.CONTAINS, EdgeKind.DECLARED_IN, EdgeKind.CALLS],
+        useGraph: true,
+      },
+      {
+        name: 'plus_references',
+        edgeKinds: [
+          EdgeKind.IMPORTS,
+          EdgeKind.CONTAINS,
+          EdgeKind.DECLARED_IN,
+          EdgeKind.CALLS,
+          EdgeKind.REFERENCES,
+        ],
+        useGraph: true,
+      },
+      {
+        name: 'plus_type_uses',
+        edgeKinds: [
+          EdgeKind.IMPORTS,
+          EdgeKind.CONTAINS,
+          EdgeKind.DECLARED_IN,
+          EdgeKind.CALLS,
+          EdgeKind.REFERENCES,
+          EdgeKind.TYPE_USES,
+          EdgeKind.IMPLEMENTS,
+          EdgeKind.INHERITS,
+        ],
+        useGraph: true,
+      },
+    ];
+
+    const steps: RecallAblationStep[] = [];
+
+    for (const config of ablationConfigs) {
+      const g = config.useGraph ? graph : undefined;
+      const candidates = this.generateCandidates(task, units, g, gitIntel, {
+        edgeKinds: config.edgeKinds,
+        traversalDirection: 'both',
+      });
+      const metrics = this.evaluateRecall(candidates, groundTruthIds);
+      steps.push({
+        name: config.name,
+        edgeKinds: config.edgeKinds,
+        candidateCount: candidates.length,
+        metrics,
+      });
+    }
+
+    const baseline = steps.find((s) => s.name === 'lexical_plus_imports') || steps[0];
+    const fullGraph = steps[steps.length - 1];
+
+    return {
+      taskId: task.taskId,
+      steps,
+      upliftSummary: {
+        baselineRecallAt20: baseline.metrics.recallAt20,
+        fullGraphRecallAt20: fullGraph.metrics.recallAt20,
+        upliftAt20: Number((fullGraph.metrics.recallAt20 - baseline.metrics.recallAt20).toFixed(4)),
+        baselineRecallAt50: baseline.metrics.recallAt50,
+        fullGraphRecallAt50: fullGraph.metrics.recallAt50,
+        upliftAt50: Number((fullGraph.metrics.recallAt50 - baseline.metrics.recallAt50).toFixed(4)),
+        baselineRecallAt100: baseline.metrics.recallAt100,
+        fullGraphRecallAt100: fullGraph.metrics.recallAt100,
+        upliftAt100: Number((fullGraph.metrics.recallAt100 - baseline.metrics.recallAt100).toFixed(4)),
+      },
     };
   }
 
