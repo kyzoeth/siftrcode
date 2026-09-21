@@ -269,6 +269,7 @@ export class TreeRanker implements LearnedContextRanker {
       trainNdcg10?: number;
       valNdcg10?: number;
     };
+  }): ModelArtifactV3 {
     const trainingCodeGitSha = options.trainingCodeGitSha || options.gitSha || resolveCurrentGitSha();
     const baselineGitSha = options.baselineGitSha || '1eedac03b0d83025ebf08ed2945e0ab015c46f6a';
     const trainHash = options.trainSplitSha256 || options.trainSplitHash || '';
