@@ -283,7 +283,8 @@
         </p>
         <ul class="list-disc pl-5 space-y-1.5 text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
           <li><strong>Local-First Guarantee:</strong> Candidate recall, ranking, knapsack budgeting, and discrete AST slicing execute entirely in local process memory on your machine.</li>
-          <li><strong>Strict Egress Gateway:</strong> Any external API invocations are strictly governed by our <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">EnforcedEgressGateway</code>, which checks customer DataRights and automatically sanitizes credentials (AWS keys, Stripe keys, Bearer tokens).</li>
+          <li><strong>Authoritative Retention Rights:</strong> <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">operationRights.*.retention.local</code> is authoritative across every durable write; proprietary source code, snippets, and prompts are never retained in SQLite under default rights.</li>
+          <li><strong>Fail-Closed Remote Processing &amp; Strict Gateway:</strong> Remote processing is denied by default. Any permitted external provider invocations are strictly governed by our <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">EnforcedEgressGateway</code>, which automatically sanitizes credentials (AWS keys, Stripe keys, Bearer tokens).</li>
           <li><strong>No Model Training:</strong> Under no circumstances does SiftrCode utilize your code, prompts, or AST representations to train or tune machine learning models (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">trainingAllowed: false</code>).</li>
         </ul>
       </section>
@@ -291,11 +292,11 @@
       <section class="space-y-3">
         <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">6. Benchmark Integrity &amp; Shadow Judged Evidence Validation (JEV)</h2>
         <p>
-          For empirical validation (such as SiftrBench studies across 140 benchmark tasks), Judged Evidence Validation (JEV) operates strictly under shadow invariants:
+          For empirical validation (such as SiftrBench studies across 25 audited real-world tasks with 500 bounded shadow calls on Express, FastAPI, and SiftrCode), Judged Evidence Validation (JEV) operates strictly under shadow invariants:
         </p>
         <ul class="list-disc pl-5 space-y-1.5 text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
           <li><strong>100% Plan Invariance:</strong> Shadow JEV calls never alter production context bundles, rank orders, or budget boundaries. ContextRank remains the sole deterministic production decision-maker.</li>
-          <li><strong>Air-Gapped Telemetry:</strong> Benchmark telemetry records only structural metrics (AST unit counts, token latencies, Pearson correlations) and never exposes underlying source code strings.</li>
+          <li><strong>Air-Gapped Telemetry:</strong> Benchmark telemetry records only structural metrics (AST unit counts, token latencies, continuous probability distributions) and never exposes underlying source code strings.</li>
         </ul>
       </section>
 

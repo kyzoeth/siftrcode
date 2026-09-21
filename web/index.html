@@ -1267,12 +1267,16 @@
           <div class="pt-4 border-t border-zinc-200/80 dark:border-zinc-800 space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-bold">Standard Model Context Protocol (MCP) Tools</span>
-              <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">8 NATIVE TOOLS</span>
+              <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">10 NATIVE TOOLS</span>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 font-mono text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 font-mono text-xs">
               <div class="p-2.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
                 <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold text-[11px]">siftr_context</span>
                 <p class="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans leading-snug">Primary context optimizer with 3-stage resolution lineage &amp; budget solver.</p>
+              </div>
+              <div class="p-2.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold text-[11px]">siftr_optimize</span>
+                <p class="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans leading-snug">Alias for siftr_context for outcome-aware context bundle optimization.</p>
               </div>
               <div class="p-2.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
                 <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold text-[11px]">siftr_expand</span>
@@ -1293,6 +1297,10 @@
               <div class="p-2.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
                 <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold text-[11px]">siftr_skeleton</span>
                 <p class="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans leading-snug">AST interface extractor for TypeScript, Python, Go, and Rust source files.</p>
+              </div>
+              <div class="p-2.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold text-[11px]">siftr_batch_skeleton</span>
+                <p class="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans leading-snug">High-throughput concurrent AST interface extraction across target files.</p>
               </div>
               <div class="p-2.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
                 <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold text-[11px]">siftr_audit</span>
@@ -1409,11 +1417,11 @@
       <div class="text-center space-y-2.5 max-w-2xl mx-auto">
         <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium text-[#B34E2E] dark:text-[#F39C82] bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40">
           <span class="w-1.5 h-1.5 rounded-full bg-[#D97757] ci-live-dot"></span>
-          EMPIRICAL STUDY &bull; SIFTRBENCH 140-TASK VALIDATION
+          EMPIRICAL PILOT STUDY &bull; SIFTRBENCH 25-TASK REAL VALIDATION
         </div>
-        <h2 class="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-ink font-serif">SiftrBench: Shadow JEV Validation</h2>
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-ink font-serif">SiftrBench: Shadow JEV Real-World Pilot</h2>
         <p class="text-xs sm:text-sm md:text-base text-ink-secondary leading-relaxed">
-          Rigorous empirical evaluation across 140 real-world engineering tasks. ContextRank remains the active deterministic decision-maker while TypeSafe JEV runs asynchronously in shadow mode, establishing high ground-truth correlation with 100% plan invariance.
+          Audited empirical evaluation across 25 real-world engineering tasks on Express, FastAPI, and SiftrCode. ContextRank remains the active deterministic decision-maker while TypeSafe JEV runs asynchronously in shadow mode, establishing genuine continuous distributions across 500 bounded calls with 100% bit-for-bit plan invariance and zero synthetic substitutions.
         </p>
       </div>
 
@@ -1422,27 +1430,27 @@
         <!-- Metric 1: Scale -->
         <div class="p-4 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5 shadow-2xs">
           <div class="text-[10px] font-mono font-semibold uppercase text-zinc-400">Sample Scale</div>
-          <div class="text-2xl font-bold font-mono text-ink tracking-tight">140 Tasks</div>
+          <div class="text-2xl font-bold font-mono text-ink tracking-tight">25 Real Tasks</div>
           <div class="text-[11px] text-zinc-500 dark:text-zinc-400">
-            2,800 shadow evaluations across 4 stratified categories (35 tasks each).
+            500 bounded evaluations across Express (10), FastAPI (10), and SiftrCode (5).
           </div>
         </div>
 
         <!-- Metric 2: Latency -->
         <div class="p-4 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5 shadow-2xs">
-          <div class="text-[10px] font-mono font-semibold uppercase text-zinc-400">P95 Latency</div>
-          <div class="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight">38.0ms</div>
+          <div class="text-[10px] font-mono font-semibold uppercase text-zinc-400">Latency (P50 / P95)</div>
+          <div class="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight">4ms / 6ms</div>
           <div class="text-[11px] text-zinc-500 dark:text-zinc-400">
-            Mean 26.9ms, p99 39.0ms. Strictly bounded worker pool (peak concurrency 4).
+            Strictly bounded calls (mean 20/task, max 20) with peak concurrency 4.
           </div>
         </div>
 
-        <!-- Metric 3: Oracle Alignment -->
+        <!-- Metric 3: Probability Distributions -->
         <div class="p-4 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5 shadow-2xs">
-          <div class="text-[10px] font-mono font-semibold uppercase text-zinc-400">Oracle Alignment</div>
-          <div class="text-2xl font-bold font-mono text-blue-600 dark:text-blue-400 tracking-tight">r = 0.78</div>
+          <div class="text-[10px] font-mono font-semibold uppercase text-zinc-400">Continuous Distributions</div>
+          <div class="text-2xl font-bold font-mono text-blue-600 dark:text-blue-400 tracking-tight">Genuine JEV</div>
           <div class="text-[11px] text-zinc-500 dark:text-zinc-400">
-            $r = 0.75$ edit targets, $r = 0.77$ root cause, $r = 0.78$ relevance.
+            Relevance 0.3445, Edit 0.2159, Root Cause 0.2042. Zero synthetic 0.0s.
           </div>
         </div>
 
@@ -1451,7 +1459,7 @@
           <div class="text-[10px] font-mono font-semibold uppercase text-zinc-400">Plan Invariance</div>
           <div class="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight">100%</div>
           <div class="text-[11px] text-zinc-500 dark:text-zinc-400">
-            Bit-for-bit plan identity. 0% fallback rate, zero production plan divergence.
+            Bit-for-bit plan identity in shadow mode. Zero production plan divergence.
           </div>
         </div>
       </div>
@@ -1460,10 +1468,10 @@
       <div class="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-2xs">
         <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
           <div class="font-mono text-xs font-semibold text-ink uppercase tracking-wide">
-            Stratified SiftrBench Benchmark Matrix (N=140)
+            Stratified SiftrBench Pilot Matrix (N=25 Audited Real Tasks)
           </div>
           <div class="text-[11px] font-mono text-zinc-400">
-            Deterministic Baseline vs Shadow Signal Fidelity
+            Real Codebase Evaluation &bull; Bounded Shadow Invariants
           </div>
         </div>
 
@@ -1471,61 +1479,74 @@
           <table class="w-full text-left font-mono text-xs divide-y divide-zinc-200 dark:divide-zinc-800">
             <thead class="bg-zinc-50 dark:bg-zinc-950 text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-wider">
               <tr>
-                <th class="px-4 py-2.5">Task Stratum</th>
+                <th class="px-4 py-2.5">Target Codebase</th>
                 <th class="px-4 py-2.5">Tasks</th>
-                <th class="px-4 py-2.5">ContextRank NDCG@10</th>
-                <th class="px-4 py-2.5">Recall@10</th>
-                <th class="px-4 py-2.5">Shadow Oracle r</th>
+                <th class="px-4 py-2.5">Task Types</th>
+                <th class="px-4 py-2.5">Shadow Calls</th>
+                <th class="px-4 py-2.5">Latency (P50/P95)</th>
                 <th class="px-4 py-2.5">Plan Invariance</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-zinc-200/80 dark:divide-zinc-800/80 text-[11px]">
               <tr class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
                 <td class="px-4 py-2.5 font-bold text-ink flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                  <span>BUG_FIX</span>
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span>benchmarks/express-repo</span>
                 </td>
-                <td class="px-4 py-2.5 text-zinc-600 dark:text-zinc-300">35 tasks</td>
-                <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-semibold">1.000</td>
-                <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-semibold">1.000</td>
-                <td class="px-4 py-2.5 text-blue-600 dark:text-blue-400 font-semibold">0.772</td>
-                <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-bold">100% Identical</td>
-              </tr>
-              <tr class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
-                <td class="px-4 py-2.5 font-bold text-ink flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                  <span>TEST_FAILURE</span>
-                </td>
-                <td class="px-4 py-2.5 text-zinc-600 dark:text-zinc-300">35 tasks</td>
-                <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-semibold">1.000</td>
-                <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-semibold">1.000</td>
-                <td class="px-4 py-2.5 text-blue-600 dark:text-blue-400 font-semibold">0.780</td>
+                <td class="px-4 py-2.5 text-zinc-600 dark:text-zinc-300">10 tasks</td>
+                <td class="px-4 py-2.5 text-zinc-500">Bug Fix, Test Failure, Features, Refactor</td>
+                <td class="px-4 py-2.5 text-ink font-semibold">200 calls</td>
+                <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-semibold">4ms / 6ms</td>
                 <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-bold">100% Identical</td>
               </tr>
               <tr class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
                 <td class="px-4 py-2.5 font-bold text-ink flex items-center gap-1.5">
                   <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                  <span>FEATURE_ADDITION</span>
+                  <span>benchmarks/fastapi-repo</span>
                 </td>
-                <td class="px-4 py-2.5 text-zinc-600 dark:text-zinc-300">35 tasks</td>
-                <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-semibold">1.000</td>
-                <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-semibold">1.000</td>
-                <td class="px-4 py-2.5 text-blue-600 dark:text-blue-400 font-semibold">0.747</td>
+                <td class="px-4 py-2.5 text-zinc-600 dark:text-zinc-300">10 tasks</td>
+                <td class="px-4 py-2.5 text-zinc-500">Async Generators, Security Scopes, Routing</td>
+                <td class="px-4 py-2.5 text-ink font-semibold">200 calls</td>
+                <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-semibold">4ms / 6ms</td>
                 <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-bold">100% Identical</td>
               </tr>
               <tr class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
                 <td class="px-4 py-2.5 font-bold text-ink flex items-center gap-1.5">
                   <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-                  <span>REFACTOR</span>
+                  <span>src/ (SiftrCode)</span>
                 </td>
-                <td class="px-4 py-2.5 text-zinc-600 dark:text-zinc-300">35 tasks</td>
-                <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-semibold">1.000</td>
-                <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-semibold">1.000</td>
-                <td class="px-4 py-2.5 text-blue-600 dark:text-blue-400 font-semibold">0.751</td>
+                <td class="px-4 py-2.5 text-zinc-600 dark:text-zinc-300">5 tasks</td>
+                <td class="px-4 py-2.5 text-zinc-500">AST Skeleton, BudgetSolver, Candidate Retrieval</td>
+                <td class="px-4 py-2.5 text-ink font-semibold">100 calls</td>
+                <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-semibold">4ms / 6ms</td>
                 <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-bold">100% Identical</td>
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Continuous Probability Distributions Strip -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
+        <div class="p-2.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-0.5">
+          <div class="text-[9px] uppercase tracking-wider text-zinc-400">Semantic Relevance</div>
+          <div class="text-sm font-bold text-ink">0.3445 <span class="text-[10px] text-zinc-400 font-normal">mean</span></div>
+          <div class="text-[10px] text-zinc-500">[0.2106 &ndash; 0.6951]</div>
+        </div>
+        <div class="p-2.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-0.5">
+          <div class="text-[9px] uppercase tracking-wider text-zinc-400">Implementation Needed</div>
+          <div class="text-sm font-bold text-ink">0.2983 <span class="text-[10px] text-zinc-400 font-normal">mean</span></div>
+          <div class="text-[10px] text-zinc-500">[0.1605 &ndash; 0.6630]</div>
+        </div>
+        <div class="p-2.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-0.5">
+          <div class="text-[9px] uppercase tracking-wider text-zinc-400">Likely Edit Target</div>
+          <div class="text-sm font-bold text-ink">0.2159 <span class="text-[10px] text-zinc-400 font-normal">mean</span></div>
+          <div class="text-[10px] text-zinc-500">[0.0601 &ndash; 0.6225]</div>
+        </div>
+        <div class="p-2.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-0.5">
+          <div class="text-[9px] uppercase tracking-wider text-zinc-400">Likely Root Cause</div>
+          <div class="text-sm font-bold text-ink">0.2042 <span class="text-[10px] text-zinc-400 font-normal">mean</span></div>
+          <div class="text-[10px] text-zinc-500">[0.0609 &ndash; 0.5737]</div>
         </div>
       </div>
 
@@ -1538,9 +1559,9 @@
             </svg>
           </div>
           <div>
-            <div class="font-mono font-semibold text-ink text-xs">Shadow Safety &amp; Lineage Integrity Policy</div>
+            <div class="font-mono font-semibold text-ink text-xs">Shadow Safety, Authoritative Retention &amp; Lineage Integrity</div>
             <div class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-              JEV operates in non-blocking SHADOW mode. Production ContextPlans remain 100% deterministic ContextRank outputs. Zero regression risk to active coding workflows.
+              JEV runs in non-blocking SHADOW mode. Production ContextPlans remain 100% deterministic ContextRank outputs. <code class="font-mono text-[10px]">operationRights.*.retention.local</code> is authoritative across all storage writes, and remote processing is strictly fail-closed.
             </div>
           </div>
         </div>

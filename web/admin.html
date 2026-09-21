@@ -422,16 +422,16 @@
               <span>trainingAllowed</span>
             </div>
             <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400">false</div>
-            <p class="text-[10px] text-zinc-500">Customer code strictly excluded from model training.</p>
+            <p class="text-[10px] text-zinc-500">RightsFilter gate excludes customer code from training.</p>
           </div>
 
           <div class="p-2.5 rounded border border-zinc-200/70 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/50 space-y-1">
             <div class="text-[10px] text-ink-secondary flex items-center gap-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              <span>rawSourceRetention</span>
+              <span>operationRights</span>
             </div>
-            <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400">false</div>
-            <p class="text-[10px] text-zinc-500">Zero storage of proprietary source code.</p>
+            <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400">AUTHORITATIVE</div>
+            <p class="text-[10px] text-zinc-500">Governs local SQLite persistence; 0 raw source retained.</p>
           </div>
 
           <div class="p-2.5 rounded border border-zinc-200/70 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/50 space-y-1">
@@ -439,17 +439,17 @@
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
               <span>remoteProcessing</span>
             </div>
-            <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400">false</div>
-            <p class="text-[10px] text-zinc-500">100% local AST compiler on developer machine.</p>
+            <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400">FAIL-CLOSED</div>
+            <p class="text-[10px] text-zinc-500">Requires explicit permission policy; 100% local CPU default.</p>
           </div>
 
           <div class="p-2.5 rounded border border-zinc-200/70 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/50 space-y-1">
             <div class="text-[10px] text-ink-secondary flex items-center gap-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              <span>evaluationInvariant</span>
+              <span>triStateEvidence</span>
             </div>
-            <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400">UNEXPOSED</div>
-            <p class="text-[10px] text-zinc-500">Omitted units are never labeled negative.</p>
+            <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400">NULL_PRESERVED</div>
+            <p class="text-[10px] text-zinc-500">Unexposed/unknown code emits null, never grade 0.</p>
           </div>
         </div>
 
@@ -734,33 +734,33 @@
           </div>
         </div>
 
-        <!-- SiftrBench 140-Task Benchmark Telemetry Grid -->
+        <!-- SiftrBench Real-World Pilot Telemetry Grid -->
         <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2.5 font-mono text-xs">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] uppercase tracking-wider text-ink-secondary">SiftrBench Shadow Study (140 Tasks)</span>
+            <span class="text-[10px] uppercase tracking-wider text-ink-secondary">SiftrBench Real-World Pilot (25 Tasks)</span>
             <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">100% Plan Invariance</span>
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
             <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center space-y-0.5">
               <div class="text-zinc-400 text-[9px] uppercase">Shadow Calls</div>
-              <div class="text-ink font-bold text-sm sm:text-base">2,800</div>
-              <div class="text-emerald-600 dark:text-emerald-400 text-[9px]">0 Fallbacks (0.0%)</div>
+              <div class="text-ink font-bold text-sm sm:text-base">500</div>
+              <div class="text-emerald-600 dark:text-emerald-400 text-[9px]">20/task &bull; 0 Fallbacks</div>
             </div>
             <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center space-y-0.5">
-              <div class="text-zinc-400 text-[9px] uppercase">p95 Latency</div>
-              <div class="text-ink font-bold text-sm sm:text-base text-emerald-600 dark:text-emerald-400">38.0ms</div>
-              <div class="text-zinc-500 text-[9px]">Mean: 26.9ms</div>
+              <div class="text-zinc-400 text-[9px] uppercase">Latency (P50/P95)</div>
+              <div class="text-ink font-bold text-sm sm:text-base text-emerald-600 dark:text-emerald-400">4ms / 6ms</div>
+              <div class="text-zinc-500 text-[9px]">Peak Concurrency: 4</div>
             </div>
             <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center space-y-0.5">
-              <div class="text-zinc-400 text-[9px] uppercase">Edit Correlation</div>
-              <div class="text-ink font-bold text-sm sm:text-base text-[#D97757]">r = 0.7474</div>
-              <div class="text-zinc-500 text-[9px]">Pearson p &lt; 0.001</div>
+              <div class="text-zinc-400 text-[9px] uppercase">Relevance (Mean)</div>
+              <div class="text-ink font-bold text-sm sm:text-base text-[#D97757]">0.3445</div>
+              <div class="text-zinc-500 text-[9px]">[0.2106 &ndash; 0.6951]</div>
             </div>
             <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center space-y-0.5">
-              <div class="text-zinc-400 text-[9px] uppercase">Root Cause Corr</div>
-              <div class="text-ink font-bold text-sm sm:text-base text-purple-600 dark:text-purple-400">r = 0.7720</div>
-              <div class="text-zinc-500 text-[9px]">Relevance: 0.7802</div>
+              <div class="text-zinc-400 text-[9px] uppercase">Edit / Root Cause</div>
+              <div class="text-ink font-bold text-sm sm:text-base text-purple-600 dark:text-purple-400">0.2159 / 0.2042</div>
+              <div class="text-zinc-500 text-[9px]">0 Synthetic 0.0s</div>
             </div>
           </div>
         </div>
