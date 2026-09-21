@@ -60,6 +60,7 @@ export interface ContextEngineOptions {
   maxReplanningRetries?: number;
   jevShadowRunner?: JevShadowRunner;
   enableJevShadow?: boolean;
+  ranker?: { rank(candidates: ContextFeaturesV1[], judgments?: any): RankedCandidate[] };
 }
 
 export interface OptimizeWorkspaceOptions {
@@ -83,6 +84,7 @@ export interface OptimizeWorkspaceOptions {
   maxReplanningRetries?: number;
   jevShadowRunner?: JevShadowRunner;
   enableJevShadow?: boolean;
+  ranker?: { rank(candidates: ContextFeaturesV1[], judgments?: any): RankedCandidate[] };
 }
 
 export interface OptimizeWorkspaceResult {
@@ -109,6 +111,7 @@ export interface RankWorkspaceOptions {
   excludePatterns?: string[];
   includePatterns?: string[];
   dataRights?: DataRights;
+  ranker?: { rank(candidates: ContextFeaturesV1[], judgments?: any): RankedCandidate[] };
 }
 
 export interface RankWorkspaceResult {
@@ -129,9 +132,11 @@ export class ContextEngine {
   private sqliteStore?: SqliteStore;
   private jevShadowRunner?: JevShadowRunner;
   private sessionCache = new Map<string, SiftrSession>();
+  private ranker?: { rank(candidates: ContextFeaturesV1[], judgments?: any): RankedCandidate[] };
 
   constructor(options: ContextEngineOptions = {}) {
     this.repoRootDir = options.repoRootDir;
+    this.ranker = options.ranker;
     this.adapter = options.adapter || new ClaudeCodeAdapter();
     this.dataRights = resolveApplicationDataRights(options.dataRights);
     this.budgetProfile = options.budgetProfile || 'BALANCED';
@@ -329,8 +334,8 @@ export class ContextEngine {
       featuresList.push(f);
     }
 
-    // 4. Candidate Ranking (ContextRanker)
-    const ranker = new ContextRanker();
+    // 4. Candidate Ranking (ContextRanker or learned ranker)
+    const ranker = this.ranker || new ContextRanker();
     const rankedCandidates = ranker.rank(featuresList);
 
     // Section 11 & 36: Compute resolution curves and minimum useful resolutions
@@ -1085,6 +1090,7 @@ export class ContextEngine {
           sqliteStore: store,
           jevShadowRunner: options.jevShadowRunner,
           enableJevShadow: options.enableJevShadow,
+          ranker: options.ranker,
         });
 
         // Canonical construction order (Milestone Part I Sections 2-4):
@@ -1245,7 +1251,7 @@ export class ContextEngine {
       featuresList.push(f);
     }
 
-    const ranker = new ContextRanker();
+    const ranker = options.ranker || new ContextRanker();
     const ranked = ranker.rank(featuresList);
     const limit = options.limit || 20;
 

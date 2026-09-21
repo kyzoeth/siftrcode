@@ -16,6 +16,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
+import { execSync } from 'child_process';
 import { SiftrBenchManifest, SiftrBenchEpisode } from '../../src/benchmark/siftrbench/episode_schema';
 import { RepositoryIndexer } from '../../src/indexing/repository_index';
 import { GraphBuilder } from '../../src/graph/graph_builder';
@@ -112,16 +114,25 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
   const gbdtArtifact = JSON.parse(fs.readFileSync(gbdtArtifactPath, 'utf8'));
   const v3TreeRanker = TreeRanker.fromArtifact(gbdtArtifact);
 
-  // Load frozen authoritative V2 ContextRanker from compiled baseline worktree
-  let v2DeterministicRanker: any;
-  try {
-    const v2Module = require(path.join(rootDir, '.v2-baseline-worktree/dist'));
-    v2DeterministicRanker = new v2Module.ContextRanker();
-    console.log('🏛️  [Final Offline Evaluation] Loaded frozen authoritative V2 ContextRanker (.v2-baseline-worktree/dist @ 1eedac0)');
-  } catch (err) {
-    v2DeterministicRanker = new ContextRanker();
-    console.log('ℹ️  [Final Offline Evaluation] Using local ContextRanker fallback');
+  // Fail-closed verification and loading of frozen authoritative V2 ContextRanker from compiled baseline worktree
+  const v2RepoDir = path.join(rootDir, '.v2-baseline-worktree');
+  if (!fs.existsSync(v2RepoDir)) {
+    throw new Error(`FAIL_CLOSED: .v2-baseline-worktree missing at: ${v2RepoDir}`);
   }
+  const v2Sha = execSync(`git -C "${v2RepoDir}" rev-parse HEAD`, { encoding: 'utf8' }).trim();
+  if (v2Sha !== '1eedac03b0d83025ebf08ed2945e0ab015c46f6a') {
+    throw new Error(`FAIL_CLOSED: .v2-baseline-worktree HEAD (${v2Sha}) does not match authoritative V2 commit 1eedac03b0d83025ebf08ed2945e0ab015c46f6a`);
+  }
+  const v2DistPath = path.join(v2RepoDir, 'dist');
+  if (!fs.existsSync(v2DistPath)) {
+    throw new Error(`FAIL_CLOSED: .v2-baseline-worktree/dist missing at: ${v2DistPath}`);
+  }
+  const v2Module = require(v2DistPath);
+  if (!v2Module.ContextRanker) {
+    throw new Error(`FAIL_CLOSED: ContextRanker missing in .v2-baseline-worktree/dist`);
+  }
+  const v2DeterministicRanker = new v2Module.ContextRanker();
+  console.log(`🏛️  [Final Offline Evaluation] Loaded frozen authoritative V2 ContextRanker (.v2-baseline-worktree/dist @ ${v2Sha})`);
 
   console.log('🏛️  [Final Offline Evaluation] Initializing evaluation on frozen fresh natural holdout...');
   console.log(`   Episodes: ${manifest.episodes.length} tasks across ${Object.keys(manifest.repositoryDistribution).length} repositories`);
@@ -131,7 +142,7 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
     express: path.join(rootDir, 'benchmarks/express-repo'),
     fastapi: path.join(rootDir, 'benchmarks/fastapi-repo'),
     commander: path.join(rootDir, 'benchmarks/commander-repo'),
-    siftrcode: path.join(rootDir, '.v2-baseline-worktree'),
+    siftrcode: rootDir,
   };
 
   const repoFilters: Record<string, any> = {
@@ -141,26 +152,46 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
     siftrcode: { includePatterns: ['src/**'], excludePatterns: ['**/node_modules/**', '**/dist/**', '**/benchmarks/**'] },
   };
 
-  // 1. Index repositories
-  console.log('\n📚 Indexing benchmark repositories...');
-  const indexes: Record<string, { units: ContextUnit[]; graph: any; gitInt?: GitGraphIntelligence }> = {};
-  for (const [repoKey, rPath] of Object.entries(repoPaths)) {
-    if (fs.existsSync(rPath)) {
-      process.stdout.write(`   Indexing ${repoKey}... `);
-      const indexer = new RepositoryIndexer();
-      const idx = await indexer.indexRepository(rPath, repoFilters[repoKey]);
-      const gb = new GraphBuilder();
-      const graph = gb.buildGraph(idx.units, { repoDir: rPath });
-      let gitInt: GitGraphIntelligence | undefined;
-      try {
-        gitInt = new GitGraphIntelligence({ repoDir: rPath });
-      } catch {}
-      indexes[repoKey] = { units: idx.units, graph, gitInt };
-      console.log(`done (${idx.units.length} units)`);
+  const indexCache = new Map<string, { units: ContextUnit[]; graph: any; gitInt?: GitGraphIntelligence }>();
+  const tmpDirsToClean: string[] = [];
+
+  async function getPointInTimeIndex(repoId: string, baseCommit: string): Promise<{ units: ContextUnit[]; graph: any; gitInt?: GitGraphIntelligence }> {
+    const cacheKey = `${repoId}:${baseCommit}`;
+    if (indexCache.has(cacheKey)) {
+      return indexCache.get(cacheKey)!;
     }
+
+    let repoDir: string;
+    if (repoId === 'siftrcode') {
+      const tmp = fs.mkdtempSync(path.join(os.tmpdir(), `siftr-offline-${baseCommit.slice(0, 8)}-`));
+      tmpDirsToClean.push(tmp);
+      execSync(`git worktree add --force --detach "${tmp}" ${baseCommit} --quiet`);
+      repoDir = tmp;
+    } else {
+      repoDir = repoPaths[repoId];
+      execSync(`git -C "${repoDir}" checkout --quiet ${baseCommit}`);
+    }
+
+    const currentSha = execSync(`git -C "${repoDir}" rev-parse HEAD`, { encoding: 'utf8' }).trim();
+    if (currentSha !== baseCommit) {
+      throw new Error(`POINT_IN_TIME_VIOLATION: ${repoId} workspace at ${currentSha}, expected ${baseCommit}`);
+    }
+
+    const indexer = new RepositoryIndexer();
+    const idx = await indexer.indexRepository(repoDir, repoFilters[repoId]);
+    const gb = new GraphBuilder();
+    const graph = gb.buildGraph(idx.units, { repoDir });
+    let gitInt: GitGraphIntelligence | undefined;
+    try {
+      gitInt = new GitGraphIntelligence({ repoDir });
+    } catch {}
+
+    const res = { units: idx.units, graph, gitInt };
+    indexCache.set(cacheKey, res);
+    return res;
   }
 
-  // 2. Evaluate all 34 tasks
+  // Scoring with point-in-time workspaces
   console.log(`\n🔬 Scoring ${manifest.episodes.length} fresh tasks with V2 (frozen deterministic) vs V3 (learned GBDT)...`);
   const candGen = new CandidateGenerator();
   const pairedDeltas: TaskPairedDelta[] = [];
@@ -169,10 +200,11 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
   const v2TaskEvals: TaskRankingEvaluation[] = [];
   const v3TaskEvals: TaskRankingEvaluation[] = [];
 
-  for (let i = 0; i < manifest.episodes.length; i++) {
-    const ep = manifest.episodes[i];
-    const repoKey = ep.repositoryId;
-    const repoData = indexes[repoKey];
+  try {
+    for (let i = 0; i < manifest.episodes.length; i++) {
+      const ep = manifest.episodes[i];
+      const repoKey = ep.repositoryId;
+      const repoData = await getPointInTimeIndex(repoKey, ep.baseCommit);
 
     if (!repoData) {
       throw new Error(`Repository data not loaded for ${repoKey}`);
@@ -482,6 +514,19 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
   console.log(`✔ Report persisted to: ${reportPath}`);
 
   return report;
+  } finally {
+    for (const tmp of tmpDirsToClean) {
+      try { execSync(`git worktree remove --force "${tmp}" --quiet`, { stdio: 'pipe' }); } catch {}
+      try { fs.rmSync(tmp, { recursive: true, force: true }); } catch {}
+    }
+    for (const [rId, rPath] of Object.entries(repoPaths)) {
+      if (rId !== 'siftrcode' && fs.existsSync(rPath)) {
+        try {
+          execSync(`git -C "${rPath}" checkout --quiet origin/master 2>/dev/null || git -C "${rPath}" checkout --quiet master 2>/dev/null || true`);
+        } catch {}
+      }
+    }
+  }
 }
 
 if (require.main === module) {
