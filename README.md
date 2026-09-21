@@ -330,7 +330,7 @@ Add SiftrCode to your `~/.claude/settings.json`, workspace `.mcp.json`, or Curso
 
 SiftrCode is engineered for strict zero-egress compliance and provable data lineage:
 
-- **Fail-Closed Remote Processing**: Remote candidate evaluation is strictly disabled by default (`remoteProcessingAllowed: false`). Evaluates remotely only when explicitly enabled via `DataRights` or the `SIFTR_JEV_REMOTE_PROCESSING=true` environment flag.
+- **Fail-Closed Remote Processing**: Remote candidate evaluation is strictly disabled by default (`remoteProcessingAllowed: false`). Evaluates remotely only when explicitly enabled via `DataRights` or the `SIFTR_JEV_REMOTE_PROCESSING=true` environment flag. In production container deployments (e.g. Railway or Docker), `SIFTR_JEV_REMOTE_PROCESSING` is omitted from the Dockerfile and must be explicitly set in Railway/deployment environment variables to grant egress consent.
 - **Authoritative WorkspaceSnapshot Identity**: All context operations, indexing, and candidate judgments are bound to immutable composite SHA-256 snapshot hashes (`WorkspaceSnapshot`). Any task or unit mismatch immediately fails closed with `WORKSPACE_SNAPSHOT_MISMATCH`.
 - **Zero Raw Source Retention**: Under default `DataRights`, `ContextPlanMetadataRecord` completely strips unit bodies and formatted prompt text before durable SQLite writes (`rawSourceRetentionAllowed: false`).
 - **Privacy-by-Default Training Policies**: `trainingAllowed: false` by default. Datasets for local model training require explicit customer opt-in and pass through sanitized `TrainingExporter` routes with cryptographic `exportId` lineage.
