@@ -533,29 +533,57 @@
 
       <!-- Zero-Egress Technical Guarantees -->
       <section class="p-6 bg-zinc-950 text-zinc-100 border border-zinc-800 rounded-md shadow-xs space-y-4">
-        <div class="flex items-center gap-2.5">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 ci-live-dot"></span>
-          <h2 class="text-lg sm:text-xl font-normal text-white font-serif tracking-tight">Zero-Egress Technical Guarantees</h2>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 ci-live-dot"></span>
+            <h2 class="text-lg sm:text-xl font-normal text-white font-serif tracking-tight">Zero-Egress &amp; Data Rights Technical Guarantees</h2>
+          </div>
+          <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-900 text-emerald-400 border border-emerald-500/30 font-semibold">Sections 50–52 Enforced</span>
         </div>
         <p class="text-xs text-zinc-300 font-sans leading-relaxed">
-          SiftrCode V2 is governed by immutable data rights enforced directly in code:
+          SiftrCode V2 is governed by immutable data rights and algorithmic isolation enforced directly in code:
         </p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 font-mono text-xs pt-1">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 font-mono text-xs pt-1">
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">trainingAllowed: false</span>
-            <p class="text-[11px] text-zinc-400 font-sans">Zero machine learning training on your syntax or proprietary code.</p>
+            <span class="text-emerald-400 font-semibold">1. trainingAllowed: false</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Zero machine learning training on your syntax, queries, or proprietary code.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">rawSourceRetention: false</span>
-            <p class="text-[11px] text-zinc-400 font-sans">Volatile RAM processing only. Zero persistent file logging.</p>
+            <span class="text-emerald-400 font-semibold">2. rawSourceRetention: false</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Volatile RAM processing only. Zero persistent raw source or token file logging.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">remoteProcessing: false</span>
-            <p class="text-[11px] text-zinc-400 font-sans">100% local CPU execution. 0 bytes of network socket transmission.</p>
+            <span class="text-emerald-400 font-semibold">3. remoteProcessing: false</span>
+            <p class="text-[11px] text-zinc-400 font-sans">100% local CPU execution. 0 outbound network sockets opened during analysis.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">UNEXPOSED_UNKNOWN</span>
-            <p class="text-[11px] text-zinc-400 font-sans">Unexposed candidate files are never falsely assumed negative.</p>
+            <span class="text-emerald-400 font-semibold">4. UNEXPOSED_UNKNOWN</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Unexposed candidate files are treated as unknown, never falsely assumed negative.</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
+            <span class="text-emerald-400 font-semibold">5. RightsFilter Boundary</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Strict firewall between raw telemetry and training datasets. Unvetted data is blocked.</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
+            <span class="text-emerald-400 font-semibold">6. Traceable Erasure</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Cryptographic lineage links enable cascading right-to-be-forgotten purges with audit trail.</p>
+          </div>
+        </div>
+
+        <!-- Export Boundary Pipeline Diagram Banner -->
+        <div class="p-3.5 rounded bg-zinc-900/90 border border-zinc-800 text-[11px] font-mono text-zinc-300 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Sec 50 Learning Plane Export Boundary Architecture</span>
+            <a href="/admin#rights" class="text-xs text-[#F39C82] hover:underline font-sans">Open Admin Console &rarr;</a>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <span class="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-700 text-zinc-300">Raw Observation Store</span>
+            <span class="text-emerald-400 font-bold">&rarr;</span>
+            <span class="px-2.5 py-1 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 font-semibold">RightsFilter Gate</span>
+            <span class="text-emerald-400 font-bold">&rarr;</span>
+            <span class="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-700 text-zinc-300">Training Exporter (Lineage Stamped)</span>
+            <span class="text-emerald-400 font-bold">&rarr;</span>
+            <span class="px-2.5 py-1 rounded bg-rose-950/50 border border-rose-500/40 text-rose-300">Cascading DeletionManager</span>
           </div>
         </div>
       </section>

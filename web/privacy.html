@@ -230,8 +230,8 @@
         SiftrCode V2 is architected from the ground up as a <strong>100% offline, local-first context optimization engine</strong>. We believe intellectual property and codebase confidentiality are inviolable. SiftrCode does not upload your files, does not maintain remote telemetry, does not train machine learning models on your syntax, and operates zero network proxies.
       </p>
       
-      <!-- 4-Part Data Rights Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 font-mono text-xs pt-1">
+      <!-- 6-Part Data Rights Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 font-mono text-xs pt-1">
         <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
           <span class="text-emerald-700 dark:text-emerald-400 font-bold">1. trainingAllowed: false</span>
           <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">SiftrCode never trains, fine-tunes, or adapts machine learning models on your syntax, prompts, or proprietary code.</p>
@@ -245,9 +245,24 @@
           <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">100% of candidate recall, ranking, bundling, and budget solving runs on local CPU. 0 outbound network sockets.</p>
         </div>
         <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-          <span class="text-emerald-700 dark:text-emerald-400 font-bold">4. UNEXPOSED_UNKNOWN Invariant</span>
+          <span class="text-emerald-700 dark:text-emerald-400 font-bold">4. UNEXPOSED Invariant</span>
           <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">In local evaluation telemetry, files not exposed to the agent are labeled unknown, never falsely assumed negative.</p>
         </div>
+        <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+          <span class="text-emerald-700 dark:text-emerald-400 font-bold">5. RightsFilter Boundary (Sec 50)</span>
+          <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Raw telemetry is isolated behind a RightsFilter gate. No training dataset builder can operate directly on raw tables.</p>
+        </div>
+        <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+          <span class="text-emerald-700 dark:text-emerald-400 font-bold">6. Traceable Erasure (Sec 52)</span>
+          <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Full lineage ties every training row to upstream observations, ensuring complete GDPR/CCPA traceable deletion.</p>
+        </div>
+      </div>
+
+      <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-sans">
+        <span class="text-zinc-600 dark:text-zinc-400">Auditors and operators can inspect live source provenance registrations, graph metrics, and execute traceable purges directly in the management portal.</span>
+        <a href="/admin#rights" class="text-[#B34E2E] dark:text-[#F39C82] font-semibold hover:underline flex items-center gap-1 shrink-0 font-mono text-[11px]">
+          Open Data Rights &amp; Lineage Console &rarr;
+        </a>
       </div>
     </div>
 
@@ -281,7 +296,28 @@
       </section>
 
       <section class="space-y-3">
-        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">4. Website &amp; Team Trial Inquiries</h2>
+        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">4. Learning Plane, RightsFilter Boundary &amp; Deletion Traceability (Sections 50–52)</h2>
+        <p>
+          For self-hosted enterprise or research environments utilizing SiftrCode's optional learning plane to refine ranking heuristics, strict algorithmic firewalls and traceable lineage protect your intellectual property:
+        </p>
+        <ul class="list-disc pl-5 space-y-2 text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
+          <li>
+            <strong>Strict RightsFilter Export Boundary:</strong> The local telemetry store operates behind an enforced pipeline: <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">Raw Observation Store &rarr; RightsFilter &rarr; Training Export</code>. Training set generation pipelines are strictly prohibited from querying raw observation tables directly.
+          </li>
+          <li>
+            <strong>Source Provenance &amp; Default Review Gate:</strong> Every source file and repository is stamped with provenance permissions (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 font-semibold">ALLOWED</code>, <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-rose-600 dark:text-rose-400 font-semibold">FORBIDDEN</code>, or <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-amber-600 dark:text-amber-400 font-semibold">REVIEW</code>). Per Section 51, any code with ambiguous, unspecified, or proprietary commercial licensing automatically defaults to <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-amber-600 dark:text-amber-400 font-semibold">REVIEW</code> and is unconditionally blocked from training exports.
+          </li>
+          <li>
+            <strong>Derived-Data Lineage:</strong> Exported training records retain deep lineage metadata (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">DerivedDataLineage</code>) linking each feature vector back to its exact raw observation record ID, license state, feature transform version, and retention window.
+          </li>
+          <li>
+            <strong>Traceable Erasure (GDPR Art. 17 / Right to be Forgotten):</strong> When a repository is purged or access rights are revoked, the <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">DeletionManager</code> cascades across all derived training rows, purges all associated downstream records, and records an immutable, verifiable audit record (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">DeletionAuditRecord</code>).
+          </li>
+        </ul>
+      </section>
+
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">5. Website &amp; Team Trial Inquiries</h2>
         <p>
           When you visit our marketing website (<a href="https://siftrcode.com" class="text-[#B34E2E] dark:text-[#F39C82] hover:underline">siftrcode.com</a>) or request a Team Pro trial via our activation form, we may collect:
         </p>
@@ -296,7 +332,7 @@
       </section>
 
       <section class="space-y-3">
-        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">5. Security Disclosures &amp; Inquiries</h2>
+        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">6. Security Disclosures &amp; Inquiries</h2>
         <p>
           Because SiftrCode is open source, our AST engine and local daemon are completely transparent and verifiable. If you have questions regarding security or wish to report a vulnerability, contact our engineering team directly at:
         </p>

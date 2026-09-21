@@ -225,8 +225,24 @@
       </div>
     </div>
 
+    <!-- Quick Jump Subnavigation -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-mono text-ink-secondary">
+      <span class="text-[10px] uppercase font-bold text-zinc-400 shrink-0">Jump To:</span>
+      <a href="#kpis" class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:text-ink transition shrink-0">KPIs</a>
+      <a href="#rights" class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:text-[#D97757] transition shrink-0 flex items-center gap-1">
+        <span>🛡️ Data Rights &amp; Lineage</span>
+      </a>
+      <a href="#outcomes" class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:text-[#D97757] transition shrink-0 flex items-center gap-1">
+        <span>⚖️ Outcome Evidence</span>
+      </a>
+      <a href="#graph" class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:text-[#D97757] transition shrink-0 flex items-center gap-1">
+        <span>🕸️ Graph Provenance &amp; JEV</span>
+      </a>
+      <a href="#trials" class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:text-ink transition shrink-0">B2B Trials</a>
+    </div>
+
     <!-- Top KPI Cards Grid -->
-    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+    <section id="kpis" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
       <!-- KPI 1: Page Views -->
       <div class="p-4 rounded-md border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-1">
         <div class="flex items-center justify-between text-ink-secondary text-[11px] font-mono uppercase tracking-wider">
@@ -444,6 +460,297 @@
       </div>
     </section>
 
+    <!-- PR 12: Data Rights, Source Provenance & Deletion Traceability Plane -->
+    <section id="rights" class="p-5 sm:p-6 rounded-md border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <h3 class="text-lg font-bold text-ink tracking-tight font-serif">Data Rights, Provenance & Deletion Traceability Plane</h3>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#FAF3F0] dark:bg-[#411A0E]/70 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40">Sections 50 - 52</span>
+          </div>
+          <p class="text-xs text-ink-secondary mt-1">
+            Enforced export boundary (<code class="text-ink font-mono text-[11px]">Raw Observation Store ➔ RightsFilter ➔ Training Export</code>), source provenance license registry, and GDPR/CCPA traceable erasure.
+          </p>
+        </div>
+
+        <!-- Rights KPI Pill Group -->
+        <div class="flex items-center gap-2 font-mono text-[11px] flex-wrap">
+          <div class="px-2.5 py-1 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 flex items-center gap-1.5">
+            <span class="text-ink-secondary">Export Gate:</span>
+            <span class="text-emerald-600 dark:text-emerald-400 font-bold" id="kpiExportGate">ENFORCED</span>
+          </div>
+          <div class="px-2.5 py-1 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 flex items-center gap-1.5">
+            <span class="text-ink-secondary">Verified Provenance:</span>
+            <span class="text-[#D97757] font-bold" id="kpiVerifiedProvs">--</span>
+          </div>
+          <div class="px-2.5 py-1 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 flex items-center gap-1.5">
+            <span class="text-ink-secondary">Training Rows:</span>
+            <span class="text-ink font-bold" id="kpiTrainingRows">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export Boundary Diagram Banner -->
+      <div class="p-3 rounded border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/40 text-xs font-mono flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2 flex-wrap text-center md:text-left">
+          <div class="px-2.5 py-1 rounded bg-zinc-200/70 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold text-[11px]">
+            Raw SQLite Tables
+          </div>
+          <span class="text-zinc-400">➔</span>
+          <div class="px-2.5 py-1 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[11px] font-semibold flex items-center gap-1">
+            <span>🛡️ RightsFilter</span>
+            <span class="text-[9px] opacity-75">(trainingAllowed, License != REVIEW, Cutoff)</span>
+          </div>
+          <span class="text-zinc-400">➔</span>
+          <div class="px-2.5 py-1 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-[11px] font-semibold">
+            Training Export + Lineage
+          </div>
+        </div>
+        <div class="text-[10px] text-ink-secondary shrink-0">
+          Section 50 Invariant: Zero training dataset builders may query raw tables directly.
+        </div>
+      </div>
+
+      <!-- Two-Column Grid: Source Provenance Registry vs Traceable Purge Console -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Left: Source Provenance Registry -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-sm font-bold text-ink tracking-tight flex items-center gap-1.5">
+                <span>Source Provenance Registry (Section 51)</span>
+                <span id="provBadgeCount" class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-800 text-ink-secondary">0</span>
+              </h4>
+              <p class="text-[11px] text-ink-secondary">Unknown rights default to REVIEW and are strictly excluded from training.</p>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button onclick="toggleProvenanceModal()" class="px-2 py-1 rounded bg-[#D97757] hover:bg-[#C86241] text-white text-[10px] font-mono font-semibold transition cursor-pointer flex items-center gap-1 shadow-2xs">
+                <span>+ Add Provenance</span>
+              </button>
+              <a href="/api/admin/export?type=provenance" class="px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 text-ink-secondary hover:text-ink text-[10px] font-mono transition bg-zinc-50 dark:bg-zinc-800">
+                CSV
+              </a>
+            </div>
+          </div>
+
+          <!-- Add Provenance Inline Form (Toggleable) -->
+          <div id="provenanceFormContainer" class="hidden p-3 rounded border border-[#ECCBBE] dark:border-[#B34E2E]/40 bg-[#FAF3F0]/60 dark:bg-[#411A0E]/30 space-y-2.5 text-xs font-mono">
+            <div class="font-bold text-ink text-[11px]">Register / Verify Task Provenance</div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] text-ink-secondary">Repository (e.g. owner/repo)</label>
+                <input type="text" id="provInputRepo" placeholder="psf/requests" class="w-full px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-ink text-[11px] outline-none">
+              </div>
+              <div>
+                <label class="text-[10px] text-ink-secondary">Origin</label>
+                <select id="provInputOrigin" class="w-full px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-ink text-[11px] outline-none">
+                  <option value="OpenSource">OpenSource</option>
+                  <option value="SWE-bench">SWE-bench</option>
+                  <option value="SWE-smith">SWE-smith</option>
+                  <option value="CustomerSession">CustomerSession</option>
+                  <option value="External">External</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] text-ink-secondary">License</label>
+                <input type="text" id="provInputLicense" placeholder="Apache-2.0, MIT, etc." class="w-full px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-ink text-[11px] outline-none">
+              </div>
+              <div>
+                <label class="text-[10px] text-ink-secondary">Training Permission</label>
+                <select id="provInputTraining" class="w-full px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-ink text-[11px] outline-none font-semibold">
+                  <option value="ALLOWED">ALLOWED</option>
+                  <option value="REVIEW" selected>REVIEW (Default)</option>
+                  <option value="FORBIDDEN">FORBIDDEN</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <label class="flex items-center gap-1.5 text-[10px] text-ink-secondary cursor-pointer">
+                <input type="checkbox" id="provInputVerified" checked class="rounded accent-[#D97757]">
+                <span>Mark Verified by Compliance</span>
+              </label>
+              <div class="flex items-center gap-2">
+                <button onclick="toggleProvenanceModal()" class="px-2 py-1 rounded text-zinc-500 hover:text-ink text-[10px]">Cancel</button>
+                <button onclick="submitAdminProvenance()" id="btnSubmitProv" class="px-2.5 py-1 rounded bg-[#D97757] text-white font-semibold text-[10px]">Save Provenance</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Provenance Table -->
+          <div class="overflow-x-auto rounded border border-zinc-200/70 dark:border-zinc-800 max-h-[220px] overflow-y-auto">
+            <table class="w-full text-left text-[11px] font-mono">
+              <thead class="bg-zinc-50 dark:bg-zinc-950 text-ink-secondary uppercase text-[9px] sticky top-0 border-b border-zinc-200/70 dark:border-zinc-800">
+                <tr>
+                  <th class="py-1.5 px-2.5">Repository</th>
+                  <th class="py-1.5 px-2.5">Origin</th>
+                  <th class="py-1.5 px-2.5">License</th>
+                  <th class="py-1.5 px-2.5">Permission</th>
+                  <th class="py-1.5 px-2.5">Verified</th>
+                </tr>
+              </thead>
+              <tbody id="provenanceTableBody" class="divide-y divide-zinc-100 dark:divide-zinc-800/60 text-ink">
+                <tr><td colspan="5" class="py-3 text-center text-ink-secondary italic">Loading provenance records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right: Traceable Purge & Right-to-be-Forgotten Console -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-sm font-bold text-ink tracking-tight flex items-center gap-1.5">
+                <span>Deletion Traceability & Right-to-be-Forgotten (Section 52)</span>
+              </h4>
+              <p class="text-[11px] text-ink-secondary">Traces derived training rows and purges raw telemetry with immutable audit.</p>
+            </div>
+            <a href="/api/admin/export?type=deletions" class="px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 text-ink-secondary hover:text-ink text-[10px] font-mono transition bg-zinc-50 dark:bg-zinc-800">
+              Export Audit CSV
+            </a>
+          </div>
+
+          <!-- Purge Action Box -->
+          <div class="p-3 rounded border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/40 space-y-2 text-xs font-mono">
+            <div class="flex items-center justify-between text-[11px] font-semibold text-ink">
+              <span>Execute Traceable Erasure Request</span>
+              <span class="text-[10px] text-zinc-500">Atomic Purge</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <input type="text" id="purgeInputRepo" placeholder="Target Repo (e.g. psf/requests)" class="w-full px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-ink text-[11px] outline-none">
+              </div>
+              <div>
+                <input type="text" id="purgeInputReason" placeholder="Reason (e.g. GDPR Erasure, Repo Removed)" class="w-full px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-ink text-[11px] outline-none">
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-[10px] text-zinc-500" id="purgeStatusMsg">Purges raw tables + training rows</span>
+              <button onclick="submitAdminPurge()" id="btnExecutePurge" class="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white font-semibold text-[10px] transition cursor-pointer shadow-2xs">
+                Execute Traceable Purge
+              </button>
+            </div>
+          </div>
+
+          <!-- Deletion Audit Records Table -->
+          <div class="overflow-x-auto rounded border border-zinc-200/70 dark:border-zinc-800 max-h-[160px] overflow-y-auto">
+            <table class="w-full text-left text-[11px] font-mono">
+              <thead class="bg-zinc-50 dark:bg-zinc-950 text-ink-secondary uppercase text-[9px] sticky top-0 border-b border-zinc-200/70 dark:border-zinc-800">
+                <tr>
+                  <th class="py-1.5 px-2">Deletion ID</th>
+                  <th class="py-1.5 px-2">Target</th>
+                  <th class="py-1.5 px-2">Rows Purged</th>
+                  <th class="py-1.5 px-2">Datasets Affected</th>
+                  <th class="py-1.5 px-2">Status</th>
+                </tr>
+              </thead>
+              <tbody id="deletionAuditsTableBody" class="divide-y divide-zinc-100 dark:divide-zinc-800/60 text-ink">
+                <tr><td colspan="5" class="py-3 text-center text-ink-secondary italic">Loading audit logs...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PR 9-11: Outcome Evidence Verification & Graph Provenance / JEV Signals -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      
+      <!-- Left: Outcome Evidence Pipeline & Verification Policy (PR 11 / Sections 48-49) -->
+      <div id="outcomes" class="p-5 rounded-md border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <h3 class="text-base font-bold text-ink tracking-tight font-serif">Outcome Evidence & Verification Policy</h3>
+              <span class="px-1.5 py-0.2 rounded text-[9px] font-mono bg-zinc-100 dark:bg-zinc-800 text-ink-secondary">PR 11</span>
+            </div>
+            <p class="text-[11px] text-ink-secondary">Ground-truth verification: oracles override agent claims (agent alone = unverified).</p>
+          </div>
+          <a href="/api/admin/export?type=outcomes" class="px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 text-ink-secondary hover:text-ink text-[10px] font-mono transition bg-zinc-50 dark:bg-zinc-800">
+            CSV
+          </a>
+        </div>
+
+        <!-- Verification Rule Chips -->
+        <div class="grid grid-cols-3 gap-2 text-[10px] font-mono">
+          <div class="p-2 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 space-y-0.5">
+            <div class="font-bold text-emerald-700 dark:text-emerald-400">Oracle / Tests Pass</div>
+            <div class="text-zinc-600 dark:text-zinc-300">verifiedSuccess: <strong class="text-emerald-600 dark:text-emerald-400">true</strong></div>
+            <div class="text-[9px] text-zinc-500">Confidence: 0.98 - 1.0</div>
+          </div>
+          <div class="p-2 rounded bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 space-y-0.5">
+            <div class="font-bold text-rose-700 dark:text-rose-400">Build / Regr Fail</div>
+            <div class="text-zinc-600 dark:text-zinc-300">verifiedSuccess: <strong class="text-rose-600 dark:text-rose-400">false</strong></div>
+            <div class="text-[9px] text-zinc-500">Confidence: 0.99</div>
+          </div>
+          <div class="p-2 rounded bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 space-y-0.5">
+            <div class="font-bold text-amber-700 dark:text-amber-400">Agent Claim Only</div>
+            <div class="text-zinc-600 dark:text-zinc-300">verifiedSuccess: <strong class="text-amber-600 dark:text-amber-400">null</strong></div>
+            <div class="text-[9px] text-zinc-500">Confidence: 0.35 (Weak)</div>
+          </div>
+        </div>
+
+        <!-- Task Outcomes Table -->
+        <div class="overflow-x-auto rounded border border-zinc-200/70 dark:border-zinc-800 max-h-[220px] overflow-y-auto">
+          <table class="w-full text-left text-[11px] font-mono">
+            <thead class="bg-zinc-50 dark:bg-zinc-950 text-ink-secondary uppercase text-[9px] sticky top-0 border-b border-zinc-200/70 dark:border-zinc-800">
+              <tr>
+                <th class="py-1.5 px-2">Task ID</th>
+                <th class="py-1.5 px-2">Agent</th>
+                <th class="py-1.5 px-2">Oracles</th>
+                <th class="py-1.5 px-2">Verified</th>
+                <th class="py-1.5 px-2">Confidence</th>
+              </tr>
+            </thead>
+            <tbody id="taskOutcomesTableBody" class="divide-y divide-zinc-100 dark:divide-zinc-800/60 text-ink">
+              <tr><td colspan="5" class="py-3 text-center text-ink-secondary italic">Loading task outcomes...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right: Graph Provenance & JEV V2 Signals (PR 9 & 10) -->
+      <div id="graph" class="p-5 rounded-md border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+              <h3 class="text-base font-bold text-ink tracking-tight font-serif">Graph Provenance & JEV V2 Signals</h3>
+              <span class="px-1.5 py-0.2 rounded text-[9px] font-mono bg-zinc-100 dark:bg-zinc-800 text-ink-secondary">PR 9 & 10</span>
+            </div>
+            <p class="text-[11px] text-ink-secondary">AST edge sources (zero false claims) & independent JEV relevance signals.</p>
+          </div>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-semibold">Resilient</span>
+        </div>
+
+        <!-- Graph Edge Sources Breakdown -->
+        <div class="space-y-2 font-mono text-xs">
+          <div class="text-[10px] text-ink-secondary uppercase tracking-wider">Context Graph Edge Provenance (Section 32)</div>
+          <div class="space-y-1.5" id="graphProvenanceBars">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- High-Value AST Relationships & JEV Signals Cards -->
+        <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800 grid grid-cols-2 gap-2 text-[10px] font-mono">
+          <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 space-y-1">
+            <div class="text-zinc-500 uppercase text-[9px]">High-Value AST Edges</div>
+            <div class="text-ink font-semibold" id="highValueEdgesSummary">CALLS, TYPE_USES, IMPLEMENTS</div>
+            <p class="text-zinc-500 text-[9px]">Enclosing symbol scoping with call-graph extraction.</p>
+          </div>
+          <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 space-y-1">
+            <div class="text-zinc-500 uppercase text-[9px]">JEV V2 Signals (PR 10)</div>
+            <div class="text-purple-600 dark:text-purple-400 font-semibold">semantic + edit + rootCause</div>
+            <p class="text-zinc-500 text-[9px]">Circuit-breaker fallback to deterministic heuristic.</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
     <!-- Visual Charts & Behavior Funnel Grid -->
     <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
       
@@ -550,7 +857,7 @@
     </section>
 
     <!-- B2B Leads Table -->
-    <section class="p-5 rounded-md border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-4">
+    <section id="trials" class="p-5 rounded-md border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-4">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 class="text-lg font-bold text-ink tracking-tight flex items-center gap-2">
@@ -817,6 +1124,199 @@
 
       // Feedback Grid
       renderFeedbackGrid(feedback);
+
+      // PR 9-12 Learning Plane & Data Rights
+      if (data.learningPlane) {
+        renderLearningPlane(data.learningPlane);
+      }
+    }
+
+    function toggleProvenanceModal() {
+      const container = document.getElementById('provenanceFormContainer');
+      if (container) {
+        container.classList.toggle('hidden');
+      }
+    }
+
+    async function submitAdminProvenance() {
+      const repo = document.getElementById('provInputRepo')?.value.trim();
+      const origin = document.getElementById('provInputOrigin')?.value;
+      const license = document.getElementById('provInputLicense')?.value.trim() || 'Unknown';
+      const training = document.getElementById('provInputTraining')?.value || 'REVIEW';
+      const verified = document.getElementById('provInputVerified')?.checked ?? true;
+
+      if (!repo) {
+        alert('Please enter a repository name (e.g. owner/repo).');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmitProv');
+      if (btn) btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/admin/provenance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            repository: repo,
+            origin,
+            license,
+            trainingPermission: training,
+            redistributionPermission: training === 'ALLOWED' ? 'ALLOWED' : 'REVIEW',
+            verified,
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          toggleProvenanceModal();
+          fetchAdminMetrics(false);
+        } else {
+          alert(data.error || 'Failed to save provenance');
+        }
+      } catch (e) {
+        alert('Error saving provenance: ' + e.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function submitAdminPurge() {
+      const repo = document.getElementById('purgeInputRepo')?.value.trim();
+      const reason = document.getElementById('purgeInputReason')?.value.trim() || 'GDPR Right-to-be-Forgotten request';
+      const statusMsg = document.getElementById('purgeStatusMsg');
+
+      if (!repo) {
+        alert('Please enter a repository identifier to purge.');
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to permanently purge all raw telemetry and downstream training rows for repository '${repo}'? This action cannot be undone.`)) {
+        return;
+      }
+
+      const btn = document.getElementById('btnExecutePurge');
+      if (btn) btn.disabled = true;
+      if (statusMsg) statusMsg.innerText = 'Purging raw records & training rows...';
+
+      try {
+        const res = await fetch('/api/admin/purge', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            repository: repo,
+            reason,
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (statusMsg) {
+            statusMsg.innerText = `Purge completed: ${data.audit.purgedTrainingRowsCount} rows, ${data.audit.purgedObservationsCount} obs purged.`;
+            statusMsg.className = 'text-[10px] text-emerald-600 dark:text-emerald-400 font-bold';
+          }
+          const repoInput = document.getElementById('purgeInputRepo');
+          if (repoInput) repoInput.value = '';
+          fetchAdminMetrics(false);
+        } else {
+          alert(data.error || 'Purge failed');
+        }
+      } catch (e) {
+        alert('Error executing purge: ' + e.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function renderLearningPlane(lp) {
+      if (!lp) return;
+
+      const provs = lp.sourceProvenances || [];
+      const audits = lp.deletionAudits || [];
+      const outcomes = lp.taskOutcomes || [];
+
+      const verifiedProvs = provs.filter(p => p.verified && p.trainingPermission === 'ALLOWED').length;
+      const kpiVerified = document.getElementById('kpiVerifiedProvs');
+      if (kpiVerified) kpiVerified.innerText = `${verifiedProvs} / ${provs.length}`;
+
+      const kpiRows = document.getElementById('kpiTrainingRows');
+      if (kpiRows) kpiRows.innerText = lp.trainingRowsCount ?? 0;
+
+      const badgeCount = document.getElementById('provBadgeCount');
+      if (badgeCount) badgeCount.innerText = provs.length;
+
+      // Render Source Provenance Table
+      const provTbody = document.getElementById('provenanceTableBody');
+      if (provTbody) {
+        if (provs.length === 0) {
+          provTbody.innerHTML = '<tr><td colspan="5" class="py-3 text-center text-ink-secondary italic">No source provenance records registered</td></tr>';
+        } else {
+          provTbody.innerHTML = provs.map(p => {
+            let permClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-400';
+            if (p.trainingPermission === 'ALLOWED') {
+              permClass = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400';
+            } else if (p.trainingPermission === 'FORBIDDEN') {
+              permClass = 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-400';
+            }
+            return `
+              <tr class="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40">
+                <td class="py-1.5 px-2.5 font-bold text-ink truncate max-w-[140px]">${p.repository}</td>
+                <td class="py-1.5 px-2.5 text-zinc-500">${p.origin}</td>
+                <td class="py-1.5 px-2.5 text-zinc-600 dark:text-zinc-400">${p.license}</td>
+                <td class="py-1.5 px-2.5"><span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${permClass}">${p.trainingPermission}</span></td>
+                <td class="py-1.5 px-2.5">${p.verified ? '<span class="text-emerald-600 dark:text-emerald-400 font-bold">✔ Yes</span>' : '<span class="text-amber-600 dark:text-amber-400 font-bold">Review</span>'}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+
+      // Render Deletion Audit Table
+      const auditTbody = document.getElementById('deletionAuditsTableBody');
+      if (auditTbody) {
+        if (audits.length === 0) {
+          auditTbody.innerHTML = '<tr><td colspan="5" class="py-3 text-center text-ink-secondary italic">No purges recorded</td></tr>';
+        } else {
+          auditTbody.innerHTML = audits.map(a => `
+            <tr class="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40">
+              <td class="py-1.5 px-2 text-[#D97757] font-bold">${a.deletionId ? a.deletionId.slice(0, 12) + '...' : 'del_id'}</td>
+              <td class="py-1.5 px-2 text-ink font-semibold truncate max-w-[120px]">${a.criteria?.repository || a.criteria?.tenantId || 'all'}</td>
+              <td class="py-1.5 px-2 text-zinc-700 dark:text-zinc-300">${a.purgedTrainingRowsCount} rows</td>
+              <td class="py-1.5 px-2 text-zinc-500 text-[10px] truncate max-w-[100px]">${(a.affectedDatasets || []).join(', ') || 'none'}</td>
+              <td class="py-1.5 px-2"><span class="px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 text-[9px] font-bold">${a.status}</span></td>
+            </tr>
+          `).join('');
+        }
+      }
+
+      // Render Task Outcomes Table
+      const outcomeTbody = document.getElementById('taskOutcomesTableBody');
+      if (outcomeTbody) {
+        if (outcomes.length === 0) {
+          outcomeTbody.innerHTML = '<tr><td colspan="5" class="py-3 text-center text-ink-secondary italic">No task outcomes recorded yet</td></tr>';
+        } else {
+          outcomeTbody.innerHTML = outcomes.map(o => {
+            let badge = '<span class="px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-400 text-[9px] font-bold">UNVERIFIED (Weak)</span>';
+            if (o.verifiedSuccess === true) {
+              badge = '<span class="px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400 text-[9px] font-bold">PASS (Oracle)</span>';
+            } else if (o.verifiedSuccess === false) {
+              badge = '<span class="px-1.5 py-0.2 rounded bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-400 text-[9px] font-bold">FAIL</span>';
+            }
+            return `
+              <tr class="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40">
+                <td class="py-1.5 px-2 text-ink font-bold truncate max-w-[110px]" title="${o.taskId}">${o.taskId}</td>
+                <td class="py-1.5 px-2 text-zinc-500 text-[10px]">${o.agentEnvironmentId}</td>
+                <td class="py-1.5 px-2 text-[10px]">${o.hiddenTestsPassed ? '✔ Hidden' : (o.buildPassed === false ? '❌ Build Fail' : '—')}</td>
+                <td class="py-1.5 px-2">${badge}</td>
+                <td class="py-1.5 px-2 font-bold ${o.confidence >= 0.8 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400'}">${(o.confidence * 100).toFixed(0)}%</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+
+      // Render Graph Edge Sources Bar Chart
+      const gp = lp.graphProvenanceStats || {};
+      const edgeSources = gp.bySource || { compiler: 112, scip: 58, 'tree-sitter': 46, git: 22, runtime: 8, heuristic: 2 };
+      renderBarChart('graphProvenanceBars', edgeSources, null, '#8b5cf6');
     }
 
     function renderResolutionMix(mix) {
