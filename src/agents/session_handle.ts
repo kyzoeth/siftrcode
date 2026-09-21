@@ -4,6 +4,9 @@
  */
 
 import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 export interface SessionHandle {
   taskId: string;
@@ -15,6 +18,57 @@ export interface SessionHandle {
 }
 
 const SESSION_HANDLE_MAGIC = 'siftr_sess_';
+let cachedLocalSecret: string | null = null;
+
+/**
+ * Section 43: Secure Session Signing Secret.
+ * Uses SIFTR_SESSION_SECRET in production/cloud, or generates a local installation secret.
+ * Missing secret in production throws a configuration error.
+ */
+export function getSessionSigningSecret(providedSecret?: string): string {
+  if (providedSecret) {
+    return providedSecret;
+  }
+
+  const envSecret = process.env.SIFTR_SESSION_SECRET;
+  if (envSecret && envSecret.trim().length > 0) {
+    return envSecret.trim();
+  }
+
+  const isProduction =
+    process.env.NODE_ENV === 'production' ||
+    process.env.SIFTR_ENV === 'cloud' ||
+    process.env.SIFTR_ENV === 'production';
+
+  if (isProduction) {
+    throw new Error(
+      'Configuration error: SIFTR_SESSION_SECRET is required in production/cloud environments (Section 43)'
+    );
+  }
+
+  if (cachedLocalSecret) {
+    return cachedLocalSecret;
+  }
+
+  try {
+    const configDir = path.join(os.homedir(), '.siftr');
+    const secretFile = path.join(configDir, 'session_secret');
+    if (fs.existsSync(secretFile)) {
+      cachedLocalSecret = fs.readFileSync(secretFile, 'utf8').trim();
+      if (cachedLocalSecret) return cachedLocalSecret;
+    }
+    const newSecret = crypto.randomBytes(32).toString('hex');
+    fs.mkdirSync(configDir, { recursive: true });
+    fs.writeFileSync(secretFile, newSecret, { mode: 0o600 });
+    cachedLocalSecret = newSecret;
+    return cachedLocalSecret;
+  } catch {
+    if (!cachedLocalSecret) {
+      cachedLocalSecret = crypto.randomBytes(32).toString('hex');
+    }
+    return cachedLocalSecret;
+  }
+}
 
 export function createSessionHandle(
   taskId: string,
@@ -36,7 +90,8 @@ export function createSessionHandle(
 /**
  * Serializes a SessionHandle into a secure, URL-safe base64 string with checksum
  */
-export function serializeSessionHandle(handle: SessionHandle, secretKey = 'siftr_stateless_v2'): string {
+export function serializeSessionHandle(handle: SessionHandle, secretKey?: string): string {
+  const effectiveSecret = getSessionSigningSecret(secretKey);
   const payloadJson = JSON.stringify({
     taskId: handle.taskId,
     siftrSessionId: handle.siftrSessionId,
@@ -48,7 +103,7 @@ export function serializeSessionHandle(handle: SessionHandle, secretKey = 'siftr
 
   const payloadBase64 = Buffer.from(payloadJson, 'utf8').toString('base64url');
   const signature = crypto
-    .createHmac('sha256', secretKey)
+    .createHmac('sha256', effectiveSecret)
     .update(payloadBase64)
     .digest('base64url')
     .slice(0, 16);
@@ -59,7 +114,8 @@ export function serializeSessionHandle(handle: SessionHandle, secretKey = 'siftr
 /**
  * Deserializes and verifies a session handle token
  */
-export function deserializeSessionHandle(token: string, secretKey = 'siftr_stateless_v2'): SessionHandle {
+export function deserializeSessionHandle(token: string, secretKey?: string): SessionHandle {
+  const effectiveSecret = getSessionSigningSecret(secretKey);
   if (!token || !token.startsWith(SESSION_HANDLE_MAGIC)) {
     throw new Error('Invalid session handle format: missing prefix');
   }
@@ -72,7 +128,7 @@ export function deserializeSessionHandle(token: string, secretKey = 'siftr_state
 
   const [payloadBase64, providedSig] = parts;
   const expectedSig = crypto
-    .createHmac('sha256', secretKey)
+    .createHmac('sha256', effectiveSecret)
     .update(payloadBase64)
     .digest('base64url')
     .slice(0, 16);

@@ -8,6 +8,7 @@ import { packRepository } from '../core/packer';
 import { auditRepository } from '../core/auditor';
 import { ContextEngine } from '../engine/context_engine';
 import { getResolutionName } from '../context/context_resolution';
+import { resolveSafeWorkspacePath } from '../workspace/workspace_source_reader';
 
 export async function runMcpServer() {
   const server = new Server(
@@ -229,14 +230,15 @@ export async function runMcpServer() {
         if (directContent !== undefined) {
           rawContent = directContent;
         } else {
-          const resolvedPath = path.resolve(filePath);
-          if (!fs.existsSync(resolvedPath)) {
+          const workspaceRoot = process.cwd();
+          const safePath = resolveSafeWorkspacePath(workspaceRoot, filePath);
+          if (!safePath || !fs.existsSync(safePath)) {
             return {
-              content: [{ type: 'text', text: `Error: File not found at ${filePath}` }],
+              content: [{ type: 'text', text: `Error: File not found or path outside workspace: ${filePath}` }],
               isError: true
             };
           }
-          rawContent = fs.readFileSync(resolvedPath, 'utf-8');
+          rawContent = fs.readFileSync(safePath, 'utf-8');
         }
 
         const skeleton = skeletonizeFile(rawContent, filePath);
@@ -275,21 +277,22 @@ export async function runMcpServer() {
         let totalOriginal = 0;
         let totalSkeleton = 0;
 
+        const workspaceRoot = process.cwd();
         for (const fp of filePaths) {
           try {
-            const resolvedPath = path.resolve(fp);
-            if (!fs.existsSync(resolvedPath)) {
+            const safePath = resolveSafeWorkspacePath(workspaceRoot, fp);
+            if (!safePath || !fs.existsSync(safePath)) {
               results.push({
                 filePath: fp,
                 originalTokens: 0,
                 skeletonTokens: 0,
                 reduction: '0%',
                 skeletonContent: '',
-                error: `File not found at ${fp}`
+                error: `File not found or path outside workspace: ${fp}`
               });
               continue;
             }
-            const rawContent = fs.readFileSync(resolvedPath, 'utf-8');
+            const rawContent = fs.readFileSync(safePath, 'utf-8');
             const skel = skeletonizeFile(rawContent, fp);
             totalOriginal += skel.originalTokensEstimate;
             totalSkeleton += skel.skeletonTokensEstimate;

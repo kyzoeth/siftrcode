@@ -37,6 +37,49 @@ export interface WorkspaceSourceReader {
   ): Promise<{ valid: boolean; reason?: string }>;
 }
 
+/**
+ * Resolves targetPath relative to workspaceRoot, verifying strictly that the
+ * canonical resolved path is a descendant of the workspace root.
+ * Section 39: Defends against directory traversal (../), absolute paths, and symlink escapes.
+ */
+export function resolveSafeWorkspacePath(workspaceRoot: string, targetPath: string): string | null {
+  try {
+    const rootResolved = path.resolve(workspaceRoot);
+    let realRoot = rootResolved;
+    try {
+      if (fs.existsSync(rootResolved)) {
+        realRoot = fs.realpathSync(rootResolved);
+      }
+    } catch {
+      // Fall back to resolved path
+    }
+
+    // Check for path traversal or absolute escape
+    const candidatePath = path.isAbsolute(targetPath)
+      ? path.resolve(targetPath)
+      : path.resolve(realRoot, targetPath);
+
+    // Verify prefix before resolving symlinks
+    const normRealRoot = realRoot.endsWith(path.sep) ? realRoot : realRoot + path.sep;
+    if (candidatePath !== realRoot && !candidatePath.startsWith(normRealRoot)) {
+      return null; // Outside workspace
+    }
+
+    // If file exists, resolve its realpath to catch symlink escapes
+    if (fs.existsSync(candidatePath)) {
+      const realCandidate = fs.realpathSync(candidatePath);
+      if (realCandidate !== realRoot && !realCandidate.startsWith(normRealRoot)) {
+        return null; // Symlink escaped workspace root!
+      }
+      return realCandidate;
+    }
+
+    return candidatePath;
+  } catch {
+    return null;
+  }
+}
+
 export class DefaultWorkspaceSourceReader implements WorkspaceSourceReader {
   private rootDir: string;
   private knownFileHashes: Map<string, string> = new Map(); // snapshotId:path -> hash
@@ -45,47 +88,8 @@ export class DefaultWorkspaceSourceReader implements WorkspaceSourceReader {
     this.rootDir = path.resolve(rootDir);
   }
 
-  /**
-   * Resolves targetPath relative to workspaceRoot, verifying strictly that the
-   * canonical resolved path is a descendant of the workspace root.
-   * Defends against directory traversal (../), absolute paths, and symlink escapes.
-   */
   public resolveSafeWorkspacePath(workspaceRoot: string, targetPath: string): string | null {
-    try {
-      const rootResolved = path.resolve(workspaceRoot);
-      let realRoot = rootResolved;
-      try {
-        if (fs.existsSync(rootResolved)) {
-          realRoot = fs.realpathSync(rootResolved);
-        }
-      } catch {
-        // Fall back to resolved path
-      }
-
-      // Check for path traversal or absolute escape
-      const candidatePath = path.isAbsolute(targetPath)
-        ? path.resolve(targetPath)
-        : path.resolve(realRoot, targetPath);
-
-      // Verify prefix before resolving symlinks
-      const normRealRoot = realRoot.endsWith(path.sep) ? realRoot : realRoot + path.sep;
-      if (candidatePath !== realRoot && !candidatePath.startsWith(normRealRoot)) {
-        return null; // Outside workspace
-      }
-
-      // If file exists, resolve its realpath to catch symlink escapes
-      if (fs.existsSync(candidatePath)) {
-        const realCandidate = fs.realpathSync(candidatePath);
-        if (realCandidate !== realRoot && !realCandidate.startsWith(normRealRoot)) {
-          return null; // Symlink escaped workspace root!
-        }
-        return realCandidate;
-      }
-
-      return candidatePath;
-    } catch {
-      return null;
-    }
+    return resolveSafeWorkspacePath(workspaceRoot, targetPath);
   }
 
   /**

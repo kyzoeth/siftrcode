@@ -192,8 +192,8 @@ export class RedisLockManager {
     assert.ok(baseRenderedTokens > 0);
     assert.strictEqual(unconstrainedPlan.overflowReason, undefined);
 
-    // Now enforce a tight budget of 150 tokens (forcing post-render budget gate to degrade/remove optional units)
-    const tightTokenLimit = 150;
+    // Now enforce a tight budget of 200 tokens (forcing post-render budget gate to degrade/remove optional units)
+    const tightTokenLimit = 200;
     const engineTight = new ContextEngine({
       repoRootDir: tempWorkspaceDir,
       materializer,

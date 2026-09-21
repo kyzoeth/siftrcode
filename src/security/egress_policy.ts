@@ -84,3 +84,75 @@ export class ProviderEgressPolicy {
     };
   }
 }
+
+export interface EnforcedProviderCall<T> {
+  providerName: string;
+  units: ContextUnit[];
+  contents: string[];
+  rights: DataRights;
+  execute: () => Promise<T>;
+}
+
+/**
+ * Section 42: Enforced wrapper around provider calls (JEV, embeddings, rerankers, Siftr Cloud).
+ * Verifies DataRights + TrustLevel + SecretFilter + EgressPolicy before any external transmission.
+ */
+export class EnforcedEgressGateway {
+  private egressPolicy: ProviderEgressPolicy;
+
+  constructor(egressPolicy?: ProviderEgressPolicy) {
+    this.egressPolicy = egressPolicy || new ProviderEgressPolicy();
+  }
+
+  public async executeWithEgressEnforcement<T>(call: EnforcedProviderCall<T>): Promise<{
+    result: T;
+    egressDecisions: EgressCheckResult[];
+  }> {
+    const egressDecisions: EgressCheckResult[] = [];
+
+    for (let i = 0; i < call.units.length; i++) {
+      const unit = call.units[i];
+      const content = call.contents[i] || '';
+      const decision = this.egressPolicy.evaluateEgress(unit, content, call.rights);
+      egressDecisions.push(decision);
+
+      if (!decision.allowed) {
+        throw new Error(
+          `Egress security violation for provider "${call.providerName}": ${decision.reason || 'blocked by policy'}`
+        );
+      }
+    }
+
+    const result = await call.execute();
+    return { result, egressDecisions };
+  }
+
+  public executeWithEgressEnforcementSync<T>(call: {
+    providerName: string;
+    units: ContextUnit[];
+    contents: string[];
+    rights: DataRights;
+    executeSync: () => T;
+  }): {
+    result: T;
+    egressDecisions: EgressCheckResult[];
+  } {
+    const egressDecisions: EgressCheckResult[] = [];
+
+    for (let i = 0; i < call.units.length; i++) {
+      const unit = call.units[i];
+      const content = call.contents[i] || '';
+      const decision = this.egressPolicy.evaluateEgress(unit, content, call.rights);
+      egressDecisions.push(decision);
+
+      if (!decision.allowed) {
+        throw new Error(
+          `Egress security violation for provider "${call.providerName}": ${decision.reason || 'blocked by policy'}`
+        );
+      }
+    }
+
+    const result = call.executeSync();
+    return { result, egressDecisions };
+  }
+}
