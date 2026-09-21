@@ -13,7 +13,8 @@ import { RankedCandidate } from '../../../ranking/context_rank';
 import { WorkspaceSnapshot } from '../../../workspace/workspace_snapshot';
 import { DataClass, DataRights, isDataClassPermitted, isRemoteProcessingPermitted } from '../../../rights/data_rights';
 import { TrustLevel } from '../../../security/trust';
-import { StructuredEgressGateway, EgressField, SanitizedEgressPayload } from '../../../security/structured_egress';
+import { StructuredEgressGateway, EgressField, SanitizedEgressPayload, EgressDeniedError } from '../../../security/structured_egress';
+import { RateLimitError, APITimeoutError, APIConnectionError, APIError } from '@typesafe-ai/sdk';
 import { SystemOneClient, TypeSafeSystemOneClient, FakeSystemOneClient } from './typesafe_client';
 import { JEV_QUESTION_SET_VERSION_V1 } from './jev_questions';
 import { JevSignalV1, JevFallbackReason, JevMode, createJevSignalV1 } from './jev_signal';
@@ -386,10 +387,17 @@ export class JevShadowRunner {
 
           const latencyMs = Date.now() - startTime;
 
-          // Validate response structure
+          // Validate response structure and 4 heads strictly
+          const prob = (x: unknown) => typeof x === 'number' && Number.isFinite(x) && x >= 0 && x <= 1 ? x : null;
           const hasAnswers = result && result.answers && typeof result.answers === 'object';
-          if (!hasAnswers) {
-            tracker.recordCallFailure();
+          const sr = hasAnswers ? prob(result.answers?.semanticRelevance?.noul) : null;
+          const ineed = hasAnswers ? prob(result.answers?.implementationNeeded?.noul) : null;
+          const let_ = hasAnswers ? prob(result.answers?.likelyEditTarget?.noul) : null;
+          const lrc = hasAnswers ? prob(result.answers?.likelyRootCause?.noul) : null;
+
+          const allValid = hasAnswers && sr !== null && ineed !== null && let_ !== null && lrc !== null;
+          if (!allValid) {
+            tracker.recordCallFailure('MALFORMED');
             signals.push(
               createJevSignalV1({
                 taskId: task.taskId,
@@ -398,10 +406,10 @@ export class JevShadowRunner {
                 agentEnvironmentId,
                 contextUnitId: unit.id,
                 contextPlanId,
-                semanticRelevanceProbability: null,
-                implementationNeededProbability: null,
-                likelyEditTargetProbability: null,
-                likelyRootCauseProbability: null,
+                semanticRelevanceProbability: sr,
+                implementationNeededProbability: ineed,
+                likelyEditTargetProbability: let_,
+                likelyRootCauseProbability: lrc,
                 model: result?.model || this.model,
                 questionSetVersion: JEV_QUESTION_SET_VERSION_V1,
                 requestId: result?.requestId,
@@ -423,10 +431,10 @@ export class JevShadowRunner {
               agentEnvironmentId,
               contextUnitId: unit.id,
               contextPlanId,
-              semanticRelevanceProbability: result.answers?.semanticRelevance?.noul ?? null,
-              implementationNeededProbability: result.answers?.implementationNeeded?.noul ?? null,
-              likelyEditTargetProbability: result.answers?.likelyEditTarget?.noul ?? null,
-              likelyRootCauseProbability: result.answers?.likelyRootCause?.noul ?? null,
+              semanticRelevanceProbability: sr,
+              implementationNeededProbability: ineed,
+              likelyEditTargetProbability: let_,
+              likelyRootCauseProbability: lrc,
               model: result.model || this.model,
               questionSetVersion: JEV_QUESTION_SET_VERSION_V1,
               requestId: result.requestId,
@@ -437,32 +445,53 @@ export class JevShadowRunner {
           );
         } catch (err: any) {
           const latencyMs = Date.now() - startTime;
-          const msg = (err?.message || '').toLowerCase();
-          const errName = (err?.name || '').toLowerCase();
-
           let fallbackReason = JevFallbackReason.PROVIDER_ERROR;
-          if (msg.includes('rights') || msg.includes('remote processing')) {
-            fallbackReason = JevFallbackReason.RIGHTS_DENIED;
-            tracker.recordRightsDenied();
-          } else if (msg.includes('trust') || msg.includes('untrusted')) {
-            fallbackReason = JevFallbackReason.TRUST_DENIED;
-            tracker.recordTrustDenied();
-          } else if (msg.includes('budget_exhausted')) {
+
+          if (err instanceof EgressDeniedError) {
+            if (err.reason === 'RIGHTS') {
+              fallbackReason = JevFallbackReason.RIGHTS_DENIED;
+              tracker.recordRightsDenied();
+            } else {
+              fallbackReason = JevFallbackReason.TRUST_DENIED;
+              tracker.recordTrustDenied();
+            }
+          } else if (err?.message?.includes('BUDGET_EXHAUSTED')) {
             fallbackReason = JevFallbackReason.BUDGET_EXHAUSTED;
             tracker.recordBudgetSkipped();
+          } else if (err instanceof APITimeoutError || err?.name === 'APITimeoutError') {
+            fallbackReason = JevFallbackReason.TIMEOUT;
+            tracker.recordCallFailure('TIMEOUT');
+          } else if (
+            err instanceof RateLimitError ||
+            err?.name === 'RateLimitError' ||
+            (err instanceof APIError && (err.status === 429 || (err as any).statusCode === 429)) ||
+            err?.status === 429 ||
+            err?.statusCode === 429
+          ) {
+            fallbackReason = JevFallbackReason.RATE_LIMITED;
+            tracker.recordCallFailure('RATE_LIMITED');
+          } else if (err instanceof APIConnectionError || err?.name === 'APIConnectionError') {
+            fallbackReason = JevFallbackReason.CONNECTION_ERROR;
+            tracker.recordCallFailure('CONNECTION_ERROR');
+          } else if (err instanceof APIError || err?.name === 'APIError') {
+            fallbackReason = JevFallbackReason.PROVIDER_ERROR;
+            tracker.recordCallFailure('PROVIDER_ERROR');
+          } else if (
+            err instanceof SyntaxError ||
+            err?.name === 'SyntaxError' ||
+            (typeof err?.message === 'string' && (err.message.includes('JSON') || err.message.includes('syntax') || err.message.includes('malformed')))
+          ) {
+            fallbackReason = JevFallbackReason.MALFORMED_RESPONSE;
+            tracker.recordCallFailure('MALFORMED');
           } else {
-            tracker.recordCallFailure();
-            if (
-              errName.includes('timeout') ||
-              msg.includes('timeout') ||
-              msg.includes('timed out') ||
-              msg.includes('abort')
-            ) {
+            const errName = (err?.name || '').toLowerCase();
+            const errMsg = (err?.message || '').toLowerCase();
+            if (errName.includes('timeout') || errName.includes('abort') || errMsg.includes('timed out')) {
               fallbackReason = JevFallbackReason.TIMEOUT;
-            } else if (msg.includes('rate') || msg.includes('429') || err?.status === 429) {
-              fallbackReason = JevFallbackReason.RATE_LIMITED;
-            } else if (msg.includes('malformed') || msg.includes('syntax') || msg.includes('parse')) {
-              fallbackReason = JevFallbackReason.MALFORMED_RESPONSE;
+              tracker.recordCallFailure('TIMEOUT');
+            } else {
+              fallbackReason = JevFallbackReason.PROVIDER_ERROR;
+              tracker.recordCallFailure('PROVIDER_ERROR');
             }
           }
 

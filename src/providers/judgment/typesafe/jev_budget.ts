@@ -28,6 +28,13 @@ export interface JevCallStats {
   trustDeniedCalls: number;
   rightsDeniedCalls: number;
   budgetSkippedCandidates: number;
+  timeouts: number;
+  rateLimited: number;
+  malformed: number;
+  connectionErrors: number;
+  providerErrors: number;
+  retries: number;
+  httpRequests: number;
 }
 
 export class JevCallTracker {
@@ -41,6 +48,13 @@ export class JevCallTracker {
     trustDeniedCalls: 0,
     rightsDeniedCalls: 0,
     budgetSkippedCandidates: 0,
+    timeouts: 0,
+    rateLimited: 0,
+    malformed: 0,
+    connectionErrors: 0,
+    providerErrors: 0,
+    retries: 0,
+    httpRequests: 0,
   };
 
   constructor(budget: Partial<JevDecisionBudget> = {}) {
@@ -80,9 +94,28 @@ export class JevCallTracker {
     this.stats.successfulCalls++;
   }
 
-  public recordCallFailure(): void {
+  public recordRetry(): void {
+    this.stats.retries++;
+  }
+
+  public recordHttpRequest(): void {
+    this.stats.httpRequests++;
+  }
+
+  public recordCallFailure(category?: 'TIMEOUT' | 'RATE_LIMITED' | 'MALFORMED' | 'CONNECTION_ERROR' | 'PROVIDER_ERROR' | string): void {
     this.stats.failedCalls++;
     this.stats.fallbackCalls++;
+    if (category === 'TIMEOUT') {
+      this.stats.timeouts++;
+    } else if (category === 'RATE_LIMITED') {
+      this.stats.rateLimited++;
+    } else if (category === 'MALFORMED') {
+      this.stats.malformed++;
+    } else if (category === 'CONNECTION_ERROR') {
+      this.stats.connectionErrors++;
+    } else {
+      this.stats.providerErrors++;
+    }
   }
 
   public recordFallback(): void {

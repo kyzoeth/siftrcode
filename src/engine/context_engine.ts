@@ -901,6 +901,7 @@ export class ContextEngine {
         })
         .catch((shadowErr) => {
           console.warn('[ContextEngine] JEV shadow evaluation error:', shadowErr);
+          contextPlan.jevError = shadowErr instanceof Error ? shadowErr : new Error(String(shadowErr));
           return [];
         });
       contextPlan.jevPromise = shadowPromise;

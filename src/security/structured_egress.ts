@@ -8,6 +8,15 @@ import { DataClass, DataRights, isOperationPermitted } from '../rights/data_righ
 import { TrustLevel } from './trust';
 import { SecretDetector, DefaultSecretDetector } from './secret_filter';
 
+export class EgressDeniedError extends Error {
+  public readonly reason: 'RIGHTS' | 'TRUST';
+  constructor(reason: 'RIGHTS' | 'TRUST', message: string) {
+    super(message);
+    this.name = 'EgressDeniedError';
+    this.reason = reason;
+  }
+}
+
 export interface EgressField {
   key: string;
   dataClass: DataClass;
@@ -48,14 +57,16 @@ export class StructuredEgressGateway {
   ): Promise<{ result: T; payload: SanitizedEgressPayload }> {
     // 1. Check top-level remote processing permission
     if (!rights.remoteProcessingAllowed) {
-      throw new Error(
+      throw new EgressDeniedError(
+        'RIGHTS',
         'Egress blocked: Customer DataRights prohibits remote processing (remoteProcessingAllowed is false)'
       );
     }
 
     // 2. Check repository trust level (Part VIII Section 22)
     if (trustLevel === TrustLevel.UNTRUSTED && !this.allowUntrustedEgress) {
-      throw new Error(
+      throw new EgressDeniedError(
+        'TRUST',
         'Egress blocked: UNTRUSTED context units are prohibited from remote provider transmission'
       );
     }
@@ -74,7 +85,8 @@ export class StructuredEgressGateway {
           'processing_remote'
         );
         if (!canProcessRemote) {
-          throw new Error(
+          throw new EgressDeniedError(
+            'RIGHTS',
             `Egress blocked: DataClass "${f.dataClass}" does not permit remote processing in OperationRightsPolicy`
           );
         }
@@ -83,7 +95,8 @@ export class StructuredEgressGateway {
       // External source trust constraints (Part VIII Section 22)
       if (trustLevel === TrustLevel.EXTERNAL_SOURCE && (f.dataClass === DataClass.RAW_SOURCE || f.dataClass === DataClass.SOURCE_SNIPPET)) {
         if (!rights.operationRights?.[f.dataClass]?.processing?.remote) {
-          throw new Error(
+          throw new EgressDeniedError(
+            'RIGHTS',
             `Egress blocked: EXTERNAL_SOURCE unit requires explicit remote-processing permission for ${f.dataClass}`
           );
         }

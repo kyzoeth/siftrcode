@@ -46,6 +46,7 @@ export interface ContextPlan {
   replanningAttempts?: number;
   jevSignals?: JevSignalV1[];
   jevPromise?: Promise<JevSignalV1[]>;
+  jevError?: Error;
   createdAt: string;
 }
 
