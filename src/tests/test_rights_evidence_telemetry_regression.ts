@@ -73,6 +73,7 @@ import {
   SystemOneEvaluationRequest,
   SystemOneEvaluationResponse,
 } from '../providers/judgment/typesafe/typesafe_client';
+import { runTypeSafeJevPilotStudy } from './pilot_jev_real_study';
 
 function createMockRankedCandidate(
   contextUnitId: string,
@@ -2122,7 +2123,32 @@ export async function runRegressionTests() {
     console.log('  ✔ Suite 13 passed: WorkspaceSnapshot equality, retry budgeting, and Railway path smoke verified\n');
   }
 
-  console.log('🎉 ALL THIRTEEN REGRESSION SUITES PASSED CLEANLY!\n');
+  // -------------------------------------------------------------------------
+  // Suite 14: Real Pilot Harness End-to-End Regression
+  // -------------------------------------------------------------------------
+  console.log('--- Suite 14: Real Pilot Harness End-to-End Regression ---');
+  {
+    const report = await runTypeSafeJevPilotStudy({
+      useLive: false,
+      isSmoke: true,
+      verbose: false,
+    });
+
+    assert.strictEqual(report.totalTasks, 5, 'Pilot smoke must evaluate exactly 5 tasks');
+    assert.strictEqual(report.tasksPerRepo.express, 2, 'Stratified smoke must evaluate 2 Express tasks');
+    assert.strictEqual(report.tasksPerRepo.fastapi, 2, 'Stratified smoke must evaluate 2 FastAPI tasks');
+    assert.strictEqual(report.tasksPerRepo.siftrcode, 1, 'Stratified smoke must evaluate 1 SiftrCode task');
+    assert.strictEqual(report.planInvarianceHolds, true, 'Decision plan invariance must hold (100% normalized decision plan match)');
+    assert.ok(report.operational.totalCalls <= 25, `Total JEV calls must be <= 25 (observed: ${report.operational.totalCalls})`);
+    assert.strictEqual(report.operational.configuredMaxConcurrency, 4, 'Configured max concurrency must be 4');
+    assert.ok(report.operational.peakConcurrency <= 4, `Measured peak concurrency must be <= 4 (observed: ${report.operational.peakConcurrency})`);
+    assert.ok(report.operational.peakConcurrency >= 1, `Measured peak concurrency must be >= 1 (observed: ${report.operational.peakConcurrency})`);
+    assert.ok(report.testedGitCommit !== undefined && report.testedGitCommit.length > 0, 'Tested git commit must be captured');
+
+    console.log('  ✔ Suite 14 passed: Real pilot harness end-to-end regression verified\n');
+  }
+
+  console.log('🎉 ALL FOURTEEN REGRESSION SUITES PASSED CLEANLY!\n');
 }
 
 if (require.main === module) {

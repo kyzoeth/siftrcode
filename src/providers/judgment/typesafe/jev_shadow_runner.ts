@@ -39,6 +39,8 @@ export class JevShadowRunner {
   private sqliteStore?: SqliteStore;
   private model: string | null;
   private lastTracker?: JevCallTracker;
+  private lastSemaphore?: Semaphore;
+  private peakConcurrency: number = 0;
 
   constructor(options: JevShadowRunnerOptions = {}) {
     const envKey = process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY;
@@ -87,6 +89,14 @@ export class JevShadowRunner {
 
   public getLastTracker(): JevCallTracker | undefined {
     return this.lastTracker;
+  }
+
+  public getLastSemaphore(): Semaphore | undefined {
+    return this.lastSemaphore;
+  }
+
+  public getPeakConcurrency(): number {
+    return this.peakConcurrency;
   }
 
   public getSqliteStore(): SqliteStore | undefined {
@@ -230,6 +240,7 @@ export class JevShadowRunner {
     const tracker = params.tracker || new JevCallTracker(this.budget);
     this.lastTracker = tracker;
     const semaphore = new Semaphore(this.budget.maxConcurrency);
+    this.lastSemaphore = semaphore;
     const signals: JevSignalV1[] = [];
     const agentEnvironmentId = task.agentEnvironment?.systemConfigurationHash || 'unknown';
 
@@ -477,6 +488,10 @@ export class JevShadowRunner {
     );
 
     await Promise.all(evalPromises);
+    const runPeak = semaphore.getPeakConcurrency();
+    if (runPeak > this.peakConcurrency) {
+      this.peakConcurrency = runPeak;
+    }
 
     // 6. Durable persistence (Part XIII Section 35)
     if (this.sqliteStore && signals.length > 0) {

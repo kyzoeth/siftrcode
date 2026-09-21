@@ -86,23 +86,24 @@ SiftrCode V2.1 includes an empirical benchmark study across 25 audited real-worl
 ================================================================
   SIFTRCODE V2: TYPESAFE JEV REAL-WORLD PILOT STUDY (5 TASKS)   
   Mode: LIVE REMOTE (TypeSafe SystemOne)
+  Tested Git Commit: b82e70ff7fe129aea4ad1363fe469d01e5e62eda
 ================================================================
 Tasks Evaluated:         5 (Express: 2, FastAPI: 2, SiftrCode: 1)
-Plan Invariance:         PASSED (100% bit-for-bit decision plan SHA-256 hash match)
+Decision Plan Invariance: PASSED (100% normalized decision plan SHA-256 match: units, resolutions, allocations & exposures)
 Total JEV Calls:         25 (Strictly 5 calls/task budget ceiling)
-Peak Concurrency:        4 (Configured Limit: 4)
-P50 Latency:             166ms (P95: 439ms)
+Peak Concurrency:        Measured = 4 (Configured Limit: 4)
+P50 Latency:             210ms (P95: 517ms)
 ----------------------------------------------------------------
 Continuous Probability Distributions:
-  Semantic Relevance:    mean=0.4824, median=0.46, [0.06 - 0.79]
-  Implementation Needed: mean=0.5932, median=0.63, [0.10 - 0.86]
-  Likely Edit Target:    mean=0.6596, median=0.64, [0.42 - 0.89]
-  Likely Root Cause:     mean=0.4428, median=0.35, [0.04 - 0.87]
+  Semantic Relevance:    mean=0.486, median=0.48, [0.06 - 0.80]
+  Implementation Needed: mean=0.602, median=0.62, [0.11 - 0.86]
+  Likely Edit Target:    mean=0.6644, median=0.68, [0.44 - 0.89]
+  Likely Root Cause:     mean=0.4428, median=0.35, [0.05 - 0.86]
 ----------------------------------------------------------------
 Correlation with Ground Truth:
-  Likely Edit Target:    r = 0.2849
-  Likely Root Cause:     r = 0.5799
-  Semantic Relevance:    r = 0.5109
+  Likely Edit Target:    r = 0.2547
+  Likely Root Cause:     r = 0.5793
+  Semantic Relevance:    r = 0.5081
 ----------------------------------------------------------------
 Ranking Ablation (Baseline ContextRank vs JEV-Augmented):
   NDCG@5:     Baseline = 0.4725  | JEV = 0.4891
@@ -115,9 +116,10 @@ Ranking Ablation (Baseline ContextRank vs JEV-Augmented):
 ```
 
 ### Key Technical Properties:
-- **Bit-for-Bit Plan Invariance**: Candidate judgment evaluations run fully in shadow mode. The rendered context plan and decision allocations remain 100% SHA-256 identical whether JEV shadow evaluation is enabled or disabled (`Plan_without_JEV == Plan_with_JEV_shadow`).
+- **Normalized Decision Plan Invariance**: Candidate judgment evaluations run fully in shadow mode. The decision plan (selected units, resolutions, token allocations, and exposures) is cryptographically identical (100% SHA-256 match across all decision fields) whether JEV shadow evaluation is active or disabled (`NormalizedPlan_without_JEV == NormalizedPlan_with_JEV_shadow`).
+- **Authoritative Workspace Snapshots**: Every repository derivation, task context, context plan, and JEV signal is pinned to an authoritative `WorkspaceSnapshot` derived from live repository state, throwing `WORKSPACE_SNAPSHOT_MISMATCH` on any split-brain variance.
 - **Continuous 4-Head Probabilities**: Evaluates continuous uncalibrated logits across Semantic Relevance, Implementation Needed, Likely Edit Target, and Likely Root Cause without destructive binary discretization.
-- **Strict Decision Budgeting**: Enforces strict call caps per task (`maxCallsPerTask = 5`), zero hidden retries, and bounded worker pool concurrency (peak $\le 4$).
+- **Strict Decision Budgeting & Honest Concurrency**: Enforces strict call caps per task (`maxCallsPerTask = 5`), zero hidden retries in smoke mode (`retry.maxRetries = 0`), and truthful reporting of measured peak concurrency vs configured limits.
 - **Structured Egress Sanitization**: All outbound judgment payloads pass through `EnforcedEgressGateway`, redacting raw code bodies, API keys, tokens, and authorization headers.
 
 ---

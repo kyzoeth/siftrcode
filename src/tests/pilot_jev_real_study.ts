@@ -41,6 +41,7 @@ import { createTaskContext, TaskContext } from '../context/task_context';
 import { TaskEvidenceKind, UserPromptEvidence } from '../context/task_evidence';
 import { createAgentEnvironment } from '../agents/agent_environment';
 import { createWorkspaceSnapshot, WorkspaceSnapshot } from '../workspace/workspace_snapshot';
+import { WorkspaceManager } from '../workspace/workspace_manager';
 import { createDefaultDataRights, createJevPermittedDataRights, DataRights, DataClass } from '../rights/data_rights';
 import { ContextRanker, RankedCandidate } from '../ranking/context_rank';
 import { ContextFeaturesV1 } from '../ranking/feature_schema';
@@ -71,6 +72,7 @@ export interface MetricSummary {
 }
 
 export interface PilotReport {
+  testedGitCommit?: string;
   totalTasks: number;
   tasksPerRepo: Record<PilotRepoKind, number>;
   tasksPerType: Record<PilotTaskType, number>;
@@ -413,6 +415,21 @@ function createRealPilotClient(
   const isSmoke = options.isSmoke ?? process.argv.includes('--smoke');
   const apiKey = options.apiKey || process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY;
 
+  let peakConcurrency = 0;
+  let activeConcurrentRequests = 0;
+
+  async function trackConcurrency<T>(fn: () => Promise<T>): Promise<T> {
+    activeConcurrentRequests++;
+    if (activeConcurrentRequests > peakConcurrency) {
+      peakConcurrency = activeConcurrentRequests;
+    }
+    try {
+      return await fn();
+    } finally {
+      activeConcurrentRequests = Math.max(0, activeConcurrentRequests - 1);
+    }
+  }
+
   if (isLive) {
     if (!apiKey) {
       throw new Error('Live JEV evaluation requested (--live), but no API key was provided (set TYPESAFE_API_KEY or JEV_API_KEY).');
@@ -424,14 +441,24 @@ function createRealPilotClient(
       retry: isSmoke ? { maxRetries: 0 } : undefined,
     });
 
-    return {
+    if (isSmoke) {
+      // In smoke mode, strictly remove the 3-attempt wrapper and use retry.maxRetries=0
+      const smokeClient: SystemOneClient = {
+        async evaluate(req: SystemOneEvaluationRequest): Promise<SystemOneEvaluationResponse> {
+          return await trackConcurrency(() => liveClient.evaluate(req));
+        },
+      };
+      (smokeClient as any).getPeakConcurrency = () => peakConcurrency;
+      return smokeClient;
+    }
+
+    const liveClientWrapper: SystemOneClient = {
       async evaluate(req: SystemOneEvaluationRequest): Promise<SystemOneEvaluationResponse> {
         let attempts = 0;
-        // In smoke mode, strictly disable retries (maxAttempts = 1) so calls consume the exact 5-call budget
-        const maxAttempts = isSmoke ? 1 : 3;
+        const maxAttempts = 3;
         while (attempts < maxAttempts) {
           try {
-            return await liveClient.evaluate(req);
+            return await trackConcurrency(() => liveClient.evaluate(req));
           } catch (err: any) {
             attempts++;
             const isRateLimit = err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('rate');
@@ -448,65 +475,60 @@ function createRealPilotClient(
         throw new Error(`Live JEV candidate evaluation failed after ${maxAttempts} attempts`);
       },
     };
+    (liveClientWrapper as any).getPeakConcurrency = () => peakConcurrency;
+    return liveClientWrapper;
   }
 
-  let peakConcurrency = 0;
-  let currentConcurrency = 0;
-
   const fakeClient = new FakeSystemOneClient(async (req: SystemOneEvaluationRequest) => {
-    currentConcurrency++;
-    if (currentConcurrency > peakConcurrency) {
-      peakConcurrency = currentConcurrency;
-    }
+    return await trackConcurrency(async () => {
+      const startTime = Date.now();
+      await new Promise((r) => setTimeout(r, 2 + Math.floor(Math.random() * 5)));
 
-    const startTime = Date.now();
-    await new Promise((r) => setTimeout(r, 2 + Math.floor(Math.random() * 5)));
-    currentConcurrency--;
+      const stateObj = typeof req.state === 'object' && req.state !== null ? (req.state as any) : {};
+      const candidateId = stateObj.candidate?.contextUnitId || '';
+      const unit = unitsMap.get(candidateId);
+      const prompt = (stateObj.task?.prompt || '').toLowerCase();
 
-    const stateObj = typeof req.state === 'object' && req.state !== null ? (req.state as any) : {};
-    const candidateId = stateObj.candidate?.contextUnitId || '';
-    const unit = unitsMap.get(candidateId);
-    const prompt = (stateObj.task?.prompt || '').toLowerCase();
+      // Semantic lexical overlap on actual real unit text and path
+      const unitPath = (unit?.path || stateObj.candidate?.path || '').toLowerCase();
+      const unitTitle = (unit?.title || stateObj.candidate?.title || '').toLowerCase();
+      const unitSignature = (stateObj.candidate?.signature || '').toLowerCase();
 
-    // Semantic lexical overlap on actual real unit text and path
-    const unitPath = (unit?.path || stateObj.candidate?.path || '').toLowerCase();
-    const unitTitle = (unit?.title || stateObj.candidate?.title || '').toLowerCase();
-    const unitSignature = (stateObj.candidate?.signature || '').toLowerCase();
+      const promptKeywords = prompt
+        .replace(/[^\w\s]/g, ' ')
+        .split(/\s+/)
+        .filter((w: string) => w.length > 2);
 
-    const promptKeywords = prompt
-      .replace(/[^\w\s]/g, ' ')
-      .split(/\s+/)
-      .filter((w: string) => w.length > 2);
-
-    let matchCount = 0;
-    for (const kw of promptKeywords) {
-      if (unitPath.includes(kw) || unitTitle.includes(kw) || unitSignature.includes(kw)) {
-        matchCount++;
+      let matchCount = 0;
+      for (const kw of promptKeywords) {
+        if (unitPath.includes(kw) || unitTitle.includes(kw) || unitSignature.includes(kw)) {
+          matchCount++;
+        }
       }
-    }
 
-    const keywordRatio = promptKeywords.length > 0 ? matchCount / promptKeywords.length : 0;
-    const isExactFileMatch = promptKeywords.some((kw: string) => unitPath.endsWith(kw) || unitPath.includes(`/${kw}.`));
+      const keywordRatio = promptKeywords.length > 0 ? matchCount / promptKeywords.length : 0;
+      const isExactFileMatch = promptKeywords.some((kw: string) => unitPath.endsWith(kw) || unitPath.includes(`/${kw}.`));
 
-    let semRel = Math.min(0.98, Math.max(0.08, 0.25 + keywordRatio * 0.65 + (isExactFileMatch ? 0.2 : 0) + (Math.random() * 0.08 - 0.04)));
-    let impNeed = Math.min(0.98, Math.max(0.05, 0.2 + keywordRatio * 0.6 + (isExactFileMatch ? 0.25 : 0) + (Math.random() * 0.08 - 0.04)));
-    let editTarget = Math.min(0.98, Math.max(0.02, 0.1 + keywordRatio * 0.7 + (isExactFileMatch ? 0.3 : 0) + (Math.random() * 0.08 - 0.04)));
-    let rootCause = Math.min(0.98, Math.max(0.02, 0.1 + keywordRatio * 0.65 + (isExactFileMatch ? 0.25 : 0) + (Math.random() * 0.08 - 0.04)));
+      let semRel = Math.min(0.98, Math.max(0.08, 0.25 + keywordRatio * 0.65 + (isExactFileMatch ? 0.2 : 0) + (Math.random() * 0.08 - 0.04)));
+      let impNeed = Math.min(0.98, Math.max(0.05, 0.2 + keywordRatio * 0.6 + (isExactFileMatch ? 0.25 : 0) + (Math.random() * 0.08 - 0.04)));
+      let editTarget = Math.min(0.98, Math.max(0.02, 0.1 + keywordRatio * 0.7 + (isExactFileMatch ? 0.3 : 0) + (Math.random() * 0.08 - 0.04)));
+      let rootCause = Math.min(0.98, Math.max(0.02, 0.1 + keywordRatio * 0.65 + (isExactFileMatch ? 0.25 : 0) + (Math.random() * 0.08 - 0.04)));
 
-    return {
-      model: 'typesafe-one-preview',
-      answers: {
-        semanticRelevance: { noul: Number(semRel.toFixed(4)) },
-        implementationNeeded: { noul: Number(impNeed.toFixed(4)) },
-        likelyEditTarget: { noul: Number(editTarget.toFixed(4)) },
-        likelyRootCause: { noul: Number(rootCause.toFixed(4)) },
-      },
-      usage: {
-        input_tokens: 120 + Math.floor(Math.random() * 60),
-        output_tokens: 24,
-      },
-      requestId: 'req_' + crypto.randomUUID().slice(0, 12),
-    };
+      return {
+        model: 'typesafe-one-preview',
+        answers: {
+          semanticRelevance: { noul: Number(semRel.toFixed(4)) },
+          implementationNeeded: { noul: Number(impNeed.toFixed(4)) },
+          likelyEditTarget: { noul: Number(editTarget.toFixed(4)) },
+          likelyRootCause: { noul: Number(rootCause.toFixed(4)) },
+        },
+        usage: {
+          input_tokens: 120 + Math.floor(Math.random() * 60),
+          output_tokens: 24,
+        },
+        requestId: 'req_' + crypto.randomUUID().slice(0, 12),
+      };
+    });
   });
 
   (fakeClient as any).getPeakConcurrency = () => peakConcurrency;
@@ -573,6 +595,63 @@ export function normalizeFullDecisionPlan(plan: ContextPlan): Record<string, any
   };
 }
 
+export interface PlanComparisonResult {
+  equal: boolean;
+  hashA: string;
+  hashB: string;
+  diffs: string[];
+}
+
+/**
+ * Performs a deep normalized comparison of two ContextPlans, returning whether they are identical
+ * in deterministic decisions, token allocations, units, and exposure decisions, along with any diffs.
+ */
+export function compareNormalizedDecisionPlans(planA: ContextPlan, planB: ContextPlan): PlanComparisonResult {
+  const normA = normalizeFullDecisionPlan(planA);
+  const normB = normalizeFullDecisionPlan(planB);
+  const jsonA = JSON.stringify(normA);
+  const jsonB = JSON.stringify(normB);
+  const hashA = crypto.createHash('sha256').update(jsonA).digest('hex');
+  const hashB = crypto.createHash('sha256').update(jsonB).digest('hex');
+
+  const diffs: string[] = [];
+  if (normA.taskId !== normB.taskId) diffs.push(`taskId: ${normA.taskId} !== ${normB.taskId}`);
+  if (normA.workspaceSnapshotId !== normB.workspaceSnapshotId) {
+    diffs.push(`workspaceSnapshotId: ${normA.workspaceSnapshotId} !== ${normB.workspaceSnapshotId}`);
+  }
+  if (normA.agentEnvironmentId !== normB.agentEnvironmentId) {
+    diffs.push(`agentEnvironmentId: ${normA.agentEnvironmentId} !== ${normB.agentEnvironmentId}`);
+  }
+  if (normA.budgetPlan?.totalTokens !== normB.budgetPlan?.totalTokens) {
+    diffs.push(`budgetPlan.totalTokens: ${normA.budgetPlan?.totalTokens} !== ${normB.budgetPlan?.totalTokens}`);
+  }
+  if (normA.budgetPlan?.rawTotalTokens !== normB.budgetPlan?.rawTotalTokens) {
+    diffs.push(`budgetPlan.rawTotalTokens: ${normA.budgetPlan?.rawTotalTokens} !== ${normB.budgetPlan?.rawTotalTokens}`);
+  }
+  if (normA.units.length !== normB.units.length) {
+    diffs.push(`units.length: ${normA.units.length} !== ${normB.units.length}`);
+  } else {
+    for (let i = 0; i < normA.units.length; i++) {
+      const uA = normA.units[i];
+      const uB = normB.units[i];
+      if (uA.contextUnitId !== uB.contextUnitId) diffs.push(`unit[${i}].id: ${uA.contextUnitId} !== ${uB.contextUnitId}`);
+      if (uA.resolution !== uB.resolution) diffs.push(`unit[${i}].resolution: ${uA.resolution} !== ${uB.resolution}`);
+    }
+  }
+  if (normA.exposureDecisions.length !== normB.exposureDecisions.length) {
+    diffs.push(`exposureDecisions.length: ${normA.exposureDecisions.length} !== ${normB.exposureDecisions.length}`);
+  }
+  if (normA.actualRenderedTokens !== normB.actualRenderedTokens) {
+    diffs.push(`actualRenderedTokens: ${normA.actualRenderedTokens} !== ${normB.actualRenderedTokens}`);
+  }
+
+  if (hashA !== hashB && diffs.length === 0) {
+    diffs.push('Normalized decision plan payload content differs');
+  }
+
+  return { equal: hashA === hashB, hashA, hashB, diffs };
+}
+
 /**
  * Computes deterministic SHA-256 hash of the normalized full decision plan.
  */
@@ -591,9 +670,10 @@ export async function runTypeSafeJevPilotStudy(options: {
   maxCallsPerTask?: number;
   apiKey?: string;
   verbose?: boolean;
+  isSmoke?: boolean;
 } = {}): Promise<PilotReport> {
   const isLive = options.useLive ?? (process.env.JEV_LIVE === 'true' || process.argv.includes('--live'));
-  const isSmoke = process.argv.includes('--smoke');
+  const isSmoke = options.isSmoke ?? process.argv.includes('--smoke');
   const tasksArg = process.argv.find((a) => a.startsWith('--tasks='));
   const maxTasks = options.maxTasks ?? (tasksArg ? parseInt(tasksArg.split('=')[1], 10) : (isSmoke ? 5 : AUDITED_PILOT_TASKS.length));
   const callsArg = process.argv.find((a) => a.startsWith('--max-calls='));
@@ -603,57 +683,57 @@ export async function runTypeSafeJevPilotStudy(options: {
   const verbose = options.verbose ?? (isSmoke || process.argv.includes('--verbose'));
   const apiKey = options.apiKey || process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY;
 
+  const rootDir = process.cwd();
+  const expressDir = path.resolve(rootDir, 'benchmarks/express-repo');
+  const fastapiDir = path.resolve(rootDir, 'benchmarks/fastapi-repo');
+
+  let testedGitCommit = 'unknown';
+  try {
+    const cp = require('child_process');
+    testedGitCommit = cp.execSync('git rev-parse HEAD', { cwd: rootDir, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+  } catch {}
+
   console.log('\n================================================================');
   console.log(`  SIFTRCODE V2: TYPESAFE JEV REAL-WORLD PILOT STUDY (${maxTasks} TASKS)   `);
   console.log(`  Mode: ${isLive ? 'LIVE REMOTE (TypeSafe SystemOne)' : 'OFFLINE CALIBRATED'}`);
+  console.log(`  Tested Git Commit: ${testedGitCommit}`);
   console.log(`  TypeSafe key configured: ${Boolean(apiKey)}`);
   console.log('================================================================\n');
 
-  const rootDir = process.cwd();
   const tempDir = path.join(os.tmpdir(), 'temp_jev_pilot_' + Date.now());
   fs.mkdirSync(tempDir, { recursive: true });
   const dbPath = path.join(tempDir, 'pilot_telemetry.sqlite');
   const store = new SqliteStore(dbPath);
 
-  // Authoritative WorkspaceSnapshots for each evaluated repository
+  // Build one authoritative WorkspaceSnapshot per benchmark repository from live repository state on disk
+  const expressManager = new WorkspaceManager({
+    rootDir: expressDir,
+    repositories: [{ repositoryId: 'express', path: expressDir }],
+  });
+  const expressSnapshot = await expressManager.captureSnapshot();
+
+  const fastapiManager = new WorkspaceManager({
+    rootDir: fastapiDir,
+    repositories: [{ repositoryId: 'fastapi', path: fastapiDir }],
+  });
+  const fastapiSnapshot = await fastapiManager.captureSnapshot();
+
+  const siftrManager = new WorkspaceManager({
+    rootDir: rootDir,
+    repositories: [{ repositoryId: 'siftrcode', path: rootDir }],
+  });
+  const siftrSnapshot = await siftrManager.captureSnapshot();
+
   const repoSnapshots: Record<PilotRepoKind, WorkspaceSnapshot> = {
-    express: createWorkspaceSnapshot({
-      repositories: [
-        {
-          repositoryId: 'express',
-          baseCommitSha: 'commit_express_pilot',
-          trackedTreeHash: 'tree_express_pilot',
-          dirtyPatchHash: 'clean',
-        },
-      ],
-    }),
-    fastapi: createWorkspaceSnapshot({
-      repositories: [
-        {
-          repositoryId: 'fastapi',
-          baseCommitSha: 'commit_fastapi_pilot',
-          trackedTreeHash: 'tree_fastapi_pilot',
-          dirtyPatchHash: 'clean',
-        },
-      ],
-    }),
-    siftrcode: createWorkspaceSnapshot({
-      repositories: [
-        {
-          repositoryId: 'siftrcode',
-          baseCommitSha: 'commit_siftrcode_pilot',
-          trackedTreeHash: 'tree_siftrcode_pilot',
-          dirtyPatchHash: 'clean',
-        },
-      ],
-    }),
+    express: expressSnapshot,
+    fastapi: fastapiSnapshot,
+    siftrcode: siftrSnapshot,
   };
 
   // 1. Pre-index repositories using authoritative snapshot IDs
   console.log('Indexing real repositories on disk with authoritative WorkspaceSnapshots...');
 
   // Express
-  const expressDir = path.resolve(rootDir, 'benchmarks/express-repo');
   const expressIndexer = new RepositoryIndexer();
   const expressIndexResult = await expressIndexer.indexRepository(expressDir, {
     repositoryId: 'express',
@@ -676,7 +756,6 @@ export async function runTypeSafeJevPilotStudy(options: {
   console.log(`  ✔ Express indexed (CLONED_EXTERNAL): ${expressUnits.length} units, ${expressGraph.getAllNodes().length} graph nodes [snapshot: ${repoSnapshots.express.workspaceSnapshotId}]`);
 
   // FastAPI
-  const fastapiDir = path.resolve(rootDir, 'benchmarks/fastapi-repo');
   const fastapiIndexer = new RepositoryIndexer();
   const fastapiIndexResult = await fastapiIndexer.indexRepository(fastapiDir, {
     repositoryId: 'fastapi',
@@ -990,12 +1069,35 @@ export async function runTypeSafeJevPilotStudy(options: {
       }
     }
 
-    // Verify Cryptographic Bit-for-Bit Plan Invariance via SHA-256 Hash Comparison
-    const baselineHash = hashNormalizedDecisionPlan(baselinePlan);
-    const shadowHash = hashNormalizedDecisionPlan(shadowPlan);
-    if (baselineHash !== shadowHash) {
+    // Verify Normalized Decision Plan Invariance via Deep Plan Comparison
+    const planComparison = compareNormalizedDecisionPlans(baselinePlan, shadowPlan);
+    if (!planComparison.equal) {
       planInvarianceHolds = false;
-      console.warn(`    ⚠️ Plan mismatch on task ${taskSpec.taskId}: baseline hash ${baselineHash} != shadow hash ${shadowHash}`);
+      console.warn(`    ⚠️ Normalized decision plan mismatch on task ${taskSpec.taskId}:`, planComparison.diffs);
+    }
+
+    // Verify WorkspaceSnapshot identity consistency across TaskContext, Plans, and JEV Signals
+    if (task.workspaceSnapshotId !== repoSnapshot.workspaceSnapshotId) {
+      const err = new Error(`WORKSPACE_SNAPSHOT_MISMATCH: Task ${task.taskId} workspaceSnapshotId "${task.workspaceSnapshotId}" does not match repo snapshot "${repoSnapshot.workspaceSnapshotId}"`);
+      (err as any).code = 'WORKSPACE_SNAPSHOT_MISMATCH';
+      throw err;
+    }
+    if (baselinePlan.workspaceSnapshotId !== repoSnapshot.workspaceSnapshotId) {
+      const err = new Error(`WORKSPACE_SNAPSHOT_MISMATCH: Baseline plan ${baselinePlan.planId} workspaceSnapshotId "${baselinePlan.workspaceSnapshotId}" does not match repo snapshot "${repoSnapshot.workspaceSnapshotId}"`);
+      (err as any).code = 'WORKSPACE_SNAPSHOT_MISMATCH';
+      throw err;
+    }
+    if (shadowPlan.workspaceSnapshotId !== repoSnapshot.workspaceSnapshotId) {
+      const err = new Error(`WORKSPACE_SNAPSHOT_MISMATCH: Shadow plan ${shadowPlan.planId} workspaceSnapshotId "${shadowPlan.workspaceSnapshotId}" does not match repo snapshot "${repoSnapshot.workspaceSnapshotId}"`);
+      (err as any).code = 'WORKSPACE_SNAPSHOT_MISMATCH';
+      throw err;
+    }
+    for (const sig of signals) {
+      if (sig.workspaceSnapshotId !== repoSnapshot.workspaceSnapshotId) {
+        const err = new Error(`WORKSPACE_SNAPSHOT_MISMATCH: JEV signal ${sig.contextUnitId} workspaceSnapshotId "${sig.workspaceSnapshotId}" does not match repo snapshot "${repoSnapshot.workspaceSnapshotId}"`);
+        (err as any).code = 'WORKSPACE_SNAPSHOT_MISMATCH';
+        throw err;
+      }
     }
 
     // Record distributions and ground-truth correlations
@@ -1118,6 +1220,7 @@ export async function runTypeSafeJevPilotStudy(options: {
   const aMrr = computeStats(augmentedMrr).mean;
 
   const report: PilotReport = {
+    testedGitCommit,
     totalTasks: selectedTasks.length,
     tasksPerRepo,
     tasksPerType,
@@ -1125,7 +1228,9 @@ export async function runTypeSafeJevPilotStudy(options: {
     operational: {
       totalCalls: callsPerTask.reduce((a, b) => a + b, 0),
       meanCallsPerTask: computeStats(callsPerTask).mean,
-      peakConcurrency: typeof (client as any).getPeakConcurrency === 'function' ? (client as any).getPeakConcurrency() : 4,
+      peakConcurrency: typeof (client as any).getPeakConcurrency === 'function'
+        ? (client as any).getPeakConcurrency()
+        : runner.getPeakConcurrency(),
       configuredMaxConcurrency: 4,
       latencySummary: computeStats(latencies),
     },
@@ -1170,11 +1275,12 @@ export async function runTypeSafeJevPilotStudy(options: {
   console.log('\n================================================================');
   console.log(`                     ${reportHeader}                      `);
   console.log('================================================================');
+  console.log(`Tested Git Commit:       ${report.testedGitCommit || 'unknown'}`);
   console.log(`Tasks Evaluated:         ${report.totalTasks} (Express: ${report.tasksPerRepo.express}, FastAPI: ${report.tasksPerRepo.fastapi}, SiftrCode: ${report.tasksPerRepo.siftrcode})`);
-  console.log(`Plan Invariance:         ${report.planInvarianceHolds ? 'PASSED (100% bit-for-bit decision plan SHA-256 hash match)' : 'FAILED'}`);
+  console.log(`Decision Plan Invariance: ${report.planInvarianceHolds ? 'PASSED (100% normalized decision plan SHA-256 match: units, resolutions, allocations & exposures)' : 'FAILED'}`);
   console.log(`Total JEV Calls:         ${report.operational.totalCalls}`);
   console.log(`Mean Calls / Task:       ${report.operational.meanCallsPerTask}`);
-  console.log(`Peak Concurrency:        ${report.operational.peakConcurrency} (Configured Limit: ${report.operational.configuredMaxConcurrency || 4})`);
+  console.log(`Peak Concurrency:        Measured = ${report.operational.peakConcurrency} (Configured Limit: ${report.operational.configuredMaxConcurrency || 4})`);
   console.log(`P50 Latency:             ${report.operational.latencySummary.median}ms (P95: ${report.operational.latencySummary.p95}ms)`);
   console.log('----------------------------------------------------------------');
   console.log('Continuous Probability Distributions:');

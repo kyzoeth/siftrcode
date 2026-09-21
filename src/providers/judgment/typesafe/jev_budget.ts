@@ -95,24 +95,45 @@ export class Semaphore {
   private currentCount: number;
   private maxConcurrency: number;
   private queue: Array<() => void> = [];
+  private activeWorkers: number = 0;
+  private peakConcurrency: number = 0;
 
   constructor(maxConcurrency: number = 4) {
     this.maxConcurrency = Math.max(1, maxConcurrency);
     this.currentCount = this.maxConcurrency;
   }
 
+  public getPeakConcurrency(): number {
+    return this.peakConcurrency;
+  }
+
+  public getActiveWorkers(): number {
+    return this.activeWorkers;
+  }
+
   public async acquire(): Promise<void> {
     if (this.currentCount > 0) {
       this.currentCount--;
+      this.activeWorkers++;
+      if (this.activeWorkers > this.peakConcurrency) {
+        this.peakConcurrency = this.activeWorkers;
+      }
       return;
     }
 
     return new Promise<void>((resolve) => {
-      this.queue.push(resolve);
+      this.queue.push(() => {
+        this.activeWorkers++;
+        if (this.activeWorkers > this.peakConcurrency) {
+          this.peakConcurrency = this.activeWorkers;
+        }
+        resolve();
+      });
     });
   }
 
   public release(): void {
+    this.activeWorkers = Math.max(0, this.activeWorkers - 1);
     if (this.queue.length > 0) {
       const next = this.queue.shift();
       if (next) next();
