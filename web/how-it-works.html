@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>How It Works — SiftrCode V2 Outcome-Aware Context Engine</title>
-  <meta name="description" content="Technical architecture of SiftrCode V2: 6-stage outcome engine, multi-channel candidate recall, transparent heuristic ranking, submodular bundle composition, safe variable-resolution degradation, and zero-egress local processing.">
+  <meta name="description" content="Technical architecture of SiftrCode V2: 6-stage outcome optimization engine, multi-channel candidate recall, point-in-time features, transparent ContextRank, submodular bundle composition, variable-resolution degradation, and zero-egress local processing.">
   <link rel="canonical" href="https://siftrcode.com/how-it-works">
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -165,7 +165,8 @@
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="/how-it-works" class="text-[#B34E2E] dark:text-[#F39C82] font-semibold transition">How It Works</a>
           <a href="/claude" class="hover:text-ink transition">Claude Code</a>
-          <a href="/#pipeline" class="hover:text-ink transition">6-Stage Pipeline</a>
+          <a href="#pipeline-stages" class="hover:text-ink transition">6-Stage Pipeline</a>
+          <a href="#triage-explorer" class="hover:text-ink transition">Triage Explorer</a>
           <a href="/#economics" class="hover:text-ink transition">Economics</a>
         </nav>
       </div>
@@ -196,7 +197,7 @@
           </svg>
         </a>
 
-        <!-- Mobile Menu Toggle Button (visible only on mobile) -->
+        <!-- Mobile Menu Toggle Button -->
         <button id="mobileMenuBtn" onclick="toggleMobileMenu()" title="Toggle Navigation Menu" aria-label="Toggle navigation menu" class="md:hidden w-8 h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
           <svg id="mobileMenuIconOpen" class="w-4 h-4 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -208,7 +209,7 @@
       </div>
     </div>
 
-    <!-- Mobile Navigation Drawer / Dropdown -->
+    <!-- Mobile Navigation Drawer -->
     <div id="mobileNavMenu" class="hidden md:hidden border-t border-zinc-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md px-4 py-3 space-y-1 transition-all duration-200">
       <a href="/how-it-works" class="flex items-center justify-between py-2.5 text-xs font-medium text-[#B34E2E] dark:text-[#F39C82] font-semibold transition">
         <span>How It Works</span>
@@ -216,6 +217,10 @@
       </a>
       <a href="/claude" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>Claude Code Integration</span>
+        <span class="text-zinc-400 font-mono text-[10px]">→</span>
+      </a>
+      <a href="/#pipeline" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+        <span>6-Stage Pipeline</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
       <a href="/#economics" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
@@ -229,10 +234,6 @@
         </span>
         <span class="text-zinc-400 font-mono text-[10px]">↗</span>
       </a>
-      <a href="mailto:info@siftrcode.com" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
-        <span>Contact Us</span>
-        <span class="text-zinc-400 font-mono text-[10px]">→</span>
-      </a>
       <a href="/about" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>About SiftrCode</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
@@ -244,144 +245,151 @@
   <main class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 space-y-12">
     
     <!-- Title Area -->
-    <div class="space-y-3 border-b border-zinc-200/80 pb-8">
+    <div class="space-y-3.5 border-b border-zinc-200/80 dark:border-zinc-800 pb-8">
       <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] text-[10px] font-mono font-semibold uppercase tracking-wider">
         <svg class="w-3 h-3 text-[#D97757]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-        SIFTRCODE V2 • SYSTEM ARCHITECTURE &amp; 6-STAGE PIPELINE
+        SIFTRCODE V2 • SYSTEM ARCHITECTURE &amp; OUTCOME OPTIMIZATION
       </div>
       <h1 class="text-4xl sm:text-5xl font-normal text-ink font-serif tracking-tight">How SiftrCode Works</h1>
-      <p class="text-xs sm:text-sm text-ink-secondary max-w-2xl">
-        An engineering overview of SiftrCode V2: multi-channel candidate recall, point-in-time features, transparent ranking, submodular bundle composition, safe variable-resolution degradation, and constrained budget solving.
+      <p class="text-xs sm:text-sm text-ink-secondary max-w-2xl leading-relaxed">
+        A deep engineering overview of SiftrCode V2: multi-channel candidate recall, point-in-time versioned features, explainable ContextRank, submodular bundle composition, safe variable-resolution degradation, and constrained knapsack budget solving.
       </p>
+
+      <!-- Architecture Metric Strip -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-xs font-mono">
+        <div class="p-2.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+          <div class="text-[10px] uppercase text-zinc-500 font-medium">Execution Latency</div>
+          <div class="text-base font-bold text-ink mt-0.5">&lt;100ms Local</div>
+        </div>
+        <div class="p-2.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+          <div class="text-[10px] uppercase text-zinc-500 font-medium">Edit Targets</div>
+          <div class="text-base font-bold text-blue-600 dark:text-blue-400 mt-0.5">100% Body</div>
+        </div>
+        <div class="p-2.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+          <div class="text-[10px] uppercase text-zinc-500 font-medium">Balanced Savings</div>
+          <div class="text-base font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">−78.6% Tokens</div>
+        </div>
+        <div class="p-2.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+          <div class="text-[10px] uppercase text-zinc-500 font-medium">Network Egress</div>
+          <div class="text-base font-bold text-ink mt-0.5">0 Outbound Bytes</div>
+        </div>
+      </div>
     </div>
 
-    <!-- Visual Architecture & Triage Pipeline -->
-    <section id="system-architecture" class="p-5 sm:p-8 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md shadow-2xs space-y-8 overflow-hidden">
+    <!-- Interactive Architecture Triage Explorer -->
+    <section id="triage-explorer" class="p-5 sm:p-8 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md shadow-2xs space-y-7 overflow-hidden">
       
       <!-- Section Header -->
       <div class="border-b border-zinc-200/70 dark:border-zinc-800/80 pb-5 space-y-1.5">
-        <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] text-xs font-mono font-semibold uppercase tracking-wider">
-          <span class="w-1.5 h-1.5 rounded-full bg-[#D97757]"></span>
-          Pipeline Architecture
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] text-xs font-mono font-semibold uppercase tracking-wider">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#D97757]"></span>
+              Live Architecture Triage Explorer
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-serif text-ink tracking-tight font-normal mt-1">
+              How SiftrCode Triages Repository Context
+            </h2>
+          </div>
+
+          <!-- Budget Profile Picker -->
+          <div class="flex items-center gap-1 p-1 rounded-md bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-[11px] font-mono shrink-0">
+            <span class="text-zinc-500 dark:text-zinc-400 px-1.5 font-semibold">Profile:</span>
+            <button onclick="setExplorerProfile('balanced')" id="expProfileBalanced" class="px-2.5 py-1 rounded bg-white dark:bg-zinc-800 text-ink font-semibold shadow-2xs transition">Balanced</button>
+            <button onclick="setExplorerProfile('aggressive')" id="expProfileAggressive" class="px-2.5 py-1 rounded text-zinc-600 dark:text-zinc-400 hover:text-ink transition">Aggressive</button>
+            <button onclick="setExplorerProfile('thorough')" id="expProfileThorough" class="px-2.5 py-1 rounded text-zinc-600 dark:text-zinc-400 hover:text-ink transition">Thorough</button>
+          </div>
         </div>
-        <h2 class="text-2xl sm:text-3xl font-serif text-ink tracking-tight font-normal">
-          How SiftrCode Triages Repository Context
-        </h2>
-        <p class="text-xs sm:text-sm text-ink-secondary max-w-2xl">
-          SiftrCode intercepts agent queries locally, evaluating repository candidates in &lt;100ms before model inference to deliver outcome-optimized context.
+        <p class="text-xs sm:text-sm text-ink-secondary max-w-2xl leading-relaxed pt-1">
+          SiftrCode intercepts agent queries locally, evaluating repository candidates in &lt;100ms before model inference to deliver outcome-optimized context with variable resolution.
         </p>
       </div>
 
-      <!-- Part 1: Each Stage Panel on its Own Row -->
-      <div class="space-y-3.5">
+      <!-- High-Level Pipeline Flow Comparison -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
         
-        <!-- Stage 01 Row -->
-        <div class="p-4 sm:p-5 rounded-md bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div class="space-y-1 min-w-0 sm:max-w-xl">
-            <div class="flex items-center gap-2.5">
-              <span class="text-xs font-mono font-bold text-zinc-500 dark:text-zinc-400">STAGE 01</span>
-              <span class="text-xs font-serif text-zinc-400 dark:text-zinc-600">•</span>
-              <h3 class="font-serif text-lg text-ink font-normal">Multi-Channel Candidate Recall</h3>
-            </div>
-            <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              Recalls 42 repository candidate files across exact symbol matches, BM25 text queries, stack trace frames, import graphs, and git co-changes.
-            </p>
+        <!-- Phase 1: Raw Bloat -->
+        <div class="p-4 rounded-md bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-mono font-bold text-zinc-500 dark:text-zinc-400">PHASE 01 • INPUT</span>
+            <span id="expRawBadge" class="text-[10px] font-mono font-semibold text-zinc-600 dark:text-zinc-400">85,000 tok</span>
           </div>
-          <div class="sm:text-right shrink-0 space-y-1 sm:min-w-[160px]">
-            <div class="inline-block px-2.5 py-1 rounded bg-zinc-200/80 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700/60 font-mono text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-              184,200 tok
-            </div>
-            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">100% Bloat Baseline</div>
-          </div>
+          <h3 class="font-serif text-lg text-ink font-normal">Candidate Bloat</h3>
+          <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            Lexical and graph discovery recalls 42 repository candidate files. Without Siftr, flooding all 42 full files into context causes latency and attention loss.
+          </p>
         </div>
 
-        <!-- Stage 02 Row -->
-        <div class="p-4 sm:p-5 rounded-md bg-[#FAF3F0]/60 dark:bg-[#411A0E]/20 border border-[#ECCBBE] dark:border-[#B34E2E]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div class="space-y-1 min-w-0 sm:max-w-xl">
-            <div class="flex items-center gap-2.5">
-              <span class="text-xs font-mono font-bold text-[#B34E2E] dark:text-[#F39C82]">STAGE 02</span>
-              <span class="text-xs font-serif text-[#ECCBBE] dark:text-[#B34E2E]">•</span>
-              <h3 class="font-serif text-lg text-ink font-normal">V2 6-Stage Optimization Engine</h3>
-            </div>
-            <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              Computes point-in-time features, evaluates heuristic rank, composes submodular synergies, and assigns variable degradation levels.
-            </p>
+        <!-- Phase 2: Engine Execution -->
+        <div class="p-4 rounded-md bg-[#FAF3F0]/60 dark:bg-[#411A0E]/20 border border-[#ECCBBE] dark:border-[#B34E2E]/40 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-mono font-bold text-[#B34E2E] dark:text-[#F39C82]">PHASE 02 • RESOLUTION</span>
+            <span class="text-[10px] font-mono font-semibold text-[#B34E2E] dark:text-[#F39C82]">&lt;100ms CPU</span>
           </div>
-          <div class="sm:text-right shrink-0 space-y-1 sm:min-w-[160px]">
-            <div class="inline-block px-2.5 py-1 rounded bg-[#FAF3F0] dark:bg-[#411A0E] border border-[#B34E2E]/30 dark:border-[#B34E2E]/50 font-mono text-xs font-semibold text-[#B34E2E] dark:text-[#F39C82]">
-              &lt;100ms Local CPU
-            </div>
-            <div class="text-[11px] font-mono text-zinc-500 dark:text-zinc-400">Zero Egress • Local Stdio</div>
-          </div>
+          <h3 class="font-serif text-lg text-ink font-normal">6-Stage Optimization</h3>
+          <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            Runs point-in-time features, transparent ranking, submodular bundle composition, and knapsack solving to partition candidates into 3 optimal resolution tiers.
+          </p>
         </div>
 
-        <!-- Stage 03 Row -->
-        <div class="p-4 sm:p-5 rounded-md bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div class="space-y-1 min-w-0 sm:max-w-xl">
-            <div class="flex items-center gap-2.5">
-              <span class="text-xs font-mono font-bold text-emerald-800 dark:text-emerald-400">STAGE 03</span>
-              <span class="text-xs font-serif text-emerald-300 dark:text-emerald-700">•</span>
-              <h3 class="font-serif text-lg text-ink font-normal">Precision Context Payoff</h3>
-            </div>
-            <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              Agent receives full bodies for edit targets, compiler-verified AST skeletons for dependencies, and 0 distractor bloat in 3.8s (vs 45s).
-            </p>
+        <!-- Phase 3: Optimized Bundle -->
+        <div class="p-4 rounded-md bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-mono font-bold text-emerald-800 dark:text-emerald-400">PHASE 03 • PAYOFF</span>
+            <span id="expOptBadge" class="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300">18,200 tok (−78.6%)</span>
           </div>
-          <div class="sm:text-right shrink-0 space-y-1 sm:min-w-[160px]">
-            <div class="inline-block px-2.5 py-1 rounded bg-emerald-100 dark:bg-emerald-950 border border-emerald-300 dark:border-emerald-800 font-mono text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-              6,420 tok (-96.5%)
-            </div>
-            <div class="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-medium">3.5% of Baseline</div>
-          </div>
+          <h3 class="font-serif text-lg text-ink font-normal">Outcome-Aware Bundle</h3>
+          <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            Agent receives 100% full implementation bodies for edit targets, compiler-verified AST skeletons for dependencies, and 0 distractor tokens in ~3.8s.
+          </p>
         </div>
 
       </div>
 
-      <!-- Part 2: Interactive Triage Explorer -->
-      <div class="space-y-5 pt-3 border-t border-zinc-200/70 dark:border-zinc-800/80">
+      <!-- Channel Tabs & Interactive Inspector -->
+      <div class="space-y-4 pt-2 border-t border-zinc-200/70 dark:border-zinc-800/80">
         
-        <!-- Explorer Header with Segmented Tabs -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 class="text-xl sm:text-2xl font-serif text-ink font-normal">
-              Inspect Triage Channels
+            <h3 class="text-xl font-serif text-ink font-normal">
+              Inspect Resolution Channels
             </h3>
             <p class="text-xs text-ink-secondary mt-0.5">
-              Examine how candidate files are evaluated across root edit targets, AST skeletons, and suppressed bloat.
+              Click a channel to inspect how SiftrCode assigns resolution, preserves types, and suppresses noise.
             </p>
           </div>
 
           <!-- Channel Tabs -->
           <div class="flex p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs font-mono gap-1 shrink-0">
             <button onclick="setTriageTab('retained')" id="tab-retained" class="px-3 py-1.5 rounded-md font-medium transition cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
-              ★ Target Files (2)
+              ★ Edit Targets (<span id="tabCountRetained">2</span>)
             </button>
             <button onclick="setTriageTab('skeletons')" id="tab-skeletons" class="px-3 py-1.5 rounded-md font-medium transition cursor-pointer bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-2xs">
-              ⚡ Skeletons (6)
+              ⚡ Skeletons (<span id="tabCountSkeletons">6</span>)
             </button>
             <button onclick="setTriageTab('dropped')" id="tab-dropped" class="px-3 py-1.5 rounded-md font-medium transition cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
-              ✕ Dropped (34)
+              ✕ Dropped (<span id="tabCountDropped">34</span>)
             </button>
           </div>
         </div>
 
-        <!-- Dynamic Channel Content Box: Stacked Rows -->
-        <div id="triageContent" class="space-y-5"></div>
+        <!-- Dynamic Channel Content Box -->
+        <div id="triageContent" class="space-y-4"></div>
 
       </div>
 
     </section>
 
     <!-- The 6-Stage V2 Outcome Engine Breakdown -->
-    <div class="space-y-8 text-xs sm:text-sm leading-relaxed font-sans text-zinc-600 dark:text-zinc-300">
+    <div id="pipeline-stages" class="space-y-8 text-xs sm:text-sm leading-relaxed font-sans text-zinc-600 dark:text-zinc-300">
       
       <div class="space-y-2 border-b border-zinc-200/80 dark:border-zinc-800 pb-4">
         <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-[10px] font-mono font-semibold uppercase tracking-wider">
-          THE V2 OUTCOME PIPELINE
+          THE 6-STAGE OUTCOME PIPELINE
         </div>
         <h2 class="text-3xl sm:text-4xl font-normal text-ink font-serif tracking-tight">The 6-Stage Optimization Engine</h2>
-        <p class="text-xs sm:text-sm text-ink-secondary max-w-2xl">
-          SiftrCode V2 replaces naive single-file pruning with a formal multi-stage context pipeline designed to maximize task completion.
+        <p class="text-xs sm:text-sm text-ink-secondary max-w-2xl leading-relaxed">
+          SiftrCode V2 replaces naive single-file token stripping with a formal multi-stage context pipeline designed to maximize first-turn task completion rates while cutting context costs.
         </p>
       </div>
 
@@ -393,28 +401,28 @@
           </div>
           <div>
             <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Multi-Channel Candidate Recall</h2>
-            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">Channel Fusion: Exact, BM25, Stack Trace, Context Graph &amp; Git Co-Change</div>
+            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">Subsystem: CandidateGenerator • 5 Orthogonal Discovery Channels</div>
           </div>
         </div>
         <p>
-          Coding agents often fail before they even begin because naive search misses non-obvious dependency files or pulls in hundreds of irrelevant results. SiftrCode V2 implements <strong>Multi-Channel Recall</strong> across 5 orthogonal channels:
+          Coding agents frequently fail when initial search misses non-obvious callers or pulls in hundreds of irrelevant results. SiftrCode V2 runs <strong>Multi-Channel Candidate Recall</strong> across 5 orthogonal channels in parallel:
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 font-mono text-xs">
           <div class="p-3 bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 rounded space-y-1">
-            <span class="text-ink font-semibold">1. Exact Symbol / Path Match</span>
-            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Direct filename and identifier matching from user prompts and task specs.</p>
+            <span class="text-ink font-semibold">1. Exact Symbol / Path Matching</span>
+            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Identifies exact symbol names, functions, classes, and file paths referenced in the prompt or error report.</p>
           </div>
           <div class="p-3 bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 rounded space-y-1">
-            <span class="text-ink font-semibold">2. BM25 Semantic Keyword Retrieval</span>
-            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Probabilistic relevance ranking over exported docstrings, types, and error tokens.</p>
+            <span class="text-ink font-semibold">2. BM25 Lexical Retrieval</span>
+            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Probabilistic keyword ranking over exported docstrings, parameter names, and error string tokens.</p>
           </div>
           <div class="p-3 bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 rounded space-y-1">
             <span class="text-ink font-semibold">3. Stack Trace Diagnostic Parser</span>
-            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Extracts failing frames, filenames, and line offsets directly from runtime logs.</p>
+            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Directly parses stack traces, runtime exceptions, and test failure outputs to pinpoint exact file and line offsets.</p>
           </div>
           <div class="p-3 bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 rounded space-y-1">
             <span class="text-ink font-semibold">4. Context Graph &amp; Git Co-Change</span>
-            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Traverses import/export caller graphs and historical git co-modification couplings.</p>
+            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Traverses AST import/export caller graphs and mines git history for files that frequently co-modify together.</p>
           </div>
         </div>
       </section>
@@ -427,14 +435,14 @@
           </div>
           <div>
             <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Point-in-Time Versioned Features</h2>
-            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">ContextFeaturesV1 Schema &amp; Strict FeatureCutoff Temporal Invariant</div>
+            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">Subsystem: ContextFeaturesV1 • Strict Temporal FeatureCutoff Invariant</div>
           </div>
         </div>
         <p>
-          Context optimization must be scientifically reproducible and immune to evaluation leakage. SiftrCode models every candidate file as a versioned feature vector (<code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">ContextFeaturesV1</code>) with a strict <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">featureCutoff</code> timestamp.
+          Context optimization must be scientifically reproducible and immune to evaluation leakage. SiftrCode models every candidate file as an immutable versioned feature vector (<code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">ContextFeaturesV1</code>) with a strict <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">featureCutoff</code> timestamp.
         </p>
         <p>
-          No future git commits, post-task edits, or test results can influence feature computation. Features capture retrieval scores, import depth, error proximity, and module centrality with deterministic attribution.
+          No post-task commits, downstream edits, or runtime test outputs can leak into feature calculation. Features capture lexical affinity, graph centrality, error proximity, line count, and edit recency with deterministic provenance.
         </p>
       </section>
 
@@ -445,18 +453,22 @@
             03
           </div>
           <div>
-            <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Transparent Heuristic Ranker</h2>
-            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">ContextRank • Explainable Reasons &amp; Explicit Penalty Bounds</div>
+            <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Transparent Explainable Ranker</h2>
+            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">Subsystem: ContextRank • Explainable Reasons &amp; Explicit Penalty Bounds</div>
           </div>
         </div>
         <p>
           Black-box neural rankers introduce non-deterministic ordering and unpredictability. SiftrCode V2 uses a transparent linear combination ranker that calculates an explicit <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">finalScore</code> alongside human-auditable reasons and score breakdowns:
         </p>
-        <ul class="list-disc pl-5 space-y-1.5 text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
-          <li><strong>Boost Multipliers:</strong> Direct stack trace hits (+0.40), exact symbol matches (+0.30), direct caller adjacency (+0.25).</li>
-          <li><strong>Domain Penalties:</strong> Vendor/generated directories (-0.50), standalone mock files (-0.25), distractor UI in backend tasks (-0.35).</li>
-          <li><strong>Explainable Decisions:</strong> Every ranked candidate exposes an array of transparent audit strings explaining why it was promoted or deprioritized.</li>
-        </ul>
+        <div class="p-3.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 font-mono text-xs space-y-2">
+          <div class="text-zinc-500 text-[11px]">ContextRank Scoring Formulation:</div>
+          <code class="text-emerald-700 dark:text-emerald-300 block">Score(c) = w_exact * s_exact + w_bm25 * s_bm25 + w_stack * s_stack + w_graph * s_graph - Penalties</code>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 font-sans text-xs text-zinc-600 dark:text-zinc-400">
+            <div><strong>Stack Trace Hits:</strong> +0.40 boost</div>
+            <div><strong>Exact Identifier:</strong> +0.30 boost</div>
+            <div><strong>Vendor / Build Dir:</strong> -0.50 penalty</div>
+          </div>
+        </div>
       </section>
 
       <!-- Stage 4 -->
@@ -467,14 +479,14 @@
           </div>
           <div>
             <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Submodular Synergy Composition</h2>
-            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">BundleComposer • Marginal Coverage Maximization &amp; Diminishing Redundancy</div>
+            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">Subsystem: BundleComposer • Marginal Coverage Maximization &amp; Synergy Boosts</div>
           </div>
         </div>
         <p>
-          Selecting context candidates individually leads to catastrophic redundancy: multiple files defining identical concepts, or missing the single contract required to understand a causal function.
+          Selecting context files independently leads to severe redundancy: multiple files defining identical helpers, or omitting the single type contract required to understand a causal function.
         </p>
         <p>
-          SiftrCode's <strong>BundleComposer</strong> applies submodular function optimization: each candidate file added to the bundle is evaluated by its <em>marginal information gain</em> relative to already-chosen candidates. Co-requisites (e.g., an interface file and its primary implementation) receive a synergistic boost, while duplicates are swiftly suppressed.
+          SiftrCode's <strong>BundleComposer</strong> applies submodular function optimization: each candidate added to the bundle is evaluated by its marginal utility gain relative to already-chosen files. Co-requisites (e.g. an interface file paired with its primary caller) receive a synergistic boost, while redundant utility mocks are quickly suppressed.
         </p>
       </section>
 
@@ -486,7 +498,7 @@
           </div>
           <div>
             <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Safe Variable-Resolution Degradation</h2>
-            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">Resolution Selection: Full Body vs AST Skeleton vs Signatures vs Drop</div>
+            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">Subsystem: ResolutionRank • Multi-Language AST Safety Guards</div>
           </div>
         </div>
         <p>
@@ -498,7 +510,7 @@
             <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Assigned to causal root and direct edit targets. 0 lines stripped.</p>
           </div>
           <div class="p-3 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/60 rounded space-y-1">
-            <span class="text-emerald-700 dark:text-emerald-300 font-bold">AST Skeleton (-90%)</span>
+            <span class="text-emerald-700 dark:text-emerald-300 font-bold">AST Skeleton (-88%)</span>
             <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Preserves all exports, classes, interfaces, types, and parameter shapes.</p>
           </div>
           <div class="p-3 bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-900/60 rounded space-y-1">
@@ -519,16 +531,68 @@
             06
           </div>
           <div>
-            <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Constrained Budget &amp; Cost Optimization</h2>
-            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">BudgetSolver • Sub-100ms Knapsack Optimization</div>
+            <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Constrained Budget &amp; Truthful Accounting</h2>
+            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">Subsystem: BudgetSolver &amp; TokenizerRegistry • Knapsack Optimization</div>
           </div>
         </div>
         <p>
-          Context windows have hard operational ceilings (e.g. 8,000 or 16,000 tokens for optimal reasoning speed and minimal cost). SiftrCode's <strong>BudgetSolver</strong> runs an exact knapsack algorithm over candidate representations, maximizing cumulative utility per token without violating hard prompt budget limits.
+          Context windows have hard operational ceilings. SiftrCode's <strong>BudgetSolver</strong> solves a constrained knapsack problem over candidate representations, maximizing cumulative utility per token without violating prompt budget limits.
         </p>
         <p>
-          The result is an optimal context bundle containing everything necessary to complete the coding task, with zero token waste and zero latency penalty.
+          Integrated with <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">TokenizerRegistry</code>, Siftr enforces pre-flight bounds calibrated against Claude BPE (~3.7 chars/tok) and GPT cl100k/o200k (~3.6 chars/tok), preventing context overflow and ensuring billing integrity.
         </p>
+      </section>
+
+      <!-- Token Economics Summary Matrix -->
+      <section class="p-6 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md shadow-2xs space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="space-y-0.5">
+            <h3 class="text-lg sm:text-xl font-serif text-ink font-normal">Token Economics by Budget Profile</h3>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">Modeled on 85k-token raw repository payload at 50 turns/day (1,400 turns/mo per dev).</p>
+          </div>
+          <a href="/#economics" class="text-xs font-mono text-[#D97757] hover:underline shrink-0">View full economics &rarr;</a>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left font-mono text-xs border border-zinc-200 dark:border-zinc-800 rounded">
+            <thead>
+              <tr class="bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                <th class="p-2.5">Profile</th>
+                <th class="p-2.5">Optimized Payload</th>
+                <th class="p-2.5">Token Reduction</th>
+                <th class="p-2.5">Sonnet 3.7 / Turn</th>
+                <th class="p-2.5">Monthly Savings</th>
+                <th class="p-2.5">10-Dev Team / Yr</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
+              <tr>
+                <td class="p-2.5 font-bold text-ink">Balanced (Default)</td>
+                <td class="p-2.5">18,200 tok</td>
+                <td class="p-2.5 text-emerald-600 dark:text-emerald-400 font-bold">−78.6%</td>
+                <td class="p-2.5">$0.055</td>
+                <td class="p-2.5 text-emerald-600 dark:text-emerald-400 font-bold">Save $280 / mo</td>
+                <td class="p-2.5 font-bold text-ink">+$33.7k / yr</td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-bold text-ink">Aggressive</td>
+                <td class="p-2.5">10,500 tok</td>
+                <td class="p-2.5 text-emerald-600 dark:text-emerald-400 font-bold">−87.6%</td>
+                <td class="p-2.5">$0.032</td>
+                <td class="p-2.5 text-emerald-600 dark:text-emerald-400 font-bold">Save $313 / mo</td>
+                <td class="p-2.5 font-bold text-ink">+$37.5k / yr</td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-bold text-ink">Thorough</td>
+                <td class="p-2.5">32,000 tok</td>
+                <td class="p-2.5 text-emerald-600 dark:text-emerald-400 font-bold">−62.4%</td>
+                <td class="p-2.5">$0.096</td>
+                <td class="p-2.5 text-emerald-600 dark:text-emerald-400 font-bold">Save $223 / mo</td>
+                <td class="p-2.5 font-bold text-ink">+$26.7k / yr</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <!-- Zero-Egress Technical Guarantees -->
@@ -538,10 +602,10 @@
             <span class="w-2 h-2 rounded-full bg-emerald-400 ci-live-dot"></span>
             <h2 class="text-lg sm:text-xl font-normal text-white font-serif tracking-tight">Zero-Egress &amp; Data Rights Technical Guarantees</h2>
           </div>
-          <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-900 text-emerald-400 border border-emerald-500/30 font-semibold">Sections 50–52 Enforced</span>
+          <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-900 text-emerald-400 border border-emerald-500/30 font-semibold">Stage 0 Enforced</span>
         </div>
         <p class="text-xs text-zinc-300 font-sans leading-relaxed">
-          SiftrCode V2 is governed by immutable data rights and algorithmic isolation enforced directly in code:
+          SiftrCode V2 is governed by immutable data rights and local-only processing guarantees:
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 font-mono text-xs pt-1">
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
@@ -550,7 +614,7 @@
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
             <span class="text-emerald-400 font-semibold">2. rawSourceRetention: false</span>
-            <p class="text-[11px] text-zinc-400 font-sans">Volatile RAM processing only. Zero persistent raw source or token file logging.</p>
+            <p class="text-[11px] text-zinc-400 font-sans">Volatile RAM processing only. Zero persistent raw source caching.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
             <span class="text-emerald-400 font-semibold">3. remoteProcessing: false</span>
@@ -561,29 +625,29 @@
             <p class="text-[11px] text-zinc-400 font-sans">Unexposed candidate files are treated as unknown, never falsely assumed negative.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">5. RightsFilter Boundary</span>
-            <p class="text-[11px] text-zinc-400 font-sans">Strict firewall between raw telemetry and training datasets. Unvetted data is blocked.</p>
+            <span class="text-emerald-400 font-semibold">5. SIFTR_CALLS_ONLY</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Conservative observability tracing capturing only Siftr tool invocations.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">6. Traceable Erasure</span>
-            <p class="text-[11px] text-zinc-400 font-sans">Cryptographic lineage links enable cascading right-to-be-forgotten purges with audit trail.</p>
+            <span class="text-emerald-400 font-semibold">6. WorkspaceChangedError</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Snapshot immutability guards trigger structured replanning if files mutate mid-task.</p>
           </div>
         </div>
 
         <!-- Export Boundary Pipeline Diagram Banner -->
         <div class="p-3.5 rounded bg-zinc-900/90 border border-zinc-800 text-[11px] font-mono text-zinc-300 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Sec 50 Learning Plane Export Boundary Architecture</span>
-            <a href="/admin#rights" class="text-xs text-[#F39C82] hover:underline font-sans">Open Admin Console &rarr;</a>
+            <span class="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Local Learning Plane Architecture</span>
+            <span class="text-xs text-emerald-400 font-sans">.siftr/observations.sqlite</span>
           </div>
           <div class="flex flex-wrap items-center gap-2 text-xs">
-            <span class="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-700 text-zinc-300">Raw Observation Store</span>
+            <span class="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-700 text-zinc-300">Candidate Generator</span>
             <span class="text-emerald-400 font-bold">&rarr;</span>
-            <span class="px-2.5 py-1 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 font-semibold">RightsFilter Gate</span>
+            <span class="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-700 text-zinc-300">ContextRank &amp; Features</span>
             <span class="text-emerald-400 font-bold">&rarr;</span>
-            <span class="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-700 text-zinc-300">Training Exporter (Lineage Stamped)</span>
+            <span class="px-2.5 py-1 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 font-semibold">Decision Observation Stored</span>
             <span class="text-emerald-400 font-bold">&rarr;</span>
-            <span class="px-2.5 py-1 rounded bg-rose-950/50 border border-rose-500/40 text-rose-300">Cascading DeletionManager</span>
+            <span class="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-700 text-zinc-300">Reconcile Outcome Evidence</span>
           </div>
         </div>
       </section>
@@ -628,9 +692,9 @@
           <div class="bg-zinc-950 text-zinc-100 p-3 rounded font-mono text-xs flex items-center justify-between gap-3 border border-zinc-800 shadow-2xs select-all">
             <div class="flex items-center gap-2 overflow-x-auto min-w-0">
               <span class="text-emerald-400 select-none font-bold bash-dollar-flash">$</span>
-              <code class="whitespace-nowrap">npx siftrcode context "fix webhook invoice race condition" --budget 8000</code>
+              <code class="whitespace-nowrap">npx siftrcode context "fix webhook invoice race condition" --profile balanced -o context.xml</code>
             </div>
-            <button onclick="copySnippet('npx siftrcode context &quot;fix webhook invoice race condition&quot; --budget 8000', this)" class="text-[10px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer shrink-0">
+            <button onclick="copySnippet('npx siftrcode context &quot;fix webhook invoice race condition&quot; --profile balanced -o context.xml', this)" class="text-[10px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer shrink-0">
               COPY
             </button>
           </div>
@@ -642,15 +706,15 @@
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-xs">
             <div class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 space-y-1">
               <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold">siftr_context</span>
-              <p class="text-[11px] text-zinc-500 font-sans leading-snug">Full 6-stage outcome optimization for task prompt within token budget.</p>
+              <p class="text-[11px] text-zinc-500 font-sans leading-snug">Full 6-stage outcome optimization for task prompt within token and cost limits.</p>
             </div>
             <div class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 space-y-1">
               <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold">siftr_optimize</span>
-              <p class="text-[11px] text-zinc-500 font-sans leading-snug">Configurable workspace optimization with explicit candidate set.</p>
+              <p class="text-[11px] text-zinc-500 font-sans leading-snug">Configurable workspace optimization alias with profile and cost ceilings.</p>
             </div>
             <div class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 space-y-1">
               <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold">siftr_rank</span>
-              <p class="text-[11px] text-zinc-500 font-sans leading-snug">Diagnostic heuristic ranking with transparent score breakdown.</p>
+              <p class="text-[11px] text-zinc-500 font-sans leading-snug">Diagnostic heuristic ranking with transparent scores and primary reasons.</p>
             </div>
           </div>
         </div>
@@ -900,19 +964,26 @@
     // ==========================================
     // Interactive Architecture Triage Controller
     // ==========================================
-    const triageData = {
-      retained: {
-        badge: '2 CAUSAL EDIT TARGETS • 100% FULL FIDELITY',
-        badgeClass: 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
-        title: 'Full Body Causal Edit Targets',
-        desc: 'Direct root causal and edit target files where agent modifications happen. Preserved at full body resolution with zero code stripping.',
-        stats: [
-          { file: 'src/services/webhook.ts', before: '1,840', after: '1,840 tok', drop: 'Full Body' },
-          { file: 'src/billing/subscription.ts', before: '2,150', after: '2,150 tok', drop: 'Full Body' }
-        ],
-        codeHeading: 'Full Implementation: src/services/webhook.ts',
-        codeSummary: '100% Line Visibility for Agent Edits',
-        codeSnippet: `// Full Implementation Retained: src/services/webhook.ts
+    let currentExplorerProfile = 'balanced';
+    let currentTriageTab = 'skeletons';
+
+    const triageProfileData = {
+      balanced: {
+        rawBadge: '85,000 tok',
+        optBadge: '18,200 tok (−78.6%)',
+        counts: { retained: 2, skeletons: 6, dropped: 34 },
+        retained: {
+          badge: '2 CAUSAL EDIT TARGETS • 100% BODY RESOLUTION',
+          badgeClass: 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
+          title: 'Full Body Causal Edit Targets',
+          desc: 'Direct causal root and edit target files where agent modifications happen. Preserved at full body resolution with zero lines stripped to prevent hallucinated edits.',
+          stats: [
+            { file: 'src/services/webhook.ts', before: '1,840', after: '1,840 tok', drop: 'Full Body (0% Loss)' },
+            { file: 'src/billing/subscription.ts', before: '2,150', after: '2,150 tok', drop: 'Full Body (0% Loss)' }
+          ],
+          codeHeading: 'Full Implementation: src/services/webhook.ts',
+          codeSummary: '100% Line Visibility for Agent Edits',
+          codeSnippet: `// Full Implementation Retained: src/services/webhook.ts
 // [Causal Root Target • Preserved at 100% Fidelity by ResolutionRank]
 export async function handleSubscriptionInvoice(event: StripeWebhookEvent) {
   const tx = await dbPool.transaction();
@@ -926,26 +997,27 @@ export async function handleSubscriptionInvoice(event: StripeWebhookEvent) {
     throw err;
   }
 }`
-      },
-      skeletons: {
-        badge: '6 DEPENDENCY FILES • AST INTERFACE SKELETONS',
-        badgeClass: 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
-        title: 'AST Interface Skeletons (Context)',
-        desc: 'Supporting context files stripped of internal imperative logic. Types, interfaces, signatures, docstrings, and call contracts remain 100% intact.',
-        stats: [
-          { file: 'src/db/client.ts', before: '1,420', after: '110 tok', drop: '-92.3%' },
-          { file: 'src/types/user.ts', before: '920', after: '84 tok', drop: '-90.9%' },
-          { file: 'src/billing/stripe.ts', before: '2,100', after: '180 tok', drop: '-91.4%' },
-          { file: 'src/auth/session.ts', before: '890', after: '92 tok', drop: '-89.7%' }
-        ],
-        codeHeading: 'Live Synthesized AST Output (src/db/client.ts)',
-        codeSummary: '1,420 ➔ 110 tokens (12 lines)',
-        codeSnippet: `// SiftrCode AST Skeletonizer: src/db/client.ts
+        },
+        skeletons: {
+          badge: '6 DEPENDENCY FILES • AST INTERFACE SKELETONS',
+          badgeClass: 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
+          title: 'AST Interface Skeletons (Dependencies)',
+          desc: 'Supporting context files stripped of internal imperative logic. Types, interfaces, signatures, docstrings, and call contracts remain 100% intact.',
+          stats: [
+            { file: 'src/db/client.ts', before: '1,420', after: '110 tok', drop: '-92.3%' },
+            { file: 'src/types/user.ts', before: '920', after: '84 tok', drop: '-90.9%' },
+            { file: 'src/billing/stripe.ts', before: '2,100', after: '180 tok', drop: '-91.4%' },
+            { file: 'src/auth/session.ts', before: '890', after: '92 tok', drop: '-89.7%' }
+          ],
+          codeHeading: 'Synthesized AST Interface: src/db/client.ts',
+          codeSummary: '1,420 ➔ 110 tokens (12 lines)',
+          codeSnippet: `// SiftrCode AST Skeletonizer: src/db/client.ts
 // [Synthesized Interface Contract • Zero Hallucination Guarantee]
 import { PoolClient } from 'pg';
 
 export interface DatabaseTransaction {
   id: string;
+  acquireLock(resourceKey: string): Promise<LockHandle>;
   commit(): Promise<void>;
   rollback(): Promise<void>;
 }
@@ -953,28 +1025,131 @@ export interface DatabaseTransaction {
 export class DatabasePool {
   public async transaction(): Promise<DatabaseTransaction>;
 }
-// Stripped: 136 lines of connection retries, idle timeouts & SQL queries.`
-      },
-      dropped: {
-        badge: '34 DISTRACTOR FILES • SUPPRESSED BLOAT (0 TOKENS)',
-        badgeClass: 'bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800',
-        title: 'Distractor Bloat Suppressed',
-        desc: 'Non-causal UI, tests, vendor, and unrelated utilities pruned from the context window to prevent attention saturation.',
-        stats: [
-          { file: 'src/views/banner.tsx', before: '3,200', after: '0 tok', drop: '-100%' },
-          { file: 'src/utils/math.ts', before: '740', after: '0 tok', drop: '-100%' },
-          { file: 'src/auth/avatar.ts', before: '1,120', after: '0 tok', drop: '-100%' },
-          { file: 'src/styles/theme.css', before: '4,500', after: '0 tok', drop: '-100%' }
-        ],
-        codeHeading: 'V2 Transparent Ranking & Elimination Log',
-        codeSummary: 'Local Solver • 154,800 Tokens Dissolved',
-        codeSnippet: `// SiftrCode V2 Decision Log (Task: "fix subscription billing webhook race condition")
-[34 Distractor Files Filtered Out]:
+// Stripped: 136 lines of connection retries, idle timeouts & SQL execution.`
+        },
+        dropped: {
+          badge: '34 DISTRACTOR FILES • SUPPRESSED BLOAT (0 TOKENS)',
+          badgeClass: 'bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800',
+          title: 'Transitive Distractors Filtered Out',
+          desc: 'Non-causal UI, tests, vendor code, and unrelated utilities pruned before LLM prompt ingestion to prevent attention saturation.',
+          stats: [
+            { file: 'src/views/banner.tsx', before: '3,200', after: '0 tok', drop: '-100%' },
+            { file: 'src/utils/math.ts', before: '740', after: '0 tok', drop: '-100%' },
+            { file: 'src/auth/avatar.ts', before: '1,120', after: '0 tok', drop: '-100%' },
+            { file: 'src/styles/theme.css', before: '4,500', after: '0 tok', drop: '-100%' }
+          ],
+          codeHeading: 'V2 Transparent ContextRank Elimination Log',
+          codeSummary: 'Local Knapsack Solver • 66,800 Tokens Dissolved',
+          codeSnippet: `// SiftrCode V2 Decision Log (Task: "fix subscription billing webhook race condition")
+[34 Distractor Files Omitted from Context]:
 - src/views/banner.tsx      [Drop: UI presentation has zero relevance to billing webhook]
 - src/utils/math.ts         [Drop: Calculation helpers not in concurrent billing path]
 - src/auth/avatar.ts        [Drop: Profile asset routines unrelated to webhook event]
-- src/styles/theme.css      [Drop: Styling rules omitted from agent context]
-... +30 additional irrelevant repository candidate files omitted completely.`
+- src/styles/theme.css      [Drop: CSS styling omitted from prompt]
+- tests/fixtures/mock.json  [Drop: Large fixture file omitted to save 8,900 tokens]
+... +29 additional candidate files omitted completely.`
+        }
+      },
+      aggressive: {
+        rawBadge: '85,000 tok',
+        optBadge: '10,500 tok (−87.6%)',
+        counts: { retained: 1, skeletons: 4, dropped: 37 },
+        retained: {
+          badge: '1 CRITICAL TARGET • 100% BODY RESOLUTION',
+          badgeClass: 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
+          title: 'Primary Edit Target Only',
+          desc: 'Under aggressive budgets, only the highest-scoring causal root file receives full body representation.',
+          stats: [
+            { file: 'src/services/webhook.ts', before: '1,840', after: '1,840 tok', drop: 'Full Body' }
+          ],
+          codeHeading: 'Full Implementation: src/services/webhook.ts',
+          codeSummary: '100% Line Visibility on Root Target',
+          codeSnippet: `// Primary Root Target: src/services/webhook.ts
+export async function handleSubscriptionInvoice(event: StripeWebhookEvent) {
+  const tx = await dbPool.transaction();
+  try {
+    const lock = await tx.acquireLock(\`sub_\${event.data.object.customer}\`);
+    await updateSubscriptionState(tx, event.data.object);
+    await tx.commit();
+  } catch (err) {
+    await tx.rollback();
+    throw err;
+  }
+}`
+        },
+        skeletons: {
+          badge: '4 COMPRESSED SIGNATURES • TIGHT AST SKELETONS',
+          badgeClass: 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
+          title: 'Compact AST Signatures',
+          desc: 'Dependencies condensed to essential exported signatures and type definitions for maximum throughput.',
+          stats: [
+            { file: 'src/db/client.ts', before: '1,420', after: '85 tok', drop: '-94.0%' },
+            { file: 'src/billing/stripe.ts', before: '2,100', after: '120 tok', drop: '-94.3%' }
+          ],
+          codeHeading: 'Compact Signatures: src/db/client.ts',
+          codeSummary: 'Maximum Token Compression',
+          codeSnippet: `export interface DatabaseTransaction { id: string; acquireLock(k: string): Promise<LockHandle>; commit(): Promise<void>; }
+export class DatabasePool { transaction(): Promise<DatabaseTransaction>; }`
+        },
+        dropped: {
+          badge: '37 CANDIDATE FILES PRUNED • 74,500 TOKENS SAVED',
+          badgeClass: 'bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800',
+          title: 'Aggressive Pruning',
+          desc: 'Deep dependencies, secondary callers, and non-critical modules filtered out to stay strictly within tiny budgets.',
+          stats: [
+            { file: 'src/billing/subscription.ts', before: '2,150', after: '0 tok', drop: '-100%' },
+            { file: 'src/views/banner.tsx', before: '3,200', after: '0 tok', drop: '-100%' }
+          ],
+          codeHeading: 'Aggressive Budget Elimination Log',
+          codeSummary: 'Strict Cost Ceiling Enforced',
+          codeSnippet: `// 37 Candidate files pruned under Aggressive profile (Token budget: 10,500 max)`
+        }
+      },
+      thorough: {
+        rawBadge: '85,000 tok',
+        optBadge: '32,000 tok (−62.4%)',
+        counts: { retained: 4, skeletons: 10, dropped: 28 },
+        retained: {
+          badge: '4 CANDIDATE FILES • 100% BODY RESOLUTION',
+          badgeClass: 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
+          title: 'Multi-File Body Retention',
+          desc: 'Under thorough budgets, all potential co-modifying candidates and test fixtures receive full implementation bodies.',
+          stats: [
+            { file: 'src/services/webhook.ts', before: '1,840', after: '1,840 tok', drop: 'Full Body' },
+            { file: 'src/billing/subscription.ts', before: '2,150', after: '2,150 tok', drop: 'Full Body' },
+            { file: 'src/handlers/invoice.ts', before: '1,920', after: '1,920 tok', drop: 'Full Body' },
+            { file: 'src/db/client.ts', before: '1,420', after: '1,420 tok', drop: 'Full Body' }
+          ],
+          codeHeading: 'Multi-File Implementation Retention',
+          codeSummary: 'Full Deep Visibility for Complex Refactoring',
+          codeSnippet: `// Retains full bodies across all co-modifying candidate files for deep architectural refactoring.`
+        },
+        skeletons: {
+          badge: '10 EXTENDED SKELETONS • RICH AST CONTEXT',
+          badgeClass: 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
+          title: 'Extended AST Skeletons',
+          desc: 'Wider radius of caller and callee modules included with full docstrings, types, and exported interfaces.',
+          stats: [
+            { file: 'src/auth/session.ts', before: '890', after: '92 tok', drop: '-89.7%' },
+            { file: 'src/types/user.ts', before: '920', after: '84 tok', drop: '-90.9%' }
+          ],
+          codeHeading: 'Extended AST Interface Context',
+          codeSummary: 'Deep Architecture Coverage',
+          codeSnippet: `// SiftrCode AST Skeletonizer: Deep dependency coverage with full types and signatures.`
+        },
+        dropped: {
+          badge: '28 DISTRACTORS PRUNED • 53,000 TOKENS SAVED',
+          badgeClass: 'bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800',
+          title: 'Peripheral Noise Pruned',
+          desc: 'Pure presentation files, unrelated mocks, and asset files dropped.',
+          stats: [
+            { file: 'src/views/banner.tsx', before: '3,200', after: '0 tok', drop: '-100%' },
+            { file: 'src/styles/theme.css', before: '4,500', after: '0 tok', drop: '-100%' }
+          ],
+          codeHeading: 'Thorough Profile Elimination Log',
+          codeSummary: 'Irrelevant Files Suppressed',
+          codeSnippet: `// 28 Peripheral files omitted from context bundle.`
+        }
       }
     };
 
@@ -982,7 +1157,36 @@ export class DatabasePool {
       return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
+    function setExplorerProfile(prof) {
+      currentExplorerProfile = prof;
+      ['balanced', 'aggressive', 'thorough'].forEach(p => {
+        const btn = document.getElementById(`expProfile${p.charAt(0).toUpperCase() + p.slice(1)}`);
+        if (!btn) return;
+        if (p === prof) {
+          btn.className = 'px-2.5 py-1 rounded bg-white dark:bg-zinc-800 text-ink font-semibold shadow-2xs transition';
+        } else {
+          btn.className = 'px-2.5 py-1 rounded text-zinc-600 dark:text-zinc-400 hover:text-ink transition';
+        }
+      });
+
+      const pData = triageProfileData[prof];
+      const rawBadge = document.getElementById('expRawBadge');
+      if (rawBadge) rawBadge.textContent = pData.rawBadge;
+      const optBadge = document.getElementById('expOptBadge');
+      if (optBadge) optBadge.textContent = pData.optBadge;
+
+      const cRet = document.getElementById('tabCountRetained');
+      if (cRet) cRet.textContent = pData.counts.retained;
+      const cSkel = document.getElementById('tabCountSkeletons');
+      if (cSkel) cSkel.textContent = pData.counts.skeletons;
+      const cDrop = document.getElementById('tabCountDropped');
+      if (cDrop) cDrop.textContent = pData.counts.dropped;
+
+      setTriageTab(currentTriageTab);
+    }
+
     function setTriageTab(tab) {
+      currentTriageTab = tab;
       ['skeletons', 'dropped', 'retained'].forEach(t => {
         const btn = document.getElementById('tab-' + t);
         if (btn) {
@@ -994,7 +1198,8 @@ export class DatabasePool {
         }
       });
 
-      const data = triageData[tab];
+      const profData = triageProfileData[currentExplorerProfile] || triageProfileData.balanced;
+      const data = profData[tab];
       const container = document.getElementById('triageContent');
       if (!data || !container) return;
 
@@ -1034,11 +1239,11 @@ export class DatabasePool {
           </div>
         </div>
 
-        <!-- Row 2: Code & Decision Inspector on its own full-width row! -->
+        <!-- Row 2: Code & Decision Inspector -->
         <div class="rounded-lg bg-[#121215] border border-zinc-800 overflow-hidden shadow-sm">
           <div class="px-4 py-2.5 bg-zinc-900 border-b border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs font-mono">
             <span class="font-medium text-zinc-200 flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span class="w-2 h-2 rounded-full ${tab === 'retained' ? 'bg-blue-500' : (tab === 'dropped' ? 'bg-rose-500' : 'bg-emerald-500')}"></span>
               ${data.codeHeading}
             </span>
             <span class="text-[11px] text-zinc-400">${data.codeSummary}</span>
@@ -1048,8 +1253,8 @@ export class DatabasePool {
       `;
     }
 
-    // Initialize with skeletons view
-    setTriageTab('skeletons');
+    // Initialize with balanced profile and skeletons view
+    setExplorerProfile('balanced');
   </script>
   <script src="/telemetry.js" defer></script>
 </body>
