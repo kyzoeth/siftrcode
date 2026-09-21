@@ -644,17 +644,38 @@ export class ContextEngine {
           evidenceList.push(diffEvidence);
         }
 
+        const agentProviderVal = kind === 'cursor' ? 'cursor' : (options.agentKind || 'unknown');
+        const modelVal = options.agentModel || 'unknown';
+
         const task = createTaskContext({
           taskId,
           workspaceSnapshotId: snapshot.workspaceSnapshotId,
           primaryPrompt: options.prompt,
           evidence: evidenceList,
           agentEnvironment: createAgentEnvironment({
-            agentProvider: kind === 'cursor' ? 'cursor' : 'anthropic',
-            agentVersion: '1.0.0',
-            model: options.agentModel || 'claude-3-5-sonnet-20241022',
-            harnessVersion: 'v2',
+            agentProvider: agentProviderVal,
+            agentVersion: 'unknown',
+            model: modelVal,
+            harnessVersion: 'unknown',
             availableTools: ['read_file', 'edit_file'],
+            provenance: {
+              agentProvider: {
+                value: agentProviderVal !== 'unknown' ? agentProviderVal : null,
+                source: options.agentKind ? 'USER_SUPPLIED' : (kind === 'cursor' ? 'DETECTED' : 'UNKNOWN'),
+              },
+              agentVersion: {
+                value: null,
+                source: 'UNKNOWN',
+              },
+              model: {
+                value: options.agentModel || null,
+                source: options.agentModel ? 'USER_SUPPLIED' : 'UNKNOWN',
+              },
+              harnessVersion: {
+                value: null,
+                source: 'UNKNOWN',
+              },
+            },
           }),
         });
 
@@ -759,11 +780,17 @@ export class ContextEngine {
       primaryPrompt: options.prompt,
       evidence: [userPromptEvidence],
       agentEnvironment: createAgentEnvironment({
-        agentProvider: 'anthropic',
-        agentVersion: '1.0.0',
-        model: 'claude-3-5-sonnet-20241022',
-        harnessVersion: 'v2',
+        agentProvider: 'unknown',
+        agentVersion: 'unknown',
+        model: 'unknown',
+        harnessVersion: 'unknown',
         availableTools: ['read_file', 'edit_file'],
+        provenance: {
+          agentProvider: { value: null, source: 'UNKNOWN' },
+          agentVersion: { value: null, source: 'UNKNOWN' },
+          model: { value: null, source: 'UNKNOWN' },
+          harnessVersion: { value: null, source: 'UNKNOWN' },
+        },
       }),
     });
 

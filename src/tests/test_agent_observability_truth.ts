@@ -129,10 +129,23 @@ export async function runAgentObservabilityTruthTests(): Promise<void> {
   // ---------------------------------------------------------------------------
   console.log('\n--- 3. Claude Code Adapter Truthful Coverage ---');
   {
+    // Closure PR 0.3: Claude defaults conservatively to SIFTR_CALLS_ONLY unless verified hooks exist
     const claude = new ClaudeCodeAdapter();
-    assert.strictEqual(claude.observabilityLevel, 'FULL_TOOL_TRACE');
-    assert.strictEqual(claude.observationCoverage.activeCoverage.fileReads, true);
-    assert.strictEqual(claude.observationCoverage.activeCoverage.fileEdits, true);
+    assert.strictEqual(
+      claude.observabilityLevel,
+      'SIFTR_CALLS_ONLY',
+      'Claude adapter must default conservatively to SIFTR_CALLS_ONLY'
+    );
+    assert.strictEqual(claude.observationCoverage.activeCoverage.fileReads, false);
+    assert.strictEqual(claude.observationCoverage.activeCoverage.fileEdits, false);
+
+    // Active verification of fileReads + fileEdits + shellCommands promotes to FULL_TOOL_TRACE:
+    claude.verifyActiveCoverage({ fileReads: true, fileEdits: true, shellCommands: true });
+    assert.strictEqual(
+      claude.observabilityLevel,
+      'FULL_TOOL_TRACE',
+      'Actively verified tool hooks promote Claude adapter to FULL_TOOL_TRACE'
+    );
 
     // If file-reading telemetry hook is disabled by environment policy:
     claude.verifyActiveCoverage({ fileReads: false });
@@ -211,7 +224,7 @@ export async function runAgentObservabilityTruthTests(): Promise<void> {
     );
 
     // Case 2: Uninspected unit under verified full tool trace (FULL_TOOL_TRACE)
-    const verifiedClaude = new ClaudeCodeAdapter();
+    const verifiedClaude = new ClaudeCodeAdapter({ fileReads: true, fileEdits: true, shellCommands: true });
     const fullOutcome = computeLabelEvidence({
       exposure: uninspectedUnitExposure,
       observabilityLevel: verifiedClaude.observabilityLevel,

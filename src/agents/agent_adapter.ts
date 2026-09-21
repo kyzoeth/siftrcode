@@ -182,12 +182,14 @@ export class ClaudeCodeAdapter implements AgentAdapter {
   observationCoverage: AgentObservationCoverage;
 
   constructor(customCoverage?: Partial<ActiveObservationCoverage>) {
+    // Closure PR 0.3: Conservative defaults. Unless an actual integration has verified hooks,
+    // observation coverage defaults to SIFTR_CALLS_ONLY.
     const active: ActiveObservationCoverage = {
-      fileReads: true,
-      fileEdits: true,
-      shellCommands: true,
-      tests: true,
-      nativeSearch: true,
+      fileReads: false,
+      fileEdits: false,
+      shellCommands: false,
+      tests: false,
+      nativeSearch: false,
       mcpCalls: true,
       ...customCoverage,
     };

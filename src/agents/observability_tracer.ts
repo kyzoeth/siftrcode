@@ -31,7 +31,7 @@ export class ObservabilityTracer {
   private level: ObservabilityLevel;
   private taskId: string;
 
-  constructor(taskId: string, level: ObservabilityLevel = 'FULL_TOOL_TRACE') {
+  constructor(taskId: string, level: ObservabilityLevel = 'SIFTR_CALLS_ONLY') {
     this.taskId = taskId;
     this.level = level;
   }
@@ -42,6 +42,10 @@ export class ObservabilityTracer {
 
   public getLevel(): ObservabilityLevel {
     return this.level;
+  }
+
+  public setLevel(level: ObservabilityLevel): void {
+    this.level = level;
   }
 
   public recordToolCall(call: ToolCallRecord): void {

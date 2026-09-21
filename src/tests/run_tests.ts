@@ -39,7 +39,8 @@ const tests = [
   { name: 'V2 ContextEngine (End-to-End Orchestration) Tests', file: 'test_context_engine.js' },
   { name: 'V2 CLI & MCP Server Integration Tests', file: 'test_v2_integration.js' },
   { name: 'V2 Multi-Language Symbol Correctness & Spans (PR 0.1) Tests', file: 'test_multi_language_symbols.js' },
-  { name: 'V2 WorkspaceSnapshot Immutability & Replanning (PR 0.2) Tests', file: 'test_workspace_immutability.js' }
+  { name: 'V2 WorkspaceSnapshot Immutability & Replanning (PR 0.2) Tests', file: 'test_workspace_immutability.js' },
+  { name: 'V2 Observability & AgentEnvironment Truth (PR 0.3) Tests', file: 'test_agent_environment_truth.js' }
 ];
 
 
