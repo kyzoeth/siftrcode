@@ -60,6 +60,7 @@ export * from './telemetry/candidate_observation';
 export * from './telemetry/trajectory_event';
 export * from './telemetry/outcome_evidence';
 export * from './telemetry/decision_observation';
+export * from './telemetry/siftr_session';
 export * from './learning/dataset_builder';
 export * from './workspace/workspace_source_reader';
 export * from './materialization/context_unit_materializer';
@@ -67,3 +68,5 @@ export * from './token/tokenizer_registry';
 export * from './token/token_cost_estimator';
 export * from './engine/context_plan';
 export * from './engine/context_engine';
+export * from './testing/test_env_scrubber';
+

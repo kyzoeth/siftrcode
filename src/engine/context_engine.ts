@@ -42,6 +42,7 @@ import { createFinalContextAllocation, FinalContextAllocationItem } from '../tok
 import { RepositoryTrustPolicy, RepositoryOrigin } from '../security/trust';
 import { JevShadowRunner } from '../providers/judgment/typesafe/jev_shadow_runner';
 import { JevMode } from '../providers/judgment/typesafe/jev_signal';
+import { createSiftrSession, SiftrSession } from '../telemetry/siftr_session';
 
 export { WorkspaceChangedError, isWorkspaceChangedError } from '../workspace/workspace_snapshot';
 
@@ -150,6 +151,47 @@ export class ContextEngine {
         sqliteStore: this.sqliteStore,
       });
     }
+  }
+
+  /**
+   * Authoritative session management: retrieves an existing active session or creates and persists a new one.
+   * Establishes session creation as a core ContextEngine capability rather than exclusively an MCP tool responsibility.
+   */
+  public getOrCreateSession(params: {
+    sessionId?: string;
+    taskId: string;
+    agentEnvironmentId?: string;
+    snapshotId?: string;
+  }): SiftrSession {
+    const effectiveSessionId =
+      params.sessionId ||
+      `sess_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
+
+    if (this.sqliteStore) {
+      const existing = this.sqliteStore.getSiftrSession(effectiveSessionId);
+      if (existing) {
+        return existing;
+      }
+    }
+
+    const session = createSiftrSession({
+      sessionId: effectiveSessionId,
+      taskId: params.taskId,
+      agentEnvironmentId: params.agentEnvironmentId || 'unknown',
+      initialWorkspaceSnapshotId: params.snapshotId || 'snapshot_init',
+      latestWorkspaceSnapshotId: params.snapshotId || 'snapshot_init',
+      status: 'ACTIVE',
+    });
+
+    if (this.sqliteStore && this.dataRights.telemetryAllowed !== false) {
+      try {
+        this.sqliteStore.saveSiftrSession(session);
+      } catch (err) {
+        console.warn('[ContextEngine] Failed to persist session:', err);
+      }
+    }
+
+    return session;
   }
 
   /**
@@ -553,10 +595,14 @@ export class ContextEngine {
       }
     }
 
-    // Closure PR 0.4: Construct immutable CandidateDecisionObservation records at decision time
-    const effectiveSessionId =
-      task.sessionId ||
-      `sess_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
+    // Closure PR 0.4 & Milestone 14: ContextEngine authoritatively manages active SiftrSession
+    const session = this.getOrCreateSession({
+      sessionId: task.sessionId,
+      taskId: task.taskId,
+      agentEnvironmentId: task.agentEnvironment?.systemConfigurationHash || 'unknown',
+      snapshotId: snapshot.workspaceSnapshotId,
+    });
+    const effectiveSessionId = session.sessionId;
 
     const decisionObservations: CandidateDecisionObservation[] = [];
     for (let i = 0; i < rankedCandidates.length; i++) {
@@ -680,6 +726,7 @@ export class ContextEngine {
         }));
         this.sqliteStore.saveContextUnits(rightsSafeUnits, this.dataRights);
 
+        this.sqliteStore.saveSiftrSession(session);
         this.sqliteStore.saveSnapshot(snapshot);
         this.sqliteStore.saveTaskContext(task, this.dataRights);
         this.sqliteStore.saveContextPlan(contextPlan, snapshot.workspaceSnapshotId);

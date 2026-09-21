@@ -146,6 +146,7 @@ export class TrainingExporter {
         sourceObservationIds: [obs.observationId],
         labelerVersion: options.labelerVersion,
         featureBuilderVersion: options.featureBuilderVersion,
+        exportId,
         provenanceId: resolved.provenance?.provenanceId,
         rightsReference: obs.rightsReference,
         exportedAt,
@@ -221,6 +222,7 @@ export class TrainingExporter {
 
       records.push({
         ...ev,
+        exportId,
         datasetVersion: options.datasetVersion,
         repository: repo,
         tenantId: resolved.tenantId || ev.tenantId,

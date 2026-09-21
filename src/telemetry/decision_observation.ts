@@ -28,7 +28,7 @@ export interface CandidateDecisionObservation {
 export function createCandidateDecisionObservation(params: {
   decisionObservationId?: string;
   taskId: string;
-  sessionId?: string;
+  sessionId: string;
   workspaceSnapshotId: string;
   contextUnitId: string;
   candidate: {
@@ -45,17 +45,18 @@ export function createCandidateDecisionObservation(params: {
   observabilityLevel: ObservabilityLevel;
   recordedAt?: string;
 }): CandidateDecisionObservation {
+  if (!params.sessionId || typeof params.sessionId !== 'string' || params.sessionId.trim().length === 0) {
+    throw new Error('CandidateDecisionObservation requires a valid, non-empty sessionId at construction.');
+  }
+
   const decisionObservationId =
     params.decisionObservationId ||
     `cdec_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
-  const sessionId =
-    params.sessionId ||
-    `sess_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
 
   return {
     decisionObservationId,
     taskId: params.taskId,
-    sessionId,
+    sessionId: params.sessionId.trim(),
     workspaceSnapshotId: params.workspaceSnapshotId,
     contextUnitId: params.contextUnitId,
     candidate: {

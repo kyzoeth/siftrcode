@@ -46,9 +46,14 @@ import { createAgentEnvironment } from '../agents/agent_environment';
 import { createWorkspaceSnapshot } from '../workspace/workspace_snapshot';
 import {
   createTrainingEvidenceRecord,
+  createTrainingRow,
   deriveRankingTrainingExample,
   deriveBinaryTrainingRow,
 } from '../learning/lineage';
+import { createCandidateObservationV2 } from '../telemetry/candidate_observation';
+import { createSourceProvenance } from '../rights/source_provenance';
+import { ContextEngine } from '../engine/context_engine';
+import { scrubJevTestEnvironment, isIntegrationTest } from '../testing/test_env_scrubber';
 import {
   JevShadowRunner,
 } from '../providers/judgment/typesafe/jev_shadow_runner';
@@ -900,6 +905,7 @@ export async function runRegressionTests() {
 
     const decObs = createCandidateDecisionObservation({
       taskId: 'task_sanitization_test',
+      sessionId: 'sess_sanitization_test',
       workspaceSnapshotId: 'ws_snap_1',
       contextUnitId: 'src/core/auth_handler.ts',
       candidate: {
@@ -1004,6 +1010,7 @@ export async function runRegressionTests() {
     const dummyFeatures: any = { schemaVersion: 'v1', heuristicScore: 0.9 };
     const decObs = createCandidateDecisionObservation({
       taskId: 'task_training_rights',
+      sessionId: 'sess_training_rights',
       workspaceSnapshotId: 'ws_snap_train',
       contextUnitId: 'src/core/test.ts',
       candidate: { generated: true, candidateRank: 1, retrievalSources: ['generator'] },
@@ -1199,6 +1206,7 @@ export async function runRegressionTests() {
     const exporter = new TrainingExporter();
     const unexposedDecObs = createCandidateDecisionObservation({
       taskId: 'task_unexposed',
+      sessionId: 'sess_unexposed',
       workspaceSnapshotId: 'ws_snap_train',
       contextUnitId: 'src/core/unexposed.ts',
       candidate: { generated: true, candidateRank: 2, retrievalSources: ['generator'] },
@@ -1347,7 +1355,292 @@ export async function runRegressionTests() {
     console.log('  ✔ Suite 9 passed: Partially missing JEV heads preserved without synthetic 0.0 injection\n');
   }
 
-  console.log('🎉 ALL NINE REGRESSION SUITES PASSED CLEANLY!\n');
+  // ==========================================================================
+  // SUITE 10: Mandatory Session Management in CandidateDecisionObservation & ContextEngine
+  // ==========================================================================
+  console.log('--- Suite 10: Mandatory Session Management & ContextEngine Authority ---');
+  {
+    const dummyFeatures: any = { schemaVersion: 'v1', heuristicScore: 0.9 };
+
+    // 1. CandidateDecisionObservation sessionId must be mandatory at construction
+    assert.throws(
+      () => {
+        createCandidateDecisionObservation({
+          taskId: 'task_mandatory_sess',
+          sessionId: '' as any,
+          workspaceSnapshotId: 'ws_snap_sess',
+          contextUnitId: 'src/core/session.ts',
+          candidate: { generated: true, candidateRank: 1, retrievalSources: ['generator'] },
+          features: dummyFeatures,
+          rank: 1,
+          exposureDecision: {
+            contextUnitId: 'src/core/session.ts',
+            eligibleForSelection: true,
+            selected: true,
+            resolution: ContextResolution.FULL,
+            contextPlanId: 'plan_sess',
+            policyId: 'policy_sess',
+            policyVersion: '1.0.0',
+            timestamp: new Date().toISOString(),
+          },
+          agentEnvironment: createAgentEnvironment(),
+          observabilityLevel: 'FULL_TOOL_TRACE',
+        });
+      },
+      /CandidateDecisionObservation requires a valid, non-empty sessionId at construction/,
+      'createCandidateDecisionObservation must reject empty or missing sessionId'
+    );
+
+    // 2. ContextEngine.getOrCreateSession authoritatively creates and persists sessions
+    const store = new SqliteStore(':memory:');
+    const engine = new ContextEngine({
+      sqliteStore: store,
+      dataRights: createDefaultDataRights({ telemetryAllowed: true }),
+    });
+
+    const session = engine.getOrCreateSession({
+      taskId: 'task_auto_session_test',
+      snapshotId: 'snap_test_1',
+    });
+    assert.ok(session.sessionId.startsWith('sess_'), 'Auto-generated session ID starts with sess_');
+    assert.strictEqual(session.status, 'ACTIVE');
+
+    const storedSession = store.getSiftrSession(session.sessionId);
+    assert.ok(storedSession !== undefined, 'getOrCreateSession must persist session to SqliteStore');
+    assert.strictEqual(storedSession?.sessionId, session.sessionId);
+
+    // 3. ContextEngine.generatePlan automatically assigns and persists SiftrSession
+    const snapshot = createWorkspaceSnapshot({
+      repositories: [
+        {
+          repositoryId: 'test_repo',
+          baseCommitSha: 'sha_sess',
+          trackedTreeHash: 'tree_sess',
+          dirtyPatchHash: 'clean',
+        },
+      ],
+    });
+    const unit: CodeSymbolUnit = {
+      id: 'unit_session_target',
+      repositoryId: 'test_repo',
+      path: 'src/session.ts',
+      title: 'SessionManager',
+      qualifiedName: 'SessionManager',
+      contentHash: 'hash_session',
+      workspaceSnapshotId: snapshot.workspaceSnapshotId,
+      provenance: { sourceType: 'file' },
+      trustLevel: TrustLevel.FIRST_PARTY_CODE,
+      symbolKind: SymbolKind.CLASS,
+      symbolName: 'SessionManager',
+      language: 'typescript',
+      kind: ContextUnitKind.CODE_SYMBOL,
+      metadata: {},
+      startLine: 1,
+      endLine: 10,
+    };
+    const task = createTaskContext({
+      taskId: 'task_generate_plan_sess',
+      workspaceSnapshotId: snapshot.workspaceSnapshotId,
+      primaryPrompt: 'Test session integration in ContextEngine',
+      agentEnvironment: createAgentEnvironment(),
+    });
+
+    const plan = engine.generatePlan({
+      task,
+      units: [unit],
+      snapshot,
+    });
+
+    assert.ok(plan.sessionId, 'ContextPlan must carry an authoritative sessionId');
+    const planSession = store.getSiftrSession(plan.sessionId);
+    assert.ok(planSession !== undefined, 'ContextEngine must persist SiftrSession to SqliteStore on generatePlan');
+    assert.strictEqual(planSession?.taskId, 'task_generate_plan_sess');
+    assert.strictEqual(planSession?.status, 'ACTIVE');
+
+    const decObsList = store.listCandidateDecisionObservations({ taskId: 'task_generate_plan_sess' });
+    assert.ok(decObsList.length >= 1, 'Decision observations persisted');
+    assert.strictEqual(decObsList[0].sessionId, plan.sessionId, 'Decision observations must carry matching sessionId');
+
+    store.close();
+    console.log('  ✔ Suite 10 passed: Mandatory session enforcement and ContextEngine session management verified\n');
+  }
+
+  // ==========================================================================
+  // SUITE 11: JEV Test Environment Scrubber & Hermeticity
+  // ==========================================================================
+  console.log('--- Suite 11: JEV Test Environment Scrubber & Hermeticity ---');
+  {
+    const mockEnv: Record<string, string | undefined> = {
+      SIFTR_JEV_REMOTE_PROCESSING: 'true',
+      SIFTR_JEV_ENABLED: 'true',
+      SIFTR_JEV_MODE: 'shadow',
+      SIFTR_JEV_MAX_CALLS: '10',
+      SIFTR_JEV_MAX_CANDIDATES: '5',
+      SIFTR_JEV_MODEL: 'custom-model',
+      SIFTR_JEV_API_KEY: 'siftr_secret',
+      TYPESAFE_API_KEY: 'typesafe_secret',
+      JEV_API_KEY: 'jev_secret',
+      INTEGRATION_TEST: 'false',
+      SIFTR_INTEGRATION_TEST: 'false',
+      SAFE_USER_VAR: 'keep_this_variable',
+      NODE_ENV: 'test',
+    };
+
+    assert.strictEqual(isIntegrationTest(mockEnv), false, 'mockEnv correctly classified as non-integration');
+
+    // Scrub mock environment
+    scrubJevTestEnvironment(mockEnv);
+
+    // Verify all JEV keys scrubbed
+    assert.strictEqual(mockEnv.SIFTR_JEV_REMOTE_PROCESSING, undefined);
+    assert.strictEqual(mockEnv.SIFTR_JEV_ENABLED, undefined);
+    assert.strictEqual(mockEnv.SIFTR_JEV_MODE, undefined);
+    assert.strictEqual(mockEnv.SIFTR_JEV_MAX_CALLS, undefined);
+    assert.strictEqual(mockEnv.SIFTR_JEV_MAX_CANDIDATES, undefined);
+    assert.strictEqual(mockEnv.SIFTR_JEV_MODEL, undefined);
+    assert.strictEqual(mockEnv.SIFTR_JEV_API_KEY, undefined);
+    assert.strictEqual(mockEnv.TYPESAFE_API_KEY, undefined);
+    assert.strictEqual(mockEnv.JEV_API_KEY, undefined);
+
+    // Verify non-JEV keys preserved
+    assert.strictEqual(mockEnv.SAFE_USER_VAR, 'keep_this_variable');
+    assert.strictEqual(mockEnv.NODE_ENV, 'test');
+
+    // Verify integration environment behavior
+    const intEnv: Record<string, string | undefined> = {
+      INTEGRATION_TEST: 'true',
+      SIFTR_JEV_REMOTE_PROCESSING: 'true',
+      SIFTR_JEV_ENABLED: 'true',
+    };
+    assert.strictEqual(isIntegrationTest(intEnv), true);
+    scrubJevTestEnvironment(intEnv, false);
+    assert.strictEqual(intEnv.SIFTR_JEV_REMOTE_PROCESSING, 'true', 'Integration env preserves JEV keys');
+
+    // Force scrubbing works even if INTEGRATION_TEST is true
+    scrubJevTestEnvironment(intEnv, true);
+    assert.strictEqual(intEnv.SIFTR_JEV_REMOTE_PROCESSING, undefined, 'Force scrub removes keys even in integration');
+
+    console.log('  ✔ Suite 11 passed: JEV environment scrubber enforces hermetic non-integration test execution\n');
+  }
+
+  // ==========================================================================
+  // SUITE 12: Sanctioned TrainingExporter Persistence Route & Export ID Lineage
+  // ==========================================================================
+  console.log('--- Suite 12: Sanctioned TrainingExporter Route & Export ID Lineage ---');
+  {
+    const store = new SqliteStore(':memory:');
+
+    // 1. Check Migration 11 applied
+    const applied = store.getAppliedMigrations();
+    const mig11 = applied.find((m) => m.version === 11);
+    assert.ok(mig11 !== undefined, 'Migration 011_training_rows_export_id must be applied');
+    assert.strictEqual(mig11?.name, '011_training_rows_export_id');
+
+    // 2. Direct persistence of unsanctioned row lacking exportId must be blocked
+    const dummyFeatures: any = { schemaVersion: 'v1', heuristicScore: 0.9 };
+    const unsanctionedRow = createTrainingRow({
+      datasetVersion: 'v2.0.0',
+      contextUnitId: 'src/core/auth.ts',
+      taskId: 'task_unsanctioned',
+      sessionId: 'sess_unsanctioned',
+      repository: 'test_repo',
+      features: dummyFeatures,
+      label: 1,
+      outcomeLabel: 'POSITIVE',
+      sourceObservationIds: ['obs_raw_1'],
+      rightsReference: 'rights_default',
+    });
+
+    assert.throws(
+      () => store.saveTrainingRows([unsanctionedRow]),
+      /UNSANCTIONED_TRAINING_ROW_PERSISTENCE/,
+      'Direct persistence of unsanctioned training row lacking exportId must throw UNSANCTIONED_TRAINING_ROW_PERSISTENCE'
+    );
+
+    // 3. Row with invalid exportId format must also be blocked
+    const invalidPrefixRow = { ...unsanctionedRow, exportId: 'unauthorized_export_123' };
+    assert.throws(
+      () => store.saveTrainingRows([invalidPrefixRow]),
+      /UNSANCTIONED_TRAINING_ROW_PERSISTENCE/,
+      'Row with non-texport_ exportId must throw UNSANCTIONED_TRAINING_ROW_PERSISTENCE'
+    );
+
+    // 4. Sanctioned TrainingExporter pipeline output persists cleanly
+    const exporter = new TrainingExporter();
+    const validObs = createCandidateObservationV2({
+      observationId: 'obs_sanctioned_1',
+      taskId: 'task_sanctioned',
+      siftrSessionId: 'sess_sanctioned',
+      workspaceSnapshotId: 'snap_sanctioned',
+      contextUnitId: 'src/core/auth.ts',
+      agentEnvironmentId: 'env_1',
+      observabilityLevel: 'FULL_TOOL_TRACE',
+      features: dummyFeatures,
+      candidate: {
+        generated: true,
+        candidateRank: 1,
+        retrievalSources: ['lexical'],
+      },
+      exposure: {
+        contextUnitId: 'src/core/auth.ts',
+        eligibleForSelection: true,
+        selected: true,
+        resolution: ContextResolution.FULL,
+        contextPlanId: 'plan_sanctioned',
+        policyId: 'policy_s',
+        policyVersion: '1.0.0',
+        timestamp: new Date().toISOString(),
+      },
+      observedBehavior: {
+        edited: true,
+      },
+      taskSucceeded: true,
+      rightsReference: 'rights_auth',
+    });
+
+    const allowedProv = createSourceProvenance({
+      repository: 'test_repo',
+      origin: 'FIRST_PARTY',
+      license: 'MIT',
+      trainingPermission: 'ALLOWED',
+      verified: true,
+    });
+
+    const exportResult = exporter.exportTrainingRows(
+      [validObs],
+      () => ({
+        dataRights: createDefaultDataRights({ trainingAllowed: true }),
+        provenance: allowedProv,
+        repository: 'test_repo',
+      }),
+      { datasetVersion: 'v2.0.0-export' }
+    );
+
+    assert.strictEqual(exportResult.totalAccepted, 1);
+    assert.ok(exportResult.exportId.startsWith('texport_'), 'exportId must start with texport_');
+    assert.strictEqual(exportResult.rows[0].exportId, exportResult.exportId);
+
+    // Persist via sanctioned TrainingExportResult
+    store.saveTrainingRows(exportResult);
+
+    const savedRow = store.getTrainingRow(exportResult.rows[0].rowId);
+    assert.ok(savedRow !== undefined, 'Sanctioned training row must be saved');
+    assert.strictEqual(savedRow?.exportId, exportResult.exportId);
+
+    // Query via exportId filter
+    const filteredRows = store.listTrainingRows({ exportId: exportResult.exportId });
+    assert.strictEqual(filteredRows.length, 1);
+    assert.strictEqual(filteredRows[0].rowId, exportResult.rows[0].rowId);
+
+    // Persist via sanctioned rows array directly
+    store.saveTrainingRows(exportResult.rows);
+    assert.strictEqual(store.listTrainingRows({ exportId: exportResult.exportId }).length, 1);
+
+    store.close();
+    console.log('  ✔ Suite 12 passed: Sanctioned TrainingExporter route, exportId lineage, and Migration 11 verified\n');
+  }
+
+  console.log('🎉 ALL TWELVE REGRESSION SUITES PASSED CLEANLY!\n');
 }
 
 if (require.main === module) {

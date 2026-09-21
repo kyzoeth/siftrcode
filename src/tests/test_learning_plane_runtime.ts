@@ -79,6 +79,7 @@ export async function runLearningPlaneRuntimeTests(): Promise<void> {
 
     const decObs = createCandidateDecisionObservation({
       taskId: 'task_learn_001',
+      sessionId: 'sess_learn_001',
       workspaceSnapshotId: 'ws_snap_001',
       contextUnitId: 'unit_auth_handler',
       candidate: {
@@ -139,6 +140,7 @@ export async function runLearningPlaneRuntimeTests(): Promise<void> {
 
     const dec1 = createCandidateDecisionObservation({
       taskId: 'task_store_test',
+      sessionId: 'sess_store_test',
       workspaceSnapshotId: 'ws_snap_store',
       contextUnitId: 'unit_jwt_verify',
       candidate: { generated: true, candidateRank: 1, retrievalSources: ['exact'] },
@@ -151,6 +153,7 @@ export async function runLearningPlaneRuntimeTests(): Promise<void> {
 
     const dec2 = createCandidateDecisionObservation({
       taskId: 'task_store_test',
+      sessionId: 'sess_store_test',
       workspaceSnapshotId: 'ws_snap_store',
       contextUnitId: 'unit_logger',
       candidate: { generated: true, candidateRank: 2, retrievalSources: ['graph'] },
@@ -205,6 +208,7 @@ export async function runLearningPlaneRuntimeTests(): Promise<void> {
 
     const decExposed = createCandidateDecisionObservation({
       taskId: 'task_join_01',
+      sessionId: 'sess_join_01',
       workspaceSnapshotId: 'ws_join_01',
       contextUnitId: 'unit_core_service',
       candidate: { generated: true, candidateRank: 1, retrievalSources: ['bm25'] },
@@ -217,6 +221,7 @@ export async function runLearningPlaneRuntimeTests(): Promise<void> {
 
     const decUnexposed = createCandidateDecisionObservation({
       taskId: 'task_join_01',
+      sessionId: 'sess_join_01',
       workspaceSnapshotId: 'ws_join_01',
       contextUnitId: 'unit_unrelated_doc',
       candidate: { generated: true, candidateRank: 2, retrievalSources: ['bm25'] },

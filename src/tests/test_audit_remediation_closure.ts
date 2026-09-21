@@ -205,6 +205,7 @@ export class CriticalManager {
     console.log('\n--- 3. Multi-Dimensional TrainingEvidenceRecord & Derivation ---');
     const dummyDecision = createCandidateDecisionObservation({
       taskId: 'task_ml_1',
+      sessionId: 'sess_ml_1',
       workspaceSnapshotId: 'snap_ml_1',
       contextUnitId: 'unit_target_1',
       candidate: { generated: true, candidateRank: 1, retrievalSources: ['git_diff', 'lexical'] },

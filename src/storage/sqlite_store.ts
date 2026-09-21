@@ -27,6 +27,7 @@ import { ProviderUsageEvent } from '../token/provider_usage';
 import { JevSignalV1 } from '../providers/judgment/typesafe/jev_signal';
 import { SourceProvenance } from '../rights/source_provenance';
 import { TrainingRow, TrainingEvidenceRecord } from '../learning/lineage';
+import { TrainingExportResult } from '../learning/training_exporter';
 import { DeletionAuditRecord } from '../rights/deletion_manager';
 import { DataRights, createDefaultDataRights, DataClass, isDataClassPermitted } from '../rights/data_rights';
 import {
@@ -514,6 +515,14 @@ const MIGRATIONS: Migration[] = [
     sql: `
       ALTER TABLE candidate_decision_observations ADD COLUMN session_id TEXT;
       CREATE INDEX IF NOT EXISTS idx_dec_obs_session ON candidate_decision_observations(session_id);
+    `,
+  },
+  {
+    version: 11,
+    name: '011_training_rows_export_id',
+    sql: `
+      ALTER TABLE training_rows ADD COLUMN export_id TEXT;
+      CREATE INDEX IF NOT EXISTS idx_trow_export ON training_rows(export_id);
     `,
   },
 ];
@@ -1810,18 +1819,32 @@ export class SqliteStore {
   // TrainingRow & Lineage Operations (Section 52)
   // ==========================================
 
-  public saveTrainingRows(rows: TrainingRow[]): void {
-    if (rows.length === 0) return;
+  public saveTrainingRows(input: TrainingExportResult | TrainingRow[]): void {
+    const rows = Array.isArray(input) ? input : input.rows;
+    const batchExportId = Array.isArray(input) ? undefined : input.exportId;
+    if (!rows || rows.length === 0) return;
+
+    // Enforce that filtered TrainingExporter output is the only sanctioned route into persistent training rows
+    for (const r of rows) {
+      const effectiveExportId = r.exportId || batchExportId;
+      if (!effectiveExportId || typeof effectiveExportId !== 'string' || !effectiveExportId.startsWith('texport_')) {
+        throw new Error(
+          `UNSANCTIONED_TRAINING_ROW_PERSISTENCE: Row '${r.rowId}' lacks a sanctioned TrainingExporter exportId. Direct persistence of un-exported or raw training rows is strictly prohibited.`
+        );
+      }
+    }
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO training_rows (
         row_id, dataset_version, context_unit_id, task_id, repository,
         tenant_id, source_observation_ids, labeler_version, feature_builder_version,
-        label, confidence, outcome_label, rights_reference, raw_json, exported_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        label, confidence, outcome_label, rights_reference, export_id, raw_json, exported_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     for (const r of rows) {
+      const effectiveExportId = r.exportId || batchExportId || null;
+      const rowToPersist = effectiveExportId && !r.exportId ? { ...r, exportId: effectiveExportId } : r;
       stmt.run(
         r.rowId,
         r.datasetVersion,
@@ -1836,7 +1859,8 @@ export class SqliteStore {
         r.confidence,
         r.outcomeLabel,
         r.rightsReference,
-        JSON.stringify(r),
+        effectiveExportId,
+        JSON.stringify(rowToPersist),
         r.exportedAt
       );
     }
@@ -1851,7 +1875,9 @@ export class SqliteStore {
     return JSON.parse(row.raw_json) as TrainingRow;
   }
 
-  public listTrainingRows(filter: { datasetVersion?: string; repository?: string; taskId?: string } = {}): TrainingRow[] {
+  public listTrainingRows(
+    filter: { datasetVersion?: string; repository?: string; taskId?: string; exportId?: string } = {}
+  ): TrainingRow[] {
     let sql = 'SELECT raw_json FROM training_rows WHERE 1=1';
     const params: string[] = [];
 
@@ -1866,6 +1892,10 @@ export class SqliteStore {
     if (filter.taskId) {
       sql += ' AND task_id = ?';
       params.push(filter.taskId);
+    }
+    if (filter.exportId) {
+      sql += ' AND export_id = ?';
+      params.push(filter.exportId);
     }
 
     sql += ' ORDER BY exported_at ASC';

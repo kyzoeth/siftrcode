@@ -1,5 +1,6 @@
 import { spawnSync } from 'child_process';
 import * as path from 'path';
+import { scrubJevTestEnvironment } from '../testing/test_env_scrubber';
 
 console.log('🧪 [SiftrCode Test Runner] Executing test suites...\n');
 
@@ -55,10 +56,7 @@ let failed = false;
 const isIntegration = process.env.INTEGRATION_TEST === 'true' || process.env.SIFTR_INTEGRATION_TEST === 'true';
 const hermeticEnv = { ...process.env };
 if (!isIntegration) {
-  delete hermeticEnv.TYPESAFE_API_KEY;
-  delete hermeticEnv.JEV_API_KEY;
-  delete hermeticEnv.SIFTR_JEV_ENABLED;
-  delete hermeticEnv.SIFTR_JEV_MODE;
+  scrubJevTestEnvironment(hermeticEnv);
 }
 
 for (const t of tests) {

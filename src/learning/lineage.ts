@@ -26,6 +26,7 @@ export interface DerivedDataLineage {
   labelerVersion: string;
   featureBuilderVersion: string;
   datasetVersion: string;
+  exportId?: string;
   provenanceId?: string;
   createdAt: string;
 }
@@ -41,6 +42,7 @@ export interface TrainingRow {
   label: 0 | 1 | null;
   confidence: number;
   outcomeLabel: ResolvedOutcomeLabel;
+  exportId?: string;
   lineage: DerivedDataLineage;
   rightsReference: string;
   exportedAt: string;
@@ -57,6 +59,7 @@ export function createDerivedDataLineage(params: {
   labelerVersion: string;
   featureBuilderVersion: string;
   datasetVersion: string;
+  exportId?: string;
   provenanceId?: string;
   createdAt?: string;
 }): DerivedDataLineage {
@@ -75,6 +78,7 @@ export function createDerivedDataLineage(params: {
     labelerVersion: params.labelerVersion,
     featureBuilderVersion: params.featureBuilderVersion,
     datasetVersion: params.datasetVersion,
+    exportId: params.exportId,
     provenanceId: params.provenanceId,
     createdAt: params.createdAt || new Date().toISOString(),
   };
@@ -95,6 +99,7 @@ export function createTrainingRow(params: {
   sourceObservationIds: string[];
   labelerVersion?: string;
   featureBuilderVersion?: string;
+  exportId?: string;
   provenanceId?: string;
   rightsReference: string;
   exportedAt?: string;
@@ -117,6 +122,7 @@ export function createTrainingRow(params: {
     labelerVersion,
     featureBuilderVersion,
     datasetVersion: params.datasetVersion,
+    exportId: params.exportId,
     provenanceId: params.provenanceId,
     createdAt: exportedAt,
   });
@@ -132,6 +138,7 @@ export function createTrainingRow(params: {
     label: params.label,
     confidence: params.confidence ?? (params.label === 1 ? 0.95 : params.label === 0 ? 0.7 : 0.0),
     outcomeLabel: params.outcomeLabel,
+    exportId: params.exportId,
     lineage,
     rightsReference: params.rightsReference,
     exportedAt,
@@ -162,6 +169,7 @@ export interface TrainingEvidenceRecord {
   verifiedOutcomeAssociation: { verifiedSuccess: boolean | null; confidence: number };
   counterfactualEffect?: { deltaUtility?: number; confidence: number };
   resolutionSufficiency?: { resolution: ContextResolution; sufficient: boolean; confidence: number };
+  exportId?: string;
   lineage: DerivedDataLineage;
   rightsReference: string;
   exportedAt: string;
@@ -189,6 +197,7 @@ export function createTrainingEvidenceRecord(params: {
   sourceObservationIds: string[];
   labelerVersion?: string;
   featureBuilderVersion?: string;
+  exportId?: string;
   provenanceId?: string;
   rightsReference: string;
   exportedAt?: string;
@@ -211,6 +220,7 @@ export function createTrainingEvidenceRecord(params: {
     labelerVersion,
     featureBuilderVersion,
     datasetVersion: params.datasetVersion,
+    exportId: params.exportId,
     provenanceId: params.provenanceId,
     createdAt: exportedAt,
   });
@@ -244,6 +254,7 @@ export function createTrainingEvidenceRecord(params: {
     },
     counterfactualEffect: params.counterfactualEffect,
     resolutionSufficiency: params.resolutionSufficiency,
+    exportId: params.exportId,
     lineage,
     rightsReference: params.rightsReference,
     exportedAt,
@@ -301,6 +312,7 @@ export function deriveBinaryTrainingRow(evidence: TrainingEvidenceRecord): Train
     label,
     confidence,
     outcomeLabel,
+    exportId: evidence.exportId,
     lineage: evidence.lineage,
     rightsReference: evidence.rightsReference,
     exportedAt: evidence.exportedAt,
