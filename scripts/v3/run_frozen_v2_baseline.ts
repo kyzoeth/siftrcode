@@ -106,11 +106,11 @@ async function main() {
   const { createTaskContext } = require('./dist/context/task_context');
   const { createAgentEnvironment } = require('./dist/agents/agent_environment');
 
-  const rootDir = process.cwd();
+  const projectRootDir = '${rootDir}';
   const repoPaths = {
-    express: path.join(rootDir, 'benchmarks/express-repo'),
-    fastapi: path.join(rootDir, 'benchmarks/fastapi-repo'),
-    siftrcode: rootDir,
+    express: path.join(projectRootDir, 'benchmarks/express-repo'),
+    fastapi: path.join(projectRootDir, 'benchmarks/fastapi-repo'),
+    siftrcode: projectRootDir,
   };
 
   const testEpisodes = JSON.parse(fs.readFileSync(path.join(__dirname, 'test_episodes.json'), 'utf8'));
@@ -122,12 +122,15 @@ async function main() {
     if (fs.existsSync(rPath)) {
       process.stdout.write(\`  Indexing \${repoKey}... \`);
       const indexer = new RepositoryIndexer();
-      const idx = await indexer.indexWorkspace({ workspaceDir: rPath });
+      const filterOpts = repoKey === 'siftrcode'
+        ? { includePatterns: ['src/**'], excludePatterns: ['**/node_modules/**', '**/dist/**', '**/temp_*/**', '**/benchmarks/**'] }
+        : {};
+      const idx = await indexer.indexRepository(rPath, filterOpts);
       const gb = new GraphBuilder();
-      const graph = gb.build(idx.units);
+      const graph = gb.buildGraph(idx.units, { repoDir: rPath });
       let gitInt = undefined;
       try {
-        gitInt = new GitGraphIntelligence({ workspaceDir: rPath });
+        gitInt = new GitGraphIntelligence({ repoDir: rPath });
       } catch (e) {}
       indexes[repoKey] = { index: idx, graph, gitInt };
       console.log(\`done (\${idx.units.length} units)\`);
@@ -171,12 +174,14 @@ async function main() {
       agentEnvironment: createAgentEnvironment({ agentKind: 'generic_mcp' })
     });
 
-    const candGen = new CandidateGenerator({ maxCandidates: candidateLimit });
-    const candidates = candGen.generateCandidates({
-      task: taskCtx,
-      units: repoData.index.units,
-      graph: repoData.graph
-    });
+    const candGen = new CandidateGenerator();
+    const candidates = candGen.generateCandidates(
+      taskCtx,
+      repoData.index.units,
+      repoData.graph,
+      repoData.gitInt,
+      { maxCandidates: candidateLimit }
+    );
 
     if (candidates.length === 0) {
       taskResults.push({
