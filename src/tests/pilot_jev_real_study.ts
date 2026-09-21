@@ -982,6 +982,7 @@ export interface PilotStudyOptions {
   apiKey?: string;
   verbose?: boolean;
   isSmoke?: boolean;
+  smoke?: boolean;
   requireCleanBuild?: boolean;
   endpoint?: string;
   allowNonproductionEndpoint?: boolean;
@@ -997,7 +998,7 @@ export interface PilotStudyOptions {
 
 export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}): Promise<PilotReport> {
   const isLive = options.useLive ?? (process.env.JEV_LIVE === 'true' || process.argv.includes('--live'));
-  const isSmoke = options.isSmoke ?? process.argv.includes('--smoke');
+  const isSmoke = options.isSmoke ?? options.smoke ?? process.argv.includes('--smoke');
   const tasksArg = process.argv.find((a) => a.startsWith('--tasks='));
   const maxTasks = options.maxTasks ?? (tasksArg ? parseInt(tasksArg.split('=')[1], 10) : (isSmoke ? 5 : AUDITED_PILOT_TASKS.length));
   const callsArg = process.argv.find((a) => a.startsWith('--max-calls='));

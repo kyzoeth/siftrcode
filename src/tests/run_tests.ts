@@ -47,7 +47,8 @@ const tests = [
   { name: 'V2 Audit Remediation Closure (PR 0.6) Tests', file: 'test_audit_remediation_closure.js' },
   { name: 'V2 MCP Learning Loop & Lineage Integrity E2E (PR F7) Tests', file: 'test_mcp_learning_loop_e2e.js' },
   { name: 'V2 JEV Shadow Integration & Learning-Loop Closure (PR J6) Tests', file: 'test_jev_shadow_closure.js' },
-  { name: 'V2 Rights, Evidence Tri-State, Telemetry & Study Integrity Regression Tests', file: 'test_rights_evidence_telemetry_regression.js' }
+  { name: 'V2 Rights, Evidence Tri-State, Telemetry & Study Integrity Regression Tests', file: 'test_rights_evidence_telemetry_regression.js' },
+  { name: 'V2 FINAL-3 Remediation Verification Tests', file: 'test_final3_remediation.js' }
 ];
 
 
