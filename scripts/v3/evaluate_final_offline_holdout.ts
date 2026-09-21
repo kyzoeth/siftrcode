@@ -71,6 +71,13 @@ export interface FinalOfflineEvaluationReport {
     v2Wins: number;
     ties: number;
   };
+  discriminativeness: {
+    pathExplicitPromptRate: number;
+    perfectAt1RateV2: number;
+    perfectAt1RateV3: number;
+    tieRate: number;
+    isDiscriminative: boolean;
+  };
   bootstrapReport: any;
   perRepoMetrics: Record<string, any>;
   perTypeMetrics: Record<string, any>;
@@ -90,12 +97,12 @@ export interface FinalOfflineEvaluationReport {
 
 export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluationReport> {
   const rootDir = path.resolve(__dirname, '../..');
-  const finalExpDir = path.join(rootDir, 'experiments/v3-1-final');
-  const manifestPath = path.join(finalExpDir, 'final_holdout_manifest.json');
+  const finalExpDir = path.join(rootDir, 'experiments/v3-1-final-natural');
+  const manifestPath = path.join(finalExpDir, 'natural_holdout_manifest.json');
   const gbdtArtifactPath = path.join(rootDir, 'data/models/gbdt_pairwise_v1.json');
 
   if (!fs.existsSync(manifestPath)) {
-    throw new Error(`Final holdout manifest missing at: ${manifestPath}`);
+    throw new Error(`Final natural holdout manifest missing at: ${manifestPath}`);
   }
   if (!fs.existsSync(gbdtArtifactPath)) {
     throw new Error(`Trained GBDT model artifact missing at: ${gbdtArtifactPath}`);
@@ -104,9 +111,19 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
   const manifest: SiftrBenchManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   const gbdtArtifact = JSON.parse(fs.readFileSync(gbdtArtifactPath, 'utf8'));
   const v3TreeRanker = TreeRanker.fromArtifact(gbdtArtifact);
-  const v2DeterministicRanker = new ContextRanker();
 
-  console.log('🏛️  [Final Offline Evaluation] Initializing evaluation on frozen fresh holdout...');
+  // Load frozen authoritative V2 ContextRanker from compiled baseline worktree
+  let v2DeterministicRanker: any;
+  try {
+    const v2Module = require(path.join(rootDir, '.v2-baseline-worktree/dist'));
+    v2DeterministicRanker = new v2Module.ContextRanker();
+    console.log('🏛️  [Final Offline Evaluation] Loaded frozen authoritative V2 ContextRanker (.v2-baseline-worktree/dist @ 1eedac0)');
+  } catch (err) {
+    v2DeterministicRanker = new ContextRanker();
+    console.log('ℹ️  [Final Offline Evaluation] Using local ContextRanker fallback');
+  }
+
+  console.log('🏛️  [Final Offline Evaluation] Initializing evaluation on frozen fresh natural holdout...');
   console.log(`   Episodes: ${manifest.episodes.length} tasks across ${Object.keys(manifest.repositoryDistribution).length} repositories`);
   console.log('   Candidate Budget: 50 | Token Budget: 8000 tokens');
 
@@ -114,7 +131,7 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
     express: path.join(rootDir, 'benchmarks/express-repo'),
     fastapi: path.join(rootDir, 'benchmarks/fastapi-repo'),
     commander: path.join(rootDir, 'benchmarks/commander-repo'),
-    siftrcode: rootDir,
+    siftrcode: path.join(rootDir, '.v2-baseline-worktree'),
   };
 
   const repoFilters: Record<string, any> = {
@@ -353,6 +370,30 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
     ties,
   };
 
+  // Discriminativeness metrics
+  let leakedPrompts = 0;
+  for (const ep of manifest.episodes) {
+    for (const tp of ep.expectedTargetPaths) {
+      if (ep.taskPrompt.toLowerCase().includes(tp.toLowerCase())) {
+        leakedPrompts++;
+        break;
+      }
+    }
+  }
+  const pathExplicitPromptRate = leakedPrompts / n;
+  const perfectAt1RateV2 = v2TaskEvals.filter((e) => e.ndcg10 >= 0.999).length / n;
+  const perfectAt1RateV3 = v3TaskEvals.filter((e) => e.ndcg10 >= 0.999).length / n;
+  const tieRate = ties / n;
+  const isDiscriminative = tieRate < 0.8 && pathExplicitPromptRate === 0;
+
+  const discriminativeness = {
+    pathExplicitPromptRate: Number(pathExplicitPromptRate.toFixed(4)),
+    perfectAt1RateV2: Number(perfectAt1RateV2.toFixed(4)),
+    perfectAt1RateV3: Number(perfectAt1RateV3.toFixed(4)),
+    tieRate: Number(tieRate.toFixed(4)),
+    isDiscriminative,
+  };
+
   // 4. Statistical Bootstrap
   const bootstrapReport = TaskLevelBootstrap.evaluate(pairedDeltas, { iterations: 2000, seed: 42 });
 
@@ -399,7 +440,7 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
   const gateDecision = gatePassed ? 'OFFLINE_GATE_PASSED' : 'OFFLINE_GATE_FAILED';
 
   const rationale = gatePassed
-    ? `Learned ContextRank V3 demonstrated non-negative NDCG@10 delta (${pairedSummaryDeltas.ndcg10Delta >= 0 ? '+' : ''}${pairedSummaryDeltas.ndcg10Delta.toFixed(4)}) with ${v3Wins} wins vs ${v2Wins} losses across 34 fresh holdout tasks.`
+    ? `Learned ContextRank V3 demonstrated non-negative NDCG@10 delta (${pairedSummaryDeltas.ndcg10Delta >= 0 ? '+' : ''}${pairedSummaryDeltas.ndcg10Delta.toFixed(4)}) with ${v3Wins} wins vs ${v2Wins} losses across ${manifest.episodes.length} natural holdout tasks.`
     : `Learned ContextRank V3 failed the final offline gate: NDCG@10 delta (${pairedSummaryDeltas.ndcg10Delta}) or win/loss ratio (${v3Wins} wins vs ${v2Wins} losses).`;
 
   const report: FinalOfflineEvaluationReport = {
@@ -414,6 +455,7 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
     v2Summary,
     v3Summary,
     pairedDeltas: pairedSummaryDeltas,
+    discriminativeness,
     bootstrapReport,
     perRepoMetrics,
     perTypeMetrics,
