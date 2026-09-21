@@ -1574,9 +1574,18 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        const store = getSharedStore();
+        const existingPlan = store?.getContextPlanByTask(taskId);
+        const existingDecisions = store?.listCandidateDecisionObservations({ taskId });
+        const resolvedSessionId =
+          (typeof payload.sessionId === 'string' && payload.sessionId.trim().length > 0 ? payload.sessionId.trim() : undefined) ||
+          existingPlan?.sessionId ||
+          (existingDecisions && existingDecisions.length > 0 ? existingDecisions[0].sessionId : undefined) ||
+          `sess_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
+
         const outcomeEvidence = createOutcomeEvidence({
           taskId,
-          sessionId: `sess_${taskId}`,
+          sessionId: resolvedSessionId,
           agentEnvironmentId: 'default',
           workspaceSnapshotBefore: 'snapshot_initial',
           publicTestsPassed: typeof payload.testsPassed === 'boolean' ? payload.testsPassed : undefined,
@@ -1590,7 +1599,6 @@ const server = http.createServer(async (req, res) => {
           wallTimeMs: typeof payload.wallTimeMs === 'number' ? payload.wallTimeMs : undefined,
         });
 
-        const store = getSharedStore();
         let persisted = false;
         if (store) {
           try {

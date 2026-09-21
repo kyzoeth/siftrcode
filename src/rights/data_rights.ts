@@ -310,10 +310,9 @@ export function resolveApplicationDataRights(configuredRights?: DataRights): Dat
     return configuredRights;
   }
 
-  // Check explicit V2 JEV remote-processing configuration (e.g. at Railway boundary)
-  const jevRemoteEnabled =
-    process.env.SIFTR_JEV_ENABLED === 'true' ||
-    process.env.SIFTR_JEV_REMOTE_PROCESSING === 'true';
+  // Check explicit V2 JEV remote-processing configuration (e.g. at Railway boundary).
+  // SIFTR_JEV_ENABLED alone does NOT grant outbound processing; only explicit SIFTR_JEV_REMOTE_PROCESSING grants remote rights.
+  const jevRemoteEnabled = process.env.SIFTR_JEV_REMOTE_PROCESSING === 'true';
 
   if (jevRemoteEnabled) {
     return createJevPermittedDataRights();

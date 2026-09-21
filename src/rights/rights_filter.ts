@@ -20,6 +20,7 @@ import { DataRights, isDataClassPermitted, isOperationPermitted, DataClass } fro
 import { CandidateObservationV2 } from '../telemetry/candidate_observation';
 import { SourceProvenance, isProvenanceEligibleForTraining } from './source_provenance';
 import { ContextFeaturesV1 } from '../ranking/feature_schema';
+import { TrainingEvidenceRecord } from '../learning/lineage';
 
 export interface RightsFilterConfig {
   requireVerifiedProvenance?: boolean;
@@ -52,34 +53,43 @@ export class RightsFilter {
 
   /**
    * Evaluates an individual observation for training export eligibility.
+   * Enforces schema-wide training permissions across all represented DataClasses.
    */
   public evaluate(params: {
     observation: CandidateObservationV2;
     dataRights: DataRights;
     provenance?: SourceProvenance;
+    representedDataClasses?: DataClass[];
   }): RightsFilterResult {
     const { observation, dataRights, provenance } = params;
     const reasons: string[] = [];
+    const representedDataClasses = params.representedDataClasses || [
+      DataClass.NUMERIC_FEATURE,
+      DataClass.OUTCOME,
+    ];
 
     // 1. Section 50 Hard Invariant: trainingAllowed must be true
     if (!dataRights.trainingAllowed) {
       reasons.push(
         `TRAINING_NOT_ALLOWED: Customer DataRights forbids training (trainingAllowed = false).`
       );
-    } else if (
-      dataRights.operationRights &&
-      !isOperationPermitted(dataRights.operationRights, DataClass.NUMERIC_FEATURE, 'training')
-    ) {
-      reasons.push(
-        `TRAINING_OPERATION_FORBIDDEN: operationRights forbids training on NUMERIC_FEATURE.`
-      );
+    } else if (dataRights.operationRights) {
+      for (const dc of representedDataClasses) {
+        if (!isOperationPermitted(dataRights.operationRights, dc, 'training')) {
+          reasons.push(
+            `TRAINING_OPERATION_FORBIDDEN: operationRights forbids training on ${dc}.`
+          );
+        }
+      }
     }
 
-    // 2. Data Class Permission Check: Numeric features must be permitted
-    if (!isDataClassPermitted(dataRights, DataClass.NUMERIC_FEATURE)) {
-      reasons.push(
-        `DATA_CLASS_FORBIDDEN: Customer DataRights forbids NUMERIC_FEATURE retention.`
-      );
+    // 2. Data Class Permission Check: represented classes must be permitted
+    for (const dc of representedDataClasses) {
+      if (!isDataClassPermitted(dataRights, dc)) {
+        reasons.push(
+          `DATA_CLASS_FORBIDDEN: Customer DataRights forbids ${dc} retention.`
+        );
+      }
     }
 
     // 3. Source Provenance Verification (Section 51)
@@ -190,5 +200,104 @@ export class RightsFilter {
     }
 
     return { accepted, rejected };
+  }
+
+  /**
+   * Evaluates an individual TrainingEvidenceRecord for training export eligibility.
+   * Enforces schema-wide training permissions across NUMERIC_FEATURE, OUTCOME, and TRAJECTORY.
+   */
+  public evaluateTrainingEvidenceRecord(params: {
+    evidence: TrainingEvidenceRecord;
+    dataRights: DataRights;
+    provenance?: SourceProvenance;
+  }): RightsFilterResult {
+    const { evidence, dataRights, provenance } = params;
+    const reasons: string[] = [];
+
+    const representedDataClasses = [
+      DataClass.NUMERIC_FEATURE,
+      DataClass.OUTCOME,
+      DataClass.TRAJECTORY,
+    ];
+
+    // 1. Section 50 Hard Invariant: trainingAllowed must be true
+    if (!dataRights.trainingAllowed) {
+      reasons.push(
+        `TRAINING_NOT_ALLOWED: Customer DataRights forbids training (trainingAllowed = false).`
+      );
+    } else if (dataRights.operationRights) {
+      for (const dc of representedDataClasses) {
+        if (!isOperationPermitted(dataRights.operationRights, dc, 'training')) {
+          reasons.push(
+            `TRAINING_OPERATION_FORBIDDEN: operationRights forbids training on ${dc}.`
+          );
+        }
+      }
+    }
+
+    // 2. Data Class Permission Check: represented classes must be permitted
+    for (const dc of representedDataClasses) {
+      if (!isDataClassPermitted(dataRights, dc)) {
+        reasons.push(
+          `DATA_CLASS_FORBIDDEN: Customer DataRights forbids ${dc} retention.`
+        );
+      }
+    }
+
+    // 3. Source Provenance Verification
+    if (provenance) {
+      const provCheck = isProvenanceEligibleForTraining(provenance, {
+        maxCutoffDate: this.config.temporalCutoff,
+        requireVerified: this.config.requireVerifiedProvenance,
+      });
+      if (!provCheck.eligible) {
+        reasons.push(provCheck.reason || 'PROVENANCE_INELIGIBLE');
+      }
+    }
+
+    // 4. Retention Expiry Check
+    if (this.config.enforceRetentionExpiry && dataRights.retentionDays !== undefined) {
+      const recordedMs = new Date(evidence.exportedAt).getTime();
+      const nowMs = Date.now();
+      const ageDays = (nowMs - recordedMs) / (1000 * 60 * 60 * 24);
+      if (ageDays > dataRights.retentionDays) {
+        reasons.push(
+          `RETENTION_EXPIRED: Evidence age (${ageDays.toFixed(1)} days) exceeds retention policy limit of ${dataRights.retentionDays} days.`
+        );
+      }
+    }
+
+    // 5. Exposure / Observability check
+    if (!evidence.exposure || !evidence.exposure.wasExposed) {
+      reasons.push(
+        `INVALID_LABEL_UNEXPOSED: Unexposed candidates cannot be exported to training (Section 21 Invariant).`
+      );
+    }
+
+    // 6. Feature Integrity Check
+    if (!evidence.features) {
+      reasons.push('MISSING_FEATURES: TrainingEvidenceRecord lacks ContextFeaturesV1 payload.');
+    }
+
+    if (reasons.length > 0) {
+      return {
+        passed: false,
+        observationId: evidence.evidenceId,
+        status: 'REJECTED',
+        reasons,
+        appliedDataRights: dataRights,
+        provenance,
+      };
+    }
+
+    return {
+      passed: true,
+      observationId: evidence.evidenceId,
+      status: 'ACCEPTED',
+      reasons: [],
+      sanitizedFeatures: { ...evidence.features },
+      appliedDataRights: dataRights,
+      provenance,
+    };
   }
 }

@@ -228,10 +228,12 @@ export async function runLearningPlaneRuntimeTests(): Promise<void> {
     });
 
     // Case A: Exposed unit was edited by agent -> POSITIVE label
+    const trainingRights = createDefaultDataRights({ trainingAllowed: true });
     const obsPositive = DatasetBuilder.buildCandidateObservation({
       decision: decExposed,
       behavior: { read: true, edited: true },
       taskSucceeded: true,
+      dataRights: trainingRights,
     });
     assert.strictEqual(obsPositive.outcomeLabel, 'POSITIVE', 'Edited exposed unit must yield POSITIVE');
     assert.strictEqual(obsPositive.contextUnitId, 'unit_core_service');
@@ -241,6 +243,7 @@ export async function runLearningPlaneRuntimeTests(): Promise<void> {
       decision: decUnexposed,
       behavior: { read: false, edited: false },
       taskSucceeded: true,
+      dataRights: trainingRights,
     });
     assert.strictEqual(obsUnexposed.outcomeLabel, 'UNEXPOSED_UNKNOWN', 'Unexposed unit must be UNEXPOSED_UNKNOWN');
 
@@ -252,6 +255,7 @@ export async function runLearningPlaneRuntimeTests(): Promise<void> {
         ['unit_unrelated_doc', { read: false, edited: false }],
       ]),
       taskSucceeded: true,
+      dataRights: trainingRights,
     });
     assert.strictEqual(dataset.length, 2);
     assert.strictEqual(dataset[0].outcomeLabel, 'POSITIVE');

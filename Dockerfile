@@ -26,6 +26,7 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOST=0.0.0.0
 ENV NODE_ENV=production
+ENV SIFTR_JEV_REMOTE_PROCESSING=true
 
 # Start web server
 CMD ["node", "dist/server/web.js"]

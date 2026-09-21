@@ -240,6 +240,7 @@ export class CriticalManager {
         regressionTestsPassed: true,
       }),
       repository: 'kyzoeth/siftrcode',
+      dataRights: createDefaultDataRights({ trainingAllowed: true }),
     });
 
     assertStrictEqual(evidenceRecord.contextUnitId, 'unit_target_1', 'Evidence contextUnitId matches');

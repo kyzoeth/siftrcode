@@ -148,6 +148,7 @@ export interface TrainingEvidenceRecord {
   datasetVersion: string;
   contextUnitId: string;
   taskId: string;
+  sessionId?: string;
   repository: string;
   tenantId?: string;
   features: ContextFeaturesV1;
@@ -223,6 +224,7 @@ export function createTrainingEvidenceRecord(params: {
     datasetVersion: params.datasetVersion,
     contextUnitId: params.contextUnitId,
     taskId: params.taskId,
+    sessionId: params.sessionId,
     repository: params.repository,
     tenantId: params.tenantId,
     features: params.features,

@@ -508,6 +508,14 @@ const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_jev_shadow_plan ON jev_shadow_judgments(context_plan_id);
     `,
   },
+  {
+    version: 10,
+    name: '010_candidate_decision_observations_session_id',
+    sql: `
+      ALTER TABLE candidate_decision_observations ADD COLUMN session_id TEXT;
+      CREATE INDEX IF NOT EXISTS idx_dec_obs_session ON candidate_decision_observations(session_id);
+    `,
+  },
 ];
 
 export class SqliteStore {
@@ -952,6 +960,11 @@ export class SqliteStore {
     return rows.map((r) => JSON.parse(r.raw_json));
   }
 
+  public getContextPlanByTask(taskId: string): ContextPlan | undefined {
+    const plans = this.listContextPlans(taskId);
+    return plans.length > 0 ? plans[plans.length - 1] : undefined;
+  }
+
   public updatePlanActualProviderTokens(planId: string, actualTokens: number): void {
     const existing = this.getContextPlan(planId);
     if (!existing) return;
@@ -1045,10 +1058,10 @@ export class SqliteStore {
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO candidate_decision_observations (
-        decision_observation_id, task_id, snapshot_id, context_unit_id,
+        decision_observation_id, task_id, session_id, snapshot_id, context_unit_id,
         candidate_rank, exposure_resolution, policy_id, policy_version,
         observability_level, features_json, raw_json, recorded_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     for (const dec of decisions) {
@@ -1056,6 +1069,7 @@ export class SqliteStore {
       stmt.run(
         sanitized.decisionObservationId,
         sanitized.taskId,
+        sanitized.sessionId || null,
         sanitized.workspaceSnapshotId,
         sanitized.contextUnitId,
         sanitized.rank ?? null,
@@ -1079,13 +1093,17 @@ export class SqliteStore {
     return JSON.parse(row.raw_json);
   }
 
-  public listCandidateDecisionObservations(options: { taskId?: string; contextUnitId?: string } = {}): CandidateDecisionObservation[] {
+  public listCandidateDecisionObservations(options: { taskId?: string; sessionId?: string; contextUnitId?: string } = {}): CandidateDecisionObservation[] {
     let sql = 'SELECT raw_json FROM candidate_decision_observations WHERE 1=1';
     const params: string[] = [];
 
     if (options.taskId) {
       sql += ' AND task_id = ?';
       params.push(options.taskId);
+    }
+    if (options.sessionId) {
+      sql += ' AND session_id = ?';
+      params.push(options.sessionId);
     }
     if (options.contextUnitId) {
       sql += ' AND context_unit_id = ?';

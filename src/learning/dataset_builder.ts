@@ -12,6 +12,17 @@ import { isExposedV2 } from '../telemetry/exposure_decision';
 import { TrainingEvidenceRecord, createTrainingEvidenceRecord } from './lineage';
 import { DataRights, isOperationPermitted, DataClass } from '../rights/data_rights';
 
+export const CANDIDATE_OBSERVATION_DATA_CLASSES: DataClass[] = [
+  DataClass.NUMERIC_FEATURE,
+  DataClass.OUTCOME,
+];
+
+export const TRAINING_EVIDENCE_RECORD_DATA_CLASSES: DataClass[] = [
+  DataClass.NUMERIC_FEATURE,
+  DataClass.OUTCOME,
+  DataClass.TRAJECTORY,
+];
+
 export interface BuildObservationOptions {
   decision: CandidateDecisionObservation;
   behavior?: ObservedBehavior;
@@ -20,7 +31,7 @@ export interface BuildObservationOptions {
   siftrSessionId?: string;
   outcomeId?: string;
   rightsReference?: string;
-  dataRights?: DataRights;
+  dataRights: DataRights;
 }
 
 export interface BuildDatasetOptions {
@@ -31,16 +42,25 @@ export interface BuildDatasetOptions {
   siftrSessionId?: string;
   outcomeId?: string;
   rightsReference?: string;
-  dataRights?: DataRights;
+  dataRights: DataRights;
 }
 
-function assertTrainingPermitted(rights?: DataRights): void {
-  if (!rights) return;
+function assertTrainingPermitted(
+  rights: DataRights,
+  representedClasses: DataClass[] = CANDIDATE_OBSERVATION_DATA_CLASSES
+): void {
+  if (!rights) {
+    throw new Error('TRAINING_FORBIDDEN: Customer DataRights must be provided explicitly.');
+  }
   if (!rights.trainingAllowed) {
     throw new Error('TRAINING_FORBIDDEN: Customer DataRights forbids training (trainingAllowed = false).');
   }
-  if (rights.operationRights && !isOperationPermitted(rights.operationRights, DataClass.NUMERIC_FEATURE, 'training')) {
-    throw new Error('TRAINING_FORBIDDEN: operationRights forbids training on NUMERIC_FEATURE.');
+  if (rights.operationRights) {
+    for (const dc of representedClasses) {
+      if (!isOperationPermitted(rights.operationRights, dc, 'training')) {
+        throw new Error(`TRAINING_FORBIDDEN: operationRights forbids training on ${dc}.`);
+      }
+    }
   }
 }
 
@@ -55,7 +75,7 @@ export class DatasetBuilder {
    * with downstream behavior and outcome evidence.
    */
   public static buildCandidateObservation(options: BuildObservationOptions): CandidateObservationV2 {
-    assertTrainingPermitted(options.dataRights);
+    assertTrainingPermitted(options.dataRights, CANDIDATE_OBSERVATION_DATA_CLASSES);
     const { decision } = options;
     const behavior: ObservedBehavior = options.behavior || {};
 
@@ -81,7 +101,7 @@ export class DatasetBuilder {
     }
 
     const observationId = `cobs_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
-    const siftrSessionId = options.siftrSessionId || `sess_${decision.taskId}`;
+    const siftrSessionId = options.siftrSessionId || decision.sessionId;
     const rightsReference = options.rightsReference || `rights_${decision.workspaceSnapshotId}`;
     const outcomeId = options.outcomeId || options.outcomeEvidence?.outcomeId;
 
@@ -115,7 +135,7 @@ export class DatasetBuilder {
    * Builds an entire dataset of CandidateObservationV2 records for a collection of decisions.
    */
   public static buildDataset(options: BuildDatasetOptions): CandidateObservationV2[] {
-    assertTrainingPermitted(options.dataRights);
+    assertTrainingPermitted(options.dataRights, CANDIDATE_OBSERVATION_DATA_CLASSES);
     const { decisions, behaviorsByUnitId, outcomeEvidence, taskSucceeded, siftrSessionId, outcomeId, rightsReference, dataRights } = options;
 
     return decisions.map((dec) => {
@@ -150,9 +170,9 @@ export class DatasetBuilder {
     repository?: string;
     tenantId?: string;
     rightsReference?: string;
-    dataRights?: DataRights;
+    dataRights: DataRights;
   }): TrainingEvidenceRecord {
-    assertTrainingPermitted(params.dataRights);
+    assertTrainingPermitted(params.dataRights, TRAINING_EVIDENCE_RECORD_DATA_CLASSES);
     const { decision, behavior, outcomeEvidence } = params;
     const wasExposed = isExposedV2(decision.exposureDecision);
     const obsLevel = decision.observabilityLevel;
@@ -176,7 +196,7 @@ export class DatasetBuilder {
       datasetVersion: params.datasetVersion || 'v2.0.0-evidence',
       contextUnitId: decision.contextUnitId,
       taskId: decision.taskId,
-      sessionId: `sess_${decision.taskId}`,
+      sessionId: decision.sessionId,
       repository: params.repository || 'unknown',
       tenantId: params.tenantId,
       features: decision.features,

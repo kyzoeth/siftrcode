@@ -840,6 +840,21 @@ export async function runRegressionTests() {
         true,
         'Railway JEV configuration permits NUMERIC_FEATURE remote processing'
       );
+
+      // 5. Decoupling verification: SIFTR_JEV_ENABLED alone does NOT grant outbound processing
+      delete process.env.SIFTR_JEV_REMOTE_PROCESSING;
+      process.env.SIFTR_JEV_ENABLED = 'true';
+      const jevEnabledOnlyRights = resolveApplicationDataRights();
+      assert.strictEqual(
+        jevEnabledOnlyRights.remoteProcessingAllowed,
+        false,
+        'SIFTR_JEV_ENABLED alone must NOT grant remote processing rights'
+      );
+      assert.strictEqual(
+        isRemoteProcessingPermitted(jevEnabledOnlyRights, DataClass.NUMERIC_FEATURE),
+        false,
+        'Remote processing strictly denied when only SIFTR_JEV_ENABLED is true'
+      );
     } finally {
       if (origJevEnabled !== undefined) process.env.SIFTR_JEV_ENABLED = origJevEnabled;
       else delete process.env.SIFTR_JEV_ENABLED;
@@ -959,11 +974,21 @@ export async function runRegressionTests() {
         0,
         'Retrieved observation features must have zeroed heuristic score'
       );
-      assert.strictEqual(
-        retrieved!.features.bm25Score,
-        0,
+      assert.ok(
+        retrieved!.features.bm25Score === 0,
         'Retrieved observation features must have zeroed bm25 score'
       );
+      assert.ok(
+        typeof decObs.sessionId === 'string' && decObs.sessionId.startsWith('sess_'),
+        'CandidateDecisionObservation must have real sessionId'
+      );
+      assert.strictEqual(
+        retrieved!.sessionId,
+        decObs.sessionId,
+        'SQLite must persist and retrieve real sessionId in CandidateDecisionObservation'
+      );
+      const bySession = store.listCandidateDecisionObservations({ sessionId: decObs.sessionId });
+      assert.strictEqual(bySession.length, 1, 'Can query CandidateDecisionObservation by real sessionId');
     } finally {
       store.close();
       if (fs.existsSync(testDbPath)) fs.unlinkSync(testDbPath);
@@ -1062,25 +1087,183 @@ export async function runRegressionTests() {
       'buildCandidateObservation must throw when operationRights denies training on NUMERIC_FEATURE'
     );
 
-    // 5. RightsFilter.evaluate rejects when operationRights denies training on NUMERIC_FEATURE
-    const filter = new RightsFilter();
+    // 5. Missing dataRights must throw TRAINING_FORBIDDEN (Mandatory dataRights requirement)
+    assert.throws(
+      () => {
+        DatasetBuilder.buildCandidateObservation({
+          decision: decObs,
+        } as any);
+      },
+      /TRAINING_FORBIDDEN: Customer DataRights must be provided explicitly/,
+      'buildCandidateObservation must throw when dataRights is omitted'
+    );
+
+    assert.throws(
+      () => {
+        DatasetBuilder.buildTrainingEvidenceRecord({
+          decision: decObs,
+        } as any);
+      },
+      /TRAINING_FORBIDDEN: Customer DataRights must be provided explicitly/,
+      'buildTrainingEvidenceRecord must throw when dataRights is omitted'
+    );
+
+    // 6. Real sessionId preservation without sess_${taskId} fabrication
+    const permissiveTrainingRights = createDefaultDataRights({
+      trainingAllowed: true,
+      trajectoryRetentionAllowed: true,
+    });
     const candidateObs = DatasetBuilder.buildCandidateObservation({
       decision: decObs,
       behavior: { read: true, edited: true },
       taskSucceeded: true,
+      dataRights: permissiveTrainingRights,
+    });
+    assert.strictEqual(
+      candidateObs.siftrSessionId,
+      decObs.sessionId,
+      'CandidateObservationV2 must inherit real decObs.sessionId without sess_${taskId} fabrication'
+    );
+
+    const evidenceRec = DatasetBuilder.buildTrainingEvidenceRecord({
+      decision: decObs,
+      behavior: { read: true, edited: true },
+      dataRights: permissiveTrainingRights,
+    });
+    assert.strictEqual(
+      evidenceRec.sessionId,
+      decObs.sessionId,
+      'TrainingEvidenceRecord must inherit real decObs.sessionId without sess_${taskId} fabrication'
+    );
+
+    // 7. Multi-dataclass training rights checks (OUTCOME and TRAJECTORY)
+    const deniedOutcomeTrainingRights = createDefaultDataRights({
+      trainingAllowed: true,
+      operationRights: {
+        ...createDefaultOperationRightsPolicy(),
+        [DataClass.NUMERIC_FEATURE]: { processing: { local: true, remote: false }, retention: { local: true, remote: false }, training: true },
+        [DataClass.OUTCOME]: { processing: { local: true, remote: false }, retention: { local: true, remote: false }, training: false },
+        [DataClass.TRAJECTORY]: { processing: { local: true, remote: false }, retention: { local: true, remote: false }, training: true },
+      },
     });
 
-    const filterResult = filter.evaluate({
+    assert.throws(
+      () => {
+        DatasetBuilder.buildCandidateObservation({
+          decision: decObs,
+          dataRights: deniedOutcomeTrainingRights,
+        });
+      },
+      /TRAINING_FORBIDDEN: operationRights forbids training on OUTCOME/,
+      'buildCandidateObservation must throw when operationRights denies training on OUTCOME'
+    );
+
+    const deniedTrajectoryTrainingRights = createDefaultDataRights({
+      trainingAllowed: true,
+      operationRights: {
+        ...createDefaultOperationRightsPolicy(),
+        [DataClass.NUMERIC_FEATURE]: { processing: { local: true, remote: false }, retention: { local: true, remote: false }, training: true },
+        [DataClass.OUTCOME]: { processing: { local: true, remote: false }, retention: { local: true, remote: false }, training: true },
+        [DataClass.TRAJECTORY]: { processing: { local: true, remote: false }, retention: { local: true, remote: false }, training: false },
+      },
+    });
+
+    assert.throws(
+      () => {
+        DatasetBuilder.buildTrainingEvidenceRecord({
+          decision: decObs,
+          dataRights: deniedTrajectoryTrainingRights,
+        });
+      },
+      /TRAINING_FORBIDDEN: operationRights forbids training on TRAJECTORY/,
+      'buildTrainingEvidenceRecord must throw when operationRights denies training on TRAJECTORY'
+    );
+
+    // 8. RightsFilter.evaluate rejects when operationRights denies training on NUMERIC_FEATURE or OUTCOME
+    const filter = new RightsFilter();
+    const filterResultNumeric = filter.evaluate({
       observation: candidateObs,
       dataRights: deniedOpTrainingRights,
     });
-    assert.strictEqual(filterResult.passed, false, 'RightsFilter must reject observation when operationRights denies training');
-    assert.ok(
-      filterResult.reasons.some((r) => r.includes('TRAINING_OPERATION_FORBIDDEN')),
-      'Filter reason must cite TRAINING_OPERATION_FORBIDDEN'
-    );
+    assert.strictEqual(filterResultNumeric.passed, false);
+    assert.ok(filterResultNumeric.reasons.some((r) => r.includes('NUMERIC_FEATURE')));
 
-    console.log('  ✔ Suite 8 passed: Training rights enforcement across DatasetBuilder & RightsFilter verified\n');
+    const filterResultOutcome = filter.evaluate({
+      observation: candidateObs,
+      dataRights: deniedOutcomeTrainingRights,
+    });
+    assert.strictEqual(filterResultOutcome.passed, false);
+    assert.ok(filterResultOutcome.reasons.some((r) => r.includes('OUTCOME')));
+
+    // 9. TrainingExporter.exportTrainingEvidenceRecords boundary verification
+    const exporter = new TrainingExporter();
+    const unexposedDecObs = createCandidateDecisionObservation({
+      taskId: 'task_unexposed',
+      workspaceSnapshotId: 'ws_snap_train',
+      contextUnitId: 'src/core/unexposed.ts',
+      candidate: { generated: true, candidateRank: 2, retrievalSources: ['generator'] },
+      features: dummyFeatures,
+      rank: 2,
+      exposureDecision: {
+        contextUnitId: 'src/core/unexposed.ts',
+        eligibleForSelection: false,
+        selected: false,
+        resolution: ContextResolution.OMIT,
+        contextPlanId: 'plan_train',
+        policyId: 'policy_train',
+        policyVersion: '1.0.0',
+        timestamp: new Date().toISOString(),
+      },
+      agentEnvironment: createAgentEnvironment(),
+      observabilityLevel: 'FULL_TOOL_TRACE',
+    });
+
+    const unexposedEvidenceRec = DatasetBuilder.buildTrainingEvidenceRecord({
+      decision: unexposedDecObs,
+      dataRights: permissiveTrainingRights,
+    });
+
+    // Test export with missing dataRights
+    const missingRightsExport = exporter.exportTrainingEvidenceRecords(
+      [evidenceRec],
+      () => ({} as any),
+      { datasetVersion: 'v2-test' }
+    );
+    assert.strictEqual(missingRightsExport.totalAccepted, 0);
+    assert.strictEqual(missingRightsExport.totalRejected, 1);
+    assert.ok(missingRightsExport.rejections[0].reasons.some((r) => r.includes('MISSING_DATA_RIGHTS')));
+
+    // Test export with forbidden training rights
+    const forbiddenExport = exporter.exportTrainingEvidenceRecords(
+      [evidenceRec],
+      () => ({ dataRights: forbiddenTrainingRights }),
+      { datasetVersion: 'v2-test' }
+    );
+    assert.strictEqual(forbiddenExport.totalAccepted, 0);
+    assert.strictEqual(forbiddenExport.totalRejected, 1);
+    assert.ok(forbiddenExport.rejections[0].reasons.some((r) => r.includes('TRAINING_NOT_ALLOWED')));
+
+    // Test export with unexposed candidate
+    const unexposedExport = exporter.exportTrainingEvidenceRecords(
+      [unexposedEvidenceRec],
+      () => ({ dataRights: permissiveTrainingRights }),
+      { datasetVersion: 'v2-test' }
+    );
+    assert.strictEqual(unexposedExport.totalAccepted, 0);
+    assert.strictEqual(unexposedExport.totalRejected, 1);
+    assert.ok(unexposedExport.rejections[0].reasons.some((r) => r.includes('INVALID_LABEL_UNEXPOSED')));
+
+    // Test export with valid exposed record and permissive rights -> ACCEPTED
+    const acceptedExport = exporter.exportTrainingEvidenceRecords(
+      [evidenceRec],
+      () => ({ dataRights: permissiveTrainingRights, repository: 'siftrcode/test' }),
+      { datasetVersion: 'v2-test' }
+    );
+    assert.strictEqual(acceptedExport.totalAccepted, 1);
+    assert.strictEqual(acceptedExport.totalRejected, 0);
+    assert.strictEqual(acceptedExport.records[0].repository, 'siftrcode/test');
+
+    console.log('  ✔ Suite 8 passed: Mandatory training rights, multi-dataclass schemas & TrainingExporter boundary verified\n');
   }
 
   // ==========================================================================

@@ -7,6 +7,7 @@ import { ObservabilityLevel } from '../agents/agent_adapter';
 export interface CandidateDecisionObservation {
   decisionObservationId: string;
   taskId: string;
+  sessionId: string;
   workspaceSnapshotId: string;
   contextUnitId: string;
   candidate: {
@@ -27,6 +28,7 @@ export interface CandidateDecisionObservation {
 export function createCandidateDecisionObservation(params: {
   decisionObservationId?: string;
   taskId: string;
+  sessionId?: string;
   workspaceSnapshotId: string;
   contextUnitId: string;
   candidate: {
@@ -46,10 +48,14 @@ export function createCandidateDecisionObservation(params: {
   const decisionObservationId =
     params.decisionObservationId ||
     `cdec_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
+  const sessionId =
+    params.sessionId ||
+    `sess_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
 
   return {
     decisionObservationId,
     taskId: params.taskId,
+    sessionId,
     workspaceSnapshotId: params.workspaceSnapshotId,
     contextUnitId: params.contextUnitId,
     candidate: {

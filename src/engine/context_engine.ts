@@ -554,6 +554,10 @@ export class ContextEngine {
     }
 
     // Closure PR 0.4: Construct immutable CandidateDecisionObservation records at decision time
+    const effectiveSessionId =
+      task.sessionId ||
+      `sess_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
+
     const decisionObservations: CandidateDecisionObservation[] = [];
     for (let i = 0; i < rankedCandidates.length; i++) {
       const rc = rankedCandidates[i];
@@ -563,6 +567,7 @@ export class ContextEngine {
         decisionObservations.push(
           createCandidateDecisionObservation({
             taskId: task.taskId,
+            sessionId: effectiveSessionId,
             workspaceSnapshotId: snapshot.workspaceSnapshotId,
             contextUnitId: rc.contextUnitId,
             candidate: {
@@ -644,7 +649,7 @@ export class ContextEngine {
     const contextPlan: ContextPlan = {
       taskId: task.taskId,
       planId,
-      sessionId: task.sessionId,
+      sessionId: effectiveSessionId,
       workspaceSnapshotId: snapshot.workspaceSnapshotId,
       agentEnvironmentId: task.agentEnvironment.systemConfigurationHash,
       budgetPlan: reconciledBudgetPlan,
