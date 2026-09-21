@@ -15,7 +15,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc && node -e \"require('fs').copyFileSync('src/skeleton/python_ast.py', 'dist/skeleton/python_ast.py')\"",
+    "build": "tsc && node scripts/post_build.js",
     "start": "node dist/server/web.js",
     "serve": "node dist/server/web.js",
     "cli": "node dist/bin/siftrcode.js",

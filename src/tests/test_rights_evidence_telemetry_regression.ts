@@ -2140,10 +2140,25 @@ export async function runRegressionTests() {
     assert.strictEqual(report.tasksPerRepo.siftrcode, 1, 'Stratified smoke must evaluate 1 SiftrCode task');
     assert.strictEqual(report.planInvarianceHolds, true, 'Decision plan invariance must hold (100% normalized decision plan match)');
     assert.ok(report.operational.totalCalls <= 25, `Total JEV calls must be <= 25 (observed: ${report.operational.totalCalls})`);
+    assert.strictEqual(report.operational.successfulCalls, 25, 'Offline mock smoke must have 25 successful calls');
+    assert.strictEqual(report.operational.failedCalls, 0, 'Offline mock smoke must have 0 failed calls');
+    assert.strictEqual(report.operational.fallbackCalls, 0, 'Offline mock smoke must have 0 fallback calls');
+    assert.strictEqual(report.operational.trustDeniedCalls, 0, 'Offline mock smoke must have 0 trust denied calls');
+    assert.strictEqual(report.operational.rightsDeniedCalls, 0, 'Offline mock smoke must have 0 rights denied calls');
+    assert.strictEqual(report.operational.budgetSkippedCalls, 0, 'Offline mock smoke must have 0 budget skipped calls');
     assert.strictEqual(report.operational.configuredMaxConcurrency, 4, 'Configured max concurrency must be 4');
     assert.ok(report.operational.peakConcurrency <= 4, `Measured peak concurrency must be <= 4 (observed: ${report.operational.peakConcurrency})`);
     assert.ok(report.operational.peakConcurrency >= 1, `Measured peak concurrency must be >= 1 (observed: ${report.operational.peakConcurrency})`);
     assert.ok(report.testedGitCommit !== undefined && report.testedGitCommit.length > 0, 'Tested git commit must be captured');
+
+    // Verify metadata completeness
+    assert.ok(report.metadata, 'Report metadata must be present');
+    assert.strictEqual(report.metadata.sdk.name, '@typesafe-ai/sdk', 'SDK name must be @typesafe-ai/sdk');
+    assert.strictEqual(report.metadata.questionSet.questionCount, 4, 'Question set must define 4 questions');
+    assert.strictEqual(report.metadata.redaction.rawSourceExcluded, true, 'Raw source code must be excluded');
+    assert.strictEqual(report.metadata.redaction.secretsRedacted, true, 'Secrets must be redacted');
+    assert.ok(report.metadata.sampleSanitizedPayloadShape, 'Sample sanitized payload shape must be captured');
+    assert.ok(report.metadata.sampleRequestId, 'Sample request ID must be captured');
 
     console.log('  ✔ Suite 14 passed: Real pilot harness end-to-end regression verified\n');
   }

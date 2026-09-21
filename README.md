@@ -86,24 +86,36 @@ SiftrCode V2.1 includes an empirical benchmark study across 25 audited real-worl
 ================================================================
   SIFTRCODE V2: TYPESAFE JEV REAL-WORLD PILOT STUDY (5 TASKS)   
   Mode: LIVE REMOTE (TypeSafe SystemOne)
-  Tested Git Commit: b82e70ff7fe129aea4ad1363fe469d01e5e62eda
+  Tested Git Commit: 5584a49ec44b4be6765e2a9f876341076dfd49fd
 ================================================================
 Tasks Evaluated:         5 (Express: 2, FastAPI: 2, SiftrCode: 1)
 Decision Plan Invariance: PASSED (100% normalized decision plan SHA-256 match: units, resolutions, allocations & exposures)
-Total JEV Calls:         25 (Strictly 5 calls/task budget ceiling)
+Total JEV Calls:         25 (Successful: 25, Failed: 0, Fallback: 0)
+Trust Denied Calls:      0
+Rights Denied Calls:     0
+Budget Skipped Calls:    0
+Mean Calls / Task:       5
 Peak Concurrency:        Measured = 4 (Configured Limit: 4)
-P50 Latency:             210ms (P95: 517ms)
+P50 Latency:             191ms (P95: 410ms)
+Sample TypeSafe Req ID:  req_01a0c489e75174f1887d4ca49eef0e44
+----------------------------------------------------------------
+Pipeline Configuration & Metadata:
+  SDK:                   @typesafe-ai/sdk@0.6.0
+  Target Model:          jev-latest
+  Question Set:          jev-context-v1 (4 questions)
+  Redaction Guarantees:  Raw Source: EXCLUDED | Secrets: REDACTED | Tokens: OMITTED
+  Fallback Strategy:     fail_closed_zero_retries (retries: 0)
 ----------------------------------------------------------------
 Continuous Probability Distributions:
-  Semantic Relevance:    mean=0.486, median=0.48, [0.06 - 0.80]
-  Implementation Needed: mean=0.602, median=0.62, [0.11 - 0.86]
-  Likely Edit Target:    mean=0.6644, median=0.68, [0.44 - 0.89]
-  Likely Root Cause:     mean=0.4428, median=0.35, [0.05 - 0.86]
+  Semantic Relevance:    mean=0.4824, median=0.45, [0.06 - 0.81]
+  Implementation Needed: mean=0.5936, median=0.63, [0.10 - 0.86]
+  Likely Edit Target:    mean=0.6568, median=0.65, [0.41 - 0.88]
+  Likely Root Cause:     mean=0.4416, median=0.36, [0.04 - 0.87]
 ----------------------------------------------------------------
 Correlation with Ground Truth:
-  Likely Edit Target:    r = 0.2547
-  Likely Root Cause:     r = 0.5793
-  Semantic Relevance:    r = 0.5081
+  Likely Edit Target:    r = 0.2856
+  Likely Root Cause:     r = 0.5890
+  Semantic Relevance:    r = 0.5152
 ----------------------------------------------------------------
 Ranking Ablation (Baseline ContextRank vs JEV-Augmented):
   NDCG@5:     Baseline = 0.4725  | JEV = 0.4891
@@ -112,15 +124,17 @@ Ranking Ablation (Baseline ContextRank vs JEV-Augmented):
   Recall@10:  Baseline = 0.2014  | JEV = 0.2014 (Delta: +0)
   MRR:        Baseline = 0.8286  | JEV = 0.8286 (Delta: +0)
 ================================================================
+[Persistence Verification] Total JEV judgments in SQLite: 25
 [Lineage Verification] 0 orphan signals, 0 mismatched snapshots, 0 mismatched agent environments.
 ```
 
 ### Key Technical Properties:
 - **Normalized Decision Plan Invariance**: Candidate judgment evaluations run fully in shadow mode. The decision plan (selected units, resolutions, token allocations, and exposures) is cryptographically identical (100% SHA-256 match across all decision fields) whether JEV shadow evaluation is active or disabled (`NormalizedPlan_without_JEV == NormalizedPlan_with_JEV_shadow`).
+- **Fail-Closed Live Probability Verification**: In live smoke evaluation, SiftrCode strictly asserts valid continuous probabilities in $[0, 1]$ across all 4 heads for 100% of candidate signals, failing immediately if any call errors or falls back.
 - **Authoritative Workspace Snapshots**: Every repository derivation, task context, context plan, and JEV signal is pinned to an authoritative `WorkspaceSnapshot` derived from live repository state, throwing `WORKSPACE_SNAPSHOT_MISMATCH` on any split-brain variance.
-- **Continuous 4-Head Probabilities**: Evaluates continuous uncalibrated logits across Semantic Relevance, Implementation Needed, Likely Edit Target, and Likely Root Cause without destructive binary discretization.
+- **Clean-Build Commit Stamping**: Builds generate stamped `dist/build_info.json` recording Git commit and build timestamps, enforcing that benchmarks execute strictly against cleanly compiled binaries.
 - **Strict Decision Budgeting & Honest Concurrency**: Enforces strict call caps per task (`maxCallsPerTask = 5`), zero hidden retries in smoke mode (`retry.maxRetries = 0`), and truthful reporting of measured peak concurrency vs configured limits.
-- **Structured Egress Sanitization**: All outbound judgment payloads pass through `EnforcedEgressGateway`, redacting raw code bodies, API keys, tokens, and authorization headers.
+- **Structured Egress Sanitization & Metadata Shape Instrumentation**: All outbound judgment payloads pass through `EnforcedEgressGateway`, redacting raw code bodies, API keys, tokens, and authorization headers, with verified metadata-only shape inspection on the first live call.
 
 ---
 

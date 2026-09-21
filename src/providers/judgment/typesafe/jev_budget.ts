@@ -24,6 +24,8 @@ export interface JevCallStats {
   attemptedCalls: number;
   successfulCalls: number;
   failedCalls: number;
+  fallbackCalls: number;
+  trustDeniedCalls: number;
   rightsDeniedCalls: number;
   budgetSkippedCandidates: number;
 }
@@ -35,6 +37,8 @@ export class JevCallTracker {
     attemptedCalls: 0,
     successfulCalls: 0,
     failedCalls: 0,
+    fallbackCalls: 0,
+    trustDeniedCalls: 0,
     rightsDeniedCalls: 0,
     budgetSkippedCandidates: 0,
   };
@@ -65,6 +69,7 @@ export class JevCallTracker {
   public recordCallAttempt(): boolean {
     if (this.stats.attemptedCalls >= this.budget.maxCallsPerTask) {
       this.stats.budgetSkippedCandidates++;
+      this.stats.fallbackCalls++;
       return false;
     }
     this.stats.attemptedCalls++;
@@ -77,14 +82,26 @@ export class JevCallTracker {
 
   public recordCallFailure(): void {
     this.stats.failedCalls++;
+    this.stats.fallbackCalls++;
+  }
+
+  public recordFallback(): void {
+    this.stats.fallbackCalls++;
+  }
+
+  public recordTrustDenied(): void {
+    this.stats.trustDeniedCalls++;
+    this.stats.fallbackCalls++;
   }
 
   public recordRightsDenied(): void {
     this.stats.rightsDeniedCalls++;
+    this.stats.fallbackCalls++;
   }
 
   public recordBudgetSkipped(): void {
     this.stats.budgetSkippedCandidates++;
+    this.stats.fallbackCalls++;
   }
 }
 

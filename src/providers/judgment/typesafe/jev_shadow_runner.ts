@@ -253,6 +253,7 @@ export class JevShadowRunner {
 
         // 2. Pre-flight check: API key / client
         if (!this.client) {
+          tracker.recordFallback();
           signals.push(
             createJevSignalV1({
               taskId: task.taskId,
@@ -445,6 +446,7 @@ export class JevShadowRunner {
             tracker.recordRightsDenied();
           } else if (msg.includes('trust') || msg.includes('untrusted')) {
             fallbackReason = JevFallbackReason.TRUST_DENIED;
+            tracker.recordTrustDenied();
           } else if (msg.includes('budget_exhausted')) {
             fallbackReason = JevFallbackReason.BUDGET_EXHAUSTED;
             tracker.recordBudgetSkipped();

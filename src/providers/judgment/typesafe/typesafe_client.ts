@@ -74,11 +74,22 @@ export class TypeSafeSystemOneClient implements SystemOneClient {
 
   public async evaluate(request: SystemOneEvaluationRequest): Promise<SystemOneEvaluationResponse> {
     const questions = request.questions || JEV_QUESTIONS_V1;
-    const res = await this.client.systemOne({
+    const callPromise = this.client.systemOne({
       state: request.state,
       questions,
       model: request.model,
     });
+
+    let res: any;
+    let requestId: string | undefined;
+
+    if (typeof (callPromise as any).withResponse === 'function') {
+      const wrapped = await (callPromise as any).withResponse();
+      res = wrapped.data;
+      requestId = wrapped.requestId;
+    } else {
+      res = await callPromise;
+    }
 
     return {
       model: res.model,
@@ -87,6 +98,7 @@ export class TypeSafeSystemOneClient implements SystemOneClient {
         input_tokens: res.usage.input_tokens,
         output_tokens: res.usage.output_tokens,
       } : undefined,
+      requestId,
     };
   }
 }

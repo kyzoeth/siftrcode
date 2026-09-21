@@ -20,6 +20,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import * as crypto from 'crypto';
+import { execSync } from 'child_process';
 import { SqliteStore } from '../storage/sqlite_store';
 import { ContextEngine } from '../engine/context_engine';
 import { ContextPlan } from '../engine/context_plan';
@@ -34,7 +35,9 @@ import {
   FakeSystemOneClient,
   SystemOneEvaluationRequest,
   SystemOneEvaluationResponse,
+  TYPESAFE_SDK_VERSION,
 } from '../providers/judgment/typesafe/typesafe_client';
+import { JEV_QUESTIONS_V1, JEV_QUESTION_SET_VERSION_V1 } from '../providers/judgment/typesafe/jev_questions';
 import { JevMode, JevSignalV1 } from '../providers/judgment/typesafe/jev_signal';
 import { ContextUnit, ContextUnitKind } from '../context/context_unit';
 import { createTaskContext, TaskContext } from '../context/task_context';
@@ -71,6 +74,36 @@ export interface MetricSummary {
   p95: number;
 }
 
+export interface PilotMetadata {
+  sdk: {
+    name: string;
+    version: string;
+  };
+  model: string;
+  questionSet: {
+    version: string;
+    questionCount: number;
+    questions: {
+      key: string;
+      prompt: string;
+    }[];
+  };
+  redaction: {
+    rawSourceExcluded: boolean;
+    secretsRedacted: boolean;
+    tokensOmitted: boolean;
+    allowedDataClasses: string[];
+    deniedDataClasses: string[];
+  };
+  fallback: {
+    strategy: string;
+    retriesConfigured: number;
+    failClosedOnZeroRemoteProbabilities: boolean;
+  };
+  sampleSanitizedPayloadShape?: Record<string, any>;
+  sampleRequestId?: string;
+}
+
 export interface PilotReport {
   testedGitCommit?: string;
   totalTasks: number;
@@ -79,11 +112,18 @@ export interface PilotReport {
   planInvarianceHolds: boolean;
   operational: {
     totalCalls: number;
+    successfulCalls: number;
+    failedCalls: number;
+    fallbackCalls: number;
+    trustDeniedCalls: number;
+    rightsDeniedCalls: number;
+    budgetSkippedCalls: number;
     meanCallsPerTask: number;
     peakConcurrency: number;
     configuredMaxConcurrency?: number;
     latencySummary: MetricSummary;
   };
+  metadata?: PilotMetadata;
   distributions: {
     semanticRelevance: MetricSummary;
     implementationNeeded: MetricSummary;
@@ -405,6 +445,87 @@ function computeMRR(rankedIds: string[], targetIds: Set<string>): number {
   return 0;
 }
 
+/**
+ * Derives a metadata-only descriptor of the egress state or payload shape.
+ * Replaces actual source content and credentials with string lengths, array item counts, and primitive types.
+ */
+export function describeMetadataOnlyPayloadShape(data: any): any {
+  if (data === null || data === undefined) return data;
+  if (typeof data === 'string') {
+    return `string (${data.length} chars)`;
+  }
+  if (typeof data === 'number') {
+    return `number (${data.toFixed(4)})`;
+  }
+  if (typeof data === 'boolean') {
+    return `boolean (${data})`;
+  }
+  if (Array.isArray(data)) {
+    if (data.length === 0) return 'array [0 items]';
+    return `array [${data.length} items of ${typeof data[0]}]`;
+  }
+  if (typeof data === 'object') {
+    const result: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data)) {
+      result[key] = describeMetadataOnlyPayloadShape(value);
+    }
+    return result;
+  }
+  return typeof data;
+}
+
+/**
+ * Validates that dist/ was built cleanly from the current Git HEAD commit.
+ * Throws MANDATORY_CLEAN_BUILD_REQUIRED or STALE_BUILD_ERROR if dist/build_info.json is missing or stale.
+ */
+export function verifyCleanBuild(
+  rootDir: string,
+  options: { mandatory?: boolean } = {}
+): { buildCommit: string; currentGitCommit: string; isClean: boolean } {
+  let currentGitCommit = 'unknown';
+  try {
+    currentGitCommit = execSync('git rev-parse HEAD', { cwd: rootDir, stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim();
+  } catch (_) {}
+
+  const buildInfoPath = path.join(rootDir, 'dist/build_info.json');
+  if (!fs.existsSync(buildInfoPath)) {
+    if (options.mandatory ?? true) {
+      const err = new Error(`MANDATORY_CLEAN_BUILD_REQUIRED: dist/build_info.json not found. A clean build ('npm run build') is mandatory before pilot execution.`);
+      (err as any).code = 'MANDATORY_CLEAN_BUILD_REQUIRED';
+      throw err;
+    }
+    return { buildCommit: 'unbuilt', currentGitCommit, isClean: false };
+  }
+
+  let buildInfo: any;
+  try {
+    buildInfo = JSON.parse(fs.readFileSync(buildInfoPath, 'utf8'));
+  } catch (e: any) {
+    if (options.mandatory ?? true) {
+      const err = new Error(`MANDATORY_CLEAN_BUILD_REQUIRED: Failed to parse dist/build_info.json: ${e?.message}`);
+      (err as any).code = 'MANDATORY_CLEAN_BUILD_REQUIRED';
+      throw err;
+    }
+    return { buildCommit: 'unreadable', currentGitCommit, isClean: false };
+  }
+
+  const buildCommit = buildInfo.buildCommit;
+  if (!buildCommit || (currentGitCommit !== 'unknown' && buildCommit !== currentGitCommit)) {
+    if (options.mandatory ?? true) {
+      const err = new Error(
+        `STALE_BUILD_ERROR: dist/ was built with commit ${buildCommit}, but current git commit is ${currentGitCommit}. A clean build ('npm run build') is mandatory before execution.`
+      );
+      (err as any).code = 'STALE_BUILD_ERROR';
+      throw err;
+    }
+    return { buildCommit: buildCommit || 'unknown', currentGitCommit, isClean: false };
+  }
+
+  return { buildCommit, currentGitCommit, isClean: true };
+}
+
 // ---------------------------------------------------------------------------
 // High-Fidelity Evaluator for Real Repositories
 function createRealPilotClient(
@@ -417,6 +538,17 @@ function createRealPilotClient(
 
   let peakConcurrency = 0;
   let activeConcurrentRequests = 0;
+  let firstCallPayloadShape: Record<string, any> | undefined;
+  let firstRequestId: string | undefined;
+
+  const inspectFirstCall = (req: SystemOneEvaluationRequest, res?: SystemOneEvaluationResponse) => {
+    if (!firstCallPayloadShape && req.state) {
+      firstCallPayloadShape = describeMetadataOnlyPayloadShape(req.state);
+    }
+    if (!firstRequestId && res?.requestId) {
+      firstRequestId = res.requestId;
+    }
+  };
 
   async function trackConcurrency<T>(fn: () => Promise<T>): Promise<T> {
     activeConcurrentRequests++;
@@ -445,20 +577,28 @@ function createRealPilotClient(
       // In smoke mode, strictly remove the 3-attempt wrapper and use retry.maxRetries=0
       const smokeClient: SystemOneClient = {
         async evaluate(req: SystemOneEvaluationRequest): Promise<SystemOneEvaluationResponse> {
-          return await trackConcurrency(() => liveClient.evaluate(req));
+          inspectFirstCall(req);
+          const res = await trackConcurrency(() => liveClient.evaluate(req));
+          inspectFirstCall(req, res);
+          return res;
         },
       };
       (smokeClient as any).getPeakConcurrency = () => peakConcurrency;
+      (smokeClient as any).getFirstCallPayloadShape = () => firstCallPayloadShape;
+      (smokeClient as any).getFirstRequestId = () => firstRequestId;
       return smokeClient;
     }
 
     const liveClientWrapper: SystemOneClient = {
       async evaluate(req: SystemOneEvaluationRequest): Promise<SystemOneEvaluationResponse> {
+        inspectFirstCall(req);
         let attempts = 0;
         const maxAttempts = 3;
         while (attempts < maxAttempts) {
           try {
-            return await trackConcurrency(() => liveClient.evaluate(req));
+            const res = await trackConcurrency(() => liveClient.evaluate(req));
+            inspectFirstCall(req, res);
+            return res;
           } catch (err: any) {
             attempts++;
             const isRateLimit = err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('rate');
@@ -476,10 +616,13 @@ function createRealPilotClient(
       },
     };
     (liveClientWrapper as any).getPeakConcurrency = () => peakConcurrency;
+    (liveClientWrapper as any).getFirstCallPayloadShape = () => firstCallPayloadShape;
+    (liveClientWrapper as any).getFirstRequestId = () => firstRequestId;
     return liveClientWrapper;
   }
 
   const fakeClient = new FakeSystemOneClient(async (req: SystemOneEvaluationRequest) => {
+    inspectFirstCall(req);
     return await trackConcurrency(async () => {
       const startTime = Date.now();
       await new Promise((r) => setTimeout(r, 2 + Math.floor(Math.random() * 5)));
@@ -514,7 +657,7 @@ function createRealPilotClient(
       let editTarget = Math.min(0.98, Math.max(0.02, 0.1 + keywordRatio * 0.7 + (isExactFileMatch ? 0.3 : 0) + (Math.random() * 0.08 - 0.04)));
       let rootCause = Math.min(0.98, Math.max(0.02, 0.1 + keywordRatio * 0.65 + (isExactFileMatch ? 0.25 : 0) + (Math.random() * 0.08 - 0.04)));
 
-      return {
+      const res = {
         model: 'typesafe-one-preview',
         answers: {
           semanticRelevance: { noul: Number(semRel.toFixed(4)) },
@@ -528,10 +671,14 @@ function createRealPilotClient(
         },
         requestId: 'req_' + crypto.randomUUID().slice(0, 12),
       };
+      inspectFirstCall(req, res);
+      return res;
     });
   });
 
   (fakeClient as any).getPeakConcurrency = () => peakConcurrency;
+  (fakeClient as any).getFirstCallPayloadShape = () => firstCallPayloadShape;
+  (fakeClient as any).getFirstRequestId = () => firstRequestId;
   return fakeClient;
 }
 
@@ -671,6 +818,7 @@ export async function runTypeSafeJevPilotStudy(options: {
   apiKey?: string;
   verbose?: boolean;
   isSmoke?: boolean;
+  requireCleanBuild?: boolean;
 } = {}): Promise<PilotReport> {
   const isLive = options.useLive ?? (process.env.JEV_LIVE === 'true' || process.argv.includes('--live'));
   const isSmoke = options.isSmoke ?? process.argv.includes('--smoke');
@@ -687,16 +835,16 @@ export async function runTypeSafeJevPilotStudy(options: {
   const expressDir = path.resolve(rootDir, 'benchmarks/express-repo');
   const fastapiDir = path.resolve(rootDir, 'benchmarks/fastapi-repo');
 
-  let testedGitCommit = 'unknown';
-  try {
-    const cp = require('child_process');
-    testedGitCommit = cp.execSync('git rev-parse HEAD', { cwd: rootDir, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
-  } catch {}
+  // Mandatory clean build verification
+  const requireCleanBuild = options.requireCleanBuild ?? (process.argv.includes('--require-clean-build') || isLive);
+  const cleanBuildResult = verifyCleanBuild(rootDir, { mandatory: requireCleanBuild });
+  let testedGitCommit = cleanBuildResult.buildCommit !== 'unbuilt' ? cleanBuildResult.buildCommit : cleanBuildResult.currentGitCommit;
 
   console.log('\n================================================================');
   console.log(`  SIFTRCODE V2: TYPESAFE JEV REAL-WORLD PILOT STUDY (${maxTasks} TASKS)   `);
   console.log(`  Mode: ${isLive ? 'LIVE REMOTE (TypeSafe SystemOne)' : 'OFFLINE CALIBRATED'}`);
   console.log(`  Tested Git Commit: ${testedGitCommit}`);
+  console.log(`  Clean Build Verification: ${cleanBuildResult.isClean ? 'PASSED (Stamped & In-Sync)' : 'SKIPPED (Non-Mandatory)'}`);
   console.log(`  TypeSafe key configured: ${Boolean(apiKey)}`);
   console.log('================================================================\n');
 
@@ -880,6 +1028,13 @@ export async function runTypeSafeJevPilotStudy(options: {
   console.log(`Executing pilot evaluation across ${selectedTasks.length} audited real tasks...`);
   const pilotStartTime = Date.now();
 
+  let totalSuccessful = 0;
+  let totalFailed = 0;
+  let totalFallback = 0;
+  let totalTrustDenied = 0;
+  let totalRightsDenied = 0;
+  let totalBudgetSkipped = 0;
+
   for (let idx = 0; idx < selectedTasks.length; idx++) {
     const taskSpec = selectedTasks[idx];
     tasksPerRepo[taskSpec.repo]++;
@@ -1033,6 +1188,14 @@ export async function runTypeSafeJevPilotStudy(options: {
     const stats = tracker ? tracker.getStats() : null;
     const taskCallCount = stats ? stats.attemptedCalls : signals.length;
     callsPerTask.push(taskCallCount);
+    if (stats) {
+      totalSuccessful += stats.successfulCalls;
+      totalFailed += stats.failedCalls;
+      totalFallback += stats.fallbackCalls;
+      totalTrustDenied += stats.trustDeniedCalls;
+      totalRightsDenied += stats.rightsDeniedCalls;
+      totalBudgetSkipped += stats.budgetSkippedCandidates;
+    }
 
     if (idx === 0) {
       console.log('\n================================================================');
@@ -1049,7 +1212,16 @@ export async function runTypeSafeJevPilotStudy(options: {
       console.log('Rights Profile:');
       console.log('  Allowed (Remote):      TASK_PROMPT, SYMBOL_NAME, SYMBOL_METADATA, PATH, NUMERIC_FEATURE');
       console.log('  Denied (Remote):       RAW_SOURCE, SOURCE_SNIPPET, TRAINING');
-      console.log('================================================================\n');
+      console.log('================================================================');
+
+      const shape = typeof (client as any).getFirstCallPayloadShape === 'function' ? (client as any).getFirstCallPayloadShape() : undefined;
+      if (shape) {
+        console.log('================================================================');
+        console.log('       METADATA-ONLY ACTUAL SANITIZED EGRESS PAYLOAD SHAPE      ');
+        console.log('================================================================');
+        console.log(JSON.stringify(shape, null, 2));
+        console.log('================================================================\n');
+      }
     }
 
     if (verbose) {
@@ -1059,7 +1231,7 @@ export async function runTypeSafeJevPilotStudy(options: {
       console.log(`    Expected Targets: ${JSON.stringify(taskSpec.expectedTargetPaths)}`);
       console.log(`    Evaluated Signals: ${signals.length} | Avg Latency: ${avgLat}ms`);
       if (stats) {
-        console.log(`    JevCallTracker: attempted=${stats.attemptedCalls}, successful=${stats.successfulCalls}, skipped=${stats.budgetSkippedCandidates}, rightsDenied=${stats.rightsDeniedCalls}`);
+        console.log(`    JevCallTracker: attempted=${stats.attemptedCalls}, successful=${stats.successfulCalls}, failed=${stats.failedCalls}, fallback=${stats.fallbackCalls}, trustDenied=${stats.trustDeniedCalls}, rightsDenied=${stats.rightsDeniedCalls}, skipped=${stats.budgetSkippedCandidates}`);
       }
       for (const sig of signals.slice(0, 4)) {
         const u = repoUnitsMap.get(sig.contextUnitId);
@@ -1074,6 +1246,38 @@ export async function runTypeSafeJevPilotStudy(options: {
     if (!planComparison.equal) {
       planInvarianceHolds = false;
       console.warn(`    ⚠️ Normalized decision plan mismatch on task ${taskSpec.taskId}:`, planComparison.diffs);
+    }
+
+    // Fail live smoke unless real valid JEV probabilities were received from TypeSafe
+    if (isLive) {
+      if (signals.length === 0) {
+        const err = new Error(`LIVE_JEV_PROBABILITY_FAILURE: Task ${taskSpec.taskId} produced zero JEV signals in live mode.`);
+        (err as any).code = 'LIVE_JEV_PROBABILITY_FAILURE';
+        throw err;
+      }
+      for (const sig of signals) {
+        if (
+          sig.semanticRelevanceProbability === null ||
+          sig.implementationNeededProbability === null ||
+          sig.likelyEditTargetProbability === null ||
+          sig.likelyRootCauseProbability === null ||
+          isNaN(sig.semanticRelevanceProbability) ||
+          isNaN(sig.implementationNeededProbability) ||
+          isNaN(sig.likelyEditTargetProbability) ||
+          isNaN(sig.likelyRootCauseProbability) ||
+          sig.semanticRelevanceProbability < 0 || sig.semanticRelevanceProbability > 1 ||
+          sig.implementationNeededProbability < 0 || sig.implementationNeededProbability > 1 ||
+          sig.likelyEditTargetProbability < 0 || sig.likelyEditTargetProbability > 1 ||
+          sig.likelyRootCauseProbability < 0 || sig.likelyRootCauseProbability > 1 ||
+          sig.fallbackReason !== undefined
+        ) {
+          const err = new Error(
+            `LIVE_JEV_PROBABILITY_FAILURE: Candidate unit "${sig.contextUnitId}" on task "${taskSpec.taskId}" failed to receive real valid probabilities from TypeSafe (fallbackReason: ${sig.fallbackReason || 'none'}, semRel: ${sig.semanticRelevanceProbability}, impNeed: ${sig.implementationNeededProbability}, editTarget: ${sig.likelyEditTargetProbability}, rootCause: ${sig.likelyRootCauseProbability})`
+          );
+          (err as any).code = 'LIVE_JEV_PROBABILITY_FAILURE';
+          throw err;
+        }
+      }
     }
 
     // Verify WorkspaceSnapshot identity consistency across TaskContext, Plans, and JEV Signals
@@ -1219,6 +1423,17 @@ export async function runTypeSafeJevPilotStudy(options: {
   const aRec20 = computeStats(augmentedRecall20).mean;
   const aMrr = computeStats(augmentedMrr).mean;
 
+  const totalCalls = callsPerTask.reduce((a, b) => a + b, 0);
+  if (isLive && isSmoke) {
+    if (totalSuccessful < totalCalls || totalFailed > 0 || totalFallback > 0) {
+      const err = new Error(
+        `LIVE_JEV_PROBABILITY_FAILURE: Live smoke evaluation required all ${totalCalls} calls to succeed with valid probabilities, but had ${totalSuccessful} successful, ${totalFailed} failed, ${totalFallback} fallback calls.`
+      );
+      (err as any).code = 'LIVE_JEV_PROBABILITY_FAILURE';
+      throw err;
+    }
+  }
+
   const report: PilotReport = {
     testedGitCommit,
     totalTasks: selectedTasks.length,
@@ -1226,13 +1441,62 @@ export async function runTypeSafeJevPilotStudy(options: {
     tasksPerType,
     planInvarianceHolds,
     operational: {
-      totalCalls: callsPerTask.reduce((a, b) => a + b, 0),
+      totalCalls,
+      successfulCalls: totalSuccessful,
+      failedCalls: totalFailed,
+      fallbackCalls: totalFallback,
+      trustDeniedCalls: totalTrustDenied,
+      rightsDeniedCalls: totalRightsDenied,
+      budgetSkippedCalls: totalBudgetSkipped,
       meanCallsPerTask: computeStats(callsPerTask).mean,
       peakConcurrency: typeof (client as any).getPeakConcurrency === 'function'
         ? (client as any).getPeakConcurrency()
         : runner.getPeakConcurrency(),
       configuredMaxConcurrency: 4,
       latencySummary: computeStats(latencies),
+    },
+    metadata: {
+      sdk: {
+        name: '@typesafe-ai/sdk',
+        version: TYPESAFE_SDK_VERSION,
+      },
+      model: isLive ? 'jev-latest' : 'typesafe-one-preview',
+      questionSet: {
+        version: JEV_QUESTION_SET_VERSION_V1,
+        questionCount: Object.keys(JEV_QUESTIONS_V1).length,
+        questions: Object.entries(JEV_QUESTIONS_V1).map(([key, q]) => ({
+          key,
+          prompt: (q as any).instructions || '',
+        })),
+      },
+      redaction: {
+        rawSourceExcluded: true,
+        secretsRedacted: true,
+        tokensOmitted: true,
+        allowedDataClasses: [
+          DataClass.TASK_PROMPT,
+          DataClass.SYMBOL_NAME,
+          DataClass.SYMBOL_METADATA,
+          DataClass.PATH,
+          DataClass.NUMERIC_FEATURE,
+        ],
+        deniedDataClasses: [
+          DataClass.RAW_SOURCE,
+          DataClass.SOURCE_SNIPPET,
+          DataClass.PATCH,
+        ],
+      },
+      fallback: {
+        strategy: isLive ? (isSmoke ? 'fail_closed_zero_retries' : 'retry_then_fail_closed') : 'offline_calibrated_lexical',
+        retriesConfigured: isSmoke ? 0 : 3,
+        failClosedOnZeroRemoteProbabilities: true,
+      },
+      sampleSanitizedPayloadShape: typeof (client as any).getFirstCallPayloadShape === 'function'
+        ? (client as any).getFirstCallPayloadShape()
+        : undefined,
+      sampleRequestId: typeof (client as any).getFirstRequestId === 'function'
+        ? (client as any).getFirstRequestId()
+        : undefined,
     },
     distributions: {
       semanticRelevance: computeStats(semRelVals),
@@ -1278,10 +1542,23 @@ export async function runTypeSafeJevPilotStudy(options: {
   console.log(`Tested Git Commit:       ${report.testedGitCommit || 'unknown'}`);
   console.log(`Tasks Evaluated:         ${report.totalTasks} (Express: ${report.tasksPerRepo.express}, FastAPI: ${report.tasksPerRepo.fastapi}, SiftrCode: ${report.tasksPerRepo.siftrcode})`);
   console.log(`Decision Plan Invariance: ${report.planInvarianceHolds ? 'PASSED (100% normalized decision plan SHA-256 match: units, resolutions, allocations & exposures)' : 'FAILED'}`);
-  console.log(`Total JEV Calls:         ${report.operational.totalCalls}`);
+  console.log(`Total JEV Calls:         ${report.operational.totalCalls} (Successful: ${report.operational.successfulCalls}, Failed: ${report.operational.failedCalls}, Fallback: ${report.operational.fallbackCalls})`);
+  console.log(`Trust Denied Calls:      ${report.operational.trustDeniedCalls}`);
+  console.log(`Rights Denied Calls:     ${report.operational.rightsDeniedCalls}`);
+  console.log(`Budget Skipped Calls:    ${report.operational.budgetSkippedCalls}`);
   console.log(`Mean Calls / Task:       ${report.operational.meanCallsPerTask}`);
   console.log(`Peak Concurrency:        Measured = ${report.operational.peakConcurrency} (Configured Limit: ${report.operational.configuredMaxConcurrency || 4})`);
   console.log(`P50 Latency:             ${report.operational.latencySummary.median}ms (P95: ${report.operational.latencySummary.p95}ms)`);
+  if (report.metadata?.sampleRequestId) {
+    console.log(`Sample TypeSafe Req ID:  ${report.metadata.sampleRequestId}`);
+  }
+  console.log('----------------------------------------------------------------');
+  console.log('Pipeline Configuration & Metadata:');
+  console.log(`  SDK:                   ${report.metadata?.sdk.name}@${report.metadata?.sdk.version}`);
+  console.log(`  Target Model:          ${report.metadata?.model}`);
+  console.log(`  Question Set:          ${report.metadata?.questionSet.version} (${report.metadata?.questionSet.questionCount} questions)`);
+  console.log(`  Redaction Guarantees:  Raw Source: EXCLUDED | Secrets: REDACTED | Tokens: OMITTED`);
+  console.log(`  Fallback Strategy:     ${report.metadata?.fallback.strategy} (retries: ${report.metadata?.fallback.retriesConfigured})`);
   console.log('----------------------------------------------------------------');
   console.log('Continuous Probability Distributions:');
   console.log(`  Semantic Relevance:    mean=${report.distributions.semanticRelevance.mean}, median=${report.distributions.semanticRelevance.median}, [${report.distributions.semanticRelevance.min} - ${report.distributions.semanticRelevance.max}]`);
