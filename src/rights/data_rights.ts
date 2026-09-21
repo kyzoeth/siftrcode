@@ -55,6 +55,7 @@ export interface DataRights {
   trajectoryRetentionAllowed: boolean;
   retentionDays?: number;
   operationRights?: OperationRightsPolicy;
+  hasExplicitOperationRights?: boolean;
 }
 
 /**
@@ -175,6 +176,44 @@ export function isOperationPermitted(
  * In accordance with Section 78: customer proprietary source != training data.
  */
 export function createDefaultDataRights(overrides: Partial<DataRights> = {}): DataRights {
+  const hasExplicitOperationRights = overrides.operationRights !== undefined;
+
+  const policyOverrides: Partial<Record<DataClass, Partial<DataClassRights>>> = {};
+  if (overrides.rawSourceRetentionAllowed !== undefined) {
+    policyOverrides[DataClass.RAW_SOURCE] = { retention: { local: overrides.rawSourceRetentionAllowed, remote: false } };
+  }
+  if (overrides.sourceSnippetRetentionAllowed !== undefined) {
+    policyOverrides[DataClass.SOURCE_SNIPPET] = { retention: { local: overrides.sourceSnippetRetentionAllowed, remote: false } };
+  }
+  if (overrides.symbolNameRetentionAllowed !== undefined) {
+    policyOverrides[DataClass.SYMBOL_NAME] = { retention: { local: overrides.symbolNameRetentionAllowed, remote: false } };
+  }
+  if (overrides.symbolMetadataAllowed !== undefined) {
+    policyOverrides[DataClass.SYMBOL_METADATA] = { retention: { local: overrides.symbolMetadataAllowed, remote: false } };
+  }
+  if (overrides.pathRetentionAllowed !== undefined) {
+    policyOverrides[DataClass.PATH] = { retention: { local: overrides.pathRetentionAllowed, remote: false } };
+  }
+  if (overrides.embeddingsRetentionAllowed !== undefined) {
+    policyOverrides[DataClass.EMBEDDING] = { retention: { local: overrides.embeddingsRetentionAllowed, remote: false } };
+  }
+  if (overrides.graphRetentionAllowed !== undefined) {
+    policyOverrides[DataClass.GRAPH_TOPOLOGY] = { retention: { local: overrides.graphRetentionAllowed, remote: false } };
+  }
+  if (overrides.derivedNumericFeaturesAllowed !== undefined) {
+    policyOverrides[DataClass.NUMERIC_FEATURE] = { retention: { local: overrides.derivedNumericFeaturesAllowed, remote: false } };
+  }
+  if (overrides.trajectoryRetentionAllowed !== undefined) {
+    policyOverrides[DataClass.TRAJECTORY] = { retention: { local: overrides.trajectoryRetentionAllowed, remote: false } };
+  }
+  if (overrides.trainingAllowed !== undefined) {
+    for (const dc of Object.values(DataClass)) {
+      policyOverrides[dc] = { ...(policyOverrides[dc] || {}), training: overrides.trainingAllowed };
+    }
+  }
+
+  const operationRights = overrides.operationRights || createDefaultOperationRightsPolicy(policyOverrides);
+
   return {
     remoteProcessingAllowed: false,
     telemetryAllowed: true,
@@ -190,6 +229,8 @@ export function createDefaultDataRights(overrides: Partial<DataRights> = {}): Da
     trajectoryRetentionAllowed: false,
     retentionDays: 30,
     ...overrides,
+    operationRights,
+    hasExplicitOperationRights,
   };
 }
 
@@ -197,7 +238,9 @@ export function isDataClassPermitted(rights: DataRights, dataClass: DataClass): 
   // Authoritative check across every durable write:
   // operationRights.*.retention.local takes precedence over legacy flat flags
   if (rights.operationRights && rights.operationRights[dataClass]?.retention?.local !== undefined) {
-    return rights.operationRights[dataClass].retention.local;
+    if (rights.hasExplicitOperationRights !== false) {
+      return rights.operationRights[dataClass].retention.local;
+    }
   }
 
   // Legacy flat flags as backward-compatible fallback

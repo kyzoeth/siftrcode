@@ -158,7 +158,7 @@ export interface TrainingEvidenceRecord {
   editEvidence: { wasEdited: boolean; editCount?: number; confidence: number };
   testEvidence: { testsPassed?: boolean; regressionTestsPassed?: boolean; confidence: number };
   rootCauseEvidence: { isRootCause?: boolean; confidence: number };
-  verifiedOutcomeAssociation: { verifiedSuccess?: boolean; confidence: number };
+  verifiedOutcomeAssociation: { verifiedSuccess: boolean | null; confidence: number };
   counterfactualEffect?: { deltaUtility?: number; confidence: number };
   resolutionSufficiency?: { resolution: ContextResolution; sufficient: boolean; confidence: number };
   lineage: DerivedDataLineage;
@@ -182,7 +182,7 @@ export function createTrainingEvidenceRecord(params: {
   editEvidence?: { wasEdited: boolean; editCount?: number; confidence: number };
   testEvidence?: { testsPassed?: boolean; regressionTestsPassed?: boolean; confidence: number };
   rootCauseEvidence?: { isRootCause?: boolean; confidence: number };
-  verifiedOutcomeAssociation?: { verifiedSuccess?: boolean; confidence: number };
+  verifiedOutcomeAssociation?: { verifiedSuccess?: boolean | null; confidence: number };
   counterfactualEffect?: { deltaUtility?: number; confidence: number };
   resolutionSufficiency?: { resolution: ContextResolution; sufficient: boolean; confidence: number };
   sourceObservationIds: string[];
@@ -198,7 +198,7 @@ export function createTrainingEvidenceRecord(params: {
 
   const exportedAt = params.exportedAt || new Date().toISOString();
   const labelerVersion = params.labelerVersion || 'v1.0.0';
-  const featureBuilderVersion = params.featureBuilderVersion || 'feature_schema_v2';
+  const featureBuilderVersion = params.featureBuilderVersion || 'v1.0.0';
 
   const lineage = createDerivedDataLineage({
     trainingRowId: evidenceId,
@@ -233,7 +233,13 @@ export function createTrainingEvidenceRecord(params: {
     editEvidence: params.editEvidence || { wasEdited: false, confidence: 0.5 },
     testEvidence: params.testEvidence || { confidence: 0.5 },
     rootCauseEvidence: params.rootCauseEvidence || { confidence: 0.5 },
-    verifiedOutcomeAssociation: params.verifiedOutcomeAssociation || { confidence: 0.5 },
+    verifiedOutcomeAssociation: {
+      verifiedSuccess:
+        params.verifiedOutcomeAssociation && params.verifiedOutcomeAssociation.verifiedSuccess !== undefined
+          ? params.verifiedOutcomeAssociation.verifiedSuccess
+          : null,
+      confidence: params.verifiedOutcomeAssociation?.confidence ?? 0.5,
+    },
     counterfactualEffect: params.counterfactualEffect,
     resolutionSufficiency: params.resolutionSufficiency,
     lineage,

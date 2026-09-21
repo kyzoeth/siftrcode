@@ -78,7 +78,10 @@ export function sanitizeContextPlanForPersistence(
 ): ContextPlanMetadataRecord {
   const allowRawSource = isDataClassPermitted(rights, DataClass.RAW_SOURCE);
   const allowSnippet = isDataClassPermitted(rights, DataClass.SOURCE_SNIPPET);
-  const allowSymbolMetadata = isDataClassPermitted(rights, DataClass.SYMBOL_NAME);
+  const allowSymbolMetadata = isDataClassPermitted(rights, DataClass.SYMBOL_METADATA);
+  const allowSymbolName = isDataClassPermitted(rights, DataClass.SYMBOL_NAME);
+  const allowPath = isDataClassPermitted(rights, DataClass.PATH);
+  const allowPrompt = isDataClassPermitted(rights, DataClass.TASK_PROMPT);
   const allowNumericFeatures = isDataClassPermitted(rights, DataClass.NUMERIC_FEATURE);
 
   const sanitizedUnits: PlannedUnitMetadata[] = (plan.units || []).map((u) => {
@@ -89,8 +92,10 @@ export function sanitizeContextPlanForPersistence(
       reason: u.reason,
     };
 
-    if (allowSymbolMetadata) {
+    if (allowSymbolName) {
       unitMeta.title = u.title;
+    }
+    if (allowPath) {
       unitMeta.path = u.path;
     }
 
@@ -102,7 +107,7 @@ export function sanitizeContextPlanForPersistence(
   });
 
   const sanitizedFormattedContext: { promptText?: string; totalTokens?: number } = {};
-  if (allowRawSource || allowSnippet) {
+  if (allowPrompt && (allowRawSource || allowSnippet)) {
     sanitizedFormattedContext.promptText = plan.formattedContext?.promptText;
   }
   if (plan.formattedContext && 'totalTokens' in plan.formattedContext) {

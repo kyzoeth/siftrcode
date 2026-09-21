@@ -56,7 +56,7 @@ export class DatasetBuilder {
       taskSucceeded,
     });
 
-    if (options.outcomeEvidence) {
+    if (options.outcomeEvidence && options.outcomeEvidence.verifiedSuccess !== null) {
       evidence.push({
         labelType: 'OUTCOME_ASSOCIATION',
         value: options.outcomeEvidence.verifiedSuccess ? 1.0 : 0.0,
@@ -189,7 +189,7 @@ export class DatasetBuilder {
         confidence: outcomeEvidence?.confidence || 0.5,
       },
       verifiedOutcomeAssociation: {
-        verifiedSuccess: outcomeEvidence?.verifiedSuccess === null ? undefined : outcomeEvidence?.verifiedSuccess,
+        verifiedSuccess: outcomeEvidence ? outcomeEvidence.verifiedSuccess : null,
         confidence: outcomeEvidence?.confidence || 0.5,
       },
       sourceObservationIds: [decision.decisionObservationId],

@@ -396,7 +396,7 @@ const MIGRATIONS: Migration[] = [
         context_unit_id TEXT NOT NULL,
         repository TEXT NOT NULL,
         tenant_id TEXT,
-        was_read INTEGER NOT NULL,
+        was_read INTEGER,
         was_edited INTEGER NOT NULL,
         verified_success INTEGER,
         rights_reference TEXT NOT NULL,
@@ -1974,9 +1974,11 @@ export class SqliteStore {
         rec.contextUnitId,
         rec.repository,
         rec.tenantId ?? null,
-        rec.readEvidence.wasRead ? 1 : 0,
+        rec.readEvidence.wasRead !== null && rec.readEvidence.wasRead !== undefined
+          ? (rec.readEvidence.wasRead ? 1 : 0)
+          : null,
         rec.editEvidence.wasEdited ? 1 : 0,
-        rec.verifiedOutcomeAssociation.verifiedSuccess !== undefined
+        rec.verifiedOutcomeAssociation.verifiedSuccess !== null && rec.verifiedOutcomeAssociation.verifiedSuccess !== undefined
           ? (rec.verifiedOutcomeAssociation.verifiedSuccess ? 1 : 0)
           : null,
         rec.rightsReference,

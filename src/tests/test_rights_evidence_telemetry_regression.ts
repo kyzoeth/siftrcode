@@ -25,6 +25,7 @@ import {
 import { RankedCandidate } from '../ranking/context_rank';
 import { TrustLevel } from '../security/trust';
 import { SqliteStore } from '../storage/sqlite_store';
+import { sanitizeContextPlanForPersistence } from '../storage/rights_aware_dto';
 import { createTaskContext } from '../context/task_context';
 import { createAgentEnvironment } from '../agents/agent_environment';
 import { createWorkspaceSnapshot } from '../workspace/workspace_snapshot';
@@ -185,6 +186,47 @@ export async function runRegressionTests() {
     const storedSignals = store.listJevShadowJudgments('task_j1');
     assert.strictEqual(storedSignals.length, 1, 'Signal saved');
     assert.strictEqual(storedSignals[0].semanticRelevanceProbability, null, 'Probabilities must be null when numeric retention is forbidden');
+
+    // Case 1E: ContextPlan and TaskContext persistence strictly honor operationRights
+    const rightsForbidSymbolName: DataRights = createDefaultDataRights({
+      symbolNameRetentionAllowed: true, // Legacy flat says TRUE
+      operationRights: createDefaultOperationRightsPolicy({
+        [DataClass.SYMBOL_NAME]: { retention: { local: false, remote: false } }, // Authoritative says FALSE
+        [DataClass.PATH]: { retention: { local: true, remote: false } },
+      }),
+    });
+
+    const mockPlan: any = {
+      planId: 'plan_reg_1',
+      taskId: 'task_reg_1',
+      units: [
+        {
+          contextUnitId: 'sym_unit_1',
+          resolution: 4,
+          tokenEstimate: 50,
+          reason: 'test',
+          title: 'AuthService.login',
+          path: 'src/auth/service.ts',
+        },
+      ],
+      budgetPlan: {},
+      exposureDecisions: [],
+      dataRights: rightsForbidSymbolName,
+      actualRenderedTokens: 50,
+      createdAt: new Date().toISOString(),
+    };
+
+    const sanitizedPlanRecord = sanitizeContextPlanForPersistence(mockPlan, rightsForbidSymbolName, 'snap_1');
+    assert.strictEqual(
+      sanitizedPlanRecord.units[0].title,
+      undefined,
+      'ContextPlan unit title must be stripped when operationRights forbids SYMBOL_NAME'
+    );
+    assert.strictEqual(
+      sanitizedPlanRecord.units[0].path,
+      'src/auth/service.ts',
+      'ContextPlan unit path must be retained when operationRights allows PATH'
+    );
 
     store.close();
     fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -369,6 +411,53 @@ export async function runRegressionTests() {
       rightsReference: 'rights_4',
     });
     assert.strictEqual(deriveRankingTrainingExample(editSuccessEvidence).relevanceGrade, 4, 'Edit + success gives grade 4');
+
+    // Case 2F: verifiedSuccess = null preserved across SQLite storage boundary (never collapses to 0/failure)
+    const tmpDir2 = fs.mkdtempSync(path.join(os.tmpdir(), 'siftr_reg_ev_'));
+    const dbPath2 = path.join(tmpDir2, 'test.db');
+    const store2 = new SqliteStore(dbPath2);
+
+    const nullSuccessEvidence = createTrainingEvidenceRecord({
+      datasetVersion: 'v2.0-test',
+      contextUnitId: 'sym_null_success',
+      taskId: 'task_null_1',
+      sessionId: 'sess_null_1',
+      repository: 'test-repo',
+      features: dummyFeatures,
+      exposure: { wasExposed: true },
+      observabilityLevel: 'FULL_TOOL_TRACE',
+      readEvidence: { wasRead: null, confidence: 0.5 },
+      editEvidence: { wasEdited: false, confidence: 0.5 },
+      verifiedOutcomeAssociation: { verifiedSuccess: null, confidence: 0.35 },
+      sourceObservationIds: ['obs_null_1'],
+      rightsReference: 'rights_null_1',
+    });
+
+    assert.strictEqual(
+      nullSuccessEvidence.verifiedOutcomeAssociation.verifiedSuccess,
+      null,
+      'TrainingEvidenceRecord must preserve verifiedSuccess as null (not undefined or false)'
+    );
+
+    store2.saveTrainingEvidenceRecords([nullSuccessEvidence]);
+
+    // Inspect direct SQLite row
+    const rawRow: any = (store2 as any).db
+      .prepare('SELECT was_read, was_edited, verified_success, raw_json FROM training_evidence_records WHERE evidence_id = ?')
+      .get(nullSuccessEvidence.evidenceId);
+
+    assert.strictEqual(rawRow.verified_success, null, 'SQLite verified_success must be NULL (not 0 or false)');
+    assert.strictEqual(rawRow.was_read, null, 'SQLite was_read must be NULL (not 0 or false)');
+
+    const parsed = JSON.parse(rawRow.raw_json);
+    assert.strictEqual(parsed.verifiedOutcomeAssociation.verifiedSuccess, null, 'raw_json must preserve verifiedSuccess as null');
+    assert.strictEqual(parsed.readEvidence.wasRead, null, 'raw_json must preserve wasRead as null');
+
+    const retrievedRec = store2.getTrainingEvidenceRecord(nullSuccessEvidence.evidenceId);
+    assert.strictEqual(retrievedRec?.verifiedOutcomeAssociation.verifiedSuccess, null, 'Retrieved record has verifiedSuccess = null');
+
+    store2.close();
+    fs.rmSync(tmpDir2, { recursive: true, force: true });
 
     console.log('  ✔ Suite 2 passed: TrainingEvidence is tri-state & exposure-aware (no false negative grade 0)\n');
   }
