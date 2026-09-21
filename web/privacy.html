@@ -246,8 +246,8 @@
         SiftrCode V2 is architected from the ground up as a <strong>100% offline, local-first context optimization engine</strong>. We believe intellectual property and codebase confidentiality are inviolable. SiftrCode does not upload your files, does not maintain remote telemetry, does not train machine learning models on your syntax, and operates zero network proxies.
       </p>
       
-      <!-- 6-Part Data Rights Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 font-mono text-xs pt-1">
+      <!-- 8-Part Data Rights Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 font-mono text-xs pt-1">
         <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
           <span class="text-emerald-700 dark:text-emerald-400 font-bold">1. trainingAllowed: false</span>
           <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">SiftrCode never trains, fine-tunes, or adapts machine learning models on your syntax, prompts, or proprietary code.</p>
@@ -271,6 +271,14 @@
         <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
           <span class="text-emerald-700 dark:text-emerald-400 font-bold">6. Traceable Erasure (Sec 52)</span>
           <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Full lineage ties every training row to upstream observations, ensuring complete GDPR/CCPA traceable deletion.</p>
+        </div>
+        <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+          <span class="text-emerald-700 dark:text-emerald-400 font-bold">7. Canonical Agent Lineage</span>
+          <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs"><code class="text-[10px]">systemConfigurationHash</code> binds sessions, plans, and observations cryptographically.</p>
+        </div>
+        <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+          <span class="text-emerald-700 dark:text-emerald-400 font-bold">8. Sanctioned Exporter Gate</span>
+          <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Raw rows cannot enter persistent training storage without sanctioned <code class="text-[10px]">texport_</code> export IDs.</p>
         </div>
       </div>
 
@@ -340,6 +348,12 @@
           </li>
           <li>
             <strong>Traceable Erasure (GDPR Art. 17 / Right to be Forgotten):</strong> When a repository is purged or access rights are revoked, the <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">DeletionManager</code> cascades across all derived training rows, purges all associated downstream records, and records an immutable, verifiable audit record (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">DeletionAuditRecord</code>).
+          </li>
+          <li>
+            <strong>Canonical AgentEnvironment Lineage &amp; Migration 13:</strong> All runtime stores (<code class="font-mono text-[11px]">sessions</code>, <code class="font-mono text-[11px]">context_plans</code>, <code class="font-mono text-[11px]">candidate_decision_observations</code>, and <code class="font-mono text-[11px]">jev_shadow_judgments</code>) enforce exact environment lineage derived from <code class="font-mono text-[11px]">systemConfigurationHash</code>. Mismatched agent environments throw <code class="font-mono text-[11px]">AGENT_ENVIRONMENT_MISMATCH</code>, preventing poisoned or uncurated state.
+          </li>
+          <li>
+            <strong>Sanctioned Exporter Boundary:</strong> Raw training rows and evidence records cannot be written to persistent storage without a sanctioned export ID (<code class="font-mono text-[11px]">texport_</code> / <code class="font-mono text-[11px]">texport_ev_</code>) issued by <code class="font-mono text-[11px]">TrainingExporter</code> with verified multi-dataclass data rights. Direct raw inserts are blocked at the database boundary.
           </li>
         </ul>
       </section>

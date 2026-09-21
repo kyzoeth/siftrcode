@@ -646,12 +646,12 @@
           <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-semibold">Audited Real Pilot</span>
         </div>
         <p class="text-xs text-zinc-600 dark:text-zinc-400 font-sans leading-relaxed">
-          Before any model-based ranking signal can influence production ContextPlans, it must survive rigorous shadow evaluation. SiftrBench evaluated 500 bounded shadow calls across 25 audited real-world tasks on Express, FastAPI, and SiftrCode to evaluate alignment against deterministic ground-truth oracles with genuine continuous probability distributions and zero synthetic substitutes:
+          Before any model-based ranking signal can influence production ContextPlans, it must survive rigorous shadow evaluation. SiftrBench evaluated 500 bounded shadow calls across 25 audited real-world tasks on Express, FastAPI, and SiftrCode, followed by a controlled live smoke study proving 100% bit-for-bit plan invariance, zero orphan signals, and zero mismatched environment IDs:
         </p>
         
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 font-mono text-xs">
           <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Continuous JEV Distributions</div>
+            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Continuous Distributions</div>
             <div class="text-xl font-bold text-ink">0.3445 <span class="text-xs font-normal text-zinc-400">relevance</span></div>
             <p class="text-[11px] text-zinc-500 font-sans">Edit target 0.2159 [0.06–0.62], root cause 0.2042 [0.06–0.57]. Zero fixed 0.0 substitutes.</p>
           </div>
@@ -664,6 +664,11 @@
             <div class="text-[10px] text-zinc-400 uppercase font-semibold">Operational Invariance</div>
             <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">100% Invariant</div>
             <p class="text-[11px] text-zinc-500 font-sans">Bit-for-bit plan identity in shadow mode (0% fallback rate, zero production divergence).</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Live Smoke Study</div>
+            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">0 Lineage Defects</div>
+            <p class="text-[11px] text-zinc-500 font-sans">5 tasks &times; 5 calls: 0 orphan signals, 0 environment ID discrepancies.</p>
           </div>
         </div>
       </section>
@@ -712,6 +717,22 @@
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
             <span class="text-emerald-400 font-semibold">8. Truthful AST Provenance</span>
             <p class="text-[11px] text-zinc-400 font-sans">Syntactic edges labeled 'typescript_ast' with calibrated confidence (0.70–0.90).</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
+            <span class="text-emerald-400 font-semibold">9. Canonical Agent Environment</span>
+            <p class="text-[11px] text-zinc-400 font-sans"><code class="text-[10px]">systemConfigurationHash</code> binds session, task, plan, observations, JEV signals, and SQLite.</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
+            <span class="text-emerald-400 font-semibold">10. Sanctioned Training Exporter</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Raw rows cannot enter persistent training storage without sanctioned <code class="text-[10px]">texport_</code> export ID.</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
+            <span class="text-emerald-400 font-semibold">11. Post-Render Budget Ladder</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Hard token gate: dynamic degradation (FULL &rarr; BODY &rarr; SKELETON &rarr; SIGNATURE &rarr; NAME &rarr; OMIT).</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
+            <span class="text-emerald-400 font-semibold">12. Class Method BODY Isolation</span>
+            <p class="text-[11px] text-zinc-400 font-sans">AST slicing isolates target method bodies strictly, excluding all adjacent sibling class methods.</p>
           </div>
         </div>
 

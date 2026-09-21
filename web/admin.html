@@ -166,7 +166,7 @@
         <div class="h-4 w-[1px] bg-zinc-300 dark:bg-zinc-700 hidden sm:block"></div>
         <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/70 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-semibold tracking-wider flex items-center gap-1.5">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 pulse-live-dot"></span>
-          v0.2.1 • V2 Control Plane
+          v0.2.1 • V2.1 Control Plane • Siftr Intelligence V1 Ready
         </span>
         <span id="lastUpdatedTag" class="text-[11px] text-ink-secondary font-mono hidden md:inline-block">Updating...</span>
       </div>
@@ -206,12 +206,12 @@
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-zinc-200/70 dark:border-zinc-800">
       <div>
         <div class="flex items-center gap-2 mb-1">
-          <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/70 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-semibold">V2 Telemetry</span>
-          <span class="text-xs text-ink-secondary font-mono">Real-Time Outcome & Pipeline Telemetry</span>
+          <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/70 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-semibold">V2.1 Telemetry</span>
+          <span class="text-xs text-ink-secondary font-mono">Real-Time Outcome, Lineage &amp; Pipeline Telemetry</span>
         </div>
-        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-normal text-ink font-serif tracking-tight">SiftrCode V2 Control Plane & Telemetry</h1>
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-normal text-ink font-serif tracking-tight">SiftrCode V2.1 Control Plane &amp; Telemetry</h1>
         <p class="text-xs sm:text-sm text-ink-secondary mt-1 font-sans">
-          Outcome-aware context optimization, AST variable-resolution engine, B2B trial pipeline, and zero-egress data rights.
+          Outcome-aware context optimization, AST variable-resolution engine, canonical AgentEnvironment lineage, live JEV smoke validation, and zero-egress data rights.
         </p>
       </div>
       <div class="flex items-center gap-2">
@@ -467,10 +467,10 @@
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
             <h3 class="text-lg font-bold text-ink tracking-tight font-serif">Data Rights, Provenance & Deletion Traceability Plane</h3>
-            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#FAF3F0] dark:bg-[#411A0E]/70 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40">Sections 50 - 52</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#FAF3F0] dark:bg-[#411A0E]/70 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40">Sections 50 - 52 • Migration 13</span>
           </div>
           <p class="text-xs text-ink-secondary mt-1">
-            Enforced export boundary (<code class="text-ink font-mono text-[11px]">Raw Observation Store ➔ RightsFilter ➔ Training Export</code>), source provenance license registry, and GDPR/CCPA traceable erasure.
+            Enforced export boundary (<code class="text-ink font-mono text-[11px]">Raw Observations ➔ RightsFilter ➔ TrainingExporter (texport_ / texport_ev_)</code>), canonical <code class="text-ink font-mono text-[11px]">AgentEnvironment.systemConfigurationHash</code> lineage closure, and GDPR/CCPA traceable erasure.
           </p>
         </div>
 
@@ -478,7 +478,7 @@
         <div class="flex items-center gap-2 font-mono text-[11px] flex-wrap">
           <div class="px-2.5 py-1 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 flex items-center gap-1.5">
             <span class="text-ink-secondary">Export Gate:</span>
-            <span class="text-emerald-600 dark:text-emerald-400 font-bold" id="kpiExportGate">ENFORCED</span>
+            <span class="text-emerald-600 dark:text-emerald-400 font-bold" id="kpiExportGate">ENFORCED (texport_)</span>
           </div>
           <div class="px-2.5 py-1 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 flex items-center gap-1.5">
             <span class="text-ink-secondary">Verified Provenance:</span>
@@ -504,11 +504,15 @@
           </div>
           <span class="text-zinc-400">➔</span>
           <div class="px-2.5 py-1 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-[11px] font-semibold">
-            Training Export + Lineage
+            TrainingExporter (texport_ / texport_ev_)
+          </div>
+          <span class="text-zinc-400">➔</span>
+          <div class="px-2.5 py-1 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-800 text-[11px] font-semibold">
+            systemConfigurationHash Lineage
           </div>
         </div>
         <div class="text-[10px] text-ink-secondary shrink-0">
-          Section 50 Invariant: Zero training dataset builders may query raw tables directly.
+          Section 50 Invariant: Direct SQLite inserts/queries blocked. TrainingExporter is the only sanctioned persistence route.
         </div>
       </div>
 
@@ -737,7 +741,7 @@
         <!-- SiftrBench Real-World Pilot Telemetry Grid -->
         <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2.5 font-mono text-xs">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] uppercase tracking-wider text-ink-secondary">SiftrBench Real-World Pilot (25 Tasks)</span>
+            <span class="text-[10px] uppercase tracking-wider text-ink-secondary">SiftrBench Pilot (25 Tasks / 500 Calls)</span>
             <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">100% Plan Invariance</span>
           </div>
 
@@ -765,19 +769,53 @@
           </div>
         </div>
 
-        <!-- 3-Stage Resolution Lineage & High-Value AST Relationships Cards -->
+        <!-- Controlled Live JEV Smoke Study (25 Calls / 5 Tasks • Final Lineage Closure) -->
+        <div class="pt-2.5 border-t border-zinc-100 dark:border-zinc-800 space-y-2 font-mono text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] uppercase tracking-wider text-ink-secondary flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span>Live JEV Smoke Study (25 Calls / 5 Tasks)</span>
+            </span>
+            <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-bold">Migration 13 Verified</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px]">
+            <div class="p-1.5 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center">
+              <div class="text-zinc-400 text-[8px] uppercase">Plan Identity</div>
+              <div class="text-emerald-600 dark:text-emerald-400 font-bold text-xs">100% Bit-for-Bit</div>
+              <div class="text-zinc-500 text-[8px]">0 Deviation</div>
+            </div>
+            <div class="p-1.5 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center">
+              <div class="text-zinc-400 text-[8px] uppercase">Smoke Latency</div>
+              <div class="text-ink font-bold text-xs">P50 4ms</div>
+              <div class="text-zinc-500 text-[8px]">Peak Conc: 4 &le; 4</div>
+            </div>
+            <div class="p-1.5 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center">
+              <div class="text-zinc-400 text-[8px] uppercase">Lineage Parity</div>
+              <div class="text-[#D97757] font-bold text-xs">0 Mismatches</div>
+              <div class="text-zinc-500 text-[8px]">Exact Env Hash</div>
+            </div>
+            <div class="p-1.5 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center">
+              <div class="text-zinc-400 text-[8px] uppercase">Orphan Signals</div>
+              <div class="text-purple-600 dark:text-purple-400 font-bold text-xs">0 Signals</div>
+              <div class="text-zinc-500 text-[8px]">25 / 25 Bound</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3-Stage Resolution Lineage & Post-Render Budget Degradation -->
         <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] font-mono">
           <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 space-y-1">
-            <div class="text-zinc-500 uppercase text-[9px]">3-Stage Resolution Lineage</div>
-            <div class="text-ink font-semibold flex items-center gap-1 text-[10px]">
-              <span>ranker</span> &rarr; <span>budgeted</span> &rarr; <span>final</span>
+            <div class="text-zinc-500 uppercase text-[9px]">Post-Render Budget Degradation</div>
+            <div class="text-ink font-semibold flex items-center gap-1 text-[9px]">
+              <span>FULL</span> &rarr; <span>BODY</span> &rarr; <span>SKELETON</span> &rarr; <span>SIG</span> &rarr; <span>NAME</span> &rarr; <span>OMIT</span>
             </div>
-            <p class="text-zinc-500 text-[9px]">Audit trail: 0 silent downgrades, discrete method body AST slicing.</p>
+            <p class="text-zinc-500 text-[9px]">Method body slicing isolates edits without leaking sibling methods.</p>
           </div>
           <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 space-y-1">
-            <div class="text-zinc-500 uppercase text-[9px]">High-Value AST Edges</div>
+            <div class="text-zinc-500 uppercase text-[9px]">High-Value AST Edges &amp; Lineage</div>
             <div class="text-ink font-semibold" id="highValueEdgesSummary">CALLS, TYPE_USES, IMPLEMENTS</div>
-            <p class="text-zinc-500 text-[9px]">Enclosing symbol scoping with call-graph extraction.</p>
+            <p class="text-zinc-500 text-[9px]">systemConfigurationHash binds runtime, DB, and JEV signals.</p>
           </div>
         </div>
       </div>
@@ -956,7 +994,7 @@
 
   <!-- Footer Notice -->
   <footer class="max-w-7xl mx-auto px-4 sm:px-6 py-6 text-center text-xs text-ink-secondary font-mono border-t border-zinc-200/60 dark:border-zinc-800 mt-12">
-    SiftrCode Admin Portal • Confidential Telemetry Engine • v0.2.1
+    SiftrCode Admin Portal • Confidential Telemetry Engine • v0.2.1 • Siftr Intelligence V1 Ready
   </footer>
 
   <script>

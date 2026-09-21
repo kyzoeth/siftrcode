@@ -125,7 +125,7 @@
             </g>
           </svg>
           <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
-          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-medium">v0.2.1</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-medium">v0.2.1 • Siftr Intelligence V1 Ready</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="/how-it-works" class="hover:text-ink transition">How It Works</a>
@@ -148,7 +148,6 @@
         <a href="https://github.com/kyzoeth/siftrcode" target="_blank" title="GitHub" aria-label="GitHub" class="hidden sm:flex w-8 h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press items-center justify-center shadow-2xs cursor-pointer">
           <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
         </a>
-
         <!-- Light / Dark Theme Switch Button -->
         <button id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light / Dark Theme" aria-label="Toggle theme" class="w-11 h-11 sm:w-8 sm:h-8 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
           <svg id="themeSunIcon" class="w-4 h-4 text-[#D97757] hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -230,7 +229,7 @@
       </div>
       <h1 class="text-4xl sm:text-5xl font-normal text-ink font-serif tracking-tight">Terms of Service</h1>
       <p class="text-xs sm:text-sm text-ink-secondary">
-        Last updated: September 20, 2026 • Governs use of the SiftrCode open source software, website, and commercial offerings.
+        Last updated: September 21, 2026 • Governs use of the SiftrCode open source software, website, and commercial offerings.
       </p>
     </div>
 
@@ -285,6 +284,9 @@
           <li><strong>Local-First Guarantee:</strong> Candidate recall, ranking, knapsack budgeting, and discrete AST slicing execute entirely in local process memory on your machine.</li>
           <li><strong>Authoritative Retention Rights:</strong> <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">operationRights.*.retention.local</code> is authoritative across every durable write; proprietary source code, snippets, and prompts are never retained in SQLite under default rights.</li>
           <li><strong>Fail-Closed Remote Processing &amp; Strict Gateway:</strong> Remote processing is denied by default. Any permitted external provider invocations are strictly governed by our <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">EnforcedEgressGateway</code>, which automatically sanitizes credentials (AWS keys, Stripe keys, Bearer tokens).</li>
+          <li><strong>Canonical Agent Lineage (Migration 13):</strong> Every local session, candidate decision, and optimization plan is strictly bound to a canonical <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">AgentEnvironment.systemConfigurationHash</code> identity, ensuring complete end-to-end environment traceability and auditability.</li>
+          <li><strong>Sanctioned Training Exporter Boundary:</strong> Direct persistence or querying of raw observations for training is strictly blocked by runtime policy. Only authenticated <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">TrainingExporter</code> exports carrying valid signed export tokens (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">texport_</code> / <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">texport_ev_</code>) and passing rights filters may generate persistent training rows.</li>
+          <li><strong>Post-Render Budget Degradation:</strong> When context limits are reached, the engine degrades AST units through an explicit ladder (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">FULL ➔ BODY ➔ SKELETON ➔ SIGNATURE ➔ NAME ➔ OMIT</code>), with class method <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">BODY</code> isolation ensuring only relevant methods are provided while excluding sibling methods.</li>
           <li><strong>No Model Training:</strong> Under no circumstances does SiftrCode utilize your code, prompts, or AST representations to train or tune machine learning models (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">trainingAllowed: false</code>).</li>
         </ul>
       </section>
@@ -292,10 +294,11 @@
       <section class="space-y-3">
         <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">6. Benchmark Integrity &amp; Shadow Judged Evidence Validation (JEV)</h2>
         <p>
-          For empirical validation (such as SiftrBench studies across 25 audited real-world tasks with 500 bounded shadow calls on Express, FastAPI, and SiftrCode), Judged Evidence Validation (JEV) operates strictly under shadow invariants:
+          For empirical validation (including SiftrBench studies across 25 audited real-world tasks with 500 bounded shadow calls on Express, FastAPI, and SiftrCode, and the controlled Live JEV Smoke Study across 5 tasks with 25 bounded calls), Judged Evidence Validation (JEV) operates strictly under shadow invariants:
         </p>
         <ul class="list-disc pl-5 space-y-1.5 text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
-          <li><strong>100% Plan Invariance:</strong> Shadow JEV calls never alter production context bundles, rank orders, or budget boundaries. ContextRank remains the sole deterministic production decision-maker.</li>
+          <li><strong>100% Plan Invariance:</strong> Shadow JEV calls never alter production context bundles, rank orders, or budget boundaries. Live smoke verification confirmed bit-for-bit plan identity (0 deviation) across all runs. ContextRank remains the sole deterministic production decision-maker.</li>
+          <li><strong>Controlled Smoke Latency &amp; Lineage:</strong> Live JEV calls operate within a bounded concurrency profile (peak concurrency 4) with P50 4ms latency, zero database lineage mismatches, and zero orphan signals.</li>
           <li><strong>Air-Gapped Telemetry:</strong> Benchmark telemetry records only structural metrics (AST unit counts, token latencies, continuous probability distributions) and never exposes underlying source code strings.</li>
         </ul>
       </section>

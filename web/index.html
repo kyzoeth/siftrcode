@@ -864,7 +864,7 @@
       <!-- V2.1 Announcement Pill -->
       <a href="#benchmark" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] text-xs font-mono font-semibold uppercase tracking-wider shadow-2xs hover:border-[#D97757] transition group">
         <span class="w-1.5 h-1.5 rounded-full bg-[#D97757] ci-live-dot"></span>
-        <span>SiftrCode V2.1 • Shadow JEV Benchmark &bull; 100% Plan Invariance</span>
+        <span>SiftrCode V2.1 • Canonical Lineage Closed &bull; Live Smoke Verified &bull; 100% Invariance</span>
         <span class="text-zinc-400 group-hover:translate-x-0.5 transition-transform text-[10px]">→</span>
       </a>
 
@@ -880,9 +880,11 @@
       <!-- Key Guarantees Pill Strip -->
       <div class="pt-2 flex flex-wrap items-center justify-center gap-2 text-[11px] font-mono text-zinc-600 dark:text-zinc-400">
         <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🎯 100% Plan Invariance</span>
-        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">⚡ Sub-40ms Shadow JEV (p95 38ms)</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">⚡ 4ms P50 Latency</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🧬 Canonical AgentEnvironment Lineage</span>
         <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🔬 3-Stage Resolution Lineage</span>
         <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🔒 Structured Zero-Egress Gateway</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">📦 Sanctioned Exporter Boundary</span>
       </div>
 
       <!-- Hero Action CTAs -->
@@ -1550,6 +1552,47 @@
         </div>
       </div>
 
+      <!-- Controlled Live JEV Smoke Study Card (Latest Verified Run) -->
+      <div class="p-5 rounded-md bg-white dark:bg-zinc-900 border border-emerald-500/40 dark:border-emerald-500/30 space-y-3.5 shadow-2xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 ci-live-dot"></span>
+            <div class="font-mono font-bold text-ink text-sm">Controlled Live JEV Smoke Study &bull; Verified Invariants</div>
+          </div>
+          <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-mono text-[10px] font-semibold border border-emerald-200 dark:border-emerald-800">
+            <span>PASSED &bull; ZERO LINEAGE DEFECTS</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Strict 5-Call Cap</div>
+            <div class="text-xl font-bold text-ink">25 Calls Total</div>
+            <p class="text-[10px] text-zinc-500 font-sans">5 audited tasks &times; 5 calls/task. Concurrency &le; 4.</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Turn Latency</div>
+            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">P50 4ms / P95 8ms</div>
+            <p class="text-[10px] text-zinc-500 font-sans">Async shadow evaluation without agent blocking.</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Database Lineage</div>
+            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">0 Mismatches</div>
+            <p class="text-[10px] text-zinc-500 font-sans">0 orphan signals, 0 environment ID discrepancies.</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Egress Protection</div>
+            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">Zero Raw Source</div>
+            <p class="text-[10px] text-zinc-500 font-sans">Zero source bodies or credentials transmitted.</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 text-[11px] font-mono text-zinc-600 dark:text-zinc-400 flex flex-wrap items-center justify-between gap-2">
+          <span><strong>Rights Profile:</strong> ALLOW (TASK_PROMPT, SYMBOL_NAME, SYMBOL_METADATA, PATH, NUMERIC_FEATURE) &bull; DENY (RAW_SOURCE, SOURCE_SNIPPET, TRAINING)</span>
+          <span class="text-emerald-600 dark:text-emerald-400 font-semibold">Plan Invariance: 100% Bit-for-Bit Identical</span>
+        </div>
+      </div>
+
       <!-- Architectural Guarantee Strip -->
       <div class="p-4 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
         <div class="flex items-start sm:items-center gap-3">
@@ -1559,9 +1602,9 @@
             </svg>
           </div>
           <div>
-            <div class="font-mono font-semibold text-ink text-xs">Shadow Safety, Authoritative Retention &amp; Lineage Integrity</div>
+            <div class="font-mono font-semibold text-ink text-xs">Shadow Safety, Canonical AgentEnvironment Lineage &amp; Migration 13</div>
             <div class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-              JEV runs in non-blocking SHADOW mode. Production ContextPlans remain 100% deterministic ContextRank outputs. <code class="font-mono text-[10px]">operationRights.*.retention.local</code> is authoritative across all storage writes, and remote processing is strictly fail-closed.
+              JEV runs in non-blocking SHADOW mode. Production ContextPlans remain 100% deterministic ContextRank outputs. <code class="font-mono text-[10px]">AgentEnvironment.systemConfigurationHash</code> is the authoritative single identity binding sessions, plans, decision observations, JEV signals, and SQLite durability.
             </div>
           </div>
         </div>

@@ -494,7 +494,7 @@
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 font-bold">PRIMARY V2 TOOL</span>
             </div>
             <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs sm:text-sm leading-relaxed">
-              Complete outcome-aware context optimization. Given a task prompt and token budget (e.g. 16,000 tokens), executes the full 6-stage pipeline with 3-stage resolution lineage (<code class="font-mono text-[10px]">rankerResolution &rarr; budgetedResolution &rarr; finalResolution</code>). Returns compiler-verified context units while Shadow JEV verifies rankings asynchronously.
+              Complete outcome-aware context optimization. Given a task prompt and token budget (e.g. 16,000 tokens), executes the full 6-stage pipeline with 3-stage resolution lineage (<code class="font-mono text-[10px]">rankerResolution &rarr; budgetedResolution &rarr; finalResolution</code>) and post-render budget degradation ladder. Supports TypeScript, Python, Golang, and Rust with 100% bit-for-bit plan invariance.
             </p>
           </div>
 
@@ -504,7 +504,7 @@
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800 font-bold">DISCRETE AST SLICING</span>
             </div>
             <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs sm:text-sm leading-relaxed">
-              Progressive disclosure tool expanding a unit to <code class="font-mono text-[10px]">BODY</code> or <code class="font-mono text-[10px]">FULL</code> resolution. Discrete AST slicing isolates strictly the target method body and parameters while pruning sibling methods and inner classes, maintaining compile-safe context boundaries.
+              Progressive disclosure tool expanding a unit to <code class="font-mono text-[10px]">BODY</code> or <code class="font-mono text-[10px]">FULL</code> resolution. Discrete AST slicing isolates strictly the target method body and parameters while pruning sibling methods and inner classes, maintaining compile-safe context boundaries without token waste.
             </p>
           </div>
 
@@ -514,7 +514,7 @@
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 font-bold">TRI-STATE FEEDBACK</span>
             </div>
             <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs sm:text-sm leading-relaxed">
-              Captures downstream verification signals (test execution, linter status, user feedback) and records truthful tri-state outcomes (<code class="font-mono text-[10px]">verifiedSuccess: true | false | null</code>) directly into local SQLite, closing the learning loop.
+              Captures downstream verification signals (test execution, linter status, user feedback) and records truthful tri-state outcomes (<code class="font-mono text-[10px]">verifiedSuccess: true | false | null</code>) directly into local SQLite, linking verified completes with candidate exposure decisions.
             </p>
           </div>
 
@@ -524,7 +524,7 @@
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">Session Lifecycle</span>
             </div>
             <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs sm:text-sm leading-relaxed">
-              Manages multi-turn session lifecycle: action <code class="font-mono text-[10px]">start</code> discovers agent environment and model provenance; action <code class="font-mono text-[10px]">end</code> closes session and derives training evidence records.
+              Manages multi-turn session lifecycle: action <code class="font-mono text-[10px]">start</code> establishes canonical <code class="font-mono text-[10px]">systemConfigurationHash</code> provenance, validating model and platform identity across all downstream plans, observations, and telemetry.
             </p>
           </div>
 
