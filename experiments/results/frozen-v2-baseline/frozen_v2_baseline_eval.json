@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "frozen-v2-evaluation-v1",
+  "baselineCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+  "gitTag": "v2-final",
+  "evaluatedAt": "2026-09-21T19:40:50.344Z",
+  "benchmarkVersion": "siftrbench-v1",
+  "candidateBudget": 50,
+  "tokenBudget": 8000,
+  "aggregate": {
+    "evaluatedTasks": 5,
+    "ndcg5": 0.5897,
+    "ndcg10": 0.9087,
+    "ndcg20": 0.9087,
+    "recall5": 1,
+    "recall10": 2,
+    "recall20": 2,
+    "mrr": 0.2,
+    "meanLatencyMs": 38.4,
+    "meanContextTokens": 680
+  },
+  "taskResults": [
+    {
+      "taskId": "exp_01_route_dispatch",
+      "repo": "express",
+      "taskType": "BUG_FIX",
+      "candidateCount": 0,
+      "latencyMs": 111,
+      "contextTokens": 0,
+      "firstHitRank": 0,
+      "metrics": {
+        "ndcg5": 0,
+        "ndcg10": 0,
+        "ndcg20": 0,
+        "recall5": 0,
+        "recall10": 0,
+        "recall20": 0,
+        "mrr": 0
+      }
+    },
+    {
+      "taskId": "exp_02_error_middleware_next",
+      "repo": "express",
+      "taskType": "BUG_FIX",
+      "candidateCount": 0,
+      "latencyMs": 21,
+      "contextTokens": 0,
+      "firstHitRank": 0,
+      "metrics": {
+        "ndcg5": 0,
+        "ndcg10": 0,
+        "ndcg20": 0,
+        "recall5": 0,
+        "recall10": 0,
+        "recall20": 0,
+        "mrr": 0
+      }
+    },
+    {
+      "taskId": "exp_03_query_parser_fn",
+      "repo": "express",
+      "taskType": "FEATURE_ADDITION",
+      "candidateCount": 24,
+      "latencyMs": 21,
+      "contextTokens": 2400,
+      "firstHitRank": 0,
+      "metrics": {
+        "ndcg5": 0,
+        "ndcg10": 0,
+        "ndcg20": 0,
+        "recall5": 0,
+        "recall10": 0,
+        "recall20": 0,
+        "mrr": 0
+      }
+    },
+    {
+      "taskId": "exp_04_response_charset",
+      "repo": "express",
+      "taskType": "BUG_FIX",
+      "candidateCount": 10,
+      "latencyMs": 20,
+      "contextTokens": 1000,
+      "firstHitRank": 1,
+      "metrics": {
+        "ndcg5": 2.9485,
+        "ndcg10": 4.5436,
+        "ndcg20": 4.5436,
+        "recall5": 5,
+        "recall10": 10,
+        "recall20": 10,
+        "mrr": 1
+      }
+    },
+    {
+      "taskId": "exp_05_mountpath_prefix",
+      "repo": "express",
+      "taskType": "BUG_FIX",
+      "candidateCount": 0,
+      "latencyMs": 19,
+      "contextTokens": 0,
+      "firstHitRank": 0,
+      "metrics": {
+        "ndcg5": 0,
+        "ndcg10": 0,
+        "ndcg20": 0,
+        "recall5": 0,
+        "recall10": 0,
+        "recall20": 0,
+        "mrr": 0
+      }
+    }
+  ]
+}

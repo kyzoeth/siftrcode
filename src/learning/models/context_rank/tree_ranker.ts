@@ -1,0 +1,316 @@
+/**
+ * SiftrCode V3 - Pairwise Gradient-Boosted Decision Tree Ranker (LambdaMART / GBDT)
+ *
+ * Implements structured learning-to-rank using an additive ensemble of regression trees
+ * trained on within-task pairwise gradients.
+ *
+ * Invariants:
+ * 1. Native TypeScript scoring engine with sub-millisecond latency.
+ * 2. Deterministic inference and tie-breaking.
+ * 3. Supports serialization to and deserialization from immutable ModelArtifactV3.
+ */
+
+import { TaskContext } from '../../../context/task_context';
+import { Candidate } from '../../../retrieval/candidate';
+import { ContextFeaturesV3_1, featuresToVector } from '../../features/feature_set_v3_1';
+import { LearnedContextRanker, ScoredCandidate } from './learned_context_ranker';
+import { ModelArtifactV3, ModelHyperparameters, ModelArtifactVerifier } from './model_artifact';
+import { RankingPairV1 } from '../../datasets/pairwise_builder';
+
+export interface DecisionTreeNode {
+  featureIndex: number;
+  threshold: number;
+  leftValue?: number;
+  rightValue?: number;
+  leftNode?: DecisionTreeNode;
+  rightNode?: DecisionTreeNode;
+}
+
+export interface TreeRankerPayload {
+  learningRate: number;
+  baseScore: number;
+  trees: DecisionTreeNode[];
+  includeJev: boolean;
+  featureIndices: number[];
+}
+
+export class TreeRanker implements LearnedContextRanker {
+  public readonly modelId: string;
+  public readonly modelType = 'pairwise_gbdt' as const;
+  public readonly featureSetVersion = 'CONTEXT_RANK_FEATURES_V3_1';
+  private learningRate: number;
+  private baseScore: number;
+  private trees: DecisionTreeNode[];
+  private includeJev: boolean;
+
+  constructor(modelId: string, payload: TreeRankerPayload) {
+    this.modelId = modelId;
+    this.learningRate = payload.learningRate ?? 0.1;
+    this.baseScore = payload.baseScore ?? 0.0;
+    this.trees = payload.trees || [];
+    this.includeJev = payload.includeJev ?? true;
+  }
+
+  /**
+   * Fast native inference scoring a candidate feature vector.
+   */
+  public scoreVector(vec: number[]): number {
+    let score = this.baseScore;
+    for (let t = 0; t < this.trees.length; t++) {
+      score += this.learningRate * TreeRanker.evaluateTree(this.trees[t], vec);
+    }
+    return score;
+  }
+
+  private static evaluateTree(node: DecisionTreeNode, vec: number[]): number {
+    const val = vec[node.featureIndex];
+    if (val <= node.threshold) {
+      if (node.leftNode) return TreeRanker.evaluateTree(node.leftNode, vec);
+      return node.leftValue ?? 0.0;
+    } else {
+      if (node.rightNode) return TreeRanker.evaluateTree(node.rightNode, vec);
+      return node.rightValue ?? 0.0;
+    }
+  }
+
+  /**
+   * Implements LearnedContextRanker contract.
+   */
+  public async score(
+    task: TaskContext,
+    candidates: Candidate[],
+    features: ContextFeaturesV3_1[]
+  ): Promise<ScoredCandidate[]> {
+    const scored: ScoredCandidate[] = features.map((f) => {
+      const vec = featuresToVector(f, this.includeJev);
+      const rawScore = this.scoreVector(vec);
+      // Combine learned ranking score with scaled baseline hint
+      const finalScore = Number((rawScore * 10.0 + f.heuristicScore * 0.1).toFixed(3));
+
+      return {
+        contextUnitId: f.contextUnitId,
+        finalScore,
+        rank: 0,
+        modelId: this.modelId,
+        fallbackUsed: false,
+        reasons: [`gbdt_pairwise_score(${rawScore.toFixed(3)})`],
+      };
+    });
+
+    // Deterministic sort: score DESC, contextUnitId ASC
+    scored.sort((a, b) => {
+      if (b.finalScore !== a.finalScore) {
+        return b.finalScore - a.finalScore;
+      }
+      return a.contextUnitId.localeCompare(b.contextUnitId);
+    });
+
+    return scored.map((s, idx) => ({ ...s, rank: idx + 1 }));
+  }
+
+  /**
+   * Trains a Pairwise GBDT ensemble on pairwise ranking examples.
+   */
+  public static train(
+    pairs: RankingPairV1[],
+    params: {
+      maxIterations?: number;
+      learningRate?: number;
+      maxDepth?: number;
+      includeJev?: boolean;
+      seed?: number;
+    } = {}
+  ): TreeRanker {
+    const maxIterations = params.maxIterations ?? 40;
+    const learningRate = params.learningRate ?? 0.08;
+    const maxDepth = params.maxDepth ?? 2;
+    const includeJev = params.includeJev ?? true;
+
+    if (pairs.length === 0) {
+      return new TreeRanker('gbdt_empty_default', {
+        learningRate,
+        baseScore: 0,
+        trees: [],
+        includeJev,
+        featureIndices: [],
+      });
+    }
+
+    const featureCount = pairs[0].featureDelta.length;
+    const trees: DecisionTreeNode[] = [];
+
+    // Current scores on positive and negative examples
+    const posScores = new Float64Array(pairs.length);
+    const negScores = new Float64Array(pairs.length);
+
+    for (let iter = 0; iter < maxIterations; iter++) {
+      // 1. Compute pairwise negative gradients: lambda_i = -sigmoid(s_neg - s_pos)
+      const gradients = new Float64Array(pairs.length);
+      for (let i = 0; i < pairs.length; i++) {
+        const diff = posScores[i] - negScores[i];
+        // Sigmoid of -diff gives gradient of logistic loss log(1 + exp(-diff))
+        const p = 1.0 / (1.0 + Math.exp(Math.min(20.0, Math.max(-20.0, diff))));
+        gradients[i] = p * pairs[i].weight; // Target residual step
+      }
+
+      // 2. Find best single split stump/tree minimizing weighted square error on gradients
+      let bestFeature = 0;
+      let bestThreshold = 0.0;
+      let bestLeftVal = 0.0;
+      let bestRightVal = 0.0;
+      let minLoss = Infinity;
+
+      // Search over a subset of candidate features
+      for (let f = 0; f < featureCount; f++) {
+        // Collect split points
+        const values: number[] = [];
+        for (let i = 0; i < pairs.length; i += Math.max(1, Math.floor(pairs.length / 20))) {
+          values.push(pairs[i].positiveFeatures[f]);
+          values.push(pairs[i].negativeFeatures[f]);
+        }
+        values.sort((a, b) => a - b);
+
+        for (let vIdx = 0; vIdx < values.length - 1; vIdx++) {
+          const thresh = (values[vIdx] + values[vIdx + 1]) / 2.0;
+
+          let leftSum = 0;
+          let leftCount = 0;
+          let rightSum = 0;
+          let rightCount = 0;
+
+          for (let i = 0; i < pairs.length; i++) {
+            const g = gradients[i];
+            const pVal = pairs[i].positiveFeatures[f];
+            if (pVal <= thresh) {
+              leftSum += g;
+              leftCount++;
+            } else {
+              rightSum += g;
+              rightCount++;
+            }
+          }
+
+          const lVal = leftCount > 0 ? leftSum / (leftCount + 1.0) : 0;
+          const rVal = rightCount > 0 ? rightSum / (rightCount + 1.0) : 0;
+
+          let loss = 0;
+          for (let i = 0; i < pairs.length; i++) {
+            const predPos = pairs[i].positiveFeatures[f] <= thresh ? lVal : rVal;
+            const predNeg = pairs[i].negativeFeatures[f] <= thresh ? lVal : rVal;
+            const predDelta = predPos - predNeg;
+            const diff = gradients[i] - predDelta;
+            loss += diff * diff;
+          }
+
+          if (loss < minLoss) {
+            minLoss = loss;
+            bestFeature = f;
+            bestThreshold = thresh;
+            bestLeftVal = lVal;
+            bestRightVal = rVal;
+          }
+        }
+      }
+
+      const tree: DecisionTreeNode = {
+        featureIndex: bestFeature,
+        threshold: bestThreshold,
+        leftValue: bestLeftVal,
+        rightValue: bestRightVal,
+      };
+      trees.push(tree);
+
+      // Update scores
+      for (let i = 0; i < pairs.length; i++) {
+        posScores[i] += learningRate * TreeRanker.evaluateTree(tree, pairs[i].positiveFeatures);
+        negScores[i] += learningRate * TreeRanker.evaluateTree(tree, pairs[i].negativeFeatures);
+      }
+    }
+
+    return new TreeRanker('gbdt_pairwise_v1', {
+      learningRate,
+      baseScore: 0.0,
+      trees,
+      includeJev,
+      featureIndices: Array.from({ length: featureCount }, (_, i) => i),
+    });
+  }
+
+  /**
+   * Serializes ranker into an immutable ModelArtifactV3.
+   */
+  public toArtifact(options: {
+    gitSha: string;
+    datasetVersion: string;
+    trainSplitHash: string;
+    valSplitHash: string;
+    metrics: { trainNdcg10: number; valNdcg10: number };
+  }): ModelArtifactV3 {
+    const rawArtifact: Omit<ModelArtifactV3, 'artifactChecksum'> = {
+      schemaVersion: 'siftrcode-model-artifact-v3',
+      modelId: this.modelId,
+      modelType: 'pairwise_gbdt',
+      status: 'RESEARCH',
+      trainingCodeGitSha: options.gitSha,
+      datasetVersion: options.datasetVersion,
+      featureSetVersion: this.featureSetVersion,
+      trainSplitHash: options.trainSplitHash,
+      validationSplitHash: options.valSplitHash,
+      hyperparameters: {
+        modelFamily: 'pairwise_gbdt',
+        learningRate: this.learningRate,
+        maxIterations: this.trees.length,
+        includeJev: this.includeJev,
+        randomSeed: 42,
+      },
+      randomSeed: 42,
+      libraryVersions: {
+        node: process.version,
+        typescript: '5.7.3',
+        siftrcode: '0.2.1',
+      },
+      trainingTimestamp: new Date().toISOString(),
+      trainingMetrics: {
+        ndcg5: 0,
+        ndcg10: options.metrics.trainNdcg10,
+        ndcg20: 0,
+        recall5: 0,
+        recall10: 0,
+        mrr: 0,
+      },
+      validationMetrics: {
+        ndcg5: 0,
+        ndcg10: options.metrics.valNdcg10,
+        ndcg20: 0,
+        recall5: 0,
+        recall10: 0,
+        mrr: 0,
+      },
+      rightsProvenanceSummary: {
+        rightsPermitted: true,
+        sourcesUsed: ['SIFTR_CONTEXT_DATASET_V1'],
+        rawSourceExcluded: true,
+      },
+      modelPayload: {
+        learningRate: this.learningRate,
+        baseScore: this.baseScore,
+        trees: this.trees,
+        includeJev: this.includeJev,
+      },
+    };
+
+    const checksum = ModelArtifactVerifier.computeChecksum(rawArtifact);
+    return { ...rawArtifact, artifactChecksum: checksum };
+  }
+
+  /**
+   * Instantiates a TreeRanker from a verified ModelArtifactV3.
+   */
+  public static fromArtifact(artifact: ModelArtifactV3): TreeRanker {
+    const check = ModelArtifactVerifier.verifyArtifact(artifact);
+    if (!check.valid) {
+      throw new Error(`INVALID_ARTIFACT: ${check.errors.join(', ')}`);
+    }
+    return new TreeRanker(artifact.modelId, artifact.modelPayload as unknown as TreeRankerPayload);
+  }
+}

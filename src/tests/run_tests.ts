@@ -50,7 +50,12 @@ const tests = [
   { name: 'V2 Rights, Evidence Tri-State, Telemetry & Study Integrity Regression Tests', file: 'test_rights_evidence_telemetry_regression.js' },
   { name: 'V2 FINAL-3 Remediation Verification Tests', file: 'test_final3_remediation.js' },
   { name: 'V2 FINAL-3.1 Acceptance Integrity & Trustworthiness Tests', file: 'test_final3_1_acceptance.js' },
-  { name: 'V2 FINAL-3 Closure & Adversarial Verification E2E Tests', file: 'test_final3_closure_e2e.js' }
+  { name: 'V2 FINAL-3 Closure & Adversarial Verification E2E Tests', file: 'test_final3_closure_e2e.js' },
+  { name: 'V3 Foundation & Baseline Immutability Tests', file: 'test_v3_foundation.js' },
+  { name: 'V3 Leakage-Safe Splits & Point-in-Time Safety Tests', file: 'test_v3_leakage_and_splits.js' },
+  { name: 'V3 Sanctioned Dataset & Pairwise Ranking Tests', file: 'test_v3_dataset_and_pairs.js' },
+  { name: 'V3 Learned ContextRank Models, Fallback & Shadow Tests', file: 'test_v3_models_and_fallback.js' },
+  { name: 'V3 Bootstrap Resampling & Verified Outcome Evaluation Tests', file: 'test_v3_bootstrap_and_eval.js' }
 ];
 
 

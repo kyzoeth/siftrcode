@@ -1,0 +1,119 @@
+{
+  "$schema": "https://siftrcode.com/schemas/v2-final-manifest.json",
+  "manifestVersion": "v2-final-manifest-v1",
+  "archivePurpose": "Permanent frozen SiftrCode V2 deterministic baseline archive",
+  "baseline": {
+    "gitCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+    "gitTreeHash": "915b3bda2b1a5834a8dbd037fdde3ab6b9a129ab",
+    "gitTag": "v2-final",
+    "author": "Ali Yazdan <ali@siftrcode.com>",
+    "date": "2026-09-21T13:41:44-05:00",
+    "subject": "fix(closure): complete final V2 patch with CI benchmark provisioning, zero-retry smoke, and report consistency validation"
+  },
+  "dependencies": {
+    "typesafeSdk": {
+      "name": "@typesafe-ai/sdk",
+      "version": "0.6.0"
+    },
+    "typescript": "5.7.3",
+    "node": ">=22.5.0"
+  },
+  "provider": {
+    "endpoint": "https://api.typesafe.ai",
+    "endpointIsProduction": true,
+    "requestedModel": "jev-latest",
+    "returnedProviderModel": "jev-1.13.0",
+    "questionSetVersion": "jev-context-v1"
+  },
+  "benchmarkRepositories": {
+    "express": {
+      "repository": "expressjs/express",
+      "pinnedSha": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+      "workspaceSnapshotId": "ws_5f24ec44faf3ee13"
+    },
+    "fastapi": {
+      "repository": "fastapi/fastapi",
+      "pinnedSha": "50113da16fec53b66b80d75e80a89296de4fa5a5",
+      "workspaceSnapshotId": "ws_bbe7ab0256387db6"
+    },
+    "siftrcode": {
+      "repository": "kyzoeth/siftrcode",
+      "pinnedSha": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+      "workspaceSnapshotId": "ws_8dc93498fae1af17"
+    }
+  },
+  "auditEvidence": {
+    "smoke": {
+      "tasksEvaluated": 5,
+      "completedTaskCount": 5,
+      "tasksWithValidProviderSignal": 5,
+      "providerCallAttempts": 25,
+      "providerCallSuccesses": 25,
+      "terminalFailures": 0,
+      "observedRetries": 0,
+      "planInvariance": "100%",
+      "planInvarianceHolds": true,
+      "orphans": 0,
+      "recommendation": "PASS_TO_30_TASK_PILOT"
+    },
+    "pilot": {
+      "tasksEvaluated": 25,
+      "completedTaskCount": 25,
+      "tasksWithValidProviderSignal": 25,
+      "taskDistribution": {
+        "express": 10,
+        "fastapi": 10,
+        "siftrcode": 5
+      },
+      "providerCallAttempts": 125,
+      "providerCallSuccesses": 125,
+      "terminalFailures": 0,
+      "observedRetries": 0,
+      "fallbackSignals": 0,
+      "planInvariance": "100%",
+      "planInvarianceHolds": true,
+      "orphans": 0,
+      "recommendation": "PASS_TO_30_TASK_PILOT"
+    },
+    "rankingMetrics": {
+      "ndcg5": {
+        "v2Baseline": 0.4122,
+        "jevAugmented": 0.4162,
+        "delta": 0.0040
+      },
+      "ndcg10": {
+        "v2Baseline": 0.3738,
+        "jevAugmented": 0.3764,
+        "delta": 0.0026
+      },
+      "recall5": {
+        "v2Baseline": 0.1615,
+        "jevAugmented": 0.1615,
+        "delta": 0.0
+      },
+      "recall10": {
+        "v2Baseline": 0.2378,
+        "jevAugmented": 0.2378,
+        "delta": 0.0
+      },
+      "mrr": {
+        "v2Baseline": 0.6990,
+        "jevAugmented": 0.7123,
+        "delta": 0.0133
+      }
+    },
+    "jevCorrelations": {
+      "likelyRootCause": 0.5130,
+      "semanticRelevance": 0.5004,
+      "likelyEditTarget": 0.1609
+    }
+  },
+  "archivedFiles": [
+    "manifest.json",
+    "live_smoke_report.json",
+    "live_pilot_report.json",
+    "checksums.sha256",
+    "README.md"
+  ],
+  "archivedAt": "2026-09-21T19:40:00.000Z"
+}
