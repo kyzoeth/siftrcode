@@ -446,20 +446,24 @@
           </div>
           <div class="space-y-2 text-zinc-300 font-sans text-xs sm:text-sm leading-relaxed">
             <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-1">
-              <span class="font-mono text-emerald-400 text-xs font-semibold">1. Prompt Ingestion:</span>
+              <span class="font-mono text-emerald-400 text-xs font-semibold">1. Task Initialization:</span>
               <p class="text-xs text-zinc-400">User prompts Claude: <code class="text-white font-mono">"Fix invoice payment webhook race condition in subscription service"</code>.</p>
             </div>
             <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-1">
-              <span class="font-mono text-emerald-400 text-xs font-semibold">2. Tool Call: siftr_context(taskPrompt, budgetTokens: 8000)</span>
-              <p class="text-xs text-zinc-400">Claude queries SiftrCode over stdio. Multi-channel recall pulls candidate files; point-in-time features are evaluated.</p>
+              <span class="font-mono text-emerald-400 text-xs font-semibold">2. Pre-Flight Context: siftr_context(taskPrompt, budgetTokens: 8000)</span>
+              <p class="text-xs text-zinc-400">Claude queries SiftrCode over stdio. Multi-channel recall pulls candidate files; point-in-time features and submodular coverage are solved.</p>
             </div>
             <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-1">
-              <span class="font-mono text-emerald-400 text-xs font-semibold">3. Outcome-Aware Context Delivery:</span>
-              <p class="text-xs text-zinc-400">SiftrCode returns causal edit targets at <strong>Full Body (100%)</strong>, dependencies at <strong>AST Skeleton (10%)</strong>, and prunes 34 distractor files to 0 tokens.</p>
+              <span class="font-mono text-emerald-400 text-xs font-semibold">3. Progressive Expansion: siftr_expand(filePath, targetResolution: "body")</span>
+              <p class="text-xs text-zinc-400">If Claude needs to inspect an interface in full detail during reasoning, it expands that single skeleton on demand without bloating the global prompt.</p>
             </div>
             <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-1">
               <span class="font-mono text-emerald-400 text-xs font-semibold">4. Zero-Hallucination Edit:</span>
               <p class="text-xs text-zinc-400">Claude finishes the edit turn in <strong>3.8s</strong> (vs 45s), accurately calling surrounding APIs without token saturation.</p>
+            </div>
+            <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-1">
+              <span class="font-mono text-emerald-400 text-xs font-semibold">5. Closed-Loop Verification: siftr_outcome(taskId, testsPassed: true)</span>
+              <p class="text-xs text-zinc-400">Claude runs test suites and automatically reports verification evidence, updating the local learning plane and recording actual provider tokens.</p>
             </div>
           </div>
         </div>
@@ -473,6 +477,36 @@
             </div>
             <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs sm:text-sm leading-relaxed">
               Complete outcome-aware context optimization. Given a task prompt and token budget (e.g. 8,000 tokens), executes the full 6-stage pipeline: multi-channel recall, versioned feature calculation, heuristic ranking, submodular bundling, variable-resolution degradation, and knapsack budget solving. Returns ready-to-ingest context units.
+            </p>
+          </div>
+
+          <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md space-y-2 shadow-2xs">
+            <div class="flex items-center justify-between">
+              <h3 class="text-[#B34E2E] dark:text-[#F39C82] font-mono font-bold text-sm">siftr_expand</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800 font-bold">PROGRESSIVE DISCLOSURE</span>
+            </div>
+            <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs sm:text-sm leading-relaxed">
+              Expands a skeletonized interface contract to its full implementation body on demand when Claude requires deep inspection, preserving strict workspace path containment and logging trajectory events.
+            </p>
+          </div>
+
+          <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md space-y-2 shadow-2xs">
+            <div class="flex items-center justify-between">
+              <h3 class="text-[#B34E2E] dark:text-[#F39C82] font-mono font-bold text-sm">siftr_outcome</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 font-bold">OUTCOME FEEDBACK LOOP</span>
+            </div>
+            <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs sm:text-sm leading-relaxed">
+              Captures downstream verification signals (unit tests, regression tests, static checks, actual provider tokens consumed) and executes versioned outcome policies to record verified success in local SQLite storage.
+            </p>
+          </div>
+
+          <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md space-y-2 shadow-2xs">
+            <div class="flex items-center justify-between">
+              <h3 class="text-[#B34E2E] dark:text-[#F39C82] font-mono font-bold text-sm">siftr_session</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">Session Telemetry</span>
+            </div>
+            <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs sm:text-sm leading-relaxed">
+              Returns multi-turn trajectory events, plan history, cumulative token expenditures, and budget burn rate across the entire conversation.
             </p>
           </div>
 

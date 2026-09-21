@@ -229,10 +229,27 @@ Add SiftrCode to your `~/.claude/settings.json`, workspace `.mcp.json`, or Curso
 | **`siftr_context`** | **V2 Primary** | End-to-end outcome-aware context optimization returning tokens, costs, and formatted XML context blocks. |
 | **`siftr_optimize`** | **V2 Alias** | Official alias for `siftr_context`. |
 | **`siftr_rank`** | **V2 Ranking** | Explainable candidate ranker returning candidate scores and primary reasons. |
+| **`siftr_expand`** | **Progressive Disclosure** | Dynamically expands an AST interface skeleton to its full implementation body on demand with path containment. |
+| **`siftr_outcome`** | **Outcome Feedback** | Reports task execution signals (builds, tests, regressions, actual provider tokens) and evaluates verification policies. |
+| **`siftr_session`** | **Session Telemetry** | Inspects active multi-turn agent session telemetry, trajectory events, and cumulative token budgets. |
 | **`siftr_skeleton`** | AST Tool | Returns the AST interface skeleton of any file on demand. |
 | **`siftr_batch_skeleton`** | Batch AST | Extracts type signatures from multiple candidate files in parallel. |
 | **`siftr_pack`** | Bundle Tool | Scans dependencies and generates a pruned context pack for a specific task. |
 | **`siftr_audit`** | Audit Tool | Returns token bloat analysis and potential savings across the codebase. |
+
+---
+
+## 🌐 Local REST & Web Daemon Endpoints
+
+SiftrCode includes a zero-dependency local HTTP daemon (`siftr web` or `node dist/server/web.js`):
+
+| Endpoint | Method | Description |
+| :--- | :---: | :--- |
+| **`/api/context`** | `POST` | Live context optimization endpoint accepting prompt, budget, profile, and agent harness. |
+| **`/api/rank`** | `POST` | Returns candidate files, heuristic relevance scores, and multi-channel breakdowns. |
+| **`/api/expand`** | `POST` | Safely expands an AST skeleton to full implementation body within the workspace. |
+| **`/api/outcome`** | `POST` | Ingests verification evidence (tests, regressions, builds) and calculates verified success. |
+| **`/api/session`** | `GET/POST`| Retrieves or updates active multi-turn session state and budget trajectory. |
 
 ---
 
@@ -241,10 +258,13 @@ Add SiftrCode to your `~/.claude/settings.json`, workspace `.mcp.json`, or Curso
 SiftrCode is designed from the ground up for strict enterprise security compliance:
 
 - **`trainingAllowed: false`**: Customer code is never ingested into LLM training corpuses.
-- **`rawSourceRetentionAllowed: false`**: Zero persistence or caching of raw source code.
+- **`rawSourceRetentionAllowed: false`**: Zero persistence or caching of raw source code strings. Under default `DataRights`, `ContextPlanMetadataRecord` strips unit contents and formatted prompt text before writing to SQLite.
 - **`remoteProcessingAllowed: false`**: 100% local compilation and optimization on developer hardware.
+- **`EnforcedEgressGateway`**: Structurally forces provider execution callbacks to receive only sanitized, redacted content.
+- **`Truthful AST Edge Provenance`**: Syntactic AST relationships are truthfully labeled `'typescript_ast'` with calibrated confidence scores (0.70–0.90) rather than overclaiming compiler certainty.
 - **`SIFTR_CALLS_ONLY Observability`**: Conservative default tracing capturing only Siftr tool invocations.
 - **Local SQLite Store**: Candidate decisions and observation logs are stored entirely in local `.siftr/observations.sqlite` without telemetry calls.
+- **Multi-Dimensional Training Evidence**: Derives binary classification (`deriveBinaryTrainingRow`) and ranking grades (`deriveRankingTrainingExample`) with complete audit lineage.
 
 ---
 
@@ -261,7 +281,10 @@ SiftrCode V2 is completely open-source, local-first, and self-contained within t
 | **BundleComposer** | [`src/context/bundle_composer.ts`](src/context/bundle_composer.ts) | Submodular synergy composer maximizing evidence coverage. |
 | **BudgetSolver** | [`src/context/budget_solver.ts`](src/context/budget_solver.ts) | Dynamic token budget and economic cost ceiling solver. |
 | **ResolutionRank** | [`src/context/resolution_rank.ts`](src/context/resolution_rank.ts) | Edit target protection (`BODY`) and safe variable-resolution degradation (`SKELETON`). |
-| **Learning Plane Store** | [`src/storage/sqlite_store.ts`](src/storage/sqlite_store.ts) | Local SQLite persistence for decision observations and audit logging (`.siftr/observations.sqlite`). |
+| **Rights-Aware DTOs** | [`src/storage/rights_aware_dto.ts`](src/storage/rights_aware_dto.ts) | Storage sanitization guaranteeing zero raw source retention in SQLite under default rights. |
+| **Egress Gateway** | [`src/security/egress_policy.ts`](src/security/egress_policy.ts) | Structural callback sanitization and secret redaction enforcement. |
+| **Learning Plane Store** | [`src/storage/sqlite_store.ts`](src/storage/sqlite_store.ts) | Local SQLite persistence for decision observations, outcome evidence, and training records. |
+| **Training Lineage** | [`src/learning/lineage.ts`](src/learning/lineage.ts) | Multi-dimensional `TrainingEvidenceRecord` and label derivation algorithms. |
 | **WorkspaceSnapshot** | [`src/workspace/workspace_manager.ts`](src/workspace/workspace_manager.ts) | Immutable snapshot tracking with `WorkspaceChangedError` structured replanning guards. |
 | **Agent Adapters** | [`src/agents/agent_adapter.ts`](src/agents/agent_adapter.ts) | Formatters for Claude Code XML, Cursor Markdown, and Generic MCP. |
 | **AST Parsers** | [`src/skeleton/`](src/skeleton/) | Multi-language AST interface extractors with exact boundary tracking (TS, Python, Go, Rust). |

@@ -607,14 +607,14 @@
         <p class="text-xs text-zinc-300 font-sans leading-relaxed">
           SiftrCode V2 is governed by immutable data rights and local-only processing guarantees:
         </p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 font-mono text-xs pt-1">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs pt-1">
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
             <span class="text-emerald-400 font-semibold">1. trainingAllowed: false</span>
             <p class="text-[11px] text-zinc-400 font-sans">Zero machine learning training on your syntax, queries, or proprietary code.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
             <span class="text-emerald-400 font-semibold">2. rawSourceRetention: false</span>
-            <p class="text-[11px] text-zinc-400 font-sans">Volatile RAM processing only. Zero persistent raw source caching.</p>
+            <p class="text-[11px] text-zinc-400 font-sans">Zero raw source strings in SQLite. Automatically sanitized via ContextPlanMetadataRecord.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
             <span class="text-emerald-400 font-semibold">3. remoteProcessing: false</span>
@@ -632,22 +632,34 @@
             <span class="text-emerald-400 font-semibold">6. WorkspaceChangedError</span>
             <p class="text-[11px] text-zinc-400 font-sans">Snapshot immutability guards trigger structured replanning if files mutate mid-task.</p>
           </div>
+          <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
+            <span class="text-emerald-400 font-semibold">7. EnforcedEgressGateway</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Structurally enforces sanitized, redacted payloads before any external provider callback.</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
+            <span class="text-emerald-400 font-semibold">8. Truthful AST Provenance</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Syntactic edges labeled 'typescript_ast' with calibrated confidence (0.70–0.90).</p>
+          </div>
         </div>
 
         <!-- Export Boundary Pipeline Diagram Banner -->
         <div class="p-3.5 rounded bg-zinc-900/90 border border-zinc-800 text-[11px] font-mono text-zinc-300 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Local Learning Plane Architecture</span>
-            <span class="text-xs text-emerald-400 font-sans">.siftr/observations.sqlite</span>
+            <span class="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Closed-Loop Learning Plane Architecture</span>
+            <span class="text-xs text-emerald-400 font-sans">.siftr/observations.sqlite (Local Only)</span>
           </div>
           <div class="flex flex-wrap items-center gap-2 text-xs">
-            <span class="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-700 text-zinc-300">Candidate Generator</span>
+            <span class="px-2 py-1 rounded bg-zinc-950 border border-zinc-700 text-zinc-300">Candidate Recall</span>
             <span class="text-emerald-400 font-bold">&rarr;</span>
-            <span class="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-700 text-zinc-300">ContextRank &amp; Features</span>
+            <span class="px-2 py-1 rounded bg-zinc-950 border border-zinc-700 text-zinc-300">ContextRank &amp; Features</span>
             <span class="text-emerald-400 font-bold">&rarr;</span>
-            <span class="px-2.5 py-1 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 font-semibold">Decision Observation Stored</span>
+            <span class="px-2 py-1 rounded bg-zinc-950 border border-zinc-700 text-zinc-300">BudgetSolver</span>
             <span class="text-emerald-400 font-bold">&rarr;</span>
-            <span class="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-700 text-zinc-300">Reconcile Outcome Evidence</span>
+            <span class="px-2 py-1 rounded bg-zinc-950 border border-zinc-700 text-zinc-300">siftr_expand</span>
+            <span class="text-emerald-400 font-bold">&rarr;</span>
+            <span class="px-2 py-1 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 font-semibold">siftr_outcome</span>
+            <span class="text-emerald-400 font-bold">&rarr;</span>
+            <span class="px-2 py-1 rounded bg-zinc-950 border border-zinc-700 text-zinc-300">TrainingEvidenceRecord</span>
           </div>
         </div>
       </section>
@@ -702,19 +714,42 @@
 
         <!-- Tool Catalog -->
         <div class="pt-2 space-y-2">
-          <span class="text-[11px] font-mono uppercase tracking-wider text-zinc-500 font-semibold">Available V2 MCP Tools:</span>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono uppercase tracking-wider text-zinc-500 font-semibold">Available V2 MCP Tools:</span>
+            <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">8 TOOLS AVAILABLE</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 font-mono text-xs">
             <div class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 space-y-1">
-              <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold">siftr_context</span>
-              <p class="text-[11px] text-zinc-500 font-sans leading-snug">Full 6-stage outcome optimization for task prompt within token and cost limits.</p>
+              <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold text-[11px]">siftr_context</span>
+              <p class="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans leading-snug">Full 6-stage outcome optimization for task prompt within token and cost limits.</p>
             </div>
             <div class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 space-y-1">
-              <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold">siftr_optimize</span>
-              <p class="text-[11px] text-zinc-500 font-sans leading-snug">Configurable workspace optimization alias with profile and cost ceilings.</p>
+              <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold text-[11px]">siftr_expand</span>
+              <p class="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans leading-snug">Progressive disclosure tool expanding skeletons into full implementation bodies.</p>
             </div>
             <div class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 space-y-1">
-              <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold">siftr_rank</span>
-              <p class="text-[11px] text-zinc-500 font-sans leading-snug">Diagnostic heuristic ranking with transparent scores and primary reasons.</p>
+              <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold text-[11px]">siftr_outcome</span>
+              <p class="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans leading-snug">Reports downstream verification signals (tests, builds, regressions) to close learning loop.</p>
+            </div>
+            <div class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 space-y-1">
+              <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold text-[11px]">siftr_rank</span>
+              <p class="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans leading-snug">Diagnostic heuristic ranking with transparent scores and primary reasons.</p>
+            </div>
+            <div class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 space-y-1">
+              <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold text-[11px]">siftr_session</span>
+              <p class="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans leading-snug">Inspects multi-turn session telemetry, trajectory events, and budget burn rate.</p>
+            </div>
+            <div class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 space-y-1">
+              <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold text-[11px]">siftr_skeleton</span>
+              <p class="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans leading-snug">AST interface extractor for TypeScript, Python, Go, and Rust source files.</p>
+            </div>
+            <div class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 space-y-1">
+              <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold text-[11px]">siftr_audit</span>
+              <p class="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans leading-snug">Audits codebase token footprint and calculates potential team ROI savings.</p>
+            </div>
+            <div class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 space-y-1">
+              <span class="text-[#B34E2E] dark:text-[#F39C82] font-bold text-[11px]">siftr_pack</span>
+              <p class="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans leading-snug">Generates whole-directory pruned context packs for task-focused areas.</p>
             </div>
           </div>
         </div>
