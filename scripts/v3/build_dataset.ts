@@ -141,7 +141,7 @@ export async function runBuildDataset(options: { maxCandidates?: number } = {}) 
   console.log(`\n🔍 Generating candidate features for ${manifest.episodes.length} episodes...`);
   const datasetBuilder = new SiftrDatasetV1Builder();
   const rows: DatasetRowV1[] = [];
-  const candGen = new CandidateGenerator({ maxCandidates });
+  const candGen = new CandidateGenerator();
   const defaultRights = createDefaultDataRights({ trainingAllowed: true });
 
   for (let i = 0; i < manifest.episodes.length; i++) {
@@ -158,8 +158,12 @@ export async function runBuildDataset(options: { maxCandidates?: number } = {}) 
     const taskCtx = createTaskContext({
       taskId: ep.taskId,
       primaryPrompt: ep.taskPrompt,
-      workspaceRoot: rInfo.path,
-      agentEnvironment: createAgentEnvironment({ agentKind: 'generic_mcp' }),
+      workspaceSnapshotId: ep.workspaceSnapshotId || 'snap_01',
+      agentEnvironment: createAgentEnvironment({
+        agentProvider: 'google',
+        model: 'gemini-3.6-flash',
+        harnessVersion: 'v3.1.0',
+      }),
     });
 
     const featureCutoff = {
@@ -167,7 +171,7 @@ export async function runBuildDataset(options: { maxCandidates?: number } = {}) 
       workspaceSnapshotId: ep.workspaceSnapshotId,
     };
 
-    const candidates = candGen.generateCandidates(taskCtx, rInfo.units, rInfo.graph, rInfo.gitInt);
+    const candidates = candGen.generateCandidates(taskCtx, rInfo.units, rInfo.graph, rInfo.gitInt, { maxCandidates });
     const unitsMap = new Map();
     for (const u of rInfo.units) unitsMap.set(u.id, u);
 

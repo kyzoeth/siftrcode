@@ -34,12 +34,12 @@ export function runBuildBenchmark() {
     trainRatio: 0.55,
     valRatio: 0.18,
     testRatio: 0.27,
-    seed: 42,
+    seed: 1042,
   });
 
   const splitManifest = SplitManager.createManifest(splitResult, {
     benchmarkVersion: manifest.benchmarkVersion,
-    seed: 42,
+    seed: 1042,
   });
 
   const splitPath = path.join(dataDir, 'siftrbench_v1_splits.json');
