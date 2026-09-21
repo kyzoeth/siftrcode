@@ -42,9 +42,19 @@ export class JevShadowRunner {
 
   constructor(options: JevShadowRunnerOptions = {}) {
     const envKey = process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY;
-    // Invariant: Make credentials inert: require explicit JEV enablement; don't enable shadow solely because a key exists.
-    this.mode = options.mode || (process.env.SIFTR_JEV_MODE as JevMode) || JevMode.OFF;
-    this.budget = { ...DEFAULT_JEV_DECISION_BUDGET, ...options.budget };
+    const envMode = process.env.SIFTR_JEV_MODE ? (process.env.SIFTR_JEV_MODE.toUpperCase() as JevMode) : undefined;
+    this.mode = options.mode || envMode || (process.env.SIFTR_JEV_ENABLED === 'true' ? JevMode.SHADOW : JevMode.OFF);
+
+    const envMaxCalls = process.env.SIFTR_JEV_MAX_CALLS ? parseInt(process.env.SIFTR_JEV_MAX_CALLS, 10) : undefined;
+    const envMaxCandidates = process.env.SIFTR_JEV_MAX_CANDIDATES ? parseInt(process.env.SIFTR_JEV_MAX_CANDIDATES, 10) : undefined;
+    const envBudget: Partial<JevDecisionBudget> = {};
+    if (envMaxCalls && !isNaN(envMaxCalls)) {
+      envBudget.maxCallsPerTask = envMaxCalls;
+    }
+    if (envMaxCandidates && !isNaN(envMaxCandidates)) {
+      envBudget.maxCandidates = envMaxCandidates;
+    }
+    this.budget = { ...DEFAULT_JEV_DECISION_BUDGET, ...envBudget, ...options.budget };
     this.egressGateway = options.egressGateway || new StructuredEgressGateway();
     this.sqliteStore = options.sqliteStore;
     this.model = options.model !== undefined ? options.model : (process.env.SIFTR_JEV_MODEL || null);
