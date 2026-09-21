@@ -53,6 +53,7 @@ export * from './ranking/context_rank';
 export * from './telemetry/exposure_decision';
 export * from './telemetry/candidate_observation';
 export * from './telemetry/trajectory_event';
+export * from './telemetry/outcome_evidence';
 export * from './workspace/workspace_source_reader';
 export * from './materialization/context_unit_materializer';
 export * from './token/token_cost_estimator';

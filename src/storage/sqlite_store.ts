@@ -8,6 +8,7 @@ import { ContextPlan } from '../engine/context_plan';
 import { CandidateObservationV2 } from '../telemetry/candidate_observation';
 import { ExposureDecisionV2, isExposedV2 } from '../telemetry/exposure_decision';
 import { TrajectoryEvent } from '../telemetry/trajectory_event';
+import { OutcomeEvidence } from '../telemetry/outcome_evidence';
 
 export interface StoredGraphEdge {
   fromUnitId: string;
@@ -219,6 +220,41 @@ const MIGRATIONS: Migration[] = [
       );
 
       CREATE INDEX IF NOT EXISTS idx_provider_task ON provider_calls(task_id);
+    `,
+  },
+  {
+    version: 3,
+    name: '003_task_outcome_records',
+    sql: `
+      CREATE TABLE IF NOT EXISTS task_outcome_records (
+        outcome_id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        agent_environment_id TEXT NOT NULL,
+        workspace_snapshot_before TEXT NOT NULL,
+        workspace_snapshot_after TEXT,
+        build_passed INTEGER,
+        public_tests_passed INTEGER,
+        hidden_tests_passed INTEGER,
+        regression_tests_passed INTEGER,
+        static_checks_passed INTEGER,
+        security_checks_passed INTEGER,
+        behavioral_oracle_passed INTEGER,
+        user_accepted INTEGER,
+        agent_reported_success INTEGER,
+        human_review TEXT,
+        verified_success INTEGER,
+        confidence REAL NOT NULL,
+        policy_id TEXT,
+        policy_version TEXT,
+        evaluation_rationale TEXT,
+        raw_json TEXT NOT NULL,
+        recorded_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_task_outcome_task ON task_outcome_records(task_id);
+      CREATE INDEX IF NOT EXISTS idx_task_outcome_session ON task_outcome_records(session_id);
+      CREATE INDEX IF NOT EXISTS idx_task_outcome_verified ON task_outcome_records(verified_success);
     `,
   },
 ];
@@ -917,6 +953,72 @@ export class SqliteStore {
       redactedSecretsCount: r.redacted_secrets_count,
       timestamp: r.timestamp,
     }));
+  }
+
+  // ==========================================
+  // Task OutcomeEvidence Operations (Section 48, 49)
+  // ==========================================
+
+  public saveTaskOutcome(outcome: OutcomeEvidence): void {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO task_outcome_records (
+        outcome_id, task_id, session_id, agent_environment_id,
+        workspace_snapshot_before, workspace_snapshot_after,
+        build_passed, public_tests_passed, hidden_tests_passed,
+        regression_tests_passed, static_checks_passed, security_checks_passed,
+        behavioral_oracle_passed, user_accepted, agent_reported_success,
+        human_review, verified_success, confidence,
+        policy_id, policy_version, evaluation_rationale,
+        raw_json, recorded_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      outcome.outcomeId,
+      outcome.taskId,
+      outcome.sessionId,
+      outcome.agentEnvironmentId,
+      outcome.workspaceSnapshotBefore,
+      outcome.workspaceSnapshotAfter ?? null,
+      outcome.buildPassed !== undefined ? (outcome.buildPassed ? 1 : 0) : null,
+      outcome.publicTestsPassed !== undefined ? (outcome.publicTestsPassed ? 1 : 0) : null,
+      outcome.hiddenTestsPassed !== undefined ? (outcome.hiddenTestsPassed ? 1 : 0) : null,
+      outcome.regressionTestsPassed !== undefined ? (outcome.regressionTestsPassed ? 1 : 0) : null,
+      outcome.staticChecksPassed !== undefined ? (outcome.staticChecksPassed ? 1 : 0) : null,
+      outcome.securityChecksPassed !== undefined ? (outcome.securityChecksPassed ? 1 : 0) : null,
+      outcome.behavioralOraclePassed !== undefined ? (outcome.behavioralOraclePassed ? 1 : 0) : null,
+      outcome.userAccepted !== undefined ? (outcome.userAccepted ? 1 : 0) : null,
+      outcome.agentReportedSuccess !== undefined ? (outcome.agentReportedSuccess ? 1 : 0) : null,
+      outcome.humanReview ?? null,
+      outcome.verifiedSuccess === null ? null : outcome.verifiedSuccess ? 1 : 0,
+      outcome.confidence,
+      outcome.policyId ?? null,
+      outcome.policyVersion ?? null,
+      outcome.evaluationRationale ?? null,
+      JSON.stringify(outcome),
+      outcome.recordedAt
+    );
+  }
+
+  public getTaskOutcome(taskId: string): OutcomeEvidence | null {
+    const row = this.db
+      .prepare(`
+      SELECT raw_json FROM task_outcome_records WHERE task_id = ? ORDER BY recorded_at DESC LIMIT 1
+    `)
+      .get(taskId) as { raw_json: string } | undefined;
+
+    if (!row) return null;
+    return JSON.parse(row.raw_json) as OutcomeEvidence;
+  }
+
+  public listTaskOutcomes(limit: number = 100): OutcomeEvidence[] {
+    const rows = this.db
+      .prepare(`
+      SELECT raw_json FROM task_outcome_records ORDER BY recorded_at DESC LIMIT ?
+    `)
+      .all(limit) as Array<{ raw_json: string }>;
+
+    return rows.map((r) => JSON.parse(r.raw_json) as OutcomeEvidence);
   }
 }
 
