@@ -774,31 +774,34 @@
           <div class="flex items-center justify-between">
             <span class="text-[10px] uppercase tracking-wider text-ink-secondary flex items-center gap-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              <span>Live JEV Smoke Study (25 Calls / 5 Tasks)</span>
+              <span>Live Remote JEV Smoke Study (25 Calls / 5 Tasks)</span>
             </span>
-            <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-bold">Migration 13 Verified</span>
+            <div class="flex items-center gap-1">
+              <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold">Commit ef61f2f</span>
+              <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-bold">Clean Build Verified</span>
+            </div>
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px]">
             <div class="p-1.5 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center">
-              <div class="text-zinc-400 text-[8px] uppercase">Plan Identity</div>
-              <div class="text-emerald-600 dark:text-emerald-400 font-bold text-xs">100% Bit-for-Bit</div>
-              <div class="text-zinc-500 text-[8px]">0 Deviation</div>
+              <div class="text-zinc-400 text-[8px] uppercase">Plan Invariance</div>
+              <div class="text-emerald-600 dark:text-emerald-400 font-bold text-xs">100% SHA-256</div>
+              <div class="text-zinc-500 text-[8px]">0 Plan Deviation</div>
             </div>
             <div class="p-1.5 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center">
-              <div class="text-zinc-400 text-[8px] uppercase">Smoke Latency</div>
-              <div class="text-ink font-bold text-xs">P50 4ms</div>
-              <div class="text-zinc-500 text-[8px]">Peak Conc: 4 &le; 4</div>
+              <div class="text-zinc-400 text-[8px] uppercase">Remote Latency</div>
+              <div class="text-ink font-bold text-xs">P50 179ms</div>
+              <div class="text-zinc-500 text-[8px]">P95 446ms &bull; Conc 4</div>
+            </div>
+            <div class="p-1.5 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center">
+              <div class="text-zinc-400 text-[8px] uppercase">Operational Calls</div>
+              <div class="text-emerald-600 dark:text-emerald-400 font-bold text-xs">25 / 25 Success</div>
+              <div class="text-zinc-500 text-[8px]">0 Fallbacks &bull; 0 Retries</div>
             </div>
             <div class="p-1.5 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center">
               <div class="text-zinc-400 text-[8px] uppercase">Lineage Parity</div>
               <div class="text-[#D97757] font-bold text-xs">0 Mismatches</div>
-              <div class="text-zinc-500 text-[8px]">Exact Env Hash</div>
-            </div>
-            <div class="p-1.5 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center">
-              <div class="text-zinc-400 text-[8px] uppercase">Orphan Signals</div>
-              <div class="text-purple-600 dark:text-purple-400 font-bold text-xs">0 Signals</div>
-              <div class="text-zinc-500 text-[8px]">25 / 25 Bound</div>
+              <div class="text-zinc-500 text-[8px]">0 Orphans &bull; req_01a0c4...</div>
             </div>
           </div>
         </div>

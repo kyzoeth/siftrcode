@@ -490,7 +490,7 @@
             <span>Shadow JEV API Integration (Non-Interfering Calibration)</span>
           </div>
           <p class="text-zinc-600 dark:text-zinc-400 font-sans leading-relaxed text-[11px]">
-            To validate semantic LLM judgments safely, Siftr forks candidate signals to a shadow <code>JudgmentProvider</code> in the background. Shadow JEV evaluates continuous relevance, edit target probability, and root cause localization (p50 4ms, p95 6ms latency) without altering any production ContextPlans (<code class="font-mono text-[10px]">Plan_without_JEV == Plan_with_JEV</code>). Only after verified benchmark evidence from SiftrBench can JEV influence ranking.
+            To validate semantic LLM judgments safely, Siftr forks candidate signals to a shadow <code>JudgmentProvider</code> in the background. Shadow JEV evaluates continuous relevance, edit target probability, and root cause localization (P50 179ms, P95 446ms remote latency; sub-40ms local shadow) without altering any production ContextPlans (<code class="font-mono text-[10px]">Plan_without_JEV == Plan_with_JEV</code>; 100% normalized decision plan SHA-256 match). Candidate evaluations run with strict decision budgeting, fail-closed probability validation, and zero hidden retries.
           </p>
         </div>
       </section>
@@ -733,6 +733,14 @@
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
             <span class="text-emerald-400 font-semibold">12. Class Method BODY Isolation</span>
             <p class="text-[11px] text-zinc-400 font-sans">AST slicing isolates target method bodies strictly, excluding all adjacent sibling class methods.</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
+            <span class="text-emerald-400 font-semibold">13. WorkspaceSnapshot Authority</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Authoritative composite SHA-256 pins index, task, plan, and JEV signals; throws on mismatch.</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
+            <span class="text-emerald-400 font-semibold">14. Clean Build &amp; Request Lineage</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Post-build stamping verifies binaries against HEAD; provider request IDs propagate into SQLite.</p>
           </div>
         </div>
 

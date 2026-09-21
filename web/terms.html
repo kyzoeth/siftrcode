@@ -297,8 +297,8 @@
           For empirical validation (including SiftrBench studies across 25 audited real-world tasks with 500 bounded shadow calls on Express, FastAPI, and SiftrCode, and the controlled Live JEV Smoke Study across 5 tasks with 25 bounded calls), Judged Evidence Validation (JEV) operates strictly under shadow invariants:
         </p>
         <ul class="list-disc pl-5 space-y-1.5 text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
-          <li><strong>100% Plan Invariance:</strong> Shadow JEV calls never alter production context bundles, rank orders, or budget boundaries. Live smoke verification confirmed bit-for-bit plan identity (0 deviation) across all runs. ContextRank remains the sole deterministic production decision-maker.</li>
-          <li><strong>Controlled Smoke Latency &amp; Lineage:</strong> Live JEV calls operate within a bounded concurrency profile (peak concurrency 4) with P50 4ms latency, zero database lineage mismatches, and zero orphan signals.</li>
+          <li><strong>100% Plan Invariance:</strong> Shadow JEV calls never alter production context bundles, rank orders, or budget boundaries. Live smoke verification confirmed 100% normalized decision plan invariance (SHA-256 matched across units, resolutions, allocations, and exposures with zero deviation) across all runs. ContextRank remains the sole deterministic production decision-maker.</li>
+          <li><strong>Controlled Smoke Latency &amp; Lineage:</strong> Live remote JEV calls operate within a bounded concurrency profile (peak concurrency 4) with P50 179ms latency (P95 446ms), zero database lineage mismatches, zero orphan signals, and authoritative WorkspaceSnapshot identity binding.</li>
           <li><strong>Air-Gapped Telemetry:</strong> Benchmark telemetry records only structural metrics (AST unit counts, token latencies, continuous probability distributions) and never exposes underlying source code strings.</li>
         </ul>
       </section>

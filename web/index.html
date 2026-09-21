@@ -879,12 +879,12 @@
 
       <!-- Key Guarantees Pill Strip -->
       <div class="pt-2 flex flex-wrap items-center justify-center gap-2 text-[11px] font-mono text-zinc-600 dark:text-zinc-400">
-        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🎯 100% Plan Invariance</span>
-        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">⚡ 4ms P50 Latency</span>
-        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🧬 Canonical AgentEnvironment Lineage</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🎯 100% Normalized Plan Invariance</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">⚡ Sub-100ms AST &bull; 179ms Remote JEV</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🧬 Authoritative WorkspaceSnapshot Identity</span>
         <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🔬 3-Stage Resolution Lineage</span>
-        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🔒 Structured Zero-Egress Gateway</span>
-        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">📦 Sanctioned Exporter Boundary</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🔒 Zero Raw Source / Secrets Egress</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">📦 Clean-Build Commit Stamping</span>
       </div>
 
       <!-- Hero Action CTAs -->
@@ -1553,43 +1553,141 @@
       </div>
 
       <!-- Controlled Live JEV Smoke Study Card (Latest Verified Run) -->
-      <div class="p-5 rounded-md bg-white dark:bg-zinc-900 border border-emerald-500/40 dark:border-emerald-500/30 space-y-3.5 shadow-2xs">
+      <div class="p-5 rounded-md bg-white dark:bg-zinc-900 border border-emerald-500/40 dark:border-emerald-500/30 space-y-4 shadow-2xs">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
           <div class="flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 ci-live-dot"></span>
-            <div class="font-mono font-bold text-ink text-sm">Controlled Live JEV Smoke Study &bull; Verified Invariants</div>
+            <div>
+              <div class="font-mono font-bold text-ink text-sm">Controlled Live Remote JEV Smoke Study &bull; Operational Telemetry</div>
+              <div class="text-[11px] text-zinc-500 font-mono">SDK: @typesafe-ai/sdk@0.6.0 &bull; Model: jev-latest &bull; Commit: <span class="text-ink font-semibold">ef61f2f</span></div>
+            </div>
           </div>
-          <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-mono text-[10px] font-semibold border border-emerald-200 dark:border-emerald-800">
-            <span>PASSED &bull; ZERO LINEAGE DEFECTS</span>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
-          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Strict 5-Call Cap</div>
-            <div class="text-xl font-bold text-ink">25 Calls Total</div>
-            <p class="text-[10px] text-zinc-500 font-sans">5 audited tasks &times; 5 calls/task. Concurrency &le; 4.</p>
-          </div>
-          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Turn Latency</div>
-            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">P50 4ms / P95 8ms</div>
-            <p class="text-[10px] text-zinc-500 font-sans">Async shadow evaluation without agent blocking.</p>
-          </div>
-          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Database Lineage</div>
-            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">0 Mismatches</div>
-            <p class="text-[10px] text-zinc-500 font-sans">0 orphan signals, 0 environment ID discrepancies.</p>
-          </div>
-          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Egress Protection</div>
-            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">Zero Raw Source</div>
-            <p class="text-[10px] text-zinc-500 font-sans">Zero source bodies or credentials transmitted.</p>
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-mono text-[10px] font-semibold border border-emerald-200 dark:border-emerald-800">
+              PASSED &bull; 0 LINEAGE DEFECTS
+            </span>
+            <span class="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono text-[10px] font-semibold border border-zinc-200 dark:border-zinc-700">
+              CLEAN BUILD VERIFIED
+            </span>
           </div>
         </div>
 
-        <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 text-[11px] font-mono text-zinc-600 dark:text-zinc-400 flex flex-wrap items-center justify-between gap-2">
+        <!-- 6 Invariant Tiles Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs font-mono">
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+            <div class="text-[9px] text-zinc-400 uppercase font-semibold">Live Remote Calls</div>
+            <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400">25 / 25</div>
+            <p class="text-[9px] text-zinc-500 font-sans">100% success &bull; 0 failed &bull; 0 retries</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+            <div class="text-[9px] text-zinc-400 uppercase font-semibold">Remote Latency</div>
+            <div class="text-lg font-bold text-ink">179ms <span class="text-[9px] text-zinc-400 font-normal">P50</span></div>
+            <p class="text-[9px] text-zinc-500 font-sans">P95 446ms &bull; Non-blocking shadow</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+            <div class="text-[9px] text-zinc-400 uppercase font-semibold">Plan Invariance</div>
+            <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400">100% SHA-256</div>
+            <p class="text-[9px] text-zinc-500 font-sans">Normalized plan bit-level equivalence</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+            <div class="text-[9px] text-zinc-400 uppercase font-semibold">Concurrency</div>
+            <div class="text-lg font-bold text-ink">4 <span class="text-[9px] text-zinc-400 font-normal">/ 4 max</span></div>
+            <p class="text-[9px] text-zinc-500 font-sans">Honest measured peak concurrency</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+            <div class="text-[9px] text-zinc-400 uppercase font-semibold">Lineage Discrepancy</div>
+            <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400">0 Mismatches</div>
+            <p class="text-[9px] text-zinc-500 font-sans">0 orphans &bull; 0 snapshot mismatches</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+            <div class="text-[9px] text-zinc-400 uppercase font-semibold">Egress Protection</div>
+            <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400">Zero Raw Source</div>
+            <p class="text-[9px] text-zinc-500 font-sans">Metadata-only &bull; secrets stripped</p>
+          </div>
+        </div>
+
+        <!-- Ground Truth Correlations & Ranking Ablation Sub-panel -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1.5">
+            <div class="text-[10px] text-zinc-400 uppercase font-semibold flex items-center justify-between">
+              <span>Ground Truth Oracle Correlation</span>
+              <span class="text-emerald-600 dark:text-emerald-400 text-[9px]">Empirical Pilot</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5 text-center text-[10px] pt-0.5">
+              <div class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200/70 dark:border-zinc-800">
+                <div class="text-zinc-400 text-[8px]">ROOT CAUSE</div>
+                <div class="font-bold text-ink text-xs sm:text-sm">r = 0.5743</div>
+              </div>
+              <div class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200/70 dark:border-zinc-800">
+                <div class="text-zinc-400 text-[8px]">RELEVANCE</div>
+                <div class="font-bold text-ink text-xs sm:text-sm">r = 0.5115</div>
+              </div>
+              <div class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200/70 dark:border-zinc-800">
+                <div class="text-zinc-400 text-[8px]">EDIT TARGET</div>
+                <div class="font-bold text-ink text-xs sm:text-sm">r = 0.2868</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1.5">
+            <div class="text-[10px] text-zinc-400 uppercase font-semibold flex items-center justify-between">
+              <span>Ranking Impact (Baseline vs JEV)</span>
+              <span class="text-[#D97757] dark:text-[#F39C82] text-[9px] font-bold">+0.0166 NDCG@5</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5 text-center text-[10px] pt-0.5">
+              <div class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200/70 dark:border-zinc-800">
+                <div class="text-zinc-400 text-[8px]">NDCG@5</div>
+                <div class="font-bold text-ink text-xs sm:text-sm">0.4725 &rarr; <span class="text-emerald-600 dark:text-emerald-400">0.4891</span></div>
+              </div>
+              <div class="p-1.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200/70 dark:border-zinc-800">
+                <div class="text-zinc-400 text-[8px]">NDCG@10</div>
+                <div class="font-bold text-ink text-xs sm:text-sm">0.4235 &rarr; <span class="text-emerald-600 dark:text-emerald-400">0.4342</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Collapsible Wire Payload Inspector -->
+        <details class="group rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 text-xs font-mono">
+          <summary class="p-3 cursor-pointer select-none flex items-center justify-between hover:bg-zinc-100/60 dark:hover:bg-zinc-900/60 transition-colors">
+            <span class="flex items-center gap-2 text-zinc-700 dark:text-zinc-300 font-semibold text-[11px]">
+              <span class="text-[#D97757] group-open:rotate-90 transition-transform inline-block">&rsaquo;</span>
+              <span>Audited Wire Payload Shape (Metadata-Only Egress &bull; Call 1)</span>
+            </span>
+            <span class="text-[10px] text-zinc-400">Sample Req ID: req_01a0c49368217c7487475df9316a7709</span>
+          </summary>
+          <div class="px-3 pb-3 pt-1 border-t border-zinc-200/60 dark:border-zinc-800/60 space-y-2">
+            <p class="text-[10px] text-zinc-500 font-sans">
+              Every remote candidate evaluation passes through <code class="text-zinc-800 dark:text-zinc-200">EnforcedEgressGateway</code>. Raw source bodies and secrets are excluded; only string lengths, symbol paths, and scalar features are transmitted over the wire:
+            </p>
+            <pre class="p-2.5 rounded bg-zinc-900 text-emerald-400 text-[10px] leading-tight overflow-x-auto"><code>{
+  "schemaVersion": "string (12 chars)",
+  "task": {
+    "prompt": "string (73 chars)",
+    "evidenceSummary": "string (13 chars)",
+    "taskType": "string (11 chars)"
+  },
+  "candidate": {
+    "contextUnitId": "string (21 chars)",
+    "kind": "string (11 chars)",
+    "title": "string (11 chars)",
+    "path": "string (30 chars)"
+  },
+  "relationships": {},
+  "history": {
+    "coChange": "number (0.0000)",
+    "recentChange": "number (1.0000)"
+  }
+}</code></pre>
+          </div>
+        </details>
+
+        <div class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 text-[10px] font-mono text-zinc-600 dark:text-zinc-400 flex flex-wrap items-center justify-between gap-2">
           <span><strong>Rights Profile:</strong> ALLOW (TASK_PROMPT, SYMBOL_NAME, SYMBOL_METADATA, PATH, NUMERIC_FEATURE) &bull; DENY (RAW_SOURCE, SOURCE_SNIPPET, TRAINING)</span>
-          <span class="text-emerald-600 dark:text-emerald-400 font-semibold">Plan Invariance: 100% Bit-for-Bit Identical</span>
+          <span class="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>SIFTR_JEV_REMOTE_PROCESSING=true Application Verified</span>
+          </span>
         </div>
       </div>
 

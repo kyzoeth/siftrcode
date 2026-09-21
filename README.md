@@ -86,7 +86,9 @@ SiftrCode V2.1 includes an empirical benchmark study across 25 audited real-worl
 ================================================================
   SIFTRCODE V2: TYPESAFE JEV REAL-WORLD PILOT STUDY (5 TASKS)   
   Mode: LIVE REMOTE (TypeSafe SystemOne)
-  Tested Git Commit: 5584a49ec44b4be6765e2a9f876341076dfd49fd
+  Tested Git Commit: ef61f2f418a97407a3a2d8363aa12e092409da16
+  Clean Build Verification: PASSED (Stamped & In-Sync)
+  TypeSafe key configured: true
 ================================================================
 Tasks Evaluated:         5 (Express: 2, FastAPI: 2, SiftrCode: 1)
 Decision Plan Invariance: PASSED (100% normalized decision plan SHA-256 match: units, resolutions, allocations & exposures)
@@ -96,8 +98,8 @@ Rights Denied Calls:     0
 Budget Skipped Calls:    0
 Mean Calls / Task:       5
 Peak Concurrency:        Measured = 4 (Configured Limit: 4)
-P50 Latency:             191ms (P95: 410ms)
-Sample TypeSafe Req ID:  req_01a0c489e75174f1887d4ca49eef0e44
+P50 Latency:             179ms (P95: 446ms)
+Sample TypeSafe Req ID:  req_01a0c49368217c7487475df9316a7709
 ----------------------------------------------------------------
 Pipeline Configuration & Metadata:
   SDK:                   @typesafe-ai/sdk@0.6.0
@@ -107,25 +109,48 @@ Pipeline Configuration & Metadata:
   Fallback Strategy:     fail_closed_zero_retries (retries: 0)
 ----------------------------------------------------------------
 Continuous Probability Distributions:
-  Semantic Relevance:    mean=0.4824, median=0.45, [0.06 - 0.81]
-  Implementation Needed: mean=0.5936, median=0.63, [0.10 - 0.86]
-  Likely Edit Target:    mean=0.6568, median=0.65, [0.41 - 0.88]
-  Likely Root Cause:     mean=0.4416, median=0.36, [0.04 - 0.87]
+  Semantic Relevance:    mean=0.4820, median=0.46, [0.06 - 0.80]
+  Implementation Needed: mean=0.5960, median=0.63, [0.10 - 0.86]
+  Likely Edit Target:    mean=0.6572, median=0.66, [0.43 - 0.89]
+  Likely Root Cause:     mean=0.4440, median=0.37, [0.04 - 0.85]
 ----------------------------------------------------------------
 Correlation with Ground Truth:
-  Likely Edit Target:    r = 0.2856
-  Likely Root Cause:     r = 0.5890
-  Semantic Relevance:    r = 0.5152
+  Likely Edit Target:    r = 0.2868
+  Likely Root Cause:     r = 0.5743
+  Semantic Relevance:    r = 0.5115
 ----------------------------------------------------------------
 Ranking Ablation (Baseline ContextRank vs JEV-Augmented):
-  NDCG@5:     Baseline = 0.4725  | JEV = 0.4891
-  NDCG@10:    Baseline = 0.4235  | JEV = 0.4342 (Delta: +0.0107)
+  NDCG@5:     Baseline = 0.4725  | JEV = 0.4891 (+0.0166)
+  NDCG@10:    Baseline = 0.4235  | JEV = 0.4342 (+0.0107)
   Recall@5:   Baseline = 0.1074  | JEV = 0.1074
   Recall@10:  Baseline = 0.2014  | JEV = 0.2014 (Delta: +0)
   MRR:        Baseline = 0.8286  | JEV = 0.8286 (Delta: +0)
 ================================================================
 [Persistence Verification] Total JEV judgments in SQLite: 25
 [Lineage Verification] 0 orphan signals, 0 mismatched snapshots, 0 mismatched agent environments.
+```
+
+#### Actual Metadata-Only Sanitized Egress Wire Shape (Call 1)
+```json
+{
+  "schemaVersion": "string (12 chars)",
+  "task": {
+    "prompt": "string (73 chars)",
+    "evidenceSummary": "string (13 chars)",
+    "taskType": "string (11 chars)"
+  },
+  "candidate": {
+    "contextUnitId": "string (21 chars)",
+    "kind": "string (11 chars)",
+    "title": "string (11 chars)",
+    "path": "string (30 chars)"
+  },
+  "relationships": {},
+  "history": {
+    "coChange": "number (0.0000)",
+    "recentChange": "number (1.0000)"
+  }
+}
 ```
 
 ### Key Technical Properties:
@@ -316,20 +341,20 @@ SiftrCode is engineered for strict zero-egress compliance and provable data line
 
 ## 🧪 Verification & Test Suites
 
-SiftrCode enforces rigorous verification across 13 regression suites, comprehensive MCP end-to-end integration tests, and JEV shadow isolation gates:
+SiftrCode enforces rigorous verification across 14 regression suites, comprehensive MCP end-to-end integration tests, and JEV shadow isolation gates:
 
 ```bash
-# Build the TypeScript project and AST extractors
+# Build the TypeScript project, AST extractors, and stamp build_info.json
 npm run build
 
-# Run all 13 regression suites, MCP learning loop tests, and shadow closure gates
+# Run all 14 regression suites, MCP learning loop tests, and shadow closure gates
 npm test
 
-# Run the JEV shadow benchmark pilot study (hermetic smoke mode)
+# Run the JEV shadow benchmark pilot study (hermetic offline smoke mode)
 node dist/tests/pilot_jev_real_study.js --smoke
 
-# Run the JEV benchmark with live remote TypeSafe SystemOne evaluation
-TYPESAFE_API_KEY="your-api-key" node dist/tests/pilot_jev_real_study.js --live --smoke
+# Run the JEV benchmark with live remote TypeSafe SystemOne evaluation (strict 5-call budget)
+TYPESAFE_API_KEY="your-api-key" node dist/tests/pilot_jev_real_study.js --live --smoke --max-calls=5
 ```
 
 ### Comprehensive Regression Coverage
@@ -346,6 +371,7 @@ TYPESAFE_API_KEY="your-api-key" node dist/tests/pilot_jev_real_study.js --live -
 - **Suite 11**: JEV test environment scrubber & hermeticity.
 - **Suite 12**: Sanctioned `TrainingExporter` route & `exportId` lineage.
 - **Suite 13**: `WorkspaceSnapshot` equality, retry budgeting, and Railway application path smoke verification.
+- **Suite 14**: Aggregate live-provider operational metrics, metadata-only egress shape instrumentation, fail-closed continuous probability validation, and post-build stamping.
 
 ---
 
