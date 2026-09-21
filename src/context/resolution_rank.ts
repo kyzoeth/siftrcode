@@ -96,9 +96,16 @@ export class ResolutionRanker {
       };
     }
 
+    const isSkeletonUnsafe =
+      unit.metadata?.skeletonSafety === 'UNSAFE' ||
+      unit.metadata?.hasDecorators === true ||
+      unit.metadata?.hasMacros === true ||
+      unit.metadata?.isModuleInit === true ||
+      unit.metadata?.isModuleInitialization === true;
+
     // Invariant 3: Distant Dependencies (>= 2 hops away)
     if (features.minDistanceToSeed !== null && features.minDistanceToSeed >= 2) {
-      const resolution = budgetPressure > 1.2
+      const resolution = budgetPressure > 1.2 || isSkeletonUnsafe
         ? ContextResolution.SIGNATURE
         : ContextResolution.SKELETON;
 
@@ -106,20 +113,25 @@ export class ResolutionRanker {
         contextUnitId: unit.id,
         resolution,
         tokenEstimate: this.estimateTokensForResolution(rawTokens, resolution),
-        safetyLevel: 'SAFE',
-        justification: 'distant_dependency_safely_skeletonized_to_save_context',
+        safetyLevel: isSkeletonUnsafe ? 'UNSAFE' : 'SAFE',
+        justification: isSkeletonUnsafe
+          ? 'unsafe_skeleton_avoided_degraded_to_signature'
+          : 'distant_dependency_safely_skeletonized_to_save_context',
       };
     }
 
     // Invariant 4: Immediate Dependencies (1 hop away)
     if (features.minDistanceToSeed === 1 || features.isDirectDependency || features.isDirectDependent) {
       if (budgetPressure > 1.5) {
+        const resolution = isSkeletonUnsafe ? ContextResolution.SIGNATURE : ContextResolution.SKELETON;
         return {
           contextUnitId: unit.id,
-          resolution: ContextResolution.SKELETON,
-          tokenEstimate: this.estimateTokensForResolution(rawTokens, ContextResolution.SKELETON),
-          safetyLevel: 'SAFE',
-          justification: 'direct_dependency_skeletonized_under_high_budget_pressure',
+          resolution,
+          tokenEstimate: this.estimateTokensForResolution(rawTokens, resolution),
+          safetyLevel: isSkeletonUnsafe ? 'UNSAFE' : 'SAFE',
+          justification: isSkeletonUnsafe
+            ? 'unsafe_skeleton_avoided_degraded_to_signature'
+            : 'direct_dependency_skeletonized_under_high_budget_pressure',
         };
       }
       return {
@@ -132,23 +144,55 @@ export class ResolutionRanker {
     }
 
     // Invariant 5: Peripheral Context (no close graph links, moderate lexical match)
-    if (budgetPressure > 1.0) {
+    if (budgetPressure > 1.0 || isSkeletonUnsafe) {
       return {
         contextUnitId: unit.id,
         resolution: ContextResolution.SIGNATURE,
         tokenEstimate: this.estimateTokensForResolution(rawTokens, ContextResolution.SIGNATURE),
-        safetyLevel: 'SAFE',
-        justification: 'peripheral_context_degraded_to_signature',
+        safetyLevel: isSkeletonUnsafe ? 'UNSAFE' : 'SAFE',
+        justification: isSkeletonUnsafe
+          ? 'unsafe_skeleton_avoided_degraded_to_signature'
+          : 'peripheral_context_degraded_to_signature',
       };
     }
 
     return {
       contextUnitId: unit.id,
-      resolution: ContextResolution.SKELETON,
-      tokenEstimate: this.estimateTokensForResolution(rawTokens, ContextResolution.SKELETON),
-      safetyLevel: 'SAFE',
-      justification: 'standard_structural_skeleton_allocation',
+      resolution: isSkeletonUnsafe ? ContextResolution.SIGNATURE : ContextResolution.SKELETON,
+      tokenEstimate: this.estimateTokensForResolution(rawTokens, isSkeletonUnsafe ? ContextResolution.SIGNATURE : ContextResolution.SKELETON),
+      safetyLevel: isSkeletonUnsafe ? 'UNSAFE' : 'SAFE',
+      justification: isSkeletonUnsafe
+        ? 'unsafe_skeleton_avoided_degraded_to_signature'
+        : 'standard_structural_skeleton_allocation',
     };
+  }
+
+  /**
+   * Section 37: Determines minimum useful resolution for a candidate unit.
+   * BundleComposer should not choose a candidate if its only feasible budget representation
+   * is below the minimum useful resolution.
+   */
+  public getMinimumUsefulResolution(unit: ContextUnit, features: ContextFeaturesV1): ContextResolution {
+    // Edit & failure targets require at least BODY to understand/edit implementation
+    if (
+      features.inStackTrace ||
+      features.isFailingTestTarget ||
+      features.inCompilerError ||
+      features.inDirtyDiff
+    ) {
+      return ContextResolution.BODY;
+    }
+
+    // Direct dependencies require at least SIGNATURE to see types and interfaces
+    if (
+      features.isDirectDependency ||
+      features.isDirectDependent ||
+      features.minDistanceToSeed === 1
+    ) {
+      return ContextResolution.SIGNATURE;
+    }
+
+    return ContextResolution.NAME;
   }
 
   /**

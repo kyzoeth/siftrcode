@@ -22,6 +22,7 @@ import { ContextRanker, RankedCandidate } from '../ranking/context_rank';
 import { BundleComposer } from '../context/bundle_composer';
 import { BudgetSolver, BudgetLimits, BUDGET_PROFILES, BudgetProfileName } from '../context/budget_solver';
 import { ContextResolution } from '../context/context_resolution';
+import { ResolutionRanker } from '../context/resolution_rank';
 import { createExposureDecision, ExposureDecision } from '../telemetry/exposure_decision';
 import { TrajectoryLogger } from '../telemetry/trajectory_event';
 import { ContextPlan, PlannedUnit } from './context_plan';
@@ -33,7 +34,7 @@ import { createAgentEnvironment } from '../agents/agent_environment';
 import { ContextUnitMaterializer, DefaultContextUnitMaterializer } from '../materialization/context_unit_materializer';
 import { WorkspaceSnapshot, createWorkspaceSnapshot } from '../workspace/workspace_snapshot';
 import { DefaultWorkspaceSourceReader } from '../workspace/workspace_source_reader';
-import { TokenCostEstimator, DefaultTokenCostEstimator } from '../token/token_cost_estimator';
+import { TokenCostEstimator, DefaultTokenCostEstimator, ResolutionOption } from '../token/token_cost_estimator';
 
 export interface ContextEngineOptions {
   repoRootDir?: string;
@@ -186,6 +187,28 @@ export class ContextEngine {
     const ranker = new ContextRanker();
     const rankedCandidates = ranker.rank(featuresList);
 
+    // Section 11 & 36: Compute resolution curves and minimum useful resolutions
+    const resolutionCurves = new Map<string, ResolutionOption[]>();
+    const minimumUsefulResolutions = new Map<string, ContextResolution>();
+    const resRanker = new ResolutionRanker();
+
+    for (const cand of rankedCandidates) {
+      const u = unitsMap.get(cand.contextUnitId);
+      const f = featuresMap.get(cand.contextUnitId);
+      if (!u || !f) continue;
+
+      const curve = this.tokenCostEstimator.computeResolutionCurve(
+        u,
+        snapshot,
+        task.agentEnvironment,
+        cand.finalScore
+      );
+      resolutionCurves.set(u.id, curve);
+
+      const minUseful = resRanker.getMinimumUsefulResolution(u, f);
+      minimumUsefulResolutions.set(u.id, minUseful);
+    }
+
     // 5. Submodular Bundle Composition (BundleComposer)
     const composer = new BundleComposer({
       maxTokens: this.budgetLimits.maxTokens,
@@ -195,6 +218,8 @@ export class ContextEngine {
       units: unitsMap,
       graph,
       evidence: task.evidence,
+      resolutionCurves,
+      minimumUsefulResolutions,
     });
 
     // 6. Constrained Budget & Resolution Solving (BudgetSolver)
@@ -214,6 +239,15 @@ export class ContextEngine {
     for (const alloc of budgetPlan.allocations) {
       const u = unitsMap.get(alloc.contextUnitId);
       if (!u) continue;
+
+      // Section 38: Enforce ResolutionCapabilities runtime invariant
+      let effectiveRes = alloc.resolution;
+      if (!this.materializer.supports(u, effectiveRes)) {
+        effectiveRes = typeof this.materializer.getNearestSafeAlternative === 'function'
+          ? this.materializer.getNearestSafeAlternative(u, effectiveRes)
+          : ContextResolution.NAME;
+        alloc.resolution = effectiveRes;
+      }
 
       const mat = this.materializer.materializeSync(u, alloc.resolution, snapshot);
       const materializedContent = mat.content;

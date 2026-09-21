@@ -4,7 +4,7 @@
  */
 
 import { ContextResolution } from './context_resolution';
-import { ContextUnit } from './context_unit';
+import { ContextUnit, ContextUnitKind } from './context_unit';
 import { ContextFeaturesV1 } from '../ranking/feature_schema';
 import { ResolutionRanker } from './resolution_rank';
 
@@ -114,9 +114,9 @@ export class BudgetSolver {
       const isPriority = i === 0 || f.inStackTrace || f.inDirtyDiff;
       const alloc = this.resolutionRanker.allocateResolution(u, f, isPriority, budgetPressure);
 
-      const raw = typeof u.metadata?.tokenEstimate === 'number'
+      const raw = (typeof u.metadata?.tokenEstimate === 'number' && u.metadata.tokenEstimate > 0)
         ? (u.metadata.tokenEstimate as number)
-        : f.tokenEstimate;
+        : (f.tokenEstimate || 50);
 
       currentAllocations.set(id, {
         contextUnitId: id,
@@ -163,6 +163,25 @@ export class BudgetSolver {
         const alloc = currentAllocations.get(id);
         if (!alloc || alloc.resolution <= targetRes) continue;
 
+        const u = units.get(id);
+        const isSkeletonUnsafe =
+          u &&
+          (u.metadata?.skeletonSafety === 'UNSAFE' ||
+            u.kind === ContextUnitKind.CONFIG ||
+            u.kind === ContextUnitKind.LOCKFILE ||
+            u.kind === ContextUnitKind.SCHEMA ||
+            u.kind === ContextUnitKind.MIGRATION ||
+            u.kind === ContextUnitKind.DOCUMENTATION ||
+            u.metadata?.hasDecorators === true ||
+            u.metadata?.hasMacros === true ||
+            u.metadata?.isModuleInit === true ||
+            u.metadata?.isModuleInitialization === true);
+
+        // Section 38: If skeleton safety is UNSAFE, SKELETON must never be selected
+        if (targetRes === ContextResolution.SKELETON && isSkeletonUnsafe) {
+          continue;
+        }
+
         const newCost = this.resolutionRanker.estimateTokensForResolution(alloc.rawTokens, targetRes);
         const tokensFreed = alloc.tokenCost - newCost;
 
@@ -172,6 +191,31 @@ export class BudgetSolver {
 
         totalTokens -= tokensFreed;
         currentCostUSD = calculateCostUSD(totalTokens, modelName);
+      }
+    }
+
+    // Invariant verification: Ensure no unit is assigned an unsafe resolution
+    for (const alloc of currentAllocations.values()) {
+      const u = units.get(alloc.contextUnitId);
+      if (!u) continue;
+      if (alloc.resolution === ContextResolution.SKELETON) {
+        const isSkeletonUnsafe =
+          u.metadata?.skeletonSafety === 'UNSAFE' ||
+          u.kind === ContextUnitKind.CONFIG ||
+          u.kind === ContextUnitKind.LOCKFILE ||
+          u.kind === ContextUnitKind.SCHEMA ||
+          u.kind === ContextUnitKind.MIGRATION ||
+          u.kind === ContextUnitKind.DOCUMENTATION ||
+          u.metadata?.hasDecorators === true ||
+          u.metadata?.hasMacros === true ||
+          u.metadata?.isModuleInit === true ||
+          u.metadata?.isModuleInitialization === true;
+
+        if (isSkeletonUnsafe) {
+          alloc.resolution = ContextResolution.SIGNATURE;
+          alloc.tokenCost = this.resolutionRanker.estimateTokensForResolution(alloc.rawTokens, ContextResolution.SIGNATURE);
+          alloc.justification = 'resolution_capabilities_enforced_signature';
+        }
       }
     }
 

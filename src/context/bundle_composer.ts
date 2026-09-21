@@ -13,6 +13,8 @@ import {
   TestFailureEvidence,
   CompilerErrorEvidence,
 } from './task_evidence';
+import { ResolutionOption } from '../token/token_cost_estimator';
+import { ContextResolution } from './context_resolution';
 
 export interface BundleSelectionStep {
   contextUnitId: string;
@@ -36,6 +38,15 @@ export interface BundleComposerOptions {
   redundancyPenalty?: number; // default: 0.5
 }
 
+export interface BundleComposerParams {
+  rankedCandidates: RankedCandidate[];
+  units: Map<string, ContextUnit>;
+  graph?: ContextGraph;
+  evidence?: TaskEvidence[];
+  resolutionCurves?: Map<string, ResolutionOption[]>;
+  minimumUsefulResolutions?: Map<string, ContextResolution>;
+}
+
 export class BundleComposer {
   private options: Required<BundleComposerOptions>;
 
@@ -52,12 +63,7 @@ export class BundleComposer {
   /**
    * Composes a synergistic bundle from ranked candidates.
    */
-  public compose(params: {
-    rankedCandidates: RankedCandidate[];
-    units: Map<string, ContextUnit>;
-    graph?: ContextGraph;
-    evidence?: TaskEvidence[];
-  }): ComposedBundle {
+  public compose(params: BundleComposerParams): ComposedBundle {
     const { rankedCandidates, units, graph, evidence = [] } = params;
 
     // 1. Extract ground-truth evidence targets needing coverage
@@ -91,13 +97,39 @@ export class BundleComposer {
       let bestCandidateIdx = -1;
       let bestMarginalGain = -Infinity;
       let bestReasons: string[] = [];
+      const candidateCostMap = new Map<string, number>();
 
       for (let i = 0; i < remainingCandidates.length; i++) {
         const cand = remainingCandidates[i];
         const unit = units.get(cand.contextUnitId);
-        const unitTokens = typeof unit?.metadata?.tokenEstimate === 'number'
+        let unitTokens = typeof unit?.metadata?.tokenEstimate === 'number'
           ? (unit.metadata.tokenEstimate as number)
           : cand.features.tokenEstimate;
+
+        let resGain = 0;
+
+        // Section 11 & 36: Resolution-aware bundle selection
+        if (params.resolutionCurves) {
+          const curve = params.resolutionCurves.get(cand.contextUnitId);
+          const minUseful = params.minimumUsefulResolutions?.get(cand.contextUnitId) ?? ContextResolution.NAME;
+
+          if (curve && curve.length > 0) {
+            // Find lowest allowed resolution option that meets minimum useful resolution
+            const feasible = curve
+              .filter((opt) => opt.allowed && opt.resolution >= minUseful)
+              .sort((a, b) => a.tokenCost - b.tokenCost);
+
+            if (feasible.length > 0) {
+              unitTokens = feasible[0].tokenCost;
+              resGain = feasible[0].estimatedUtility * 5;
+            } else {
+              // Cannot satisfy minimum useful resolution within allowed options
+              continue;
+            }
+          }
+        }
+
+        candidateCostMap.set(cand.contextUnitId, unitTokens);
 
         if (currentTokens + unitTokens > this.options.maxTokens) {
           continue; // Exceeds budget
@@ -146,7 +178,7 @@ export class BundleComposer {
           }
         }
 
-        const marginalGain = baseGain + synergyGain + evidenceGain - penalty;
+        const marginalGain = baseGain + synergyGain + evidenceGain + resGain - penalty;
 
         if (marginalGain > bestMarginalGain) {
           bestMarginalGain = marginalGain;
@@ -162,9 +194,11 @@ export class BundleComposer {
 
       const selected = remainingCandidates.splice(bestCandidateIdx, 1)[0];
       const selectedUnit = units.get(selected.contextUnitId);
-      const unitTokens = typeof selectedUnit?.metadata?.tokenEstimate === 'number'
-        ? (selectedUnit.metadata.tokenEstimate as number)
-        : selected.features.tokenEstimate;
+      const unitTokens = candidateCostMap.get(selected.contextUnitId) ?? (
+        typeof selectedUnit?.metadata?.tokenEstimate === 'number'
+          ? (selectedUnit.metadata.tokenEstimate as number)
+          : selected.features.tokenEstimate
+      );
 
       selectedIds.add(selected.contextUnitId);
       currentTokens += unitTokens;

@@ -1,6 +1,11 @@
 import * as crypto from 'crypto';
 import { ContextUnit, ContextUnitKind, CodeSymbolUnit, isCodeSymbolUnit, SymbolKind } from '../context/context_unit';
-import { ContextResolution } from '../context/context_resolution';
+import {
+  ContextResolution,
+  ResolutionCapabilities,
+  SkeletonSafetyLevel,
+  isResolutionSupported,
+} from '../context/context_resolution';
 import { WorkspaceSnapshot } from '../workspace/workspace_snapshot';
 import { AgentEnvironment } from '../agents/agent_environment';
 import { WorkspaceSourceReader, DefaultWorkspaceSourceReader } from '../workspace/workspace_source_reader';
@@ -37,7 +42,11 @@ export interface ContextUnitMaterializer {
     environment?: AgentEnvironment
   ): MaterializedContext;
 
-  supports(unitKind: ContextUnitKind, resolution: ContextResolution): boolean;
+  supports(unitOrKind: ContextUnit | ContextUnitKind, resolution: ContextResolution): boolean;
+
+  getResolutionCapabilities?(unit: ContextUnit): ResolutionCapabilities;
+
+  getNearestSafeAlternative?(unit: ContextUnit, resolution: ContextResolution): ContextResolution;
 }
 
 export class DefaultContextUnitMaterializer implements ContextUnitMaterializer {
@@ -50,41 +59,141 @@ export class DefaultContextUnitMaterializer implements ContextUnitMaterializer {
   }
 
   /**
-   * Returns whether a given ContextUnitKind supports the requested ContextResolution.
-   * Section 6 & 38: Enforces ResolutionCapabilities (non-code configs/lockfiles cannot be skeletonized).
+   * Section 38: Determines full ResolutionCapabilities for a ContextUnit,
+   * explicitly evaluating non-code artifacts, Python decorators, Rust macros, and module initializations.
    */
-  public supports(unitKind: ContextUnitKind, resolution: ContextResolution): boolean {
+  public getResolutionCapabilities(unit: ContextUnit): ResolutionCapabilities {
+    const isCode =
+      unit.kind === ContextUnitKind.CODE_SYMBOL ||
+      unit.kind === ContextUnitKind.SOURCE_FILE ||
+      unit.kind === ContextUnitKind.TEST;
+
+    const reasonCodes: string[] = [];
+    let skeletonSafety: SkeletonSafetyLevel = 'SAFE';
+
+    // 1. Non-code artifacts (CONFIG, LOCKFILE, SCHEMA, MIGRATION, DOCUMENTATION, etc.)
+    if (!isCode) {
+      skeletonSafety = 'UNSAFE';
+      reasonCodes.push('NON_CODE_ARTIFACT');
+      return {
+        supportsName: true,
+        supportsSignature: false,
+        supportsSkeleton: false,
+        supportsBody: true,
+        supportsFull: true,
+        skeletonSafety: 'UNSAFE',
+        reasonCodes,
+      };
+    }
+
+    // 2. Explicit metadata safety override
+    if (unit.metadata?.skeletonSafety === 'UNSAFE') {
+      skeletonSafety = 'UNSAFE';
+      reasonCodes.push(
+        typeof unit.metadata?.safetyReason === 'string'
+          ? unit.metadata.safetyReason
+          : 'EXPLICIT_UNSAFE_METADATA'
+      );
+    }
+
+    // 3. Python decorator case (Section 38)
+    if (
+      unit.metadata?.hasDecorators === true ||
+      unit.metadata?.isDecorator === true ||
+      unit.metadata?.hasUnsafeDecorators === true ||
+      (unit.path?.endsWith('.py') && unit.metadata?.hasDecorators === true)
+    ) {
+      skeletonSafety = 'UNSAFE';
+      reasonCodes.push('PYTHON_DECORATOR_UNSAFE');
+    }
+
+    // 4. Rust macro case (Section 38)
+    if (
+      unit.metadata?.hasMacros === true ||
+      unit.metadata?.isMacro === true ||
+      unit.metadata?.macroRules === true ||
+      (unit.path?.endsWith('.rs') && unit.metadata?.hasMacros === true)
+    ) {
+      skeletonSafety = 'UNSAFE';
+      reasonCodes.push('RUST_MACRO_UNSAFE');
+    }
+
+    // 5. Module initialization case (Section 38)
+    if (
+      unit.metadata?.isModuleInit === true ||
+      unit.metadata?.isModuleInitialization === true ||
+      (unit.path &&
+        (unit.path.endsWith('/__init__.py') || unit.path === '__init__.py') &&
+        unit.metadata?.hasTopLevelCode === true)
+    ) {
+      skeletonSafety = 'UNSAFE';
+      reasonCodes.push('MODULE_INITIALIZATION_UNSAFE');
+    }
+
+    return {
+      supportsName: true,
+      supportsSignature: true,
+      supportsSkeleton: skeletonSafety !== 'UNSAFE',
+      supportsBody: true,
+      supportsFull: true,
+      skeletonSafety,
+      reasonCodes,
+    };
+  }
+
+  /**
+   * Returns whether a given ContextUnit or ContextUnitKind supports the requested ContextResolution.
+   * Section 6 & 38: Enforces ResolutionCapabilities as a runtime invariant.
+   */
+  public supports(unitOrKind: ContextUnit | ContextUnitKind, resolution: ContextResolution): boolean {
     if (resolution === ContextResolution.OMIT) {
       return true;
     }
 
-    if (resolution === ContextResolution.NAME) {
-      return true;
+    if (typeof unitOrKind === 'string') {
+      if (resolution === ContextResolution.NAME || resolution === ContextResolution.FULL || resolution === ContextResolution.BODY) {
+        return true;
+      }
+      if (resolution === ContextResolution.SKELETON || resolution === ContextResolution.SIGNATURE) {
+        return (
+          unitOrKind === ContextUnitKind.CODE_SYMBOL ||
+          unitOrKind === ContextUnitKind.SOURCE_FILE ||
+          unitOrKind === ContextUnitKind.TEST
+        );
+      }
+      return false;
     }
 
-    if (resolution === ContextResolution.FULL || resolution === ContextResolution.BODY) {
-      return true;
+    const caps = this.getResolutionCapabilities(unitOrKind);
+    return isResolutionSupported(resolution, caps);
+  }
+
+  /**
+   * Section 38: Computes the nearest safe alternative resolution when requested resolution is unsupported or unsafe.
+   */
+  public getNearestSafeAlternative(unit: ContextUnit, resolution: ContextResolution): ContextResolution {
+    const caps = this.getResolutionCapabilities(unit);
+    if (isResolutionSupported(resolution, caps)) {
+      return resolution;
     }
 
-    // SKELETON is only supported for code files, code symbols, and test files
+    // Degrade safely: if SKELETON is unsafe, try SIGNATURE, then NAME
     if (resolution === ContextResolution.SKELETON) {
-      return (
-        unitKind === ContextUnitKind.CODE_SYMBOL ||
-        unitKind === ContextUnitKind.SOURCE_FILE ||
-        unitKind === ContextUnitKind.TEST
-      );
+      if (isResolutionSupported(ContextResolution.SIGNATURE, caps)) {
+        return ContextResolution.SIGNATURE;
+      }
+      return ContextResolution.NAME;
     }
 
-    // SIGNATURE is supported for symbols, source files, and tests
     if (resolution === ContextResolution.SIGNATURE) {
-      return (
-        unitKind === ContextUnitKind.CODE_SYMBOL ||
-        unitKind === ContextUnitKind.SOURCE_FILE ||
-        unitKind === ContextUnitKind.TEST
-      );
+      return ContextResolution.NAME;
     }
 
-    return false;
+    if (resolution === ContextResolution.BODY || resolution === ContextResolution.FULL) {
+      return ContextResolution.NAME;
+    }
+
+    return ContextResolution.NAME;
   }
 
   /**
@@ -108,13 +217,22 @@ export class DefaultContextUnitMaterializer implements ContextUnitMaterializer {
       };
     }
 
-    // 1. Enforce ResolutionCapabilities safety
-    let effectiveResolution = resolution;
-    if (!this.supports(unit.kind, resolution)) {
-      // Degrade to nearest safe alternative
-      if (resolution === ContextResolution.SKELETON || resolution === ContextResolution.SIGNATURE) {
-        effectiveResolution = ContextResolution.NAME;
-      }
+    // 1. Enforce ResolutionCapabilities safety runtime invariant (Section 38)
+    let effectiveResolution: ContextResolution = resolution;
+    if (!this.supports(unit, resolution)) {
+      effectiveResolution = this.getNearestSafeAlternative(unit, resolution);
+    }
+
+    if (effectiveResolution === ContextResolution.OMIT) {
+      return {
+        contextUnitId: unit.id,
+        resolution: ContextResolution.OMIT,
+        content: '',
+        actualTokenCount: 0,
+        sourcePath: unit.path,
+        contentHash: 'none',
+        materializerVersion: DefaultContextUnitMaterializer.VERSION,
+      };
     }
 
     // 2. Load file or raw content via WorkspaceSourceReader
@@ -168,11 +286,21 @@ export class DefaultContextUnitMaterializer implements ContextUnitMaterializer {
       };
     }
 
-    let effectiveResolution = resolution;
-    if (!this.supports(unit.kind, resolution)) {
-      if (resolution === ContextResolution.SKELETON || resolution === ContextResolution.SIGNATURE) {
-        effectiveResolution = ContextResolution.NAME;
-      }
+    let effectiveResolution: ContextResolution = resolution;
+    if (!this.supports(unit, resolution)) {
+      effectiveResolution = this.getNearestSafeAlternative(unit, resolution);
+    }
+
+    if (effectiveResolution === ContextResolution.OMIT) {
+      return {
+        contextUnitId: unit.id,
+        resolution: ContextResolution.OMIT,
+        content: '',
+        actualTokenCount: 0,
+        sourcePath: unit.path,
+        contentHash: 'none',
+        materializerVersion: DefaultContextUnitMaterializer.VERSION,
+      };
     }
 
     const rawContent = this.loadSourceContentSync(unit, workspace);

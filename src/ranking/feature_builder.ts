@@ -3,7 +3,7 @@
  * Extracts immutable ContextFeaturesV1 for a given Candidate and TaskContext.
  */
 
-import { ContextUnit, ContextUnitKind } from '../context/context_unit';
+import { ContextUnit, ContextUnitKind, isCodeSymbolUnit } from '../context/context_unit';
 import { Candidate } from '../retrieval/candidate';
 import { TaskContext } from '../context/task_context';
 import {
@@ -47,9 +47,17 @@ export class FeatureBuilderV1 {
     } = params;
 
     // 1. Static Unit Features
-    const tokenEstimate = typeof unit.metadata?.tokenEstimate === 'number'
+    let tokenEstimate = typeof unit.metadata?.tokenEstimate === 'number' && unit.metadata.tokenEstimate > 0
       ? (unit.metadata.tokenEstimate as number)
       : Math.ceil(String(unit.metadata?.content || '').length / 4);
+
+    if (tokenEstimate === 0) {
+      if (isCodeSymbolUnit(unit) && unit.endLine >= unit.startLine) {
+        tokenEstimate = Math.max(10, (unit.endLine - unit.startLine + 1) * 8);
+      } else {
+        tokenEstimate = 50;
+      }
+    }
 
     const isTest = unit.kind === ContextUnitKind.TEST || (unit.path?.toLowerCase().includes('test') ?? false);
     const isConfig = unit.kind === ContextUnitKind.CONFIG;

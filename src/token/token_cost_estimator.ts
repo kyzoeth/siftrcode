@@ -141,15 +141,27 @@ export class DefaultTokenCostEstimator implements TokenCostEstimator {
     const options: ResolutionOption[] = [];
 
     for (const res of resolutions) {
-      const supported = this.materializer.supports(unit.kind, res);
+      const supported = this.materializer.supports(unit, res);
       let safety: ResolutionSafety = 'SAFE';
       let allowed = supported;
       const reasonCodes: string[] = [];
+
+      const caps = typeof (this.materializer as any).getResolutionCapabilities === 'function'
+        ? (this.materializer as any).getResolutionCapabilities(unit)
+        : undefined;
 
       if (!supported) {
         safety = 'UNSAFE';
         allowed = false;
         reasonCodes.push(`UNSUPPORTED_RESOLUTION_FOR_${unit.kind}`);
+      }
+
+      if (caps && caps.skeletonSafety === 'UNSAFE' && res === ContextResolution.SKELETON) {
+        safety = 'UNSAFE';
+        allowed = false;
+        if (caps.reasonCodes && caps.reasonCodes.length > 0) {
+          reasonCodes.push(...caps.reasonCodes);
+        }
       }
 
       // Special non-code safety rules (e.g. config/lockfile skeletonization is unsafe)
@@ -159,7 +171,9 @@ export class DefaultTokenCostEstimator implements TokenCostEstimator {
       ) {
         safety = 'UNSAFE';
         allowed = false;
-        reasonCodes.push('NON_CODE_SKELETON_UNSAFE');
+        if (!reasonCodes.includes('NON_CODE_SKELETON_UNSAFE')) {
+          reasonCodes.push('NON_CODE_SKELETON_UNSAFE');
+        }
       }
 
       const tokenCost = allowed
