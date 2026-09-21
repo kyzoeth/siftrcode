@@ -36,6 +36,7 @@ import { WorkspaceSnapshot, createWorkspaceSnapshot, WorkspaceChangedError, isWo
 import { DefaultWorkspaceSourceReader } from '../workspace/workspace_source_reader';
 import { TokenCostEstimator, DefaultTokenCostEstimator, ResolutionOption } from '../token/token_cost_estimator';
 import { SqliteStore } from '../storage/sqlite_store';
+import { CandidateDecisionObservation, createCandidateDecisionObservation } from '../telemetry/decision_observation';
 
 export { WorkspaceChangedError, isWorkspaceChangedError } from '../workspace/workspace_snapshot';
 
@@ -79,6 +80,8 @@ export interface OptimizeWorkspaceResult {
   formattedContext: FormattedContext;
   contextString: string;
   replanningAttempts?: number;
+  decisionObservations?: CandidateDecisionObservation[];
+  sqliteStore?: SqliteStore;
 }
 
 
@@ -169,6 +172,8 @@ export class ContextEngine {
     // 2. Candidate Discovery (Multi-channel: exact, lexical, stack_trace, graph, git)
     const generator = new CandidateGenerator();
     const candidates = generator.generateCandidates(task, units, graph, gitIntelligence);
+    const candidateMap = new Map<string, (typeof candidates)[0]>();
+    for (const c of candidates) candidateMap.set(c.contextUnitId, c);
 
     // 3. Feature Extraction (ContextFeaturesV1 with point-in-time constraints)
     const featuresMap = new Map<string, ContextFeaturesV1>();
@@ -505,6 +510,35 @@ export class ContextEngine {
       }
     }
 
+    // Closure PR 0.4: Construct immutable CandidateDecisionObservation records at decision time
+    const decisionObservations: CandidateDecisionObservation[] = [];
+    for (let i = 0; i < rankedCandidates.length; i++) {
+      const rc = rankedCandidates[i];
+      const decV2 = exposureDecisionsV2[i];
+      const feat = featuresMap.get(rc.contextUnitId);
+      if (feat && decV2) {
+        decisionObservations.push(
+          createCandidateDecisionObservation({
+            taskId: task.taskId,
+            workspaceSnapshotId: snapshot.workspaceSnapshotId,
+            contextUnitId: rc.contextUnitId,
+            candidate: {
+              generated: true,
+              candidateRank: i + 1,
+              retrievalSources: candidateMap.get(rc.contextUnitId)?.retrievalSources || ['lexical'],
+            },
+            features: feat,
+            rank: i + 1,
+            exposureDecision: decV2,
+            policyId,
+            policyVersion,
+            agentEnvironment: task.agentEnvironment,
+            observabilityLevel: this.adapter.observabilityLevel,
+          })
+        );
+      }
+    }
+
     trajectoryLogger.logEvent('CONTEXT_ALLOCATED', {
       planId,
       totalUnits: plannedUnits.length,
@@ -525,6 +559,7 @@ export class ContextEngine {
       formattedContext,
       exposureDecisions,
       exposureDecisionsV2,
+      decisionObservations,
       policyId,
       policyVersion,
       dataRights: this.dataRights,
@@ -533,17 +568,26 @@ export class ContextEngine {
       createdAt,
     };
 
-    // If a persistent store is configured, persist the plan, exposures, and trajectory durably (Section 25)
-    if (this.sqliteStore) {
-      this.sqliteStore.saveContextPlan(contextPlan, snapshot.workspaceSnapshotId);
-      if (exposureDecisionsV2.length > 0) {
-        this.sqliteStore.saveExposureDecisions(exposureDecisionsV2, task.taskId);
+    // If a persistent store is configured and telemetry is allowed, persist all runtime and learning records (Closure PR 0.4)
+    if (this.sqliteStore && this.dataRights.telemetryAllowed !== false) {
+      try {
+        this.sqliteStore.saveSnapshot(snapshot);
+        this.sqliteStore.saveTaskContext(task);
+        this.sqliteStore.saveContextPlan(contextPlan, snapshot.workspaceSnapshotId);
+        if (exposureDecisionsV2.length > 0) {
+          this.sqliteStore.saveExposureDecisions(exposureDecisionsV2, task.taskId);
+        }
+        if (decisionObservations.length > 0) {
+          this.sqliteStore.saveCandidateDecisionObservations(decisionObservations);
+        }
+        this.sqliteStore.saveTrajectoryEvents(
+          trajectoryLogger.getEvents(),
+          undefined,
+          snapshot.workspaceSnapshotId
+        );
+      } catch (storeErr) {
+        console.warn('[ContextEngine] Failed to persist local learning records:', storeErr);
       }
-      this.sqliteStore.saveTrajectoryEvents(
-        trajectoryLogger.getEvents(),
-        undefined,
-        snapshot.workspaceSnapshotId
-      );
     }
 
     return contextPlan;
@@ -700,6 +744,22 @@ export class ContextEngine {
           throwOnWorkspaceChanged: true,
         });
 
+        // Closure PR 0.4: Wire the Learning Plane into the default runtime
+        let store: SqliteStore | undefined = undefined;
+        const telemetryAllowed = options.dataRights ? options.dataRights.telemetryAllowed : true;
+        if (telemetryAllowed !== false) {
+          try {
+            const siftrDir = path.join(rootDir, '.siftr');
+            if (!fs.existsSync(siftrDir)) {
+              fs.mkdirSync(siftrDir, { recursive: true });
+            }
+            const dbPath = path.join(siftrDir, 'observations.sqlite');
+            store = new SqliteStore(dbPath);
+          } catch {
+            // Non-fatal if local SQLite store cannot be initialized
+          }
+        }
+
         const engine = new ContextEngine({
           repoRootDir: rootDir,
           adapter,
@@ -707,6 +767,7 @@ export class ContextEngine {
           budgetProfile: options.budgetProfile,
           budgetLimits,
           materializer,
+          sqliteStore: store,
         });
 
         const plan = engine.generatePlan({
@@ -730,6 +791,8 @@ export class ContextEngine {
           formattedContext: plan.formattedContext,
           contextString: plan.formattedContext.promptText,
           replanningAttempts: attempt,
+          decisionObservations: plan.decisionObservations,
+          sqliteStore: store,
         };
       } catch (err: unknown) {
         if (isWorkspaceChangedError(err) && attempt < maxReplanningRetries) {

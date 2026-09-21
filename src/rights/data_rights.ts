@@ -34,7 +34,7 @@ export interface DataRights {
 export function createDefaultDataRights(overrides: Partial<DataRights> = {}): DataRights {
   return {
     remoteProcessingAllowed: false,
-    telemetryAllowed: false,
+    telemetryAllowed: true,
     trainingAllowed: false,
     rawSourceRetentionAllowed: false,
     sourceSnippetRetentionAllowed: false,

@@ -7,6 +7,7 @@ import { ContextResolution } from '../context/context_resolution';
 import { BudgetAllocationPlan } from '../context/budget_solver';
 import { FormattedContext } from '../agents/agent_adapter';
 import { ExposureDecision, ExposureDecisionV2 } from '../telemetry/exposure_decision';
+import { CandidateDecisionObservation } from '../telemetry/decision_observation';
 import { DataRights } from '../rights/data_rights';
 
 export interface PlannedUnit {
@@ -27,6 +28,7 @@ export interface ContextPlan {
   formattedContext: FormattedContext;
   exposureDecisions: ExposureDecision[];
   exposureDecisionsV2?: ExposureDecisionV2[];
+  decisionObservations?: CandidateDecisionObservation[];
   policyId?: string;
   policyVersion?: string;
   dataRights: DataRights;

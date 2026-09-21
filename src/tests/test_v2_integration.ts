@@ -127,7 +127,7 @@ export async function runV2IntegrationTests() {
 
   // Mode A: JSON output
   const jsonCmd = `node "${binScript}" context "Fix AST skeletonizer TypeScript interface generation" --dir "${projectRoot}" --json`;
-  const jsonStdout = execSync(jsonCmd, { encoding: 'utf-8' });
+  const jsonStdout = execSync(jsonCmd, { encoding: 'utf-8', maxBuffer: 20 * 1024 * 1024 });
   const parsedCliPlan = JSON.parse(jsonStdout);
 
   assert(typeof parsedCliPlan.planId === 'string', 'CLI --json outputs parseable ContextPlan JSON');
@@ -138,7 +138,7 @@ export async function runV2IntegrationTests() {
   const tmpOutFile = path.join(os.tmpdir(), `siftr_test_context_${Date.now()}.xml`);
   try {
     const fileCmd = `node "${binScript}" context "Refactor candidate discovery" --dir "${projectRoot}" -o "${tmpOutFile}"`;
-    const fileStdout = execSync(fileCmd, { encoding: 'utf-8' });
+    const fileStdout = execSync(fileCmd, { encoding: 'utf-8', maxBuffer: 20 * 1024 * 1024 });
 
     assert(fs.existsSync(tmpOutFile), 'CLI -o wrote context file to disk');
     const writtenContent = fs.readFileSync(tmpOutFile, 'utf-8');
@@ -152,14 +152,14 @@ export async function runV2IntegrationTests() {
 
   // Mode C: Standard console output
   const plainCmd = `node "${binScript}" context "Fix AST skeletonizer interface" --dir "${projectRoot}"`;
-  const plainStdout = execSync(plainCmd, { encoding: 'utf-8' });
+  const plainStdout = execSync(plainCmd, { encoding: 'utf-8', maxBuffer: 20 * 1024 * 1024 });
   assert(plainStdout.includes('Context optimized for coding agent!'), 'CLI prints success header');
   assert(plainStdout.includes('Token & Cost Optimization:'), 'CLI prints token & cost table');
   assert(plainStdout.includes('Allocated Context Units:'), 'CLI prints allocated units list');
 
   // Mode D: Alias `siftr plan`
   const aliasCmd = `node "${binScript}" plan "Fix AST skeletonizer interface" --dir "${projectRoot}"`;
-  const aliasStdout = execSync(aliasCmd, { encoding: 'utf-8' });
+  const aliasStdout = execSync(aliasCmd, { encoding: 'utf-8', maxBuffer: 20 * 1024 * 1024 });
   assert(aliasStdout.includes('Context optimized for coding agent!'), 'CLI alias `siftr plan` works');
 
 

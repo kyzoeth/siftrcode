@@ -16,6 +16,7 @@ import { ContextUnit, ContextUnitKind } from '../context/context_unit';
 import { TaskContext } from '../context/task_context';
 import { ContextPlan } from '../engine/context_plan';
 import { CandidateObservationV2 } from '../telemetry/candidate_observation';
+import { CandidateDecisionObservation } from '../telemetry/decision_observation';
 import { ExposureDecisionV2, isExposedV2 } from '../telemetry/exposure_decision';
 import { TrajectoryEvent } from '../telemetry/trajectory_event';
 import { OutcomeEvidence } from '../telemetry/outcome_evidence';
@@ -329,7 +330,29 @@ const MIGRATIONS: Migration[] = [
         raw_json TEXT NOT NULL
       );
 
-      CREATE INDEX IF NOT EXISTS idx_del_time ON deletion_audit_records(executed_at);
+    `,
+  },
+  {
+    version: 6,
+    name: '006_candidate_decision_observations',
+    sql: `
+      CREATE TABLE IF NOT EXISTS candidate_decision_observations (
+        decision_observation_id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        snapshot_id TEXT NOT NULL,
+        context_unit_id TEXT NOT NULL,
+        candidate_rank INTEGER,
+        exposure_resolution INTEGER NOT NULL,
+        policy_id TEXT NOT NULL,
+        policy_version TEXT NOT NULL,
+        observability_level TEXT NOT NULL,
+        features_json TEXT NOT NULL,
+        raw_json TEXT NOT NULL,
+        recorded_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_dec_obs_task ON candidate_decision_observations(task_id);
+      CREATE INDEX IF NOT EXISTS idx_dec_obs_unit ON candidate_decision_observations(context_unit_id);
     `,
   },
 ];
@@ -744,6 +767,66 @@ export class SqliteStore {
     if (options.outcomeLabel) {
       sql += ' AND outcome_label = ?';
       params.push(options.outcomeLabel);
+    }
+
+    sql += ' ORDER BY recorded_at ASC';
+    const rows = this.db.prepare(sql).all(...params) as Array<{ raw_json: string }>;
+    return rows.map((r) => JSON.parse(r.raw_json));
+  }
+
+  // ==========================================
+  // CandidateDecisionObservation Operations (Closure PR 0.4)
+  // ==========================================
+
+  public saveCandidateDecisionObservations(decisions: CandidateDecisionObservation[]): void {
+    if (decisions.length === 0) return;
+
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO candidate_decision_observations (
+        decision_observation_id, task_id, snapshot_id, context_unit_id,
+        candidate_rank, exposure_resolution, policy_id, policy_version,
+        observability_level, features_json, raw_json, recorded_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const dec of decisions) {
+      stmt.run(
+        dec.decisionObservationId,
+        dec.taskId,
+        dec.workspaceSnapshotId,
+        dec.contextUnitId,
+        dec.rank ?? null,
+        dec.exposureDecision.resolution,
+        dec.policyId,
+        dec.policyVersion,
+        dec.observabilityLevel,
+        JSON.stringify(dec.features),
+        JSON.stringify(dec),
+        dec.recordedAt
+      );
+    }
+  }
+
+  public getCandidateDecisionObservation(id: string): CandidateDecisionObservation | undefined {
+    const row = this.db.prepare('SELECT raw_json FROM candidate_decision_observations WHERE decision_observation_id = ?').get(id) as {
+      raw_json: string;
+    } | undefined;
+
+    if (!row) return undefined;
+    return JSON.parse(row.raw_json);
+  }
+
+  public listCandidateDecisionObservations(options: { taskId?: string; contextUnitId?: string } = {}): CandidateDecisionObservation[] {
+    let sql = 'SELECT raw_json FROM candidate_decision_observations WHERE 1=1';
+    const params: string[] = [];
+
+    if (options.taskId) {
+      sql += ' AND task_id = ?';
+      params.push(options.taskId);
+    }
+    if (options.contextUnitId) {
+      sql += ' AND context_unit_id = ?';
+      params.push(options.contextUnitId);
     }
 
     sql += ' ORDER BY recorded_at ASC';
