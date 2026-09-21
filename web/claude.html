@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Claude Code Integration Guide — SiftrCode</title>
-  <meta name="description" content="Configure SiftrCode AST skeletonizer with Claude Code in 10 seconds. Slash Claude 3.7 Sonnet token bloat by 90% and keep agent turns blazing fast.">
+  <title>Claude Code Integration Guide — SiftrCode V2 Outcome-Aware Context Engine</title>
+  <meta name="description" content="Integrate SiftrCode V2 with Claude Code CLI. Multi-channel candidate recall, AST interface skeletons, and siftr_context tool for 90% faster agent turns.">
   <link rel="canonical" href="https://siftrcode.com/claude">
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -139,10 +139,13 @@
             </g>
           </svg>
           <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
-          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-medium">v0.1.1</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-medium">v0.2.0</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="/how-it-works" class="hover:text-ink transition">How It Works</a>
+          <a href="/claude" class="text-[#B34E2E] dark:text-[#F39C82] font-semibold transition">Claude Code</a>
+          <a href="/#pipeline" class="hover:text-ink transition">6-Stage Pipeline</a>
+          <a href="/#economics" class="hover:text-ink transition">Economics</a>
         </nav>
       </div>
 
@@ -223,17 +226,24 @@
     <div class="space-y-3 border-b border-zinc-200/80 pb-8">
       <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] text-[10px] font-mono font-semibold uppercase tracking-wider">
         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ci-live-dot"></span>
-        CLAUDE CODE INTEGRATION
+        SIFTRCODE V2 • CLAUDE CODE INTEGRATION
       </div>
       <h1 class="text-4xl sm:text-5xl font-normal text-ink font-serif tracking-tight">Claude Code Integration</h1>
       <p class="text-xs sm:text-sm text-ink-secondary max-w-2xl">
-        Slash Claude 3.7 Sonnet context window bloat by 90%. Eliminate prompt saturation, accelerate turn latency from 45s to 4s, and stop context degradation in large codebases.
+        Outcome-aware context optimization for Claude Code CLI and Claude 3.7 Sonnet. Intercept repository bloat, provide exact AST interface contracts, protect causal edit targets at 100% fidelity, and accelerate turn latency from 45s to 3.8s.
       </p>
       <div class="pt-2 flex flex-wrap items-center gap-3 font-mono text-xs">
         <div class="bg-zinc-950 text-zinc-100 px-3.5 py-1.5 rounded border border-zinc-800 flex items-center gap-2.5 shadow-2xs select-all">
           <span class="text-emerald-400 select-none font-bold bash-dollar-flash">$</span>
           <code>claude mcp add siftrcode -- npx -y siftrcode mcp</code>
           <button onclick="copySnippet('claude mcp add siftrcode -- npx -y siftrcode mcp', this)" class="text-[9px] text-zinc-400 hover:text-white px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer">
+            COPY
+          </button>
+        </div>
+        <div class="bg-zinc-950 text-zinc-100 px-3.5 py-1.5 rounded border border-zinc-800 flex items-center gap-2.5 shadow-2xs select-all">
+          <span class="text-emerald-400 select-none font-bold bash-dollar-flash">$</span>
+          <code>npx siftrcode context "fix webhook race condition"</code>
+          <button onclick="copySnippet('npx siftrcode context &quot;fix webhook race condition&quot;', this)" class="text-[9px] text-zinc-400 hover:text-white px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer">
             COPY
           </button>
         </div>
@@ -425,38 +435,84 @@
       <section class="space-y-4">
         <div class="space-y-1">
           <h2 class="text-2xl sm:text-3xl font-normal text-ink font-serif tracking-tight">Available MCP Tools in Claude Code</h2>
-          <p class="text-xs sm:text-sm text-ink-secondary">Once connected, Claude automatically calls these tools via Model Context Protocol.</p>
+          <p class="text-xs sm:text-sm text-ink-secondary">Once connected, Claude automatically calls these tools via Model Context Protocol to optimize its own prompt.</p>
+        </div>
+
+        <!-- Claude Code Workflow Diagram -->
+        <div class="p-5 bg-zinc-950 text-zinc-100 border border-zinc-800 rounded-md shadow-xs space-y-3 font-mono text-xs">
+          <div class="flex items-center gap-2 text-emerald-400 font-bold uppercase tracking-wider text-[11px]">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 ci-live-dot"></span>
+            <span>How Claude Code Dispatches SiftrCode V2</span>
+          </div>
+          <div class="space-y-2 text-zinc-300 font-sans text-xs sm:text-sm leading-relaxed">
+            <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-1">
+              <span class="font-mono text-emerald-400 text-xs font-semibold">1. Prompt Ingestion:</span>
+              <p class="text-xs text-zinc-400">User prompts Claude: <code class="text-white font-mono">"Fix invoice payment webhook race condition in subscription service"</code>.</p>
+            </div>
+            <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-1">
+              <span class="font-mono text-emerald-400 text-xs font-semibold">2. Tool Call: siftr_context(taskPrompt, budgetTokens: 8000)</span>
+              <p class="text-xs text-zinc-400">Claude queries SiftrCode over stdio. Multi-channel recall pulls candidate files; point-in-time features are evaluated.</p>
+            </div>
+            <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-1">
+              <span class="font-mono text-emerald-400 text-xs font-semibold">3. Outcome-Aware Context Delivery:</span>
+              <p class="text-xs text-zinc-400">SiftrCode returns causal edit targets at <strong>Full Body (100%)</strong>, dependencies at <strong>AST Skeleton (10%)</strong>, and prunes 34 distractor files to 0 tokens.</p>
+            </div>
+            <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-1">
+              <span class="font-mono text-emerald-400 text-xs font-semibold">4. Zero-Hallucination Edit:</span>
+              <p class="text-xs text-zinc-400">Claude finishes the edit turn in <strong>3.8s</strong> (vs 45s), accurately calling surrounding APIs without token saturation.</p>
+            </div>
+          </div>
         </div>
 
         <div class="space-y-3 font-mono text-xs">
           
           <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md space-y-2 shadow-2xs">
             <div class="flex items-center justify-between">
-              <h3 class="text-[#B34E2E] dark:text-[#F39C82] font-mono font-bold text-sm">siftr_skeleton</h3>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">Single File Tool</span>
+              <h3 class="text-[#B34E2E] dark:text-[#F39C82] font-mono font-bold text-sm">siftr_context</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 font-bold">PRIMARY V2 TOOL</span>
             </div>
             <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs sm:text-sm leading-relaxed">
-              Synthesizes clean interface contracts from source code in TypeScript, Python, Go, and Rust. Strips implementation bodies while keeping all types, classes, interfaces, and docstrings intact.
+              Complete outcome-aware context optimization. Given a task prompt and token budget (e.g. 8,000 tokens), executes the full 6-stage pipeline: multi-channel recall, versioned feature calculation, heuristic ranking, submodular bundling, variable-resolution degradation, and knapsack budget solving. Returns ready-to-ingest context units.
             </p>
           </div>
 
           <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md space-y-2 shadow-2xs">
             <div class="flex items-center justify-between">
-              <h3 class="text-[#B34E2E] dark:text-[#F39C82] font-mono font-bold text-sm">siftr_pack</h3>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">Directory / Repo Tool</span>
+              <h3 class="text-[#B34E2E] dark:text-[#F39C82] font-mono font-bold text-sm">siftr_optimize</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">Advanced Workspace Engine</span>
             </div>
             <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs sm:text-sm leading-relaxed">
-              Prepares an AST-compressed architecture pack across entire directories or modules for Claude Code to understand project structure without importing gigabytes of raw source.
+              Configurable workspace context optimizer allowing custom candidate units, manual budget constraints, and degradation strategy selection for complex multi-agent orchestrations.
             </p>
           </div>
 
           <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md space-y-2 shadow-2xs">
             <div class="flex items-center justify-between">
-              <h3 class="text-[#B34E2E] dark:text-[#F39C82] font-mono font-bold text-sm">siftr_audit</h3>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">Audit &amp; Telemetry</span>
+              <h3 class="text-[#B34E2E] dark:text-[#F39C82] font-mono font-bold text-sm">siftr_rank</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">Diagnostic Ranking</span>
             </div>
             <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs sm:text-sm leading-relaxed">
-              Scans code or repositories for dead weight and calculates exact token bloat, potential cost reductions, and efficiency opportunities.
+              Runs heuristic candidate ranking and outputs transparent scoring breakdowns, boost multipliers, and penalty evaluations without modifying file contents.
+            </p>
+          </div>
+
+          <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md space-y-2 shadow-2xs">
+            <div class="flex items-center justify-between">
+              <h3 class="text-[#B34E2E] dark:text-[#F39C82] font-mono font-bold text-sm">siftr_skeleton &amp; siftr_batch_skeleton</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">AST Surface Extraction</span>
+            </div>
+            <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs sm:text-sm leading-relaxed">
+              Synthesizes clean interface contracts from source code in TypeScript, Python, Go, and Rust. Strips imperative function bodies while keeping all types, classes, interfaces, parameter signatures, and docstrings 100% intact.
+            </p>
+          </div>
+
+          <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md space-y-2 shadow-2xs">
+            <div class="flex items-center justify-between">
+              <h3 class="text-[#B34E2E] dark:text-[#F39C82] font-mono font-bold text-sm">siftr_pack &amp; siftr_audit</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">Architecture &amp; Auditing</span>
+            </div>
+            <p class="text-zinc-600 dark:text-zinc-400 font-sans text-xs sm:text-sm leading-relaxed">
+              Prepares directory-wide AST architectural packs and audits entire repositories for deadweight files, reporting exact token bloat, potential economic savings, and efficiency opportunities.
             </p>
           </div>
 

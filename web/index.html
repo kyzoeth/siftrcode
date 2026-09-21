@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SiftrCode — AST Codebase Pruner for AI Coding Agents</title>
-  <meta name="description" content="SiftrCode synthesizes codebases into clean interface skeletons before LLM inference. Slashing Claude Code & Cursor token waste by 85–98%.">
+  <title>SiftrCode V2 — Outcome-Aware Context Optimization for Coding Agents</title>
+  <meta name="description" content="SiftrCode V2 delivers outcome-aware context optimization for AI coding agents. Discovers multi-channel candidates, protects edit targets, synthesizes interface skeletons, and optimizes budgets.">
   <link rel="canonical" href="https://siftrcode.com">
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -758,10 +758,13 @@
             </g>
           </svg>
           <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
-          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-medium">v0.1.1</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-medium">v0.2.0</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="/how-it-works" class="hover:text-ink transition">How It Works</a>
+          <a href="/claude" class="hover:text-ink transition">Claude Code</a>
+          <a href="#pipeline" class="hover:text-ink transition">Pipeline</a>
+          <a href="#economics" class="hover:text-ink transition">Economics</a>
         </nav>
       </div>
 
@@ -843,14 +846,43 @@
   <section class="relative pt-10 pb-6 sm:pt-16 sm:pb-8 md:pt-20 md:pb-10 px-3 sm:px-4">
     <div class="max-w-4xl mx-auto text-center space-y-3.5 sm:space-y-5 relative z-10">
       
+      <!-- V2 Announcement Pill -->
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] text-xs font-mono font-semibold uppercase tracking-wider shadow-2xs">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#D97757] ci-live-dot"></span>
+        <span>SiftrCode V2 • Outcome-Aware Context Optimization</span>
+      </div>
+
       <h1 class="text-3xl sm:text-[2.75rem] md:text-[3.35rem] lg:text-[4rem] xl:text-[4.5rem] font-normal tracking-tight text-ink font-serif md:whitespace-nowrap max-w-none mx-auto leading-[1.12] sm:leading-[1.06] text-balance">
-        Cut agent token waste by <span class="italic hero-glow-text">90%</span>
+        Context optimization, <span class="italic hero-glow-text">outcome-aware</span>
       </h1>
 
       <!-- Subtitle -->
-      <p class="text-xs sm:text-base text-zinc-500 max-w-md sm:max-w-none mx-auto font-normal -mt-0.5 leading-relaxed">
-        Our open-source AST synthesis engine strips implementation bloat into clean interfaces before inference.
+      <p class="text-xs sm:text-base text-zinc-500 max-w-2xl mx-auto font-normal -mt-0.5 leading-relaxed">
+        Discovers, ranks, and composes compiler-verified repository context bundles — maximizing coding-agent task success while eliminating 90% of token bloat under strict economic budget ceilings.
       </p>
+
+      <!-- Key Guarantees Pill Strip -->
+      <div class="pt-2 flex flex-wrap items-center justify-center gap-2 text-[11px] font-mono text-zinc-600 dark:text-zinc-400">
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🎯 Edit Targets Protected</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">⚡ AST Interface Skeletons</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">📐 Submodular Synergy</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🔒 100% Local • Zero Egress</span>
+      </div>
+
+      <!-- Hero Action CTAs -->
+      <div class="pt-2 flex flex-wrap items-center justify-center gap-3 font-mono text-xs">
+        <a href="#workbench" class="px-4 py-2 rounded bg-ink text-surface-50 dark:bg-zinc-100 dark:text-zinc-950 font-sans font-semibold hover:opacity-90 transition btn-press shadow-sm flex items-center gap-2">
+          <span>Explore Interactive Optimizer</span>
+          <span class="text-xs font-mono">↓</span>
+        </a>
+        <div class="bg-zinc-950 text-zinc-100 px-3.5 py-2 rounded border border-zinc-800 flex items-center gap-2.5 shadow-2xs select-all">
+          <span class="text-emerald-400 select-none font-bold bash-dollar-flash">$</span>
+          <code>npx siftrcode context "task prompt"</code>
+          <button onclick="copySnippet('npx siftrcode context &quot;task prompt&quot;', this)" class="text-[10px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer font-sans">
+            COPY
+          </button>
+        </div>
+      </div>
 
     </div>
   </section>
@@ -859,13 +891,179 @@
   <section id="workbench" class="py-6 sm:py-10 px-2 sm:px-4 relative z-10">
     <div class="max-w-4xl mx-auto space-y-3.5">
       
-      <!-- Modern Flat Language Selector Bar -->
-      <div id="langSelectorDeck" class="flex items-center justify-start gap-2 sm:gap-3 py-1 mb-2 overflow-x-auto no-scrollbar touch-pan-x" style="-webkit-overflow-scrolling: touch;">
-        <span class="text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-300 select-none shrink-0">Demo:</span>
-        <!-- Language Selection Tabs -->
-        <div class="inline-flex items-center p-0.5 rounded-md bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 gap-0.5 shadow-2xs shrink-0">
-          <button onclick="setLang('ts', true)" id="tab-ts" class="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-700/80 shrink-0">
-            <svg class="w-3.5 h-3.5 shrink-0 rounded-xs" viewBox="0 0 128 128" fill="none"><rect width="128" height="128" rx="16" fill="#3178C6"/><path fill="#ffffff" d="M60.82 50.11H43.76v54.76H29.13V50.11H12.08v-12.8h48.74v12.8zm53.48 24.31c0 3.73-1.02 6.94-3.05 9.63-2.03 2.69-4.94 4.74-8.73 6.16-3.79 1.42-8.23 2.13-13.32 2.13-4.52 0-8.66-.54-12.42-1.62-3.76-1.08-6.85-2.61-9.27-4.59l5.44-11.23c2.09 1.62 4.54 2.87 7.35 3.76s5.73 1.33 8.76 1.33c3.73 0 6.44-.65 8.13-1.95 1.69-1.3 2.54-3.02 2.54-5.16 0-1.77-.66-3.23-1.98-4.38-1.32-1.15-3.66-2.27-7.02-3.36-4.52-1.47-8.08-3.09-10.68-4.86-2.6-1.77-4.49-3.86-5.67-6.27-1.18-2.41-1.77-5.26-1.77-8.55 0-3.67.97-6.88 2.91-9.63 1.94-2.75 4.72-4.85 8.34-6.3 3.62-1.45 7.96-2.18 13.02-2.18 4.07 0 7.82.48 11.25 1.44 3.43.96 6.3 2.27 8.61 3.93l-5.14 11.08c-2.09-1.42-4.39-2.52-6.9-3.3-2.51-.78-5.14-1.17-7.89-1.17-3.27 0-5.74.57-7.41 1.71-1.67 1.14-2.51 2.67-2.51 4.59 0 1.62.63 2.97 1.89 4.05 1.26 1.08 3.52 2.15 6.78 3.21 4.72 1.57 8.43 3.27 11.13 5.1 2.7 1.83 4.67 3.98 5.91 6.45 1.24 2.47 1.86 5.38 1.86 8.73z"/></svg>
+      <!-- Interactive Workbench Mode Switcher: V2 Context Optimizer vs File Skeletonizer -->
+      <div class="flex items-center justify-between pb-1 flex-wrap gap-2">
+        <div class="inline-flex p-0.5 rounded-md bg-zinc-200/70 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-mono gap-1 shadow-2xs">
+          <button id="modeBtnBundle" onclick="switchWorkbenchMode('bundle')" class="px-3 py-1.5 rounded font-medium transition cursor-pointer bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-700/80 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-[#D97757] ci-live-dot"></span>
+            <span>V2 Context Optimizer</span>
+          </button>
+          <button id="modeBtnSkeleton" onclick="switchWorkbenchMode('skeleton')" class="px-3 py-1.5 rounded font-medium transition cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1.5">
+            <span>AST Interface Skeletonizer</span>
+          </button>
+        </div>
+        <div class="text-[11px] font-mono text-zinc-500 flex items-center gap-2">
+          <span class="inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Local CPU</span>
+          <span>•</span>
+          <span>Zero Network Egress</span>
+        </div>
+      </div>
+
+      <!-- VIEW A: V2 OUTCOME-AWARE CONTEXT OPTIMIZER (Default View) -->
+      <div id="viewContextOptimizer" class="space-y-3">
+        <!-- Interactive Task Prompt Bar -->
+        <div class="bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-md p-3 sm:p-4 shadow-sm space-y-2.5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-zinc-500 uppercase tracking-wider">Task Prompt:</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">100% Recall@20</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-[10px] font-mono text-zinc-400">
+              <span>Budget Cap:</span>
+              <span class="text-zinc-700 dark:text-zinc-300 font-semibold">16k tok / $0.05 max</span>
+            </div>
+          </div>
+
+          <!-- Prompt Input Bar -->
+          <div class="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-950 p-1.5 pl-3 rounded border border-zinc-200 dark:border-zinc-800 shadow-inner">
+            <span class="text-[#D97757] font-mono font-bold select-none">❯</span>
+            <input type="text" id="v2SimPromptInput" value="Fix webhook signature verification race condition & idempotency" class="flex-1 bg-transparent border-none outline-none font-sans text-xs sm:text-sm text-ink placeholder:text-zinc-400" />
+            <button onclick="runV2ContextOptimizer()" class="px-3 py-1.5 rounded bg-[#D97757] hover:bg-[#C86241] text-white font-sans text-xs font-semibold transition btn-press cursor-pointer shrink-0 shadow-2xs flex items-center gap-1.5">
+              <span>Optimize Context</span>
+              <span class="font-mono text-[10px]">→</span>
+            </button>
+          </div>
+
+          <!-- Quick Presets -->
+          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5 text-[11px] font-mono">
+            <span class="text-zinc-400 shrink-0">Presets:</span>
+            <button onclick="loadSimPreset('webhook')" class="px-2 py-0.5 rounded bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition cursor-pointer shrink-0">Webhook Race Condition</button>
+            <button onclick="loadSimPreset('jwt')" class="px-2 py-0.5 rounded bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition cursor-pointer shrink-0">JWT Token Refresh</button>
+            <button onclick="loadSimPreset('db_pool')" class="px-2 py-0.5 rounded bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition cursor-pointer shrink-0">DB Pool Deadlock</button>
+          </div>
+        </div>
+
+        <!-- Optimized Bundle Terminal View -->
+        <div class="bg-white dark:bg-zinc-950 border border-zinc-200/90 dark:border-zinc-800 rounded-md overflow-hidden shadow-sm flex flex-col text-xs font-mono">
+          <!-- Terminal Header Bar -->
+          <div class="bg-zinc-50 dark:bg-zinc-900/95 px-3 sm:px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs font-sans shrink-0 select-none gap-2">
+            <div class="flex items-center gap-2.5">
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#ff5f56] inline-block border border-[#e0443e]/80"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-[#ffbd2e] inline-block border border-[#dea123]/80"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-[#27c93f] inline-block border border-[#1aab29]/80"></span>
+              </div>
+              <span class="text-xs font-mono text-zinc-500 pl-2 border-l border-zinc-200 dark:border-zinc-800" id="simPlanIdBadge">cplan_9bf2a481 • ContextPlan</span>
+            </div>
+            <div class="flex items-center gap-2 text-[11px] font-mono text-emerald-600 dark:text-emerald-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Submodular Synergy Bundle</span>
+            </div>
+          </div>
+
+          <!-- Bundle Content: Resolution Breakdown -->
+          <div class="p-3 sm:p-4 space-y-3 max-h-[380px] overflow-y-auto">
+            <!-- Tier 1: Target Edit File (Protected FULL resolution) -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                  <span>★</span> EDIT TARGET (FULL IMPLEMENTATION BODY PROTECTED)
+                </span>
+                <span class="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold text-[10px]">RESOLUTION 5 (FULL)</span>
+              </div>
+              <div class="p-2.5 rounded bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="font-bold text-zinc-900 dark:text-zinc-100 truncate" id="simTargetFile">src/webhooks/signature_verifier.ts</div>
+                  <div class="text-[11px] text-zinc-500 font-sans truncate" id="simTargetReason">Identified via stack trace match & exact prompt symbols. Retained 100% body to allow editing without hallucination.</div>
+                </div>
+                <div class="text-right shrink-0">
+                  <div class="font-bold text-zinc-800 dark:text-zinc-200" id="simTargetTokens">1,420 tok</div>
+                  <div class="text-[10px] text-zinc-400">100% Retained</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tier 2: AST Interface Skeletons -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="font-bold text-[#B34E2E] dark:text-[#F39C82] flex items-center gap-1.5">
+                  <span>⚡</span> DEPENDENCY INTERFACES (AST SKELETON SYNTHESIS)
+                </span>
+                <span class="px-1.5 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E] text-[#B34E2E] dark:text-[#F39C82] font-bold text-[10px]">−92% TOKENS</span>
+              </div>
+              <div class="space-y-1" id="simSkeletonFilesList">
+                <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between text-[11px]">
+                  <div class="truncate">
+                    <span class="text-zinc-800 dark:text-zinc-200 font-medium">src/auth/jwt.ts</span>
+                    <span class="text-zinc-400 font-sans ml-2">Interface skeleton: 4 types, 2 public methods</span>
+                  </div>
+                  <span class="text-emerald-600 font-bold shrink-0">480 tok <span class="text-zinc-400 font-normal line-through text-[10px]">4,120</span></span>
+                </div>
+                <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between text-[11px]">
+                  <div class="truncate">
+                    <span class="text-zinc-800 dark:text-zinc-200 font-medium">src/db/session.ts</span>
+                    <span class="text-zinc-400 font-sans ml-2">Interface skeleton: SessionManager, TransactionClient</span>
+                  </div>
+                  <span class="text-emerald-600 font-bold shrink-0">520 tok <span class="text-zinc-400 font-normal line-through text-[10px]">5,800</span></span>
+                </div>
+                <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between text-[11px]">
+                  <div class="truncate">
+                    <span class="text-zinc-800 dark:text-zinc-200 font-medium">src/queue/event_bus.ts</span>
+                    <span class="text-zinc-400 font-sans ml-2">Interface skeleton: EventPublisher, DeadLetterQueue</span>
+                  </div>
+                  <span class="text-emerald-600 font-bold shrink-0">610 tok <span class="text-zinc-400 font-normal line-through text-[10px]">6,400</span></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tier 3: Suppressed Unrelated Files -->
+            <div class="space-y-1.5 pt-1">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="font-bold text-zinc-500 flex items-center gap-1.5">
+                  <span>✕</span> SUPPRESSED DEADWEIGHT (ZERO CONTEXT POLLUTION)
+                </span>
+                <span class="text-zinc-400 text-[10px]">14 Files Omitted</span>
+              </div>
+              <div class="p-2 rounded bg-zinc-100/50 dark:bg-zinc-900/40 border border-dashed border-zinc-300 dark:border-zinc-800 text-[10px] text-zinc-500 truncate" id="simSuppressedList">
+                tests/e2e/legacy.test.ts, scripts/deploy.sh, docs/arch.md, src/frontend/Header.tsx, src/billing/tax.ts...
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Telemetry Strip -->
+          <div class="bg-zinc-50/95 dark:bg-zinc-900/90 p-3 sm:px-4 border-t border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div class="grid grid-cols-3 gap-3 text-center sm:text-left">
+              <div>
+                <div class="text-[10px] text-zinc-400 uppercase">Raw Context</div>
+                <div class="text-xs sm:text-sm font-bold text-zinc-700 dark:text-zinc-300" id="simRawTokens">94,200 tok</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-zinc-400 uppercase">V2 Bundle</div>
+                <div class="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400" id="simAllocTokens">3,030 tok</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-zinc-400 uppercase">Turn Cost</div>
+                <div class="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400" id="simTurnCost">$0.0091</div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between sm:justify-end gap-2 border-t sm:border-t-0 border-zinc-200 dark:border-zinc-800 pt-2 sm:pt-0">
+              <span class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold text-xs" id="simReductionPill">−96.8% Tokens</span>
+              <span class="text-[11px] text-zinc-500 font-sans">Save $0.273 / turn</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW B: SINGLE-FILE AST SKELETONIZER (Toggleable) -->
+      <div id="viewFileSkeleton" class="space-y-3.5 hidden">
+        <!-- Modern Flat Language Selector Bar -->
+        <div id="langSelectorDeck" class="flex items-center justify-start gap-2 sm:gap-3 py-1 mb-2 overflow-x-auto no-scrollbar touch-pan-x" style="-webkit-overflow-scrolling: touch;">
+          <span class="text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-300 select-none shrink-0">Demo:</span>
+          <!-- Language Selection Tabs -->
+          <div class="inline-flex items-center p-0.5 rounded-md bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 gap-0.5 shadow-2xs shrink-0">
+            <button onclick="setLang('ts', true)" id="tab-ts" class="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded text-xs font-medium transition cursor-pointer btn-press bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-700/80 shrink-0">
+              <svg class="w-3.5 h-3.5 shrink-0 rounded-xs" viewBox="0 0 128 128" fill="none"><rect width="128" height="128" rx="16" fill="#3178C6"/><path fill="#ffffff" d="M60.82 50.11H43.76v54.76H29.13V50.11H12.08v-12.8h48.74v12.8zm53.48 24.31c0 3.73-1.02 6.94-3.05 9.63-2.03 2.69-4.94 4.74-8.73 6.16-3.79 1.42-8.23 2.13-13.32 2.13-4.52 0-8.66-.54-12.42-1.62-3.76-1.08-6.85-2.61-9.27-4.59l5.44-11.23c2.09 1.62 4.54 2.87 7.35 3.76s5.73 1.33 8.76 1.33c3.73 0 6.44-.65 8.13-1.95 1.69-1.3 2.54-3.02 2.54-5.16 0-1.77-.66-3.23-1.98-4.38-1.32-1.15-3.66-2.27-7.02-3.36-4.52-1.47-8.08-3.09-10.68-4.86-2.6-1.77-4.49-3.86-5.67-6.27-1.18-2.41-1.77-5.26-1.77-8.55 0-3.67.97-6.88 2.91-9.63 1.94-2.75 4.72-4.85 8.34-6.3 3.62-1.45 7.96-2.18 13.02-2.18 4.07 0 7.82.48 11.25 1.44 3.43.96 6.3 2.27 8.61 3.93l-5.14 11.08c-2.09-1.42-4.39-2.52-6.9-3.3-2.51-.78-5.14-1.17-7.89-1.17-3.27 0-5.74.57-7.41 1.71-1.67 1.14-2.51 2.67-2.51 4.59 0 1.62.63 2.97 1.89 4.05 1.26 1.08 3.52 2.15 6.78 3.21 4.72 1.57 8.43 3.27 11.13 5.1 2.7 1.83 4.67 3.98 5.91 6.45 1.24 2.47 1.86 5.38 1.86 8.73z"/></svg>
             <span>TypeScript</span>
           </button>
           <button onclick="setLang('py', true)" id="tab-py" class="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded text-xs font-medium transition cursor-pointer btn-press text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/40 dark:hover:bg-zinc-800/40 border border-transparent shrink-0">
@@ -979,6 +1177,7 @@
 
         </div>
       </div>
+      </div>
 
     </div>
   </section>
@@ -1035,9 +1234,112 @@
               COPY
             </button>
           </div>
+
+          <!-- Secondary V2 CLI Command Option -->
+          <div class="pt-2 border-t border-zinc-200/80 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
+            <span class="text-zinc-500 dark:text-zinc-400">Or optimize context directly from terminal:</span>
+            <div class="inline-flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800/80 px-2.5 py-1 rounded font-mono text-[11px] border border-zinc-200 dark:border-zinc-700">
+              <span class="text-emerald-500 font-bold">$</span>
+              <code class="text-zinc-800 dark:text-zinc-200">siftr context "task description"</code>
+              <button onclick="copySnippet('npx siftrcode context &quot;task description&quot;', this)" class="text-[9px] text-zinc-400 hover:text-white px-1.5 py-0.5 rounded bg-zinc-700 hover:bg-zinc-600 transition cursor-pointer">
+                COPY
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
+    </div>
+  </section>
+
+  <!-- SiftrCode V2 6-Stage Outcome-Aware Pipeline Section -->
+  <section id="pipeline" class="py-12 sm:py-16 px-3 sm:px-4 bg-zinc-50 dark:bg-zinc-900/60 border-t border-zinc-200 dark:border-zinc-800">
+    <div class="max-w-4xl mx-auto space-y-8">
+      <!-- Section Header -->
+      <div class="text-center space-y-1.5 max-w-2xl mx-auto">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] text-[10px] font-mono font-semibold uppercase tracking-wider">
+          <span>PIPELINE SPECIFICATION</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-ink font-serif">The 6-Stage Optimization Engine</h2>
+        <p class="text-xs sm:text-sm text-ink-secondary">
+          How SiftrCode V2 delivers 100% recall on critical edit targets while compressing token payloads by up to 90%.
+        </p>
+      </div>
+
+      <!-- 6-Stage Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 text-xs font-sans">
+        <!-- Stage 01 -->
+        <div class="p-4 sm:p-5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2.5 shadow-2xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-mono font-bold text-[#B34E2E] dark:text-[#F39C82] px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40">STAGE 01</span>
+            <span class="text-[10px] font-mono text-zinc-400">Recall@20: 100%</span>
+          </div>
+          <h3 class="font-serif text-lg text-ink font-normal">Multi-Channel Candidate Recall</h3>
+          <p class="text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed">
+            Blends Exact symbol matches, BM25 text retrieval, Stack Trace log parsing, Semantic AST Context Graph, and Git Co-Change intelligence to never miss relevant code.
+          </p>
+        </div>
+
+        <!-- Stage 02 -->
+        <div class="p-4 sm:p-5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2.5 shadow-2xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-mono font-bold text-[#B34E2E] dark:text-[#F39C82] px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40">STAGE 02</span>
+            <span class="text-[10px] font-mono text-zinc-400">ContextFeaturesV1</span>
+          </div>
+          <h3 class="font-serif text-lg text-ink font-normal">Point-in-Time Versioned Features</h3>
+          <p class="text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed">
+            Extracts deterministic feature vectors with strict <code class="font-mono text-[10px]">FeatureCutoff</code> timestamps, strictly eliminating data leakage and lookahead contamination.
+          </p>
+        </div>
+
+        <!-- Stage 03 -->
+        <div class="p-4 sm:p-5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2.5 shadow-2xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-mono font-bold text-[#B34E2E] dark:text-[#F39C82] px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40">STAGE 03</span>
+            <span class="text-[10px] font-mono text-zinc-400">ContextRank</span>
+          </div>
+          <h3 class="font-serif text-lg text-ink font-normal">Transparent Heuristic Ranker</h3>
+          <p class="text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed">
+            Scores candidates with fully inspectable component breakdowns. Applies deterministic penalties to lockfiles, generated code, and unrelated tests.
+          </p>
+        </div>
+
+        <!-- Stage 04 -->
+        <div class="p-4 sm:p-5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2.5 shadow-2xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-mono font-bold text-[#B34E2E] dark:text-[#F39C82] px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40">STAGE 04</span>
+            <span class="text-[10px] font-mono text-zinc-400">BundleComposer</span>
+          </div>
+          <h3 class="font-serif text-lg text-ink font-normal">Submodular Synergy Bundler</h3>
+          <p class="text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed">
+            Assembles bundles with diminishing marginal returns. Maximizes task evidence coverage while suppressing same-file symbol redundancy and dead weight.
+          </p>
+        </div>
+
+        <!-- Stage 05 -->
+        <div class="p-4 sm:p-5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2.5 shadow-2xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-mono font-bold text-[#B34E2E] dark:text-[#F39C82] px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40">STAGE 05</span>
+            <span class="text-[10px] font-mono text-zinc-400">ResolutionRank</span>
+          </div>
+          <h3 class="font-serif text-lg text-ink font-normal">Safe Variable Degradation</h3>
+          <p class="text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed">
+            Protects direct edit targets at FULL/BODY resolution. Degrades surrounding modules into compiler-verified AST skeletons, and non-code files safely.
+          </p>
+        </div>
+
+        <!-- Stage 06 -->
+        <div class="p-4 sm:p-5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2.5 shadow-2xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-mono font-bold text-[#B34E2E] dark:text-[#F39C82] px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40">STAGE 06</span>
+            <span class="text-[10px] font-mono text-zinc-400">BudgetSolver</span>
+          </div>
+          <h3 class="font-serif text-lg text-ink font-normal">Constrained Cost Optimization</h3>
+          <p class="text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed">
+            Strictly enforces token caps (e.g. 16,000 max) and economic cost ceilings (e.g. $0.05/turn) with precise pricing models for Sonnet 3.7 and GPT-4o.
+          </p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1269,22 +1571,26 @@
               <span class="text-xs text-zinc-500">Free forever (MIT)</span>
             </div>
 
-            <ul class="space-y-2.5 text-zinc-600 text-xs border-t border-zinc-200 pt-3.5">
+            <ul class="space-y-2.5 text-zinc-600 dark:text-zinc-400 text-xs border-t border-zinc-200 dark:border-zinc-800 pt-3.5">
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
-                <span>Local AST Pruning (TS, Py, Go, Rust)</span>
+                <span>V2 Context Engine (<code class="font-mono text-[11px] text-zinc-800 dark:text-zinc-200 font-semibold bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">siftr context</code>)</span>
               </li>
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
-                <span>Codebase Auditor (<code class="font-mono text-[11px] text-zinc-800 font-semibold bg-zinc-100 px-1.5 py-0.5 rounded"><span class="text-emerald-500 font-bold select-none bash-dollar-flash mr-0.5">$</span>siftrcode audit</code>)</span>
+                <span>Multi-Channel Candidate Recall (100% Recall@20)</span>
               </li>
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
-                <span>Context Packer (<code class="font-mono text-[11px] text-zinc-800 font-semibold bg-zinc-100 px-1.5 py-0.5 rounded"><span class="text-emerald-500 font-bold select-none bash-dollar-flash mr-0.5">$</span>siftrcode pack</code>)</span>
+                <span>Safe Variable Degradation &amp; Edit Target Protection</span>
               </li>
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
-                <span>Stdio MCP Server integration</span>
+                <span>AST Interface Skeletons (TS, Py, Go, Rust)</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-600 font-bold shrink-0">✔</span>
+                <span>Stdio &amp; HTTP/SSE Model Context Protocol (MCP)</span>
               </li>
             </ul>
           </div>
@@ -1310,22 +1616,22 @@
               <span class="text-xs text-zinc-500">/ seat / mo</span>
             </div>
 
-            <ul class="space-y-2.5 text-zinc-700 text-xs border-t border-[#ECCBBE] dark:border-[#B34E2E]/30 pt-3.5">
+            <ul class="space-y-2.5 text-zinc-700 dark:text-zinc-300 text-xs border-t border-[#ECCBBE] dark:border-[#B34E2E]/30 pt-3.5">
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
                 <span>Everything in Community CLI</span>
               </li>
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
-                <span>TypeSafe Jev Cloud Relevance Gate</span>
+                <span>Team Cross-Repo Semantic Context Cache</span>
               </li>
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
-                <span>Team Cross-Repo Context Cache</span>
+                <span>Exposure-Aware Outcome Telemetry &amp; Analytics</span>
               </li>
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
-                <span>CI/CD Pull Request Context Auditor</span>
+                <span>CI/CD PR Context Gates &amp; Custom Budget Ceilings</span>
               </li>
             </ul>
           </div>
@@ -3396,13 +3702,153 @@ ${renderedRaw}
     }
 
     // ==========================================
+    // V2 Context Optimizer Simulator Engine
+    // ==========================================
+    const simPresets = {
+      webhook: {
+        prompt: "Fix webhook signature verification race condition & idempotency",
+        planId: "cplan_9bf2a481",
+        targetFile: "src/webhooks/signature_verifier.ts",
+        targetReason: "Identified via stack trace match & exact prompt symbols. Retained 100% body to allow editing without hallucination.",
+        targetTokens: "1,420 tok",
+        skeletons: [
+          { file: "src/auth/jwt.ts", desc: "Interface skeleton: 4 types, 2 public methods", tokens: "480 tok", raw: "4,120" },
+          { file: "src/db/session.ts", desc: "Interface skeleton: SessionManager, TransactionClient", tokens: "520 tok", raw: "5,800" },
+          { file: "src/queue/event_bus.ts", desc: "Interface skeleton: EventPublisher, DeadLetterQueue", tokens: "610 tok", raw: "6,400" }
+        ],
+        suppressed: "tests/e2e/legacy.test.ts, scripts/deploy.sh, docs/arch.md, src/frontend/Header.tsx, src/billing/tax.ts, src/reports/export.ts...",
+        rawTokens: "94,200 tok",
+        allocTokens: "3,030 tok",
+        turnCost: "$0.0091",
+        savingsPill: "−96.8% Tokens"
+      },
+      jwt: {
+        prompt: "Refresh expired JWT auth token with sliding session expiration",
+        planId: "cplan_f4a18e02",
+        targetFile: "src/auth/jwt.ts",
+        targetReason: "Direct edit target containing token signing & refresh routines. 100% implementation preserved.",
+        targetTokens: "1,180 tok",
+        skeletons: [
+          { file: "src/db/user_repository.ts", desc: "Interface skeleton: UserRepository, UserRoleEnum", tokens: "410 tok", raw: "4,800" },
+          { file: "src/middleware/auth_guard.ts", desc: "Interface skeleton: AuthGuard, RequestClaims", tokens: "390 tok", raw: "3,200" },
+          { file: "src/config/auth.ts", desc: "Configuration unit: TokenExpiryLimits, KeyRotationConfig", tokens: "220 tok", raw: "1,100" }
+        ],
+        suppressed: "src/payments/stripe.ts, src/webhooks/receiver.ts, tests/integration/orders.test.ts, scripts/seed.sql...",
+        rawTokens: "82,500 tok",
+        allocTokens: "2,200 tok",
+        turnCost: "$0.0066",
+        savingsPill: "−97.3% Tokens"
+      },
+      db_pool: {
+        prompt: "Resolve connection pool deadlock during high-concurrency order checkout",
+        planId: "cplan_d103b77c",
+        targetFile: "src/db/connection_pool.ts",
+        targetReason: "Target deadlock location in transaction acquisition loop. Retained at FULL resolution for precise diff synthesis.",
+        targetTokens: "1,650 tok",
+        skeletons: [
+          { file: "src/orders/checkout_service.ts", desc: "Interface skeleton: CheckoutService, OrderStatus", tokens: "680 tok", raw: "7,800" },
+          { file: "src/db/metrics.ts", desc: "Interface skeleton: PoolMetricsCollector, HealthState", tokens: "310 tok", raw: "2,400" },
+          { file: "src/config/database.ts", desc: "Configuration unit: PoolSizeConstraints, TimeoutLimits", tokens: "190 tok", raw: "950" }
+        ],
+        suppressed: "src/marketing/campaign.ts, src/emails/template.ts, tests/perf/stress.test.ts, docker/compose.yml...",
+        rawTokens: "118,000 tok",
+        allocTokens: "2,830 tok",
+        turnCost: "$0.0085",
+        savingsPill: "−97.6% Tokens"
+      }
+    };
+
+    function switchWorkbenchMode(mode) {
+      const viewOpt = document.getElementById('viewContextOptimizer');
+      const viewSkel = document.getElementById('viewFileSkeleton');
+      const btnBundle = document.getElementById('modeBtnBundle');
+      const btnSkel = document.getElementById('modeBtnSkeleton');
+
+      if (mode === 'bundle') {
+        if (viewOpt) viewOpt.classList.remove('hidden');
+        if (viewSkel) viewSkel.classList.add('hidden');
+        if (btnBundle) {
+          btnBundle.className = 'px-3 py-1.5 rounded font-medium transition cursor-pointer bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-700/80 flex items-center gap-1.5';
+        }
+        if (btnSkel) {
+          btnSkel.className = 'px-3 py-1.5 rounded font-medium transition cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1.5';
+        }
+      } else {
+        if (viewOpt) viewOpt.classList.add('hidden');
+        if (viewSkel) viewSkel.classList.remove('hidden');
+        if (btnSkel) {
+          btnSkel.className = 'px-3 py-1.5 rounded font-medium transition cursor-pointer bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-700/80 flex items-center gap-1.5';
+        }
+        if (btnBundle) {
+          btnBundle.className = 'px-3 py-1.5 rounded font-medium transition cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1.5';
+        }
+      }
+    }
+
+    function loadSimPreset(presetId) {
+      const data = simPresets[presetId];
+      if (!data) return;
+      const input = document.getElementById('v2SimPromptInput');
+      if (input) input.value = data.prompt;
+      applySimData(data);
+    }
+
+    function applySimData(data) {
+      const planBadge = document.getElementById('simPlanIdBadge');
+      if (planBadge) planBadge.innerText = `${data.planId} • ContextPlan`;
+      const targetFile = document.getElementById('simTargetFile');
+      if (targetFile) targetFile.innerText = data.targetFile;
+      const targetReason = document.getElementById('simTargetReason');
+      if (targetReason) targetReason.innerText = data.targetReason;
+      const targetTokens = document.getElementById('simTargetTokens');
+      if (targetTokens) targetTokens.innerText = data.targetTokens;
+
+      const skelList = document.getElementById('simSkeletonFilesList');
+      if (skelList) {
+        skelList.innerHTML = data.skeletons.map(s => `
+          <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between text-[11px]">
+            <div class="truncate">
+              <span class="text-zinc-800 dark:text-zinc-200 font-medium">${s.file}</span>
+              <span class="text-zinc-400 font-sans ml-2">${s.desc}</span>
+            </div>
+            <span class="text-emerald-600 font-bold shrink-0">${s.tokens} <span class="text-zinc-400 font-normal line-through text-[10px]">${s.raw}</span></span>
+          </div>
+        `).join('');
+      }
+
+      const supp = document.getElementById('simSuppressedList');
+      if (supp) supp.innerText = data.suppressed;
+
+      const raw = document.getElementById('simRawTokens');
+      if (raw) raw.innerText = data.rawTokens;
+      const alloc = document.getElementById('simAllocTokens');
+      if (alloc) alloc.innerText = data.allocTokens;
+      const cost = document.getElementById('simTurnCost');
+      if (cost) cost.innerText = data.turnCost;
+      const pill = document.getElementById('simReductionPill');
+      if (pill) pill.innerText = data.savingsPill;
+    }
+
+    function runV2ContextOptimizer() {
+      const input = document.getElementById('v2SimPromptInput');
+      const val = (input?.value || '').toLowerCase();
+      if (val.includes('jwt') || val.includes('auth') || val.includes('token')) {
+        applySimData(simPresets.jwt);
+      } else if (val.includes('pool') || val.includes('deadlock') || val.includes('database') || val.includes('db')) {
+        applySimData(simPresets.db_pool);
+      } else {
+        applySimData(simPresets.webhook);
+      }
+    }
+
+    // ==========================================
     // Agent & Model Interactive Switcher Engine
     // ==========================================
     const agentConfigs = {
       claude: {
         badge: '',
         title: 'Connect to Claude Code',
-        desc: 'Registers SiftrCode\'s Stdio MCP server to prune code before Claude reads it.',
+        desc: 'Registers SiftrCode V2 MCP server to discover, rank, bundle, and safely degrade codebase context.',
         command: 'claude mcp add siftrcode -- npx -y siftrcode mcp',
         ruleHint: '',
         guideUrl: '/claude',
@@ -3411,7 +3857,7 @@ ${renderedRaw}
       cursor: {
         badge: '',
         title: 'Connect to Cursor',
-        desc: 'Adds SiftrCode MCP to Cursor Composer for automated context skeletonization.',
+        desc: 'Integrates SiftrCode V2 MCP with Cursor Composer to discover edit targets and optimize token budgets.',
         command: 'npx siftrcode init --cursor',
         ruleHint: '',
         guideUrl: '/how-it-works',

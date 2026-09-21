@@ -2,6 +2,10 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import { skeletonizeFile } from '../skeleton/dispatcher';
+import { packRepository } from '../core/packer';
+import { auditRepository } from '../core/auditor';
+import { ContextEngine } from '../engine/context_engine';
+import { getResolutionName } from '../context/context_resolution';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
@@ -12,13 +16,127 @@ const WEB_DIR = path.join(__dirname, '..', '..', 'web');
 const SERVER_CARD = {
   serverInfo: {
     name: 'siftrcode',
-    version: '0.1.1',
-    description: 'AST-powered codebase skeletonizer and context pruner for AI coding agents. Slashes agent token waste by up to 90%.'
+    version: '0.2.0',
+    description: 'Outcome-aware context optimization engine for AI coding agents. Discovers, ranks, bundles, and safely degrades repository context to maximize task success under strict token and economic budgets.'
   },
   authentication: {
     required: false
   },
   tools: [
+    {
+      name: 'siftr_context',
+      description: 'Generates an outcome-aware optimized context bundle for an AI coding task. Discovers multi-channel candidates, ranks by evidence and graph proximity, protects edit targets at full resolution, degrades distant dependencies to AST skeletons, and strictly optimizes token and economic cost limits.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          prompt: {
+            type: 'string',
+            description: 'Developer task description, issue summary, or prompt'
+          },
+          directory: {
+            type: 'string',
+            description: 'Target workspace directory path (defaults to current working directory)'
+          },
+          agentModel: {
+            type: 'string',
+            description: 'Target LLM agent model name (e.g. claude-3-5-sonnet, gpt-4o, cursor)'
+          },
+          agentKind: {
+            type: 'string',
+            enum: ['claude_code', 'cursor', 'generic_mcp'],
+            description: 'Target agent environment adapter (defaults to claude_code)'
+          },
+          budgetProfile: {
+            type: 'string',
+            enum: ['LEAN', 'BALANCED', 'THOROUGH'],
+            description: 'Budget optimization profile (defaults to BALANCED)'
+          },
+          tokenBudget: {
+            type: 'number',
+            description: 'Explicit maximum token budget'
+          },
+          maxCostUSD: {
+            type: 'number',
+            description: 'Explicit maximum economic cost ceiling in USD'
+          },
+          includeContext: {
+            type: 'boolean',
+            description: 'Whether to return the compiled context text directly in the response (defaults to true)'
+          },
+          includePlan: {
+            type: 'boolean',
+            description: 'Whether to include the complete ContextPlan metadata object (defaults to true)'
+          }
+        },
+        required: ['prompt']
+      }
+    },
+    {
+      name: 'siftr_optimize',
+      description: 'Alias for siftr_context. Generates an outcome-aware optimized context bundle for an AI coding task.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          prompt: {
+            type: 'string',
+            description: 'Developer task description, issue summary, or prompt'
+          },
+          directory: {
+            type: 'string',
+            description: 'Target workspace directory path (defaults to current working directory)'
+          },
+          agentModel: {
+            type: 'string',
+            description: 'Target LLM agent model name'
+          },
+          agentKind: {
+            type: 'string',
+            enum: ['claude_code', 'cursor', 'generic_mcp'],
+            description: 'Target agent environment adapter'
+          },
+          budgetProfile: {
+            type: 'string',
+            enum: ['LEAN', 'BALANCED', 'THOROUGH'],
+            description: 'Budget optimization profile'
+          },
+          tokenBudget: {
+            type: 'number',
+            description: 'Explicit maximum token budget'
+          },
+          maxCostUSD: {
+            type: 'number',
+            description: 'Explicit maximum economic cost ceiling in USD'
+          },
+          includeContext: {
+            type: 'boolean',
+            description: 'Whether to return the compiled context text directly'
+          }
+        },
+        required: ['prompt']
+      }
+    },
+    {
+      name: 'siftr_rank',
+      description: 'Evaluates and ranks candidate files/symbols for a task prompt with transparent heuristic scores, evidence coverage, graph proximity, and penalty breakdowns.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          prompt: {
+            type: 'string',
+            description: 'Developer task description or issue prompt'
+          },
+          directory: {
+            type: 'string',
+            description: 'Target workspace directory path'
+          },
+          limit: {
+            type: 'number',
+            description: 'Maximum number of ranked candidates to return (defaults to 20)'
+          }
+        },
+        required: ['prompt']
+      }
+    },
     {
       name: 'siftr_skeleton',
       description: 'Returns the pruned AST interface skeleton of source code. Strips function bodies and internal implementation loops while preserving 100% of exported types, signatures, classes, and docstrings. Cuts token usage by 80-95%.',
@@ -38,25 +156,22 @@ const SERVER_CARD = {
             type: 'string',
             description: 'Optional filename (e.g. index.ts, app.py, main.go, lib.rs)'
           }
-        },
-        required: ['code']
+        }
       }
     },
     {
-      name: 'siftr_audit',
-      description: 'Audits source code or repository for token bloat, dead weight, and context waste. Returns potential token and cost savings.',
+      name: 'siftr_batch_skeleton',
+      description: 'Batch extracts interface skeletons for multiple source files in a single turn. Ideal for Claude Code and Cursor when inspecting multiple related files simultaneously.',
       inputSchema: {
         type: 'object',
         properties: {
-          code: {
-            type: 'string',
-            description: 'Code snippet to audit'
-          },
-          language: {
-            type: 'string',
-            description: 'Language of snippet'
+          filePaths: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Array of relative or absolute file paths to skeletonize'
           }
-        }
+        },
+        required: ['filePaths']
       }
     },
     {
@@ -68,6 +183,31 @@ const SERVER_CARD = {
           focus: {
             type: 'string',
             description: 'Task description or focus area'
+          },
+          directory: {
+            type: 'string',
+            description: 'Directory path to scan'
+          }
+        }
+      }
+    },
+    {
+      name: 'siftr_audit',
+      description: 'Audits source code or repository for token bloat, dead weight, and context waste. Returns potential token and cost savings.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          directory: {
+            type: 'string',
+            description: 'Directory path to audit'
+          },
+          code: {
+            type: 'string',
+            description: 'Code snippet to audit'
+          },
+          language: {
+            type: 'string',
+            description: 'Language of snippet'
           }
         }
       }
@@ -81,7 +221,7 @@ function createMcpServerInstance() {
   const mcpServer = new Server(
     {
       name: 'siftrcode',
-      version: '0.1.1'
+      version: '0.2.0'
     },
     {
       capabilities: {
@@ -99,7 +239,121 @@ function createMcpServerInstance() {
   mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
     try {
-      if (name === 'siftr_skeleton' || name === 'siftr_audit') {
+      if (name === 'siftr_context' || name === 'siftr_optimize') {
+        const prompt = String(args?.prompt || '');
+        if (!prompt) {
+          return {
+            content: [{ type: 'text', text: 'Error: "prompt" parameter is required' }],
+            isError: true
+          };
+        }
+
+        const workspaceDir = (args?.directory as string) || process.cwd();
+        const agentModel = (args?.agentModel as string) || undefined;
+        const agentKind = (args?.agentKind as any) || undefined;
+        const budgetProfile = (args?.budgetProfile as any) || undefined;
+        const tokenBudget = typeof args?.tokenBudget === 'number' ? args.tokenBudget : undefined;
+        const maxCostUSD = typeof args?.maxCostUSD === 'number' ? args.maxCostUSD : undefined;
+        const includeContext = args?.includeContext !== false;
+        const includePlan = args?.includePlan !== false;
+
+        const result = await ContextEngine.optimizeWorkspace({
+          workspaceDir,
+          prompt,
+          agentModel,
+          agentKind,
+          budgetProfile,
+          tokenBudget,
+          maxCostUSD,
+        });
+
+        const plan = result.plan;
+        const allocatedUnits = plan.units.filter((u) => u.resolution > 0);
+
+        const responsePayload: any = {
+          planId: plan.planId,
+          taskId: plan.taskId,
+          totalRawTokens: plan.budgetPlan.rawTotalTokens,
+          allocatedTokens: plan.budgetPlan.totalTokens,
+          reductionRatio: `${plan.budgetPlan.savingsPercentage.toFixed(1)}%`,
+          estimatedCostUSD: `$${plan.budgetPlan.estimatedCostUSD.toFixed(4)}`,
+          costSavedUSD: `$${plan.budgetPlan.costSavedUSD.toFixed(4)}`,
+          allocatedUnitsCount: allocatedUnits.length,
+          units: allocatedUnits.map((u) => ({
+            path: u.path,
+            title: u.title,
+            resolution: u.resolution,
+            resolutionName: getResolutionName(u.resolution),
+            allocatedTokens: u.tokenEstimate,
+            reason: u.reason,
+          })),
+        };
+
+        if (includeContext) {
+          responsePayload.context = result.contextString;
+        }
+
+        if (includePlan) {
+          responsePayload.plan = plan;
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(responsePayload, null, 2)
+            }
+          ]
+        };
+      }
+
+      if (name === 'siftr_rank') {
+        const prompt = String(args?.prompt || '');
+        if (!prompt) {
+          return {
+            content: [{ type: 'text', text: 'Error: "prompt" parameter is required' }],
+            isError: true
+          };
+        }
+
+        const workspaceDir = (args?.directory as string) || process.cwd();
+        const limit = typeof args?.limit === 'number' ? args.limit : 20;
+
+        const result = await ContextEngine.rankWorkspace({
+          workspaceDir,
+          prompt,
+          limit,
+        });
+
+        const rankedFormatted = result.ranked.map((rc) => ({
+          rank: rc.rank,
+          contextUnitId: rc.contextUnitId,
+          score: Number(rc.finalScore.toFixed(4)),
+          primaryReason: rc.reasons[0] || 'relevance',
+          allReasons: rc.reasons,
+          scoreBreakdown: rc.scoreBreakdown,
+        }));
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  taskId: result.task.taskId,
+                  totalCandidatesEvaluated: result.totalCandidates,
+                  returnedCount: rankedFormatted.length,
+                  ranked: rankedFormatted,
+                },
+                null,
+                2
+              )
+            }
+          ]
+        };
+      }
+
+      if (name === 'siftr_skeleton') {
         const code = String(args?.code || '');
         const lang = String(args?.language || 'typescript').toLowerCase();
         let ext = '.ts';
@@ -132,16 +386,45 @@ function createMcpServerInstance() {
         };
       }
 
+      if (name === 'siftr_audit') {
+        if (args?.code) {
+          const code = String(args.code);
+          const filename = String(args.filename || 'snippet.ts');
+          const result = skeletonizeFile(code, filename);
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    originalTokens: result.originalTokensEstimate,
+                    skeletonTokens: result.skeletonTokensEstimate,
+                    reduction: `${(result.reductionRatio * 100).toFixed(1)}%`,
+                    estimatedSavedUSD: Number(((result.originalTokensEstimate - result.skeletonTokensEstimate) / 1000000 * 3.0).toFixed(4))
+                  },
+                  null,
+                  2
+                )
+              }
+            ]
+          };
+        }
+        const audit = await auditRepository((args?.directory as string) || process.cwd());
+        return {
+          content: [{ type: 'text', text: JSON.stringify(audit, null, 2) }]
+        };
+      }
+
       if (name === 'siftr_pack') {
+        const result = await packRepository({
+          focus: args?.focus as string | undefined,
+          directory: args?.directory as string | undefined,
+        });
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify({
-                message: 'SiftrCode AST packing completed',
-                reduction: '88.5%',
-                focus: args?.focus || 'general'
-              })
+              text: JSON.stringify(result, null, 2)
             }
           ]
         };
@@ -329,6 +612,136 @@ const server = http.createServer(async (req, res) => {
       } catch (err: any) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: err.message || 'Invalid request' }));
+      }
+    });
+    return;
+  }
+
+  // Live Outcome-Aware Context Optimization API
+  if (pathname === '/api/context' && req.method === 'POST') {
+    let body = '';
+    let aborted = false;
+    req.on('data', chunk => {
+      if (aborted) return;
+      body += chunk;
+      if (body.length > 5 * 1024 * 1024) {
+        aborted = true;
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Payload too large' }));
+        req.destroy();
+      }
+    });
+
+    req.on('end', async () => {
+      if (aborted || res.headersSent) return;
+      try {
+        const payload = JSON.parse(body || '{}');
+        const prompt = String(payload.prompt || '').trim();
+        if (!prompt) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Field "prompt" is required' }));
+          return;
+        }
+
+        const workspaceDir = String(payload.directory || process.cwd());
+        const budgetProfile = payload.budgetProfile as any;
+        const tokenBudget = typeof payload.tokenBudget === 'number' ? payload.tokenBudget : undefined;
+        const maxCostUSD = typeof payload.maxCostUSD === 'number' ? payload.maxCostUSD : undefined;
+        const agentModel = payload.agentModel as string | undefined;
+
+        const result = await ContextEngine.optimizeWorkspace({
+          workspaceDir,
+          prompt,
+          agentModel,
+          budgetProfile,
+          tokenBudget,
+          maxCostUSD,
+        });
+
+        const plan = result.plan;
+        const allocatedUnits = plan.units.filter((u) => u.resolution > 0);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          planId: plan.planId,
+          taskId: plan.taskId,
+          totalRawTokens: plan.budgetPlan.rawTotalTokens,
+          allocatedTokens: plan.budgetPlan.totalTokens,
+          reductionRatio: `${plan.budgetPlan.savingsPercentage.toFixed(1)}%`,
+          estimatedCostUSD: `$${plan.budgetPlan.estimatedCostUSD.toFixed(4)}`,
+          costSavedUSD: `$${plan.budgetPlan.costSavedUSD.toFixed(4)}`,
+          allocatedUnitsCount: allocatedUnits.length,
+          units: allocatedUnits.map((u) => ({
+            path: u.path,
+            title: u.title,
+            resolution: u.resolution,
+            resolutionName: getResolutionName(u.resolution),
+            allocatedTokens: u.tokenEstimate,
+            reason: u.reason,
+          })),
+          context: result.contextString,
+        }));
+      } catch (err: any) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message || 'Optimization failed' }));
+      }
+    });
+    return;
+  }
+
+  // Live Heuristic Candidate Rank API
+  if (pathname === '/api/rank' && req.method === 'POST') {
+    let body = '';
+    let aborted = false;
+    req.on('data', chunk => {
+      if (aborted) return;
+      body += chunk;
+      if (body.length > 5 * 1024 * 1024) {
+        aborted = true;
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Payload too large' }));
+        req.destroy();
+      }
+    });
+
+    req.on('end', async () => {
+      if (aborted || res.headersSent) return;
+      try {
+        const payload = JSON.parse(body || '{}');
+        const prompt = String(payload.prompt || '').trim();
+        if (!prompt) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Field "prompt" is required' }));
+          return;
+        }
+
+        const workspaceDir = String(payload.directory || process.cwd());
+        const limit = typeof payload.limit === 'number' ? payload.limit : 20;
+
+        const result = await ContextEngine.rankWorkspace({
+          workspaceDir,
+          prompt,
+          limit,
+        });
+
+        const rankedFormatted = result.ranked.map((rc) => ({
+          rank: rc.rank,
+          contextUnitId: rc.contextUnitId,
+          score: Number(rc.finalScore.toFixed(4)),
+          primaryReason: rc.reasons[0] || 'relevance',
+          allReasons: rc.reasons,
+          scoreBreakdown: rc.scoreBreakdown,
+        }));
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          taskId: result.task.taskId,
+          totalCandidates: result.totalCandidates,
+          ranked: rankedFormatted,
+        }));
+      } catch (err: any) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message || 'Ranking failed' }));
       }
     });
     return;
