@@ -281,6 +281,19 @@ export class GeminiWorkspaceSandbox {
     allowlistedEnv['https_proxy'] = 'http://127.0.0.1:0';
     allowlistedEnv['all_proxy'] = 'http://127.0.0.1:0';
 
+    // Enhance PATH with workspace binaries if present
+    const nodeBin = path.join(this.workspaceRoot, 'node_modules/.bin');
+    const venvBin = path.join(this.workspaceRoot, 'venv/bin');
+    let enhancedPath = allowlistedEnv['PATH'] || process.env.PATH || '';
+    if (fs.existsSync(nodeBin)) {
+      enhancedPath = `${nodeBin}:${enhancedPath}`;
+    }
+    if (fs.existsSync(venvBin)) {
+      enhancedPath = `${venvBin}:${enhancedPath}`;
+      allowlistedEnv['VIRTUAL_ENV'] = path.join(this.workspaceRoot, 'venv');
+    }
+    allowlistedEnv['PATH'] = enhancedPath;
+
     try {
       const result = spawnSync('sh', ['-c', command], {
         cwd: this.workspaceRoot,

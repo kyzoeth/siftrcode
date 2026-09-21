@@ -1,11 +1,17 @@
 #!/usr/bin/env node
 /**
- * SiftrCode V3 - Verified Coding-Task Paired Evaluator (Phase V3.1G)
+ * SiftrCode V3.1 - Verified Coding-Task Paired Evaluator (Phase 12)
  *
- * Runs paired A/B evaluation (V2 vs V3) on actual coding tasks with verification.
- * Primary Endpoint: Cost Per Verified Successful Task (CPVST).
+ * Evaluates frozen deterministic V2 vs learned ContextRank V3 on the genuinely
+ * fresh, untouched 34-task holdout using real Gemini coding-agent execution:
+ * - Real code context materialized (not just filenames) without target labels
+ * - Randomize A/B ordering (V2 first vs V3 first) with recorded seed
+ * - Sandboxed execution with isolated HOME/TMPDIR, disabled network, command inspection
+ * - Fail-closed official Google GenAI pricing ($0.10/M prompt, $0.40/M candidate/thoughts)
+ * - Tri-state verification (true | false | null)
+ * - Emits experiments/v3-1-final/paired_gemini_report.json
  *
- * Emits final V3.1 Promotion Decision:
+ * Gate Decision:
  * - V3.1_PROMOTION_GATE_PASSED
  * - V3.1_FAILED_TO_BEAT_BASELINE
  * - V3.1_INSUFFICIENT_EVIDENCE
@@ -20,10 +26,19 @@ import {
   PairedTaskEvaluation,
   SingleTaskVerifiedRun,
 } from '../../src/learning/evaluation/verified_task_evaluator';
-import { SiftrBenchManifest } from '../../src/benchmark/siftrbench/episode_schema';
-import { SplitManifest } from '../../src/benchmark/siftrbench/split_manager';
+import { SiftrBenchManifest, SiftrBenchEpisode } from '../../src/benchmark/siftrbench/episode_schema';
+import { RepositoryIndexer } from '../../src/indexing/repository_index';
+import { GraphBuilder } from '../../src/graph/graph_builder';
+import { GitGraphIntelligence } from '../../src/graph/git_graph';
+import { CandidateGenerator } from '../../src/retrieval/candidate_generator';
+import { createTaskContext } from '../../src/context/task_context';
+import { createAgentEnvironment } from '../../src/agents/agent_environment';
+import { FeatureBuilderV3_1 } from '../../src/learning/features/feature_builder_v3_1';
+import { ContextFeaturesV3_1, featuresToVector } from '../../src/learning/features/feature_set_v3_1';
+import { ContextFeaturesV1 } from '../../src/ranking/feature_schema';
+import { ContextRanker } from '../../src/ranking/context_rank';
 import { TreeRanker } from '../../src/learning/models/context_rank/tree_ranker';
-import { SiftrContextDatasetV1, DatasetRowV1 } from '../../src/learning/datasets/siftr_dataset_v1';
+import { ContextUnit } from '../../src/context/context_unit';
 import { resolveGeminiApiKey } from '../../src/learning/evaluation/gemini/gemini_config';
 import { GeminiCodingAgent } from '../../src/learning/evaluation/gemini/gemini_agent';
 
@@ -33,6 +48,8 @@ export interface VerifiedEvalOptions {
   taskFilter?: string;
   useRealAgent?: boolean;
   maxTurns?: number;
+  seed?: number;
+  manifestPath?: string;
 }
 
 function createEphemeralWorkspace(repoId: string, baseCommit: string): { dir: string; cleanup: () => void } {
@@ -44,6 +61,8 @@ function createEphemeralWorkspace(repoId: string, baseCommit: string): { dir: st
     sourceDir = path.join(rootDir, 'benchmarks/express-repo');
   } else if (repoId === 'fastapi') {
     sourceDir = path.join(rootDir, 'benchmarks/fastapi-repo');
+  } else if (repoId === 'commander') {
+    sourceDir = path.join(rootDir, 'benchmarks/commander-repo');
   }
 
   try {
@@ -52,8 +71,8 @@ function createEphemeralWorkspace(repoId: string, baseCommit: string): { dir: st
     throw new Error(`Failed to create worktree for ${repoId} at ${baseCommit}: ${err}`);
   }
 
-  // Symlink dependencies to enable local test runners
-  if (repoId === 'express') {
+  // Symlink dependencies to enable local test runners & modules
+  if (repoId === 'express' || repoId === 'commander') {
     const nm = path.join(sourceDir, 'node_modules');
     if (fs.existsSync(nm)) {
       try {
@@ -74,6 +93,12 @@ function createEphemeralWorkspace(repoId: string, baseCommit: string): { dir: st
         fs.symlinkSync(nm, path.join(tmp, 'node_modules'), 'dir');
       } catch {}
     }
+    const dist = path.join(rootDir, 'dist');
+    if (fs.existsSync(dist)) {
+      try {
+        execSync(`cp -r "${dist}" "${path.join(tmp, 'dist')}"`);
+      } catch {}
+    }
   }
 
   return {
@@ -89,87 +114,152 @@ function createEphemeralWorkspace(repoId: string, baseCommit: string): { dir: st
   };
 }
 
-function formatInitialContext(bundle: DatasetRowV1[]): string {
-  if (bundle.length === 0) return '(No candidate context units retrieved)';
-  return bundle
-    .map((c, idx) => {
-      const p = c.unitPath || c.contextUnitId;
-      const tok = c.features?.tokenEstimate || 100;
-      return `[Candidate ${idx + 1}] File: ${p} | Unit: ${c.contextUnitId} (~${tok} tokens)\nHeuristic Score: ${c.preRankingScore}`;
-    })
-    .join('\n\n');
+/**
+ * Materializes real code context from repository units up to token budget.
+ * Invariant: Never contains ground-truth target annotations or relevance labels.
+ */
+function formatMaterializedContext(
+  repoRoot: string,
+  units: Array<{ path?: string }>,
+  maxTokens: number = 8000
+): string {
+  if (units.length === 0) return '(No initial context retrieved)';
+  const parts: string[] = [];
+  let tokenSum = 0;
+
+  for (const u of units) {
+    if (!u.path) continue;
+    const fullPath = path.join(repoRoot, u.path);
+    if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) continue;
+
+    try {
+      const content = fs.readFileSync(fullPath, 'utf8');
+      const lines = content.split('\n');
+      let truncated = content;
+      if (lines.length > 400) {
+        truncated = lines.slice(0, 400).join('\n') + '\n// ... [truncated for context budget]';
+      }
+      const approxTokens = Math.ceil(truncated.length / 4);
+      if (tokenSum + approxTokens > maxTokens && parts.length > 0) {
+        break;
+      }
+      parts.push(`--- File: ${u.path} ---\n${truncated}`);
+      tokenSum += approxTokens;
+    } catch {}
+  }
+
+  return parts.join('\n\n');
 }
 
-function resolveVerifierCommand(repoId: string, wsDir: string, ep: any): string {
-  if (repoId === 'express') {
-    const mochaBin = path.join(wsDir, 'node_modules/.bin/mocha');
-    if (fs.existsSync(mochaBin)) {
-      const candidates = (ep.expectedTargetPaths || [])
-        .map((tp: string) => {
-          const base = path.basename(tp, path.extname(tp));
-          return path.join('test', `${base}.js`);
-        })
-        .filter((p: string) => fs.existsSync(path.join(wsDir, p)));
-      if (candidates.length > 0) {
-        return `./node_modules/.bin/mocha ${candidates.join(' ')}`;
-      }
-    }
-    return 'npm test';
-  } else if (repoId === 'fastapi') {
-    const pytestBin = path.join(wsDir, 'venv/bin/pytest');
-    if (fs.existsSync(pytestBin)) {
-      const candidates = (ep.expectedTargetPaths || [])
-        .map((tp: string) => {
-          const base = path.basename(tp, path.extname(tp));
-          return path.join('tests', `test_${base}.py`);
-        })
-        .filter((p: string) => fs.existsSync(path.join(wsDir, p)));
-      if (candidates.length > 0) {
-        return `./venv/bin/pytest -W ignore ${candidates.join(' ')}`;
-      }
-      return './venv/bin/pytest -W ignore';
-    }
-    return 'pytest';
+function resolveVerifierCommand(repoId: string, verifierFilename: string): string {
+  if (repoId === 'fastapi') {
+    return `./venv/bin/python ${verifierFilename}`;
   } else if (repoId === 'siftrcode') {
-    return 'npm test';
+    return `npx tsc --skipLibCheck && node ${verifierFilename}`;
   }
-  return ep.verifier?.command || 'npm test';
+  return `node ${verifierFilename}`;
+}
+
+async function runSingleVariant(
+  variant: 'V2_FROZEN' | 'V3_LEARNED',
+  ep: SiftrBenchEpisode,
+  materializedContext: string,
+  contextTokens: number,
+  options: { maxTurns?: number; executeRealAgent: boolean }
+): Promise<SingleTaskVerifiedRun> {
+  const rootDir = path.resolve(__dirname, '../..');
+
+  if (!options.executeRealAgent) {
+    return {
+      taskId: ep.taskId,
+      variant,
+      runValidity: 'VERIFIER_UNAVAILABLE',
+      verifiedSuccess: null,
+      wallClockLatencyMs: 0,
+      contextTokens,
+      agentInputTokens: 0,
+      agentOutputTokens: 0,
+      providerCostUSD: 0,
+      costStatus: 'VALID',
+      toolCalls: 0,
+      trajectoryLength: 0,
+      verifierResult: 'UNAVAILABLE (missing credentials)',
+    };
+  }
+
+  const verifierFilename = ep.verifier?.metadata?.verifierFilename;
+  if (!verifierFilename) {
+    throw new Error(`Verifier filename missing in episode metadata: ${ep.taskId}`);
+  }
+
+  const ws = createEphemeralWorkspace(ep.repositoryId, ep.baseCommit);
+
+  try {
+    // Copy the verifier file into the ephemeral workspace
+    const verifierSrc = path.join(rootDir, 'benchmarks/verifiers/final_holdout', verifierFilename);
+    const verifierDst = path.join(ws.dir, verifierFilename);
+    if (!fs.existsSync(verifierSrc)) {
+      throw new Error(`Verifier file missing at ${verifierSrc}`);
+    }
+    fs.copyFileSync(verifierSrc, verifierDst);
+
+    const verifierCmd = resolveVerifierCommand(ep.repositoryId, verifierFilename);
+
+    const agent = new GeminiCodingAgent(ws.dir, {
+      configOverrides: { model: 'gemini-3.6-flash', maxTurns: options.maxTurns ?? 5 },
+    });
+
+    const agentRes = await agent.runTask(ep.taskPrompt, materializedContext, {
+      taskVerifierCommand: verifierCmd,
+    });
+
+    return {
+      taskId: ep.taskId,
+      variant,
+      runValidity: agentRes.runValidity,
+      verifiedSuccess: agentRes.verifiedSuccess,
+      wallClockLatencyMs: agentRes.wallClockLatencyMs,
+      contextTokens,
+      agentInputTokens: agentRes.totalPromptTokens,
+      agentOutputTokens: agentRes.totalCandidateTokens + agentRes.totalThoughtsTokens,
+      providerCostUSD: agentRes.providerCostUSD,
+      costStatus: agentRes.costStatus,
+      toolCalls: agentRes.toolCallsCount,
+      trajectoryLength: agentRes.turns,
+      verifierResult: agentRes.verifierOutput?.slice(0, 500) || (agentRes.verifiedSuccess ? 'PASS' : 'FAIL'),
+    };
+  } finally {
+    ws.cleanup();
+  }
 }
 
 export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
   const rootDir = path.resolve(__dirname, '../..');
   const dataDir = path.join(rootDir, 'data');
-  const resultsDir = path.join(rootDir, 'experiments/results/v3-verified-tasks');
-  fs.mkdirSync(resultsDir, { recursive: true });
+  const finalExpDir = path.join(rootDir, 'experiments/v3-1-final');
+  const legacyResultsDir = path.join(rootDir, 'experiments/results/v3-verified-tasks');
+  fs.mkdirSync(finalExpDir, { recursive: true });
+  fs.mkdirSync(legacyResultsDir, { recursive: true });
 
-  console.log('⚖️  [Verified Task Evaluator] Initializing Paired A/B Evaluation...');
-  const splitPath = path.join(dataDir, 'siftrbench_v1_splits.json');
-  const manifestPath = path.join(dataDir, 'siftrbench_v1_manifest.json');
-  const datasetPath = path.join(dataDir, 'siftr_dataset_v1.json');
+  const manifestPath = options.manifestPath || path.join(dataDir, 'siftrbench_v3_1_final_holdout.json');
   const gbdtArtifactPath = path.join(dataDir, 'models/gbdt_pairwise_v1.json');
 
-  if (
-    !fs.existsSync(splitPath) ||
-    !fs.existsSync(manifestPath) ||
-    !fs.existsSync(gbdtArtifactPath) ||
-    !fs.existsSync(datasetPath)
-  ) {
-    throw new Error('Required manifests, datasets, or model artifacts missing.');
+  console.log('⚖️  [Verified Task Evaluator] Initializing Paired A/B Evaluation (V2 vs V3)...');
+  console.log(`   Manifest: ${path.basename(manifestPath)}`);
+  console.log(`   Model:    gemini-3.6-flash`);
+
+  if (!fs.existsSync(manifestPath) || !fs.existsSync(gbdtArtifactPath)) {
+    throw new Error('Required holdout manifest or model artifacts missing.');
   }
 
   const manifest: SiftrBenchManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-  const splitManifest: SplitManifest = JSON.parse(fs.readFileSync(splitPath, 'utf8'));
-  const dataset: SiftrContextDatasetV1 = JSON.parse(fs.readFileSync(datasetPath, 'utf8'));
   const gbdtArtifact = JSON.parse(fs.readFileSync(gbdtArtifactPath, 'utf8'));
-  const ranker = TreeRanker.fromArtifact(gbdtArtifact);
+  const v3TreeRanker = TreeRanker.fromArtifact(gbdtArtifact);
+  const v2DeterministicRanker = new ContextRanker();
 
-  const testAssignments = splitManifest.assignments.filter((a) => a.split === 'test');
-  let testEpisodes = manifest.episodes.filter((e) =>
-    testAssignments.some((a) => a.episodeId === e.episodeId)
-  );
-
+  let episodes = manifest.episodes;
   if (options.taskFilter) {
-    testEpisodes = testEpisodes.filter(
+    episodes = episodes.filter(
       (e) =>
         e.episodeId.includes(options.taskFilter!) ||
         e.repositoryId.includes(options.taskFilter!) ||
@@ -178,20 +268,11 @@ export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
   }
 
   if (options.maxTasks && options.maxTasks > 0) {
-    testEpisodes = testEpisodes.slice(0, options.maxTasks);
+    episodes = episodes.slice(0, options.maxTasks);
   }
-
-  const rowsByEpisode = new Map<string, DatasetRowV1[]>();
-  for (const r of dataset.rows) {
-    if (!rowsByEpisode.has(r.episodeId)) rowsByEpisode.set(r.episodeId, []);
-    rowsByEpisode.get(r.episodeId)!.push(r);
-  }
-
-  console.log(`   Evaluating ${testEpisodes.length} paired held-out tasks across repositories...`);
 
   const geminiApiKey = resolveGeminiApiKey();
-  const hasAnthropicOrOpenAI = !!(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY);
-  const hasCredentials = hasAnthropicOrOpenAI || !!geminiApiKey;
+  const hasCredentials = !!geminiApiKey;
   const executeRealAgent = options.useRealAgent ?? hasCredentials;
 
   if (!hasCredentials) {
@@ -203,176 +284,196 @@ export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
     console.log(`✔ Real coding-agent credentials active (Provider: Google Gemini / gemini-3.6-flash).`);
   }
 
+  // 1. Index repositories for candidate retrieval and feature extraction
+  console.log('\n📚 Indexing benchmark repositories...');
+  const repoPaths: Record<string, string> = {
+    express: path.join(rootDir, 'benchmarks/express-repo'),
+    fastapi: path.join(rootDir, 'benchmarks/fastapi-repo'),
+    commander: path.join(rootDir, 'benchmarks/commander-repo'),
+    siftrcode: rootDir,
+  };
+
+  const repoFilters: Record<string, any> = {
+    express: {},
+    fastapi: { includePatterns: ['fastapi/**'], excludePatterns: ['**/tests/**', '**/docs/**'] },
+    commander: { includePatterns: ['lib/**'], excludePatterns: ['**/tests/**'] },
+    siftrcode: { includePatterns: ['src/**'], excludePatterns: ['**/node_modules/**', '**/dist/**', '**/benchmarks/**'] },
+  };
+
+  const indexes: Record<string, { units: ContextUnit[]; graph: any; gitInt?: GitGraphIntelligence }> = {};
+  for (const [repoKey, rPath] of Object.entries(repoPaths)) {
+    if (fs.existsSync(rPath)) {
+      process.stdout.write(`   Indexing ${repoKey}... `);
+      const indexer = new RepositoryIndexer();
+      const idx = await indexer.indexRepository(rPath, repoFilters[repoKey]);
+      const gb = new GraphBuilder();
+      const graph = gb.buildGraph(idx.units, { repoDir: rPath });
+      let gitInt: GitGraphIntelligence | undefined;
+      try {
+        gitInt = new GitGraphIntelligence({ repoDir: rPath });
+      } catch {}
+      indexes[repoKey] = { units: idx.units, graph, gitInt };
+      console.log(`done (${idx.units.length} units)`);
+    }
+  }
+
+  // 2. Evaluate all paired tasks
+  const candGen = new CandidateGenerator();
   const pairedResults: PairedTaskEvaluation[] = [];
-  let v2TargetCoveredCount = 0;
-  let v3TargetCoveredCount = 0;
+  const orderSeed = options.seed ?? 42;
+  console.log(`\n🎲 A/B Randomization Seed: ${orderSeed}`);
+  console.log(`🔬 Executing ${episodes.length} paired tasks with GeminiCodingAgent...`);
 
-  for (let i = 0; i < testEpisodes.length; i++) {
-    const ep = testEpisodes[i];
-    const rows = rowsByEpisode.get(ep.episodeId) || [];
-    const expectedTargetPaths = ep.expectedTargetPaths || [];
-    console.log(`\n▶ [Task ${i + 1}/${testEpisodes.length}] ${ep.episodeId} (${ep.repositoryId})`);
-    console.log(`   Prompt: "${ep.taskPrompt.slice(0, 80)}..."`);
+  for (let i = 0; i < episodes.length; i++) {
+    const ep = episodes[i];
+    const repoKey = ep.repositoryId;
+    const repoData = indexes[repoKey];
+    if (!repoData) {
+      throw new Error(`Repository index not available for: ${repoKey}`);
+    }
 
-    // --- V2 Frozen Deterministic Run ---
-    const t0 = Date.now();
-    const v2Candidates = rows.slice().sort((a, b) => {
-      if (b.preRankingScore !== a.preRankingScore) return b.preRankingScore - a.preRankingScore;
-      return a.contextUnitId.localeCompare(b.contextUnitId);
+    console.log(`\n▶ [Task ${i + 1}/${episodes.length}] ${ep.taskId} (${ep.repositoryId})`);
+    console.log(`   Prompt: "${ep.taskPrompt.slice(0, 85)}..."`);
+
+    // A. Generate Candidates & Features
+    const taskCtx = createTaskContext({
+      taskId: ep.taskId,
+      primaryPrompt: ep.taskPrompt,
+      workspaceSnapshotId: ep.workspaceSnapshotId,
+      agentEnvironment: createAgentEnvironment({
+        agentProvider: 'google',
+        model: 'gemini-3.6-flash',
+        harnessVersion: 'v3.1.0',
+      }),
     });
 
-    // Assemble V2 context bundle under 8,000 token limit
+    const candidates = candGen.generateCandidates(
+      ep.taskPrompt,
+      repoData.units,
+      {
+        maxCandidates: 50,
+        graph: repoData.graph,
+        gitIntelligence: repoData.gitInt,
+      }
+    );
+
+    const unitMap = new Map<string, ContextUnit>();
+    for (const u of repoData.units) unitMap.set(u.id, u);
+
+    const validCandidatePairs: Array<{ cand: any; unit: ContextUnit; features: ContextFeaturesV3_1 }> = [];
+    for (const c of candidates) {
+      const u = unitMap.get(c.contextUnitId);
+      if (!u) continue;
+      const f = FeatureBuilderV3_1.buildFeatures({
+        candidate: c,
+        unit: u,
+        task: taskCtx,
+        graph: repoData.graph,
+        gitIntelligence: repoData.gitInt,
+      });
+      validCandidatePairs.push({ cand: c, unit: u, features: f });
+    }
+
+    // B. V2 Frozen Deterministic Ranking
+    const v1Features: ContextFeaturesV1[] = validCandidatePairs.map(({ features: f }) => ({
+      schemaVersion: 'v1',
+      contextUnitId: f.contextUnitId,
+      unitKind: f.unitKind,
+      fileExtension: f.fileExtension,
+      tokenEstimate: f.tokenEstimate,
+      pathDepth: f.pathDepth,
+      inTestDirectory: f.inTestDirectory,
+      inDocsDirectory: f.inDocsDirectory,
+      lexicalMatchScore: f.lexicalMatchScore,
+      exactNameMatch: f.exactNameMatch,
+      graphDistance: f.graphDistance,
+      coChangeFrequency: f.coChangeFrequency,
+      heuristicScore: f.heuristicScore,
+    }));
+
+    const v2Ranked = v2DeterministicRanker.rank(v1Features);
+    const v2Units: ContextUnit[] = [];
     let v2Tokens = 0;
-    const v2Bundle: DatasetRowV1[] = [];
-    for (const c of v2Candidates) {
-      const tok = c.features.tokenEstimate || 100;
+    for (const r of v2Ranked) {
+      const pair = validCandidatePairs.find((p) => p.cand.contextUnitId === r.contextUnitId);
+      if (!pair) continue;
+      const tok = r.features.tokenEstimate || 100;
       if (v2Tokens + tok <= 8000) {
-        v2Bundle.push(c);
+        v2Units.push(pair.unit);
         v2Tokens += tok;
       }
     }
-    const v2Latency = Date.now() - t0;
 
-    // Diagnostic Offline Metric: Target bundle presence
-    const v2TargetFound =
-      expectedTargetPaths.length > 0 &&
-      expectedTargetPaths.every((tp) =>
-        v2Bundle.some((c) => {
-          const p = (c.unitPath || '').toLowerCase();
-          return p.endsWith(tp.toLowerCase()) || p.includes(tp.toLowerCase());
-        })
-      );
-    if (v2TargetFound) v2TargetCoveredCount++;
-
-    // --- V3 Learned ContextRank Run ---
-    const t1 = Date.now();
-    const v3Candidates = rows.slice().map((r) => {
-      const score = ranker.scoreVector(r.featureVector) * 10 + r.preRankingScore * 0.1;
-      return { row: r, score };
+    // C. V3 Learned GBDT Ranking
+    const v3Scored = validCandidatePairs.map(({ cand, unit, features: f }) => {
+      const vec = featuresToVector(f, true);
+      const rawScore = v3TreeRanker.scoreVector(vec);
+      const score = rawScore * 10.0 + f.heuristicScore * 0.1;
+      return {
+        unit,
+        score,
+        tokenEstimate: f.tokenEstimate || 100,
+      };
     });
-    v3Candidates.sort((a, b) => {
+
+    v3Scored.sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
-      return a.row.contextUnitId.localeCompare(b.row.contextUnitId);
+      return a.unit.id.localeCompare(b.unit.id);
     });
 
+    const v3Units: ContextUnit[] = [];
     let v3Tokens = 0;
-    const v3Bundle: DatasetRowV1[] = [];
-    for (const c of v3Candidates) {
-      const tok = c.row.features.tokenEstimate || 100;
-      if (v3Tokens + tok <= 8000) {
-        v3Bundle.push(c.row);
-        v3Tokens += tok;
+    for (const s of v3Scored) {
+      if (v3Tokens + s.tokenEstimate <= 8000) {
+        v3Units.push(s.unit);
+        v3Tokens += s.tokenEstimate;
       }
     }
-    const v3Latency = Date.now() - t1;
 
-    // Diagnostic Offline Metric: Target bundle presence
-    const v3TargetFound =
-      expectedTargetPaths.length > 0 &&
-      expectedTargetPaths.every((tp) =>
-        v3Bundle.some((c) => {
-          const p = (c.unitPath || '').toLowerCase();
-          return p.endsWith(tp.toLowerCase()) || p.includes(tp.toLowerCase());
-        })
-      );
-    if (v3TargetFound) v3TargetCoveredCount++;
+    // Materialize real code content without target labels
+    const repoDir = repoPaths[repoKey];
+    const v2Context = formatMaterializedContext(repoDir, v2Units, 8000);
+    const v3Context = formatMaterializedContext(repoDir, v3Units, 8000);
 
-    let v2Run: SingleTaskVerifiedRun;
-    let v3Run: SingleTaskVerifiedRun;
+    // Randomize A/B order
+    const runV2First = ((orderSeed * 37 + i * 17 + 101) % 2 === 0);
+    const order: Array<'V2_FROZEN' | 'V3_LEARNED'> = runV2First
+      ? ['V2_FROZEN', 'V3_LEARNED']
+      : ['V3_LEARNED', 'V2_FROZEN'];
 
-    if (executeRealAgent) {
-      const v2InitialContext = formatInitialContext(v2Bundle);
-      const v3InitialContext = formatInitialContext(v3Bundle);
+    console.log(`   Order: [ ${order.join(' -> ')} ]`);
 
-      // 1. Execute V2 Variant
-      process.stdout.write('   Executing Variant V2_FROZEN...');
-      const v2Ws = createEphemeralWorkspace(ep.repositoryId, ep.baseCommit);
-      const v2VerifierCmd = resolveVerifierCommand(ep.repositoryId, v2Ws.dir, ep);
-      let v2AgentRes: any;
-      try {
-        const agentV2 = new GeminiCodingAgent(v2Ws.dir, {
-          configOverrides: { model: 'gemini-3.6-flash', maxTurns: options.maxTurns ?? 5 },
-        });
-        v2AgentRes = await agentV2.runTask(ep.taskPrompt, v2InitialContext, {
-          taskVerifierCommand: v2VerifierCmd,
-        });
-      } finally {
-        v2Ws.cleanup();
+    let v2Run: SingleTaskVerifiedRun | null = null;
+    let v3Run: SingleTaskVerifiedRun | null = null;
+
+    for (const variant of order) {
+      if (variant === 'V2_FROZEN') {
+        process.stdout.write(`   Executing ${variant}... `);
+        v2Run = await runSingleVariant(
+          'V2_FROZEN',
+          ep,
+          v2Context,
+          v2Tokens,
+          { maxTurns: options.maxTurns, executeRealAgent }
+        );
+        const resLabel = v2Run.verifiedSuccess === true ? 'PASS 🟢' : v2Run.verifiedSuccess === false ? 'FAIL 🔴' : 'NULL ⚪';
+        console.log(`Done (${resLabel}, $${(v2Run.providerCostUSD ?? 0).toFixed(5)}, ${v2Run.wallClockLatencyMs}ms)`);
+      } else {
+        process.stdout.write(`   Executing ${variant}... `);
+        v3Run = await runSingleVariant(
+          'V3_LEARNED',
+          ep,
+          v3Context,
+          v3Tokens,
+          { maxTurns: options.maxTurns, executeRealAgent }
+        );
+        const resLabel = v3Run.verifiedSuccess === true ? 'PASS 🟢' : v3Run.verifiedSuccess === false ? 'FAIL 🔴' : 'NULL ⚪';
+        console.log(`Done (${resLabel}, $${(v3Run.providerCostUSD ?? 0).toFixed(5)}, ${v3Run.wallClockLatencyMs}ms)`);
       }
-      process.stdout.write(` Done (${v2AgentRes.verifiedSuccess ? 'PASS' : 'FAIL'}, $${v2AgentRes.providerCostUSD.toFixed(5)})\n`);
+    }
 
-      v2Run = {
-        taskId: ep.taskId,
-        variant: 'V2_FROZEN',
-        verifiedSuccess: v2AgentRes.verifiedSuccess,
-        wallClockLatencyMs: v2AgentRes.wallClockLatencyMs,
-        contextTokens: v2Tokens,
-        agentInputTokens: v2AgentRes.totalPromptTokens,
-        agentOutputTokens: v2AgentRes.totalCandidateTokens + v2AgentRes.totalThoughtsTokens,
-        providerCostUSD: v2AgentRes.providerCostUSD,
-        toolCalls: v2AgentRes.toolCallsCount,
-        trajectoryLength: v2AgentRes.turns,
-        verifierResult: v2AgentRes.verifierOutput?.slice(0, 500) || (v2AgentRes.verifiedSuccess ? 'PASS' : 'FAIL'),
-      };
-
-      // 2. Execute V3 Variant
-      process.stdout.write('   Executing Variant V3_LEARNED...');
-      const v3Ws = createEphemeralWorkspace(ep.repositoryId, ep.baseCommit);
-      const v3VerifierCmd = resolveVerifierCommand(ep.repositoryId, v3Ws.dir, ep);
-      let v3AgentRes: any;
-      try {
-        const agentV3 = new GeminiCodingAgent(v3Ws.dir, {
-          configOverrides: { model: 'gemini-3.6-flash', maxTurns: options.maxTurns ?? 5 },
-        });
-        v3AgentRes = await agentV3.runTask(ep.taskPrompt, v3InitialContext, {
-          taskVerifierCommand: v3VerifierCmd,
-        });
-      } finally {
-        v3Ws.cleanup();
-      }
-      process.stdout.write(` Done (${v3AgentRes.verifiedSuccess ? 'PASS' : 'FAIL'}, $${v3AgentRes.providerCostUSD.toFixed(5)})\n`);
-
-      v3Run = {
-        taskId: ep.taskId,
-        variant: 'V3_LEARNED',
-        verifiedSuccess: v3AgentRes.verifiedSuccess,
-        wallClockLatencyMs: v3AgentRes.wallClockLatencyMs,
-        contextTokens: v3Tokens,
-        agentInputTokens: v3AgentRes.totalPromptTokens,
-        agentOutputTokens: v3AgentRes.totalCandidateTokens + v3AgentRes.totalThoughtsTokens,
-        providerCostUSD: v3AgentRes.providerCostUSD,
-        toolCalls: v3AgentRes.toolCallsCount,
-        trajectoryLength: v3AgentRes.turns,
-        verifierResult: v3AgentRes.verifierOutput?.slice(0, 500) || (v3AgentRes.verifiedSuccess ? 'PASS' : 'FAIL'),
-      };
-    } else {
-      v2Run = {
-        taskId: ep.taskId,
-        variant: 'V2_FROZEN',
-        verifiedSuccess: null,
-        wallClockLatencyMs: v2Latency,
-        contextTokens: v2Tokens,
-        agentInputTokens: 0,
-        agentOutputTokens: 0,
-        providerCostUSD: 0,
-        toolCalls: 0,
-        trajectoryLength: 0,
-        verifierResult: 'UNAVAILABLE (missing credentials)',
-      };
-
-      v3Run = {
-        taskId: ep.taskId,
-        variant: 'V3_LEARNED',
-        verifiedSuccess: null,
-        wallClockLatencyMs: v3Latency,
-        contextTokens: v3Tokens,
-        agentInputTokens: 0,
-        agentOutputTokens: 0,
-        providerCostUSD: 0,
-        toolCalls: 0,
-        trajectoryLength: 0,
-        verifierResult: 'UNAVAILABLE (missing credentials)',
-      };
+    if (!v2Run || !v3Run) {
+      throw new Error(`Variant run failure for task: ${ep.taskId}`);
     }
 
     let successDelta = 0;
@@ -386,58 +487,58 @@ export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
       v3: v3Run,
       successDelta,
       tokenDelta: v3Tokens - v2Tokens,
-      costDeltaUSD: Number((v3Run.providerCostUSD - v2Run.providerCostUSD).toFixed(5)),
+      costDeltaUSD: Number(((v3Run.providerCostUSD || 0) - (v2Run.providerCostUSD || 0)).toFixed(5)),
       latencyDeltaMs: v3Run.wallClockLatencyMs - v2Run.wallClockLatencyMs,
     });
   }
 
-  const v2CoverageRate = Number((v2TargetCoveredCount / testEpisodes.length).toFixed(4));
-  const v3CoverageRate = Number((v3TargetCoveredCount / testEpisodes.length).toFixed(4));
-
-  const proxyOfflineMetrics = {
-    totalTasks: testEpisodes.length,
-    v2TargetBundleSuccessRate: v2CoverageRate,
-    v3TargetBundleSuccessRate: v3CoverageRate,
-    delta: Number((v3CoverageRate - v2CoverageRate).toFixed(4)),
-    modeledCostPerTargetCoveredTaskV2USD: Number((v2CoverageRate > 0 ? 0.035 / v2CoverageRate : 0).toFixed(4)),
-    modeledCostPerTargetCoveredTaskV3USD: Number((v3CoverageRate > 0 ? 0.032 / v3CoverageRate : 0).toFixed(4)),
-  };
-
+  // 3. Final Report & Decision
   const report = VerifiedTaskEvaluator.evaluatePairedExperiment(pairedResults, {
     minTasksForPromotion: options.minTasks ?? 30,
     minSuccessDelta: 0.0,
     blockedReason: !hasCredentials
-      ? 'REAL_AGENT_EVALUATION_BLOCKED: Missing real agent credentials (GEMINI_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY).'
+      ? 'REAL_AGENT_EVALUATION_BLOCKED: Missing real agent credentials (GEMINI_API_KEY).'
       : undefined,
-    missingDependencies: !hasCredentials ? ['GEMINI_API_KEY', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY'] : undefined,
-    proxyOfflineMetrics,
+    missingDependencies: !hasCredentials ? ['GEMINI_API_KEY'] : undefined,
   });
 
-  console.log('\n🏁 Paired Verified Coding-Task Evaluation Report:');
+  const fullReport = {
+    ...report,
+    meta: {
+      model: 'gemini-3.6-flash',
+      randomizationSeed: orderSeed,
+      totalHoldoutTasks: episodes.length,
+      evaluatedAt: new Date().toISOString(),
+    },
+  };
+
+  const finalPath = path.join(finalExpDir, 'paired_gemini_report.json');
+  const legacyPath = path.join(legacyResultsDir, 'paired_verified_eval_report.json');
+
+  fs.writeFileSync(finalPath, JSON.stringify(fullReport, null, 2), 'utf8');
+  fs.writeFileSync(legacyPath, JSON.stringify(fullReport, null, 2), 'utf8');
+
+  console.log('\n🏁 ================= FINAL PAIRED GEMINI EVALUATION REPORT =================');
   console.log(`   Gate Decision:            [ ${report.gateDecision} ]`);
   console.log(`   Decision Rationale:       ${report.decisionRationale}`);
   if (report.blockReason) {
     console.log(`   Blocked Reason:           ${report.blockReason}`);
   }
-  console.log(`   V2 Verified Success Rate: ${(report.v2Summary.successRate * 100).toFixed(1)}% (${report.v2Summary.successfulTasks}/${report.v2Summary.evaluatedTasks})`);
-  console.log(`   V3 Verified Success Rate: ${(report.v3Summary.successRate * 100).toFixed(1)}% (${report.v3Summary.successfulTasks}/${report.v3Summary.evaluatedTasks})`);
-  console.log(`   V2 Mean Context Tokens:   ${report.v2Summary.meanContextTokensPerTask}`);
-  console.log(`   V3 Mean Context Tokens:   ${report.v3Summary.meanContextTokensPerTask}`);
-  console.log(`   V2 Total Provider Cost:   $${report.v2Summary.totalCostUSD.toFixed(4)}`);
-  console.log(`   V3 Total Provider Cost:   $${report.v3Summary.totalCostUSD.toFixed(4)}`);
-  console.log(`   V2 CPVST:                 ${report.v2Summary.cpvstUSD ? '$' + report.v2Summary.cpvstUSD.toFixed(4) : 'null'}`);
-  console.log(`   V3 CPVST:                 ${report.v3Summary.cpvstUSD ? '$' + report.v3Summary.cpvstUSD.toFixed(4) : 'null'}`);
+  console.log('   -------------------------------------------------------------------------');
+  console.log(`   Metric                    Frozen V2          Learned V3          Delta`);
+  console.log(`   Verified Success Rate:    ${(report.v2Summary.successRate * 100).toFixed(1)}% (${report.v2Summary.successfulTasks}/${report.v2Summary.evaluatedTasks})       ${(report.v3Summary.successRate * 100).toFixed(1)}% (${report.v3Summary.successfulTasks}/${report.v3Summary.evaluatedTasks})       ${report.pairedDeltas.successRateDelta >= 0 ? '+' : ''}${(report.pairedDeltas.successRateDelta * 100).toFixed(1)}%`);
+  console.log(`   Mean Context Tokens:      ${report.v2Summary.meanContextTokensPerTask}              ${report.v3Summary.meanContextTokensPerTask}              ${report.pairedDeltas.meanTokenDelta >= 0 ? '+' : ''}${report.pairedDeltas.meanTokenDelta}`);
+  console.log(`   Total Provider Cost:      $${report.v2Summary.totalCostUSD.toFixed(4)}            $${report.v3Summary.totalCostUSD.toFixed(4)}            ${report.pairedDeltas.meanCostDeltaUSD >= 0 ? '+' : ''}$${(report.v3Summary.totalCostUSD - report.v2Summary.totalCostUSD).toFixed(4)}`);
+  console.log(`   CPVST:                    ${report.v2Summary.cpvstUSD ? '$' + report.v2Summary.cpvstUSD.toFixed(4) : 'null'}            ${report.v3Summary.cpvstUSD ? '$' + report.v3Summary.cpvstUSD.toFixed(4) : 'null'}            ${report.pairedDeltas.cpvstDeltaUSD !== null ? (report.pairedDeltas.cpvstDeltaUSD >= 0 ? '+' : '') + '$' + report.pairedDeltas.cpvstDeltaUSD.toFixed(4) : 'N/A'}`);
+  console.log('   -------------------------------------------------------------------------');
+  console.log(`   Task Outcomes:            ${report.pairedDeltas.v3Wins} V3 wins, ${report.pairedDeltas.ties} ties, ${report.pairedDeltas.v2Wins} V2 wins`);
+  if (report.pairedDeltas.mcNemar) {
+    console.log(`   McNemar Exact Test:       ${report.pairedDeltas.mcNemar.summary}`);
+  }
+  console.log('   =========================================================================');
+  console.log(`✔ Report persisted to: ${finalPath}`);
 
-  console.log('\n📈 Diagnostic Offline Target-Bundle Metrics:');
-  console.log(`   V2 Target Bundle Coverage: ${(proxyOfflineMetrics.v2TargetBundleSuccessRate * 100).toFixed(1)}% (${v2TargetCoveredCount}/${testEpisodes.length})`);
-  console.log(`   V3 Target Bundle Coverage: ${(proxyOfflineMetrics.v3TargetBundleSuccessRate * 100).toFixed(1)}% (${v3TargetCoveredCount}/${testEpisodes.length})`);
-  console.log(`   Target Bundle Delta:       ${proxyOfflineMetrics.delta >= 0 ? '+' : ''}${(proxyOfflineMetrics.delta * 100).toFixed(1)}%`);
-
-  const reportPath = path.join(resultsDir, 'paired_verified_eval_report.json');
-  fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), 'utf8');
-  console.log(`\n✔ Report persisted to: ${reportPath}`);
-
-  return report;
+  return fullReport;
 }
 
 if (require.main === module) {
@@ -448,6 +549,8 @@ if (require.main === module) {
     if (a.startsWith('--filter=')) opts.taskFilter = a.split('=')[1];
     if (a.startsWith('--min-tasks=')) opts.minTasks = parseInt(a.split('=')[1], 10);
     if (a.startsWith('--max-turns=')) opts.maxTurns = parseInt(a.split('=')[1], 10);
+    if (a.startsWith('--seed=')) opts.seed = parseInt(a.split('=')[1], 10);
+    if (a.startsWith('--manifest=')) opts.manifestPath = a.split('=')[1];
   }
   runVerifiedTaskEval(opts).catch((err) => {
     console.error('Fatal error during verified task eval:', err);
