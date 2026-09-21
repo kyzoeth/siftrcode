@@ -704,6 +704,14 @@ export class SqliteStore {
     return rows.map((r) => JSON.parse(r.raw_json));
   }
 
+  public updatePlanActualProviderTokens(planId: string, actualTokens: number): void {
+    const existing = this.getContextPlan(planId);
+    if (!existing) return;
+    existing.actualProviderInputTokens = actualTokens;
+    const stmt = this.db.prepare('UPDATE context_plans SET raw_json = ? WHERE plan_id = ?');
+    stmt.run(JSON.stringify(existing), planId);
+  }
+
   // ==========================================
   // CandidateObservation Operations (Append-Only)
   // ==========================================

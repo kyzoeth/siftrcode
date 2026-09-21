@@ -20,6 +20,10 @@ export interface OutcomeEvidence {
   userAccepted?: boolean;
   agentReportedSuccess?: boolean;
   humanReview?: 'PASS' | 'FAIL' | 'UNKNOWN';
+  actualProviderInputTokens?: number;
+  actualProviderOutputTokens?: number;
+  costUSD?: number;
+  wallTimeMs?: number;
   verifiedSuccess: true | false | null;
   confidence: number;
   recordedAt: string;

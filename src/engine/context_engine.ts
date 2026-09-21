@@ -35,6 +35,7 @@ import { ContextUnitMaterializer, DefaultContextUnitMaterializer } from '../mate
 import { WorkspaceSnapshot, createWorkspaceSnapshot, WorkspaceChangedError, isWorkspaceChangedError } from '../workspace/workspace_snapshot';
 import { DefaultWorkspaceSourceReader } from '../workspace/workspace_source_reader';
 import { TokenCostEstimator, DefaultTokenCostEstimator, ResolutionOption } from '../token/token_cost_estimator';
+import { defaultTokenizerRegistry } from '../token/tokenizer_registry';
 import { SqliteStore } from '../storage/sqlite_store';
 import { CandidateDecisionObservation, createCandidateDecisionObservation } from '../telemetry/decision_observation';
 
@@ -539,11 +540,20 @@ export class ContextEngine {
       }
     }
 
+    const detailedEstimate = this.tokenCostEstimator.getDetailedEstimate
+      ? this.tokenCostEstimator.getDetailedEstimate(formattedContext.promptText, task.agentEnvironment)
+      : defaultTokenizerRegistry.estimate(formattedContext.promptText, task.agentEnvironment);
+
+    const estimatedRenderedTokens = detailedEstimate.tokens;
+
     trajectoryLogger.logEvent('CONTEXT_ALLOCATED', {
       planId,
       totalUnits: plannedUnits.length,
       allocatedTokens: budgetPlan.totalTokens,
-      actualRenderedTokens,
+      estimatedRenderedTokens,
+      actualRenderedTokens: estimatedRenderedTokens,
+      tokenEstimationMethod: detailedEstimate.method,
+      tokenSafetyMargin: detailedEstimate.safetyMargin,
       savingsPercentage: budgetPlan.savingsPercentage,
       costSavedUSD: budgetPlan.costSavedUSD,
       overflowReason,
@@ -563,7 +573,11 @@ export class ContextEngine {
       policyId,
       policyVersion,
       dataRights: this.dataRights,
-      actualRenderedTokens,
+      estimatedRenderedTokens,
+      actualRenderedTokens: estimatedRenderedTokens, // backward-compatible alias
+      actualProviderInputTokens: undefined, // reported downstream by provider
+      tokenEstimationMethod: detailedEstimate.method,
+      tokenSafetyMargin: detailedEstimate.safetyMargin,
       overflowReason,
       createdAt,
     };
@@ -886,6 +900,39 @@ export class ContextEngine {
       ranked: ranked.slice(0, limit),
       totalCandidates: candidates.length,
     };
+  }
+
+  /**
+   * Records measured downstream input token usage from the actual LLM provider (Closure PR 0.5).
+   * Updates in-memory plan and persistent SQLite store if available.
+   */
+  public recordActualProviderTokens(plan: ContextPlan, actualInputTokens: number): void {
+    plan.actualProviderInputTokens = actualInputTokens;
+    if (this.sqliteStore && this.dataRights.telemetryAllowed !== false) {
+      try {
+        this.sqliteStore.updatePlanActualProviderTokens(plan.planId, actualInputTokens);
+      } catch (err) {
+        console.warn('[ContextEngine] Failed to record actual provider tokens:', err);
+      }
+    }
+  }
+
+  /**
+   * Static helper to record measured provider tokens on a plan and its store.
+   */
+  public static recordActualProviderTokens(
+    store: SqliteStore | undefined,
+    plan: ContextPlan,
+    actualInputTokens: number
+  ): void {
+    plan.actualProviderInputTokens = actualInputTokens;
+    if (store) {
+      try {
+        store.updatePlanActualProviderTokens(plan.planId, actualInputTokens);
+      } catch (err) {
+        console.warn('[ContextEngine] Failed to update actual provider tokens in store:', err);
+      }
+    }
   }
 }
 

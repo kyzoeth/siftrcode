@@ -9,6 +9,11 @@ import { ContextUnit, ContextUnitKind } from '../context/context_unit';
 import { WorkspaceSnapshot } from '../workspace/workspace_snapshot';
 import { AgentEnvironment } from '../agents/agent_environment';
 import { ContextUnitMaterializer, DefaultContextUnitMaterializer } from '../materialization/context_unit_materializer';
+import {
+  TokenEstimate,
+  TokenizerRegistry,
+  defaultTokenizerRegistry,
+} from './tokenizer_registry';
 
 export type ResolutionSafety = 'SAFE' | 'PARTIAL' | 'UNSAFE';
 
@@ -27,6 +32,11 @@ export interface TokenCostEstimator {
     content: string,
     environment?: AgentEnvironment
   ): number;
+
+  getDetailedEstimate?(
+    content: string,
+    environment?: AgentEnvironment
+  ): TokenEstimate;
 
   estimateResolution(
     unit: ContextUnit,
@@ -52,22 +62,30 @@ export interface TokenCostEstimator {
 
 export class DefaultTokenCostEstimator implements TokenCostEstimator {
   private materializer: ContextUnitMaterializer;
+  private tokenizerRegistry: TokenizerRegistry;
   private cache: Map<string, number> = new Map(); // unitId:resolution:snapshotId -> tokenCost
 
-  constructor(materializer?: ContextUnitMaterializer) {
+  constructor(
+    materializer?: ContextUnitMaterializer,
+    tokenizerRegistry?: TokenizerRegistry
+  ) {
     this.materializer = materializer || new DefaultContextUnitMaterializer();
+    this.tokenizerRegistry = tokenizerRegistry || defaultTokenizerRegistry;
   }
 
   /**
    * Authoritative token estimator for already-materialized text content.
-   * Calibrated for modern LLM code tokenizers (Claude, GPT-4o, Llama).
-   * 1 code token ~= 3.7 characters.
+   * Delegates to TokenizerRegistry for exact, calibrated, or conservative fallback estimation.
    */
-  public estimateMaterialized(content: string, _environment?: AgentEnvironment): number {
-    if (!content || content.length === 0) {
-      return 0;
-    }
-    return Math.max(1, Math.ceil(content.length / 3.7));
+  public estimateMaterialized(content: string, environment?: AgentEnvironment): number {
+    return this.tokenizerRegistry.estimate(content, environment).tokens;
+  }
+
+  /**
+   * Returns full detailed TokenEstimate metadata including method and safety margin.
+   */
+  public getDetailedEstimate(content: string, environment?: AgentEnvironment): TokenEstimate {
+    return this.tokenizerRegistry.estimate(content, environment);
   }
 
   /**

@@ -9,6 +9,7 @@ import { FormattedContext } from '../agents/agent_adapter';
 import { ExposureDecision, ExposureDecisionV2 } from '../telemetry/exposure_decision';
 import { CandidateDecisionObservation } from '../telemetry/decision_observation';
 import { DataRights } from '../rights/data_rights';
+import { TokenEstimationMethod } from '../token/tokenizer_registry';
 
 export interface PlannedUnit {
   contextUnitId: string;
@@ -32,7 +33,11 @@ export interface ContextPlan {
   policyId?: string;
   policyVersion?: string;
   dataRights: DataRights;
-  actualRenderedTokens: number;
+  estimatedRenderedTokens?: number;
+  actualRenderedTokens: number; // Backward-compatible alias for estimatedRenderedTokens
+  actualProviderInputTokens?: number; // Measured input tokens reported downstream by LLM provider
+  tokenEstimationMethod?: TokenEstimationMethod;
+  tokenSafetyMargin?: number;
   overflowReason?: string;
   replanningAttempts?: number;
   createdAt: string;

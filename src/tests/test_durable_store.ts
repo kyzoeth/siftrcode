@@ -129,6 +129,7 @@ export async function runDurableStoreTests(): Promise<void> {
         policyId: 'siftr-deterministic',
         policyVersion: '2.1.0',
         dataRights: createDefaultDataRights(),
+        estimatedRenderedTokens: 460,
         actualRenderedTokens: 460,
         createdAt: new Date().toISOString(),
       };
