@@ -508,6 +508,14 @@ function loadTelemetry(): any {
       leadsCount: 0,
       feedbackCount: 0
     },
+    v2Summary: {
+      totalOptimizations: 0,
+      totalTokensEvaluated: 0,
+      totalTokensAllocated: 0,
+      totalTokensSaved: 0,
+      estimatedSavedUSD: 0,
+      resolutionCounts: { FULL: 0, BODY: 0, SKELETON: 0, SIGNATURE: 0, NAME: 0, OMIT: 0 },
+    },
     pageTraffic: {},
     simulatorLanguages: {},
     agentPreferences: {},
@@ -660,6 +668,52 @@ const server = http.createServer(async (req, res) => {
 
         const plan = result.plan;
         const allocatedUnits = plan.units.filter((u) => u.resolution > 0);
+
+        // Update V2 telemetry
+        try {
+          const telemetry = loadTelemetry();
+          if (!telemetry.v2Summary) {
+            telemetry.v2Summary = {
+              totalOptimizations: 0,
+              totalTokensEvaluated: 0,
+              totalTokensAllocated: 0,
+              totalTokensSaved: 0,
+              estimatedSavedUSD: 0,
+              resolutionCounts: { FULL: 0, BODY: 0, SKELETON: 0, SIGNATURE: 0, NAME: 0, OMIT: 0 },
+            };
+          }
+          telemetry.v2Summary.totalOptimizations = (telemetry.v2Summary.totalOptimizations || 0) + 1;
+          telemetry.v2Summary.totalTokensEvaluated = (telemetry.v2Summary.totalTokensEvaluated || 0) + (plan.budgetPlan.rawTotalTokens || 0);
+          telemetry.v2Summary.totalTokensAllocated = (telemetry.v2Summary.totalTokensAllocated || 0) + (plan.budgetPlan.totalTokens || 0);
+          telemetry.v2Summary.totalTokensSaved = (telemetry.v2Summary.totalTokensSaved || 0) + Math.max(0, (plan.budgetPlan.rawTotalTokens || 0) - (plan.budgetPlan.totalTokens || 0));
+          telemetry.v2Summary.estimatedSavedUSD = Number(((telemetry.v2Summary.estimatedSavedUSD || 0) + (plan.budgetPlan.costSavedUSD || 0)).toFixed(4));
+          
+          if (!telemetry.v2Summary.resolutionCounts) {
+            telemetry.v2Summary.resolutionCounts = { FULL: 0, BODY: 0, SKELETON: 0, SIGNATURE: 0, NAME: 0, OMIT: 0 };
+          }
+          for (const u of plan.units) {
+            const resName = getResolutionName(u.resolution);
+            telemetry.v2Summary.resolutionCounts[resName] = (telemetry.v2Summary.resolutionCounts[resName] || 0) + 1;
+          }
+
+          telemetry.recentEvents.unshift({
+            id: `ev_${Date.now()}_v2opt`,
+            event: 'v2_context_optimize',
+            path: '/api/context',
+            properties: {
+              planId: plan.planId,
+              prompt: prompt.slice(0, 80),
+              rawTokens: plan.budgetPlan.rawTotalTokens,
+              allocatedTokens: plan.budgetPlan.totalTokens,
+              savingsPercentage: `${plan.budgetPlan.savingsPercentage.toFixed(1)}%`,
+              costSavedUSD: `$${plan.budgetPlan.costSavedUSD.toFixed(4)}`,
+            },
+            sessionId: 'v2_optimizer',
+            timestamp: new Date().toISOString()
+          });
+          if (telemetry.recentEvents.length > 150) telemetry.recentEvents = telemetry.recentEvents.slice(0, 150);
+          saveTelemetry(telemetry);
+        } catch (e) {}
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
@@ -1026,11 +1080,21 @@ const server = http.createServer(async (req, res) => {
       }
     });
 
+    const defaultV2Summary = {
+      totalOptimizations: 0,
+      totalTokensEvaluated: 0,
+      totalTokensAllocated: 0,
+      totalTokensSaved: 0,
+      estimatedSavedUSD: 0,
+      resolutionCounts: { FULL: 0, BODY: 0, SKELETON: 0, SIGNATURE: 0, NAME: 0, OMIT: 0 },
+    };
+
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       success: true,
       timestamp: new Date().toISOString(),
       summary: telemetry.summary,
+      v2Summary: telemetry.v2Summary || defaultV2Summary,
       pageTraffic: telemetry.pageTraffic,
       simulatorLanguages: telemetry.simulatorLanguages,
       agentPreferences: agentMap,
