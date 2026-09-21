@@ -168,6 +168,7 @@ export class RedisLockManager {
 
     const task = createTaskContext({
       taskId: 'task_budget_gate',
+      sessionId: 'sess_budget_gate',
       workspaceSnapshotId: snapshot.workspaceSnapshotId,
       primaryPrompt: 'Fix acquire lock timeout',
       agentEnvironment: env,

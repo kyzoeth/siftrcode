@@ -301,38 +301,21 @@ export function createMcpServer(): Server {
         let inputSessionId = args?.sessionId ? String(args.sessionId) : undefined;
         let resolvedTaskId = args?.taskId ? String(args.taskId) : undefined;
 
-        // Auto-create session if omitted (Milestone Part XVI Section 42)
-        if (!inputSessionId) {
-          const workspaceManager = new WorkspaceManager({ rootDir: workspaceDir });
-          const snapshot = await workspaceManager.captureSnapshot();
-          sessionStore.saveSnapshot(snapshot);
-
-          const autoTaskId = resolvedTaskId || `task_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-          resolvedTaskId = autoTaskId;
-
-          const env = createAgentEnvironment({
-            model: (args?.agentModel as string) || 'unknown',
-            agentProvider: 'unknown',
-          });
-
-          const autoSession = createSiftrSession({
-            taskId: autoTaskId,
-            agentEnvironmentId: env.systemConfigurationHash,
-            initialWorkspaceSnapshotId: snapshot.workspaceSnapshotId,
-            latestWorkspaceSnapshotId: snapshot.workspaceSnapshotId,
-            status: 'ACTIVE',
-          });
-          sessionStore.saveSiftrSession(autoSession);
-          inputSessionId = autoSession.sessionId;
-        } else if (!resolvedTaskId) {
-          const sess = sessionStore.getSiftrSession(inputSessionId);
-          if (sess) {
-            resolvedTaskId = sess.taskId;
+        let existingSess = inputSessionId ? sessionStore.getSiftrSession(inputSessionId) : undefined;
+        if (existingSess) {
+          if (!resolvedTaskId) {
+            resolvedTaskId = existingSess.taskId;
           }
         }
 
-        const agentModel = (args?.agentModel as string) || undefined;
-        const agentKind = (args?.agentKind as any) || undefined;
+        const agentModel =
+          (args?.agentModel as string) ||
+          (existingSess?.metadata?.agentModel as string) ||
+          undefined;
+        const agentKind =
+          (args?.agentKind as any) ||
+          (existingSess?.metadata?.agentKind as any) ||
+          undefined;
         const budgetProfile = (args?.budgetProfile as any) || undefined;
         const tokenBudget = typeof args?.tokenBudget === 'number' ? args.tokenBudget : undefined;
         const maxCostUSD = typeof args?.maxCostUSD === 'number' ? args.maxCostUSD : undefined;
@@ -887,6 +870,10 @@ export function createMcpServer(): Server {
             initialWorkspaceSnapshotId: snapshot.workspaceSnapshotId,
             latestWorkspaceSnapshotId: snapshot.workspaceSnapshotId,
             status: 'ACTIVE',
+            metadata: {
+              agentModel: agentModel || 'unknown',
+              agentKind: 'unknown',
+            },
           });
 
           store.saveSiftrSession(session);

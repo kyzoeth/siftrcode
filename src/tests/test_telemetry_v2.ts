@@ -381,6 +381,7 @@ export async function runTelemetryV2Tests(): Promise<void> {
 
     const task = createTaskContext({
       taskId: 'task_v2_telemetry',
+      sessionId: 'sess_v2_telemetry',
       workspaceSnapshotId: snapshot.workspaceSnapshotId,
       primaryPrompt: 'Fix lock acquire',
       agentEnvironment: createAgentEnvironment({

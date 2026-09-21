@@ -533,6 +533,14 @@ const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_evrec_export ON training_evidence_records(export_id);
     `,
   },
+  {
+    version: 13,
+    name: '013_jev_shadow_judgments_agent_env',
+    sql: `
+      ALTER TABLE jev_shadow_judgments ADD COLUMN agent_environment_id TEXT;
+      CREATE INDEX IF NOT EXISTS idx_jev_shadow_agent_env ON jev_shadow_judgments(agent_environment_id);
+    `,
+  },
 ];
 
 export class SqliteStore {
@@ -1708,13 +1716,13 @@ export class SqliteStore {
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO jev_shadow_judgments (
-        signal_id, task_id, session_id, workspace_snapshot_id, context_unit_id,
+        signal_id, task_id, session_id, workspace_snapshot_id, agent_environment_id, context_unit_id,
         context_plan_id, provider, model, question_set_version,
         semantic_relevance_probability, implementation_needed_probability,
         likely_edit_target_probability, likely_root_cause_probability,
         latency_ms, input_tokens, request_id, redaction_applied,
         fallback_reason, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     for (const sig of signals) {
@@ -1724,6 +1732,7 @@ export class SqliteStore {
         sig.taskId,
         sig.sessionId || null,
         sig.workspaceSnapshotId,
+        sig.agentEnvironmentId || null,
         sig.contextUnitId,
         sig.contextPlanId || null,
         sig.provider,
@@ -1755,6 +1764,7 @@ export class SqliteStore {
       taskId: r.task_id,
       sessionId: r.session_id || undefined,
       workspaceSnapshotId: r.workspace_snapshot_id,
+      agentEnvironmentId: r.agent_environment_id || undefined,
       contextUnitId: r.context_unit_id,
       contextPlanId: r.context_plan_id || undefined,
       provider: 'typesafe-jev',

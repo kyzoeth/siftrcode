@@ -325,6 +325,7 @@ export class RedisLockManager {
 
     const task = createTaskContext({
       taskId: 'task_mat_test',
+      sessionId: 'sess_mat_test',
       workspaceSnapshotId: snapshot.workspaceSnapshotId,
       primaryPrompt: 'Fix RedisLockManager acquire timeout handling',
       agentEnvironment: createAgentEnvironment({

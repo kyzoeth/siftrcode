@@ -417,6 +417,7 @@ export async function runDurableStoreTests(): Promise<void> {
 
       const task = createTaskContext({
         taskId: 'task_auto_durable',
+        sessionId: 'sess_auto_durable',
         workspaceSnapshotId: snapshot.workspaceSnapshotId,
         primaryPrompt: 'Fix lock acquire timeout',
         agentEnvironment: createAgentEnvironment({

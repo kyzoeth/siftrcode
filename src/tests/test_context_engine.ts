@@ -187,6 +187,7 @@ const stackEvidence: StackTraceEvidence = {
 };
 
 const task = createTaskContext({
+  sessionId: 'sess_e2e_test',
   primaryPrompt: 'Fix race condition in WebhookHandler duplicate event processing',
   evidence: [stackEvidence],
   workspaceSnapshotId: snapshotId,

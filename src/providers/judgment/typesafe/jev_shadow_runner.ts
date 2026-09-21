@@ -89,6 +89,16 @@ export class JevShadowRunner {
     return this.lastTracker;
   }
 
+  public getSqliteStore(): SqliteStore | undefined {
+    return this.sqliteStore;
+  }
+
+  public setSqliteStore(store: SqliteStore): void {
+    if (!this.sqliteStore) {
+      this.sqliteStore = store;
+    }
+  }
+
   /**
    * Selects candidate subset for JEV shadow evaluation (Part IV Section 9):
    * Top 12 local-ranked candidates + up to 8 uncertainty/diversity candidates.
@@ -202,6 +212,7 @@ export class JevShadowRunner {
     this.lastTracker = tracker;
     const semaphore = new Semaphore(this.budget.maxConcurrency);
     const signals: JevSignalV1[] = [];
+    const agentEnvironmentId = task.agentEnvironment?.systemConfigurationHash || 'unknown';
 
     // Evaluate in parallel with bounded concurrency
     const evalPromises = shadowUnits.map((unit) =>
@@ -217,6 +228,7 @@ export class JevShadowRunner {
               taskId: task.taskId,
               sessionId: task.sessionId,
               workspaceSnapshotId: workspaceSnapshot.workspaceSnapshotId,
+              agentEnvironmentId,
               contextUnitId: unit.id,
               contextPlanId,
               semanticRelevanceProbability: null,
@@ -241,6 +253,7 @@ export class JevShadowRunner {
               taskId: task.taskId,
               sessionId: task.sessionId,
               workspaceSnapshotId: workspaceSnapshot.workspaceSnapshotId,
+              agentEnvironmentId,
               contextUnitId: unit.id,
               contextPlanId,
               semanticRelevanceProbability: null,
@@ -351,6 +364,7 @@ export class JevShadowRunner {
                 taskId: task.taskId,
                 sessionId: task.sessionId,
                 workspaceSnapshotId: workspaceSnapshot.workspaceSnapshotId,
+                agentEnvironmentId,
                 contextUnitId: unit.id,
                 contextPlanId,
                 semanticRelevanceProbability: null,
@@ -375,6 +389,7 @@ export class JevShadowRunner {
               taskId: task.taskId,
               sessionId: task.sessionId,
               workspaceSnapshotId: workspaceSnapshot.workspaceSnapshotId,
+              agentEnvironmentId,
               contextUnitId: unit.id,
               contextPlanId,
               semanticRelevanceProbability: result.answers?.semanticRelevance?.noul ?? null,
@@ -424,6 +439,7 @@ export class JevShadowRunner {
               taskId: task.taskId,
               sessionId: task.sessionId,
               workspaceSnapshotId: workspaceSnapshot.workspaceSnapshotId,
+              agentEnvironmentId,
               contextUnitId: unit.id,
               contextPlanId,
               semanticRelevanceProbability: null,

@@ -414,7 +414,7 @@ function createRealPilotClient(
     if (!apiKey) {
       throw new Error('Live JEV evaluation requested (--live), but no API key was provided (set TYPESAFE_API_KEY or JEV_API_KEY).');
     }
-    console.log('  [Pilot] Using live TypeSafeSystemOneClient with verified API key');
+    console.log('  [Pilot] Using live TypeSafeSystemOneClient (TypeSafe key configured: true)');
     const liveClient = new TypeSafeSystemOneClient({ apiKey, timeoutMs: 15000 });
 
     return {
@@ -521,16 +521,15 @@ export async function runTypeSafeJevPilotStudy(options: {
   const maxTasks = options.maxTasks ?? (tasksArg ? parseInt(tasksArg.split('=')[1], 10) : (isSmoke ? 5 : AUDITED_PILOT_TASKS.length));
   const callsArg = process.argv.find((a) => a.startsWith('--max-calls='));
   const envMaxCalls = process.env.SIFTR_JEV_MAX_CALLS ? parseInt(process.env.SIFTR_JEV_MAX_CALLS, 10) : undefined;
-  const maxCallsPerTask =
-    options.maxCallsPerTask ??
-    (callsArg ? parseInt(callsArg.split('=')[1], 10) : undefined) ??
-    envMaxCalls ??
-    (isSmoke ? 5 : 20);
+  const explicitMaxCalls = options.maxCallsPerTask ?? (callsArg ? parseInt(callsArg.split('=')[1], 10) : undefined);
+  const maxCallsPerTask = explicitMaxCalls !== undefined ? explicitMaxCalls : (isSmoke ? 5 : (envMaxCalls ?? 20));
   const verbose = options.verbose ?? (isSmoke || process.argv.includes('--verbose'));
+  const apiKey = options.apiKey || process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY;
 
   console.log('\n================================================================');
   console.log(`  SIFTRCODE V2: TYPESAFE JEV REAL-WORLD PILOT STUDY (${maxTasks} TASKS)   `);
   console.log(`  Mode: ${isLive ? 'LIVE REMOTE (TypeSafe SystemOne)' : 'OFFLINE CALIBRATED'}`);
+  console.log(`  TypeSafe key configured: ${Boolean(apiKey)}`);
   console.log('================================================================\n');
 
   const rootDir = process.cwd();
@@ -766,6 +765,24 @@ export async function runTypeSafeJevPilotStudy(options: {
     const taskCallCount = stats ? stats.attemptedCalls : signals.length;
     callsPerTask.push(taskCallCount);
 
+    if (idx === 0) {
+      console.log('\n================================================================');
+      console.log('             TASK 1 SAFE STRUCTURAL SUMMARY                     ');
+      console.log('================================================================');
+      console.log(`Task ID:                 ${taskSpec.taskId}`);
+      console.log(`Repository:              ${taskSpec.repo}`);
+      console.log(`Prompt Length:           ${taskSpec.prompt.length} characters`);
+      console.log(`Prompt Title / Intent:   "${taskSpec.prompt.slice(0, 80)}..."`);
+      console.log(`Candidate Paths:         ${JSON.stringify(shadowPlan.units.slice(0, 5).map((u) => u.path))}`);
+      console.log(`Candidate Signatures:    ${JSON.stringify(shadowPlan.units.slice(0, 3).map((u) => u.title))}`);
+      console.log(`Raw Source Bodies:       [OMITTED - ZERO REMOTE EGRESS]`);
+      console.log(`Secrets / API Keys:      [OMITTED - ZERO EGRESS]`);
+      console.log('Rights Profile:');
+      console.log('  Allowed (Remote):      TASK_PROMPT, SYMBOL_NAME, SYMBOL_METADATA, PATH, NUMERIC_FEATURE');
+      console.log('  Denied (Remote):       RAW_SOURCE, SOURCE_SNIPPET, TRAINING');
+      console.log('================================================================\n');
+    }
+
     if (verbose) {
       const avgLat = signals.length > 0 ? (signals.reduce((a, s) => a + s.latencyMs, 0) / signals.length).toFixed(0) : '0';
       console.log(`\n  --- [Task ${idx + 1}/${selectedTasks.length}] [${taskSpec.repo}] ${taskSpec.taskId} ---`);
@@ -965,8 +982,9 @@ export async function runTypeSafeJevPilotStudy(options: {
   // -------------------------------------------------------------------------
   // Print Pilot Summary Tables
   // -------------------------------------------------------------------------
+  const reportHeader = isLive ? 'LIVE JEV SMOKE REPORT' : (isSmoke ? 'JEV SMOKE REPORT' : 'AUDITED PILOT RESULTS SUMMARY');
   console.log('\n================================================================');
-  console.log('                 AUDITED PILOT RESULTS SUMMARY                  ');
+  console.log(`                     ${reportHeader}                      `);
   console.log('================================================================');
   console.log(`Tasks Evaluated:         ${report.totalTasks} (Express: 10, FastAPI: 10, SiftrCode: 5)`);
   console.log(`Plan Invariance:         ${report.planInvarianceHolds ? 'PASSED (100% bit-for-bit identical)' : 'FAILED'}`);
@@ -999,6 +1017,56 @@ export async function runTypeSafeJevPilotStudy(options: {
   console.log(`[Persistence Verification] Total JEV judgments in SQLite: ${rowCount.count}`);
   if (rowCount.count === 0) {
     throw new Error('Verification failure: Expected JEV judgments to be stored in SQLite');
+  }
+
+  // Verify zero orphan JEV signals
+  const orphanJudgments = (store as any).db.prepare(`
+    SELECT COUNT(*) as count 
+    FROM jev_shadow_judgments 
+    WHERE session_id IS NULL OR session_id = '' OR session_id = 'unknown'
+  `).get() as { count: number };
+  console.log(`[Lineage Verification] Orphan JEV signals: ${orphanJudgments.count}`);
+  if (orphanJudgments.count > 0) {
+    throw new Error(`Lineage failure: Found ${orphanJudgments.count} orphan JEV signals with missing sessionId`);
+  }
+
+  // Verify zero mismatched AgentEnvironment IDs between JEV judgments and sessions
+  const mismatchedJevAgentEnvs = (store as any).db.prepare(`
+    SELECT COUNT(*) as count 
+    FROM jev_shadow_judgments j 
+    JOIN sessions s ON j.session_id = s.session_id 
+    WHERE j.agent_environment_id != s.agent_environment_id 
+       OR j.agent_environment_id IS NULL 
+       OR j.agent_environment_id = '' 
+       OR j.agent_environment_id = 'unknown'
+  `).get() as { count: number };
+  console.log(`[Lineage Verification] Mismatched JEV AgentEnvironment IDs: ${mismatchedJevAgentEnvs.count}`);
+  if (mismatchedJevAgentEnvs.count > 0) {
+    throw new Error(`Lineage failure: Found ${mismatchedJevAgentEnvs.count} JEV signals with mismatched or invalid agentEnvironmentId`);
+  }
+
+  // Verify zero mismatched AgentEnvironment IDs between context plans and sessions
+  const mismatchedPlanAgentEnvs = (store as any).db.prepare(`
+    SELECT COUNT(*) as count 
+    FROM context_plans p 
+    JOIN sessions s ON json_extract(p.raw_json, '$.sessionId') = s.session_id 
+    WHERE json_extract(p.raw_json, '$.agentEnvironmentId') != s.agent_environment_id
+  `).get() as { count: number };
+  console.log(`[Lineage Verification] Mismatched Plan AgentEnvironment IDs: ${mismatchedPlanAgentEnvs.count}`);
+  if (mismatchedPlanAgentEnvs.count > 0) {
+    throw new Error(`Lineage failure: Found ${mismatchedPlanAgentEnvs.count} context plans with mismatched agentEnvironmentId`);
+  }
+
+  // Verify zero mismatched AgentEnvironment IDs between candidate decisions and sessions
+  const mismatchedDecisionAgentEnvs = (store as any).db.prepare(`
+    SELECT COUNT(*) as count 
+    FROM candidate_decision_observations d 
+    JOIN sessions s ON d.session_id = s.session_id 
+    WHERE json_extract(d.raw_json, '$.agentEnvironment.systemConfigurationHash') != s.agent_environment_id
+  `).get() as { count: number };
+  console.log(`[Lineage Verification] Mismatched Decision AgentEnvironment IDs: ${mismatchedDecisionAgentEnvs.count}`);
+  if (mismatchedDecisionAgentEnvs.count > 0) {
+    throw new Error(`Lineage failure: Found ${mismatchedDecisionAgentEnvs.count} decision observations with mismatched agentEnvironmentId`);
   }
 
   // Close SQLite store connection and cleanup temp dir

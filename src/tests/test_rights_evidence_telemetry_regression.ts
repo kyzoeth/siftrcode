@@ -1410,7 +1410,7 @@ export async function runRegressionTests() {
     assert.ok(storedSession !== undefined, 'getOrCreateSession must persist session to SqliteStore');
     assert.strictEqual(storedSession?.sessionId, session.sessionId);
 
-    // 3. ContextEngine.generatePlan automatically assigns and persists SiftrSession
+    // 3. ContextEngine.generatePlan validates and persists SiftrSession
     const snapshot = createWorkspaceSnapshot({
       repositories: [
         {
@@ -1441,6 +1441,7 @@ export async function runRegressionTests() {
     };
     const task = createTaskContext({
       taskId: 'task_generate_plan_sess',
+      sessionId: 'sess_generate_plan_1',
       workspaceSnapshotId: snapshot.workspaceSnapshotId,
       primaryPrompt: 'Test session integration in ContextEngine',
       agentEnvironment: createAgentEnvironment(),
@@ -1516,6 +1517,111 @@ export async function runRegressionTests() {
     const persistedSession = (optResult.engine as any).sqliteStore.getSiftrSession(optResult.task.sessionId);
     assert.ok(persistedSession !== undefined, 'Session must be persisted in SQLite');
     assert.strictEqual(persistedSession?.sessionId, optResult.task.sessionId, 'persisted session.sessionId == task.sessionId');
+
+    // Section 10: AgentEnvironment identity equality across all records
+    assert.strictEqual(
+      persistedSession?.agentEnvironmentId,
+      optResult.task.agentEnvironment.systemConfigurationHash,
+      'persistedSession.agentEnvironmentId == result.task.agentEnvironment.systemConfigurationHash'
+    );
+    assert.strictEqual(
+      optResult.plan.agentEnvironmentId,
+      persistedSession?.agentEnvironmentId,
+      'result.plan.agentEnvironmentId == persistedSession.agentEnvironmentId'
+    );
+    for (const dec of optResult.plan.decisionObservations!) {
+      assert.strictEqual(
+        dec.agentEnvironment.systemConfigurationHash,
+        persistedSession?.agentEnvironmentId,
+        'decision.agentEnvironment.systemConfigurationHash == persistedSession.agentEnvironmentId'
+      );
+    }
+
+    // Section 11: JEV signal lineage equality
+    for (const sig of optResult.plan.jevSignals!) {
+      assert.strictEqual(sig.taskId, optResult.task.taskId, 'sig.taskId == task.taskId');
+      assert.strictEqual(sig.sessionId, optResult.task.sessionId, 'sig.sessionId == task.sessionId');
+      assert.strictEqual(sig.workspaceSnapshotId, optResult.task.workspaceSnapshotId, 'sig.workspaceSnapshotId == task.workspaceSnapshotId');
+      assert.strictEqual(sig.agentEnvironmentId, persistedSession?.agentEnvironmentId, 'sig.agentEnvironmentId == persistedSession.agentEnvironmentId');
+      assert.ok(sig.contextUnitId, 'sig.contextUnitId present');
+    }
+
+    // Also assert in SQLite table jev_shadow_judgments
+    const persistedJudgments = (optResult.engine as any).sqliteStore.listJevShadowJudgments(optResult.task.taskId);
+    assert.strictEqual(persistedJudgments.length, optResult.plan.jevSignals!.length);
+    assert.strictEqual(persistedJudgments[0].agentEnvironmentId, persistedSession?.agentEnvironmentId);
+
+    // Section 12: Existing-session mismatch test
+    // Attempting to reuse an existing session with a conflicting agentEnvironment must throw AGENT_ENVIRONMENT_MISMATCH
+    const countPlansBefore = (optResult.engine as any).sqliteStore.listContextPlans(undefined, optResult.task.sessionId).length;
+    const countDecisionsBefore = (optResult.engine as any).sqliteStore.listCandidateDecisionObservations({ sessionId: optResult.task.sessionId }).length;
+    const countJudgmentsBefore = (optResult.engine as any).sqliteStore.listJevShadowJudgments(optResult.task.taskId).length;
+
+    await assert.rejects(
+      async () => {
+        await ContextEngine.optimizeWorkspace({
+          workspaceDir: tempDir,
+          prompt: 'Second prompt with conflicting environment',
+          sessionId: optResult.task.sessionId,
+          agentModel: 'different-conflicting-model-v2',
+        });
+      },
+      (err: any) => {
+        return (
+          err?.code === 'AGENT_ENVIRONMENT_MISMATCH' ||
+          (err?.message && err.message.includes('AGENT_ENVIRONMENT_MISMATCH'))
+        );
+      },
+      'Conflicting agentEnvironment on existing session must throw AGENT_ENVIRONMENT_MISMATCH'
+    );
+
+    // Assert zero new plans, decisions, or judgments written on mismatch
+    const countPlansAfter = (optResult.engine as any).sqliteStore.listContextPlans(undefined, optResult.task.sessionId).length;
+    const countDecisionsAfter = (optResult.engine as any).sqliteStore.listCandidateDecisionObservations({ sessionId: optResult.task.sessionId }).length;
+    const countJudgmentsAfter = (optResult.engine as any).sqliteStore.listJevShadowJudgments(optResult.task.taskId).length;
+    assert.strictEqual(countPlansAfter, countPlansBefore, 'No new ContextPlan written on mismatch');
+    assert.strictEqual(countDecisionsAfter, countDecisionsBefore, 'No new CandidateDecisionObservations written on mismatch');
+    assert.strictEqual(countJudgmentsAfter, countJudgmentsBefore, 'No new JevShadowJudgments written on mismatch');
+
+    // Section 13: Existing-session valid reuse test
+    // Compatible operation with same session and matching environment succeeds
+    const reuseResult = await ContextEngine.optimizeWorkspace({
+      workspaceDir: tempDir,
+      prompt: 'Compatible second prompt in same session',
+      sessionId: optResult.task.sessionId,
+      agentModel: optResult.task.agentEnvironment.model !== 'unknown' ? optResult.task.agentEnvironment.model : undefined,
+    });
+    assert.strictEqual(reuseResult.task.sessionId, optResult.task.sessionId, 'Session reused successfully');
+    assert.strictEqual(
+      reuseResult.plan.agentEnvironmentId,
+      persistedSession?.agentEnvironmentId,
+      'Reused session maintains identical agentEnvironmentId'
+    );
+
+    // Section 8: generatePlan() requires TaskContext.sessionId or throws SESSION_REQUIRED
+    const dummyTaskNoSession = createTaskContext({
+      taskId: 'task_no_session_check',
+      workspaceSnapshotId: 'snap_dummy_check',
+      primaryPrompt: 'No session prompt',
+      agentEnvironment: createAgentEnvironment(),
+    });
+    delete (dummyTaskNoSession as any).sessionId;
+    const directEngine = new ContextEngine();
+    assert.throws(
+      () => {
+        directEngine.generatePlan({
+          task: dummyTaskNoSession,
+          units: [],
+        });
+      },
+      (err: any) => {
+        return (
+          err?.code === 'SESSION_REQUIRED' ||
+          (err?.message && err.message.includes('SESSION_REQUIRED'))
+        );
+      },
+      'generatePlan without TaskContext.sessionId must throw SESSION_REQUIRED'
+    );
 
     // Clean up tempDir
     try {
@@ -1703,6 +1809,11 @@ export async function runRegressionTests() {
     const mig12 = applied.find((m) => m.version === 12);
     assert.ok(mig12 !== undefined, 'Migration 012_training_evidence_records_export_id must be applied');
     assert.strictEqual(mig12?.name, '012_training_evidence_records_export_id');
+
+    // Migration 13: JEV shadow judgments agent_environment_id
+    const mig13 = applied.find((m) => m.version === 13);
+    assert.ok(mig13 !== undefined, 'Migration 013_jev_shadow_judgments_agent_env must be applied');
+    assert.strictEqual(mig13?.name, '013_jev_shadow_judgments_agent_env');
 
     // 6. Direct persistence of unsanctioned evidence lacking exportId must be blocked
     const unsanctionedEv = createTrainingEvidenceRecord({

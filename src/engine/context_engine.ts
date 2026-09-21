@@ -128,6 +128,7 @@ export class ContextEngine {
   private tokenCostEstimator: TokenCostEstimator;
   private sqliteStore?: SqliteStore;
   private jevShadowRunner?: JevShadowRunner;
+  private sessionCache = new Map<string, SiftrSession>();
 
   constructor(options: ContextEngineOptions = {}) {
     this.repoRootDir = options.repoRootDir;
@@ -146,6 +147,9 @@ export class ContextEngine {
 
     if (options.jevShadowRunner) {
       this.jevShadowRunner = options.jevShadowRunner;
+      if (this.sqliteStore && !this.jevShadowRunner.getSqliteStore()) {
+        this.jevShadowRunner.setSqliteStore(this.sqliteStore);
+      }
     } else if (options.enableJevShadow || process.env.SIFTR_JEV_ENABLED === 'true') {
       this.jevShadowRunner = new JevShadowRunner({
         sqliteStore: this.sqliteStore,
@@ -155,7 +159,7 @@ export class ContextEngine {
 
   /**
    * Authoritative session management: retrieves an existing active session or creates and persists a new one.
-   * Establishes session creation as a core ContextEngine capability rather than exclusively an MCP tool responsibility.
+   * Enforces agentEnvironmentId and taskId lineage consistency (Sections 5-7).
    */
   public getOrCreateSession(params: {
     sessionId?: string;
@@ -167,17 +171,71 @@ export class ContextEngine {
       params.sessionId ||
       `sess_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
 
+    const reqEnvId = params.agentEnvironmentId || 'unknown';
+
+    let existing: SiftrSession | undefined = undefined;
     if (this.sqliteStore) {
-      const existing = this.sqliteStore.getSiftrSession(effectiveSessionId);
-      if (existing) {
-        return existing;
+      existing = this.sqliteStore.getSiftrSession(effectiveSessionId);
+    }
+    if (!existing) {
+      existing = this.sessionCache.get(effectiveSessionId);
+    }
+
+    if (existing) {
+      // 1. Check AgentEnvironment mismatch (Sections 5 & 6)
+      if (existing.agentEnvironmentId !== reqEnvId) {
+        // Section 7: Controlled one-time upgrade for legacy/unknown sessions if no conflicting observations exist
+        let canUpgrade = false;
+        if (existing.agentEnvironmentId === 'unknown') {
+          let hasObservations = false;
+          if (this.sqliteStore) {
+            const decs = this.sqliteStore.listCandidateDecisionObservations({ sessionId: existing.sessionId });
+            const plans = this.sqliteStore.listContextPlans(undefined, existing.sessionId);
+            if (decs.length > 0 || plans.length > 0) {
+              hasObservations = true;
+            }
+          }
+          if (!hasObservations) {
+            canUpgrade = true;
+          }
+        }
+
+        if (canUpgrade) {
+          existing.agentEnvironmentId = reqEnvId;
+          if (this.sqliteStore && this.dataRights.telemetryAllowed !== false) {
+            try {
+              this.sqliteStore.saveSiftrSession(existing);
+            } catch (err) {
+              console.warn('[ContextEngine] Failed to save upgraded session:', err);
+            }
+          }
+          this.sessionCache.set(existing.sessionId, existing);
+          return existing;
+        }
+
+        const mismatchErr = new Error(
+          `AGENT_ENVIRONMENT_MISMATCH: Session "${existing.sessionId}" is bound to agentEnvironmentId "${existing.agentEnvironmentId}", which does not match requested "${reqEnvId}".`
+        );
+        (mismatchErr as any).code = 'AGENT_ENVIRONMENT_MISMATCH';
+        throw mismatchErr;
       }
+
+      // 2. Check task ID mismatch where appropriate
+      if (existing.taskId && params.taskId && existing.taskId !== params.taskId) {
+        const taskMismatchErr = new Error(
+          `SESSION_TASK_MISMATCH: Session "${existing.sessionId}" is bound to taskId "${existing.taskId}", which does not match requested "${params.taskId}".`
+        );
+        (taskMismatchErr as any).code = 'SESSION_TASK_MISMATCH';
+        throw taskMismatchErr;
+      }
+
+      return existing;
     }
 
     const session = createSiftrSession({
       sessionId: effectiveSessionId,
       taskId: params.taskId,
-      agentEnvironmentId: params.agentEnvironmentId || 'unknown',
+      agentEnvironmentId: reqEnvId,
       initialWorkspaceSnapshotId: params.snapshotId || 'snapshot_init',
       latestWorkspaceSnapshotId: params.snapshotId || 'snapshot_init',
       status: 'ACTIVE',
@@ -191,6 +249,7 @@ export class ContextEngine {
       }
     }
 
+    this.sessionCache.set(session.sessionId, session);
     return session;
   }
 
@@ -595,7 +654,16 @@ export class ContextEngine {
       }
     }
 
-    // Closure PR 0.4 & Milestone 14: ContextEngine authoritatively manages active SiftrSession
+    // Section 8: TaskContext must always carry an authoritative sessionId before planning
+    if (!task.sessionId || task.sessionId.trim() === '') {
+      const sessionErr = new Error(
+        'SESSION_REQUIRED: TaskContext must carry an authoritative sessionId before planning.'
+      );
+      (sessionErr as any).code = 'SESSION_REQUIRED';
+      throw sessionErr;
+    }
+
+    // ContextEngine authoritatively retrieves and validates active SiftrSession
     const session = this.getOrCreateSession({
       sessionId: task.sessionId,
       taskId: task.taskId,
@@ -908,7 +976,31 @@ export class ContextEngine {
           adapter = new ClaudeCodeAdapter();
         }
 
-        const taskId = options.taskId || `task_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+        // Initialize SQLite store if telemetry is permitted
+        let store: SqliteStore | undefined = undefined;
+        const telemetryAllowed = options.dataRights ? options.dataRights.telemetryAllowed : true;
+        if (telemetryAllowed !== false) {
+          try {
+            const siftrDir = path.join(rootDir, '.siftr');
+            if (!fs.existsSync(siftrDir)) {
+              fs.mkdirSync(siftrDir, { recursive: true });
+            }
+            const dbPath = path.join(siftrDir, 'observations.sqlite');
+            store = new SqliteStore(dbPath);
+          } catch {
+            // Non-fatal if local SQLite store cannot be initialized
+          }
+        }
+
+        let existingSession: SiftrSession | undefined = undefined;
+        if (options.sessionId && store) {
+          existingSession = store.getSiftrSession(options.sessionId);
+        }
+
+        const taskId =
+          options.taskId ||
+          existingSession?.taskId ||
+          `task_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
         const userPromptEvidence: UserPromptEvidence = {
           evidenceId: 'ev_' + crypto.randomUUID().slice(0, 8),
           kind: TaskEvidenceKind.USER_PROMPT,
@@ -929,7 +1021,7 @@ export class ContextEngine {
         }
 
         const agentProviderVal = kind === 'cursor' ? 'cursor' : (options.agentKind || 'unknown');
-        const modelVal = options.agentModel || 'unknown';
+        const modelVal = options.agentModel || (existingSession?.metadata?.agentModel as string) || 'unknown';
         const availableTools = options.availableTools ? [...options.availableTools] : [];
 
         let budgetLimits = options.budgetLimits;
@@ -953,22 +1045,6 @@ export class ContextEngine {
           throwOnWorkspaceChanged: true,
         });
 
-        // Closure PR 0.4 & Milestone 14: Wire the Learning Plane and authoritative session into default runtime
-        let store: SqliteStore | undefined = undefined;
-        const telemetryAllowed = options.dataRights ? options.dataRights.telemetryAllowed : true;
-        if (telemetryAllowed !== false) {
-          try {
-            const siftrDir = path.join(rootDir, '.siftr');
-            if (!fs.existsSync(siftrDir)) {
-              fs.mkdirSync(siftrDir, { recursive: true });
-            }
-            const dbPath = path.join(siftrDir, 'observations.sqlite');
-            store = new SqliteStore(dbPath);
-          } catch {
-            // Non-fatal if local SQLite store cannot be initialized
-          }
-        }
-
         const engine = new ContextEngine({
           repoRootDir: rootDir,
           adapter,
@@ -981,11 +1057,41 @@ export class ContextEngine {
           enableJevShadow: options.enableJevShadow,
         });
 
-        // Authoritatively obtain/create active session so there is NEVER a sessionless task in the planning pipeline
+        // Canonical construction order (Milestone Part I Sections 2-4):
+        // WorkspaceSnapshot -> AgentEnvironment -> systemConfigurationHash -> SiftrSession -> TaskContext -> ContextPlan
+        const agentEnvironment = createAgentEnvironment({
+          agentProvider: agentProviderVal,
+          agentVersion: 'unknown',
+          model: modelVal,
+          harnessVersion: 'unknown',
+          availableTools,
+          provenance: {
+            agentProvider: {
+              value: agentProviderVal !== 'unknown' ? agentProviderVal : null,
+              source: options.agentKind ? 'USER_SUPPLIED' : (kind === 'cursor' ? 'DETECTED' : 'UNKNOWN'),
+            },
+            agentVersion: {
+              value: null,
+              source: 'UNKNOWN',
+            },
+            model: {
+              value: options.agentModel || null,
+              source: options.agentModel ? 'USER_SUPPLIED' : 'UNKNOWN',
+            },
+            harnessVersion: {
+              value: null,
+              source: 'UNKNOWN',
+            },
+          },
+        });
+
+        const agentEnvironmentId = agentEnvironment.systemConfigurationHash;
+
+        // Authoritatively obtain/create active session bound to canonical agentEnvironmentId
         const session = engine.getOrCreateSession({
           sessionId: options.sessionId,
           taskId,
-          agentEnvironmentId: modelVal,
+          agentEnvironmentId,
           snapshotId: snapshot.workspaceSnapshotId,
         });
 
@@ -995,31 +1101,7 @@ export class ContextEngine {
           workspaceSnapshotId: snapshot.workspaceSnapshotId,
           primaryPrompt: options.prompt,
           evidence: evidenceList,
-          agentEnvironment: createAgentEnvironment({
-            agentProvider: agentProviderVal,
-            agentVersion: 'unknown',
-            model: modelVal,
-            harnessVersion: 'unknown',
-            availableTools,
-            provenance: {
-              agentProvider: {
-                value: agentProviderVal !== 'unknown' ? agentProviderVal : null,
-                source: options.agentKind ? 'USER_SUPPLIED' : (kind === 'cursor' ? 'DETECTED' : 'UNKNOWN'),
-              },
-              agentVersion: {
-                value: null,
-                source: 'UNKNOWN',
-              },
-              model: {
-                value: options.agentModel || null,
-                source: options.agentModel ? 'USER_SUPPLIED' : 'UNKNOWN',
-              },
-              harnessVersion: {
-                value: null,
-                source: 'UNKNOWN',
-              },
-            },
-          }),
+          agentEnvironment,
         });
 
         const plan = await engine.generatePlanAsync({

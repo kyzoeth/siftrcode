@@ -26,6 +26,7 @@ export interface JevSignalV1 {
   taskId: string;
   sessionId?: string;
   workspaceSnapshotId: string;
+  agentEnvironmentId?: string;
   contextUnitId: string;
   contextPlanId?: string;
   semanticRelevanceProbability: number | null;
@@ -51,6 +52,7 @@ export function createJevSignalV1(params: Omit<JevSignalV1, 'schemaVersion' | 'p
     ...params,
     schemaVersion: 'jev-signal-v1',
     provider: 'typesafe-jev',
+    agentEnvironmentId: params.agentEnvironmentId || 'unknown',
     createdAt: params.createdAt || new Date().toISOString(),
   };
 }
