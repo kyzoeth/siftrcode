@@ -2,15 +2,15 @@
   {
     "taskCount": 10,
     "pairCount": 1436,
-    "valNdcg10": 0.5925,
+    "valNdcg10": 0.586,
     "valRecall10": 0.7273,
-    "valMrr": 0.5513
+    "valMrr": 0.5438
   },
   {
     "taskCount": 25,
     "pairCount": 4112,
-    "valNdcg10": 0.5411,
-    "valRecall10": 0.6364,
-    "valMrr": 0.5169
+    "valNdcg10": 0.5211,
+    "valRecall10": 0.5909,
+    "valMrr": 0.5087
   }
 ]

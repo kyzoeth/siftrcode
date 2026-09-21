@@ -93,20 +93,19 @@ export class LinearPairwiseRanker implements LearnedContextRanker {
 
     const featureCount = pairs[0].featureDelta.length;
     const weights = new Float64Array(featureCount);
-    let bias = 0.0;
 
     for (let iter = 0; iter < maxIterations; iter++) {
       for (const pair of pairs) {
-        let margin = bias;
+        let margin = 0.0;
         for (let i = 0; i < featureCount; i++) {
           margin += weights[i] * pair.featureDelta[i];
         }
 
-        // Hinge loss gradient on margin
+        // Hinge loss gradient on margin (w^T delta_x)
         if (margin < 1.0) {
-          bias += learningRate * 0.1;
+          const sampleWeight = pair.weight ?? 1.0;
           for (let i = 0; i < featureCount; i++) {
-            weights[i] += learningRate * (pair.featureDelta[i] - l2 * weights[i]);
+            weights[i] += learningRate * (sampleWeight * pair.featureDelta[i] - l2 * weights[i]);
           }
         } else {
           for (let i = 0; i < featureCount; i++) {
@@ -118,7 +117,7 @@ export class LinearPairwiseRanker implements LearnedContextRanker {
 
     return new LinearPairwiseRanker('linear_pairwise_v1', {
       weights: Array.from(weights),
-      bias,
+      bias: 0.0,
       includeJev,
     });
   }

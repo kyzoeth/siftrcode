@@ -1,58 +1,58 @@
 {
   "schemaVersion": "siftrcode-v3-context-rank-eval-v1",
-  "evaluatedAt": "2026-09-21T20:44:56.298Z",
+  "evaluatedAt": "2026-09-21T21:32:10.958Z",
   "benchmarkVersion": "siftrbench-v1",
   "heldOutEpisodeCount": 33,
   "baselineMetrics": {
     "totalTasks": 33,
-    "ndcg5": 0.7988,
-    "ndcg10": 0.7988,
-    "ndcg20": 0.8066,
-    "recall5": 0.8485,
-    "recall10": 0.8485,
-    "recall20": 0.8788,
-    "recall50": 0.9394,
-    "mrr": 0.7859,
-    "meanLatencyMs": 5390.9,
-    "meanTokens": 5473,
-    "targetCoverage": 0.8485,
+    "ndcg5": 0.4755,
+    "ndcg10": 0.4863,
+    "ndcg20": 0.4863,
+    "recall5": 0.5455,
+    "recall10": 0.5758,
+    "recall20": 0.5758,
+    "recall50": 0.5758,
+    "mrr": 0.4571,
+    "meanLatencyMs": 4681.4,
+    "meanTokens": 5000,
+    "targetCoverage": 0.5758,
     "preBudgetNdcg10": 0,
     "preBudgetRecall10": 0
   },
   "learnedMetrics": {
     "totalTasks": 33,
     "ndcg5": 0.5229,
-    "ndcg10": 0.5431,
-    "ndcg20": 0.5881,
+    "ndcg10": 0.5538,
+    "ndcg20": 0.5991,
     "recall5": 0.6061,
-    "recall10": 0.6667,
-    "recall20": 0.8485,
-    "recall50": 0.9091,
-    "mrr": 0.517,
+    "recall10": 0.697,
+    "recall20": 0.8788,
+    "recall50": 0.8788,
+    "mrr": 0.5212,
     "meanLatencyMs": 0.1,
-    "meanTokens": 7990,
+    "meanTokens": 7991,
     "targetCoverage": 0.9091,
-    "preBudgetNdcg10": 0.5734,
-    "preBudgetRecall10": 0.697
+    "preBudgetNdcg10": 0.5841,
+    "preBudgetRecall10": 0.7273
   },
   "perRepositoryBreakdown": {
     "express": {
       "taskCount": 12,
-      "baselineNdcg10": 0.9167,
+      "baselineNdcg10": 0.2718,
       "learnedNdcg10": 0.2966,
-      "ndcg10Delta": -0.6201,
-      "baselineRecall10": 0.9167,
+      "ndcg10Delta": 0.0248,
+      "baselineRecall10": 0.3333,
       "learnedRecall10": 0.5,
-      "recall10Delta": -0.4167
+      "recall10Delta": 0.1667
     },
     "fastapi": {
       "taskCount": 14,
-      "baselineNdcg10": 0.6687,
-      "learnedNdcg10": 0.5972,
-      "ndcg10Delta": -0.0715,
-      "baselineRecall10": 0.7857,
-      "learnedRecall10": 0.7143,
-      "recall10Delta": -0.0714
+      "baselineNdcg10": 0.4848,
+      "learnedNdcg10": 0.6227,
+      "ndcg10Delta": 0.1379,
+      "baselineRecall10": 0.6429,
+      "learnedRecall10": 0.7857,
+      "recall10Delta": 0.1428
     },
     "siftrcode": {
       "taskCount": 7,
@@ -67,15 +67,15 @@
   "perTaskTypeBreakdown": {
     "BUG_FIX": {
       "taskCount": 26,
-      "baselineNdcg10": 0.7666,
-      "learnedNdcg10": 0.5088,
-      "ndcg10Delta": -0.2578
+      "baselineNdcg10": 0.4033,
+      "learnedNdcg10": 0.5225,
+      "ndcg10Delta": 0.1192
     },
     "FEATURE_ADDITION": {
       "taskCount": 5,
-      "baselineNdcg10": 0.8861,
+      "baselineNdcg10": 0.7123,
       "learnedNdcg10": 0.5385,
-      "ndcg10Delta": -0.3476
+      "ndcg10Delta": -0.1738
     },
     "REFACTOR": {
       "taskCount": 2,
@@ -89,49 +89,49 @@
     "iterations": 2000,
     "randomSeed": 42,
     "ndcg10": {
-      "meanDelta": -0.2558,
+      "meanDelta": 0.0675,
       "medianDelta": 0,
-      "ciLower95": -0.3903,
-      "ciUpper95": -0.1324,
-      "pValue": 0,
-      "wins": 0,
-      "ties": 22,
-      "losses": 11,
-      "isStatisticallySignificant": true
+      "ciLower95": -0.01,
+      "ciUpper95": 0.1595,
+      "pValue": 0.105,
+      "wins": 6,
+      "ties": 25,
+      "losses": 2,
+      "isStatisticallySignificant": false
     },
     "recall10": {
-      "meanDelta": -0.1818,
+      "meanDelta": 0.1212,
       "medianDelta": 0,
-      "ciLower95": -0.3333,
-      "ciUpper95": -0.0606,
-      "pValue": 0.003,
-      "wins": 0,
+      "ciLower95": 0,
+      "ciUpper95": 0.2727,
+      "pValue": 0.118,
+      "wins": 5,
       "ties": 27,
-      "losses": 6,
-      "isStatisticallySignificant": true
+      "losses": 1,
+      "isStatisticallySignificant": false
     },
     "mrr": {
-      "meanDelta": -0.2689,
+      "meanDelta": 0.0642,
       "medianDelta": 0,
-      "ciLower95": -0.4115,
-      "ciUpper95": -0.1369,
-      "pValue": 0,
-      "wins": 3,
+      "ciLower95": -0.0108,
+      "ciUpper95": 0.154,
+      "pValue": 0.099,
+      "wins": 13,
       "ties": 18,
-      "losses": 12,
-      "isStatisticallySignificant": true
+      "losses": 2,
+      "isStatisticallySignificant": false
     },
     "perRepoDeltas": {
       "express": {
-        "ndcg10Delta": -0.6201,
-        "recall10Delta": -0.4167,
-        "mrrDelta": -0.6559,
+        "ndcg10Delta": 0.0248,
+        "recall10Delta": 0.1667,
+        "mrrDelta": 0.0098,
         "taskCount": 12
       },
       "fastapi": {
-        "ndcg10Delta": -0.0714,
-        "recall10Delta": -0.0714,
-        "mrrDelta": -0.0716,
+        "ndcg10Delta": 0.1379,
+        "recall10Delta": 0.1429,
+        "mrrDelta": 0.1429,
         "taskCount": 14
       },
       "siftrcode": {
@@ -143,15 +143,15 @@
     },
     "perTypeDeltas": {
       "BUG_FIX": {
-        "ndcg10Delta": -0.2578,
-        "recall10Delta": -0.1923,
-        "mrrDelta": -0.2643,
+        "ndcg10Delta": 0.1191,
+        "recall10Delta": 0.1923,
+        "mrrDelta": 0.1135,
         "taskCount": 26
       },
       "FEATURE_ADDITION": {
-        "ndcg10Delta": -0.3476,
+        "ndcg10Delta": -0.1738,
         "recall10Delta": -0.2,
-        "mrrDelta": -0.4,
+        "mrrDelta": -0.1667,
         "taskCount": 5
       },
       "REFACTOR": {
@@ -168,17 +168,17 @@
       "description": "Frozen V2 deterministic heuristic baseline",
       "aggregate": {
         "totalTasks": 33,
-        "ndcg5": 0.7988,
-        "ndcg10": 0.7988,
-        "ndcg20": 0.8066,
-        "recall5": 0.8485,
-        "recall10": 0.8485,
-        "recall20": 0.8788,
-        "recall50": 0.9394,
-        "mrr": 0.7859,
-        "meanLatencyMs": 5390.9,
-        "meanTokens": 5473,
-        "targetCoverage": 0.8485,
+        "ndcg5": 0.4755,
+        "ndcg10": 0.4863,
+        "ndcg20": 0.4863,
+        "recall5": 0.5455,
+        "recall10": 0.5758,
+        "recall20": 0.5758,
+        "recall50": 0.5758,
+        "mrr": 0.4571,
+        "meanLatencyMs": 4681.4,
+        "meanTokens": 5000,
+        "targetCoverage": 0.5758,
         "preBudgetNdcg10": 0,
         "preBudgetRecall10": 0
       },
@@ -192,22 +192,22 @@
       "aggregate": {
         "totalTasks": 33,
         "ndcg5": 0.5229,
-        "ndcg10": 0.5431,
-        "ndcg20": 0.5881,
+        "ndcg10": 0.5538,
+        "ndcg20": 0.5991,
         "recall5": 0.6061,
-        "recall10": 0.6667,
-        "recall20": 0.8485,
-        "recall50": 0.9091,
-        "mrr": 0.517,
+        "recall10": 0.697,
+        "recall20": 0.8788,
+        "recall50": 0.8788,
+        "mrr": 0.5212,
         "meanLatencyMs": 0,
-        "meanTokens": 7990,
+        "meanTokens": 7991,
         "targetCoverage": 0.9091,
-        "preBudgetNdcg10": 0.5734,
-        "preBudgetRecall10": 0.697
+        "preBudgetNdcg10": 0.5841,
+        "preBudgetRecall10": 0.7273
       },
-      "ndcg10DeltaOverV2": -0.2557,
-      "recall10DeltaOverV2": -0.1818,
-      "mrrDeltaOverV2": -0.2689
+      "ndcg10DeltaOverV2": 0.0675,
+      "recall10DeltaOverV2": 0.1212,
+      "mrrDeltaOverV2": 0.0641
     },
     {
       "variant": "learned_with_jev",
@@ -215,22 +215,22 @@
       "aggregate": {
         "totalTasks": 33,
         "ndcg5": 0.5229,
-        "ndcg10": 0.5431,
-        "ndcg20": 0.5881,
+        "ndcg10": 0.5538,
+        "ndcg20": 0.5991,
         "recall5": 0.6061,
-        "recall10": 0.6667,
-        "recall20": 0.8485,
-        "recall50": 0.9091,
-        "mrr": 0.517,
+        "recall10": 0.697,
+        "recall20": 0.8788,
+        "recall50": 0.8788,
+        "mrr": 0.5212,
         "meanLatencyMs": 0,
-        "meanTokens": 7990,
+        "meanTokens": 7991,
         "targetCoverage": 0.9091,
-        "preBudgetNdcg10": 0.5734,
-        "preBudgetRecall10": 0.697
+        "preBudgetNdcg10": 0.5841,
+        "preBudgetRecall10": 0.7273
       },
-      "ndcg10DeltaOverV2": -0.2557,
-      "recall10DeltaOverV2": -0.1818,
-      "mrrDeltaOverV2": -0.2689
+      "ndcg10DeltaOverV2": 0.0675,
+      "recall10DeltaOverV2": 0.1212,
+      "mrrDeltaOverV2": 0.0641
     },
     {
       "variant": "learned_without_graph",
@@ -238,22 +238,22 @@
       "aggregate": {
         "totalTasks": 33,
         "ndcg5": 0.5229,
-        "ndcg10": 0.5431,
-        "ndcg20": 0.5881,
+        "ndcg10": 0.5538,
+        "ndcg20": 0.5991,
         "recall5": 0.6061,
-        "recall10": 0.6667,
-        "recall20": 0.8485,
+        "recall10": 0.697,
+        "recall20": 0.8788,
         "recall50": 0.8788,
-        "mrr": 0.5167,
+        "mrr": 0.5212,
         "meanLatencyMs": 0,
-        "meanTokens": 7990,
+        "meanTokens": 7991,
         "targetCoverage": 0.9091,
-        "preBudgetNdcg10": 0.5734,
-        "preBudgetRecall10": 0.697
+        "preBudgetNdcg10": 0.5841,
+        "preBudgetRecall10": 0.7273
       },
-      "ndcg10DeltaOverV2": -0.2557,
-      "recall10DeltaOverV2": -0.1818,
-      "mrrDeltaOverV2": -0.2692
+      "ndcg10DeltaOverV2": 0.0675,
+      "recall10DeltaOverV2": 0.1212,
+      "mrrDeltaOverV2": 0.0641
     },
     {
       "variant": "learned_without_git",
@@ -261,22 +261,22 @@
       "aggregate": {
         "totalTasks": 33,
         "ndcg5": 0.5229,
-        "ndcg10": 0.5431,
-        "ndcg20": 0.5881,
+        "ndcg10": 0.5538,
+        "ndcg20": 0.5991,
         "recall5": 0.6061,
-        "recall10": 0.6667,
-        "recall20": 0.8485,
-        "recall50": 0.9091,
-        "mrr": 0.517,
+        "recall10": 0.697,
+        "recall20": 0.8788,
+        "recall50": 0.8788,
+        "mrr": 0.5212,
         "meanLatencyMs": 0,
-        "meanTokens": 7990,
+        "meanTokens": 7991,
         "targetCoverage": 0.9091,
-        "preBudgetNdcg10": 0.5734,
-        "preBudgetRecall10": 0.697
+        "preBudgetNdcg10": 0.5841,
+        "preBudgetRecall10": 0.7273
       },
-      "ndcg10DeltaOverV2": -0.2557,
-      "recall10DeltaOverV2": -0.1818,
-      "mrrDeltaOverV2": -0.2689
+      "ndcg10DeltaOverV2": 0.0675,
+      "recall10DeltaOverV2": 0.1212,
+      "mrrDeltaOverV2": 0.0641
     },
     {
       "variant": "learned_without_runtime",
@@ -284,22 +284,22 @@
       "aggregate": {
         "totalTasks": 33,
         "ndcg5": 0.5229,
-        "ndcg10": 0.5431,
-        "ndcg20": 0.5881,
+        "ndcg10": 0.5538,
+        "ndcg20": 0.5991,
         "recall5": 0.6061,
-        "recall10": 0.6667,
-        "recall20": 0.8485,
-        "recall50": 0.9091,
-        "mrr": 0.517,
+        "recall10": 0.697,
+        "recall20": 0.8788,
+        "recall50": 0.8788,
+        "mrr": 0.5212,
         "meanLatencyMs": 0,
-        "meanTokens": 7990,
+        "meanTokens": 7991,
         "targetCoverage": 0.9091,
-        "preBudgetNdcg10": 0.5734,
-        "preBudgetRecall10": 0.697
+        "preBudgetNdcg10": 0.5841,
+        "preBudgetRecall10": 0.7273
       },
-      "ndcg10DeltaOverV2": -0.2557,
-      "recall10DeltaOverV2": -0.1818,
-      "mrrDeltaOverV2": -0.2689
+      "ndcg10DeltaOverV2": 0.0675,
+      "recall10DeltaOverV2": 0.1212,
+      "mrrDeltaOverV2": 0.0641
     },
     {
       "variant": "learned_full_model",
@@ -307,22 +307,22 @@
       "aggregate": {
         "totalTasks": 33,
         "ndcg5": 0.5229,
-        "ndcg10": 0.5431,
-        "ndcg20": 0.5881,
+        "ndcg10": 0.5538,
+        "ndcg20": 0.5991,
         "recall5": 0.6061,
-        "recall10": 0.6667,
-        "recall20": 0.8485,
-        "recall50": 0.9091,
-        "mrr": 0.517,
+        "recall10": 0.697,
+        "recall20": 0.8788,
+        "recall50": 0.8788,
+        "mrr": 0.5212,
         "meanLatencyMs": 0,
-        "meanTokens": 7990,
+        "meanTokens": 7991,
         "targetCoverage": 0.9091,
-        "preBudgetNdcg10": 0.5734,
-        "preBudgetRecall10": 0.697
+        "preBudgetNdcg10": 0.5841,
+        "preBudgetRecall10": 0.7273
       },
-      "ndcg10DeltaOverV2": -0.2557,
-      "recall10DeltaOverV2": -0.1818,
-      "mrrDeltaOverV2": -0.2689
+      "ndcg10DeltaOverV2": 0.0675,
+      "recall10DeltaOverV2": 0.1212,
+      "mrrDeltaOverV2": 0.0641
     }
   ]
 }

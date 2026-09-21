@@ -153,70 +153,73 @@ export class TreeRanker implements LearnedContextRanker {
         gradients[i] = p * pairs[i].weight; // Target residual step
       }
 
-      // 2. Find best single split stump/tree minimizing weighted square error on gradients
+      // 2. Find best single split stump minimizing weighted square error on pairwise gradients:
+      // A split at feature f, threshold thresh assigns +Delta/2 to left (<= thresh) and -Delta/2 to right (> thresh).
+      // For pair i:
+      //   if pos <= thresh and neg > thresh: delta_i = +1, predicted margin change = +Delta
+      //   if pos > thresh and neg <= thresh: delta_i = -1, predicted margin change = -Delta
+      //   otherwise: delta_i = 0, predicted margin change = 0
+      // Loss L(Delta) = sum_i (g_i - delta_i * Delta)^2 + lambda * Delta^2
+      // Optimal Delta* = sum(delta_i * g_i) / (sum(delta_i^2) + lambda)
+      // Gain = (sum(delta_i * g_i))^2 / (sum(delta_i^2) + lambda)
+      const l2 = 1.0;
       let bestFeature = 0;
       let bestThreshold = 0.0;
-      let bestLeftVal = 0.0;
-      let bestRightVal = 0.0;
-      let minLoss = Infinity;
+      let bestDelta = 0.0;
+      let bestGain = -1.0;
 
-      // Search over a subset of candidate features
+      // Search over candidate features and split thresholds
       for (let f = 0; f < featureCount; f++) {
-        // Collect split points
+        // Collect candidate split points
         const values: number[] = [];
-        for (let i = 0; i < pairs.length; i += Math.max(1, Math.floor(pairs.length / 20))) {
+        const step = Math.max(1, Math.floor(pairs.length / 40));
+        for (let i = 0; i < pairs.length; i += step) {
           values.push(pairs[i].positiveFeatures[f]);
           values.push(pairs[i].negativeFeatures[f]);
         }
         values.sort((a, b) => a - b);
 
         for (let vIdx = 0; vIdx < values.length - 1; vIdx++) {
+          if (values[vIdx] === values[vIdx + 1]) continue;
           const thresh = (values[vIdx] + values[vIdx + 1]) / 2.0;
 
-          let leftSum = 0;
-          let leftCount = 0;
-          let rightSum = 0;
-          let rightCount = 0;
+          let sumDeltaG = 0.0;
+          let nSep = 0;
 
           for (let i = 0; i < pairs.length; i++) {
-            const g = gradients[i];
-            const pVal = pairs[i].positiveFeatures[f];
-            if (pVal <= thresh) {
-              leftSum += g;
-              leftCount++;
-            } else {
-              rightSum += g;
-              rightCount++;
+            const pLeft = pairs[i].positiveFeatures[f] <= thresh;
+            const nLeft = pairs[i].negativeFeatures[f] <= thresh;
+
+            if (pLeft && !nLeft) {
+              sumDeltaG += gradients[i];
+              nSep++;
+            } else if (!pLeft && nLeft) {
+              sumDeltaG -= gradients[i];
+              nSep++;
             }
           }
 
-          const lVal = leftCount > 0 ? leftSum / (leftCount + 1.0) : 0;
-          const rVal = rightCount > 0 ? rightSum / (rightCount + 1.0) : 0;
+          if (nSep === 0) continue;
 
-          let loss = 0;
-          for (let i = 0; i < pairs.length; i++) {
-            const predPos = pairs[i].positiveFeatures[f] <= thresh ? lVal : rVal;
-            const predNeg = pairs[i].negativeFeatures[f] <= thresh ? lVal : rVal;
-            const predDelta = predPos - predNeg;
-            const diff = gradients[i] - predDelta;
-            loss += diff * diff;
-          }
-
-          if (loss < minLoss) {
-            minLoss = loss;
+          const gain = (sumDeltaG * sumDeltaG) / (nSep + l2);
+          if (gain > bestGain) {
+            bestGain = gain;
             bestFeature = f;
             bestThreshold = thresh;
-            bestLeftVal = lVal;
-            bestRightVal = rVal;
+            bestDelta = sumDeltaG / (nSep + l2);
           }
         }
+      }
+
+      if (bestGain <= 0 || Math.abs(bestDelta) < 1e-6) {
+        break;
       }
 
       const tree: DecisionTreeNode = {
         featureIndex: bestFeature,
         threshold: bestThreshold,
-        leftValue: bestLeftVal,
-        rightValue: bestRightVal,
+        leftValue: bestDelta / 2.0,
+        rightValue: -bestDelta / 2.0,
       };
       trees.push(tree);
 
