@@ -187,6 +187,7 @@ for (let i = 0; i < 35; i++) {
     v2: {
       taskId: `task_${i}`,
       variant: 'V2_FROZEN',
+      runValidity: 'VALID',
       verifiedSuccess: !v2Won && (i % 3 === 0),
       wallClockLatencyMs: 1000,
       contextTokens: 3000,
@@ -200,6 +201,7 @@ for (let i = 0; i < 35; i++) {
     v3: {
       taskId: `task_${i}`,
       variant: 'V3_LEARNED',
+      runValidity: 'VALID',
       verifiedSuccess: v3Won || (i % 3 === 0),
       wallClockLatencyMs: 900,
       contextTokens: 2600,
@@ -220,5 +222,99 @@ for (let i = 0; i < 35; i++) {
 const promotionReport = VerifiedTaskEvaluator.evaluatePairedExperiment(pairedWithLift, { minTasksForPromotion: 30 });
 assert.strictEqual(promotionReport.gateDecision, 'V3.1_PROMOTION_GATE_PASSED');
 console.log(`  ✔ Verified success lift correctly evaluates to: ${promotionReport.gateDecision}`);
+
+// --- 5. Valid-Pair Filtering & Invalid Reason Accounting Regression Suite ---
+console.log('\n--- 5. Valid-Pair Filtering Regression Suite ---');
+
+// Test Case 1: V2 VALID / V3 VALID -> included
+const singleValidPair: PairedTaskEvaluation[] = [{
+  taskId: 't_valid',
+  repo: 'express',
+  v2: { taskId: 't_valid', variant: 'V2_FROZEN', runValidity: 'VALID', verifiedSuccess: true, wallClockLatencyMs: 100, contextTokens: 100, agentInputTokens: 100, agentOutputTokens: 10, providerCostUSD: 0.01, toolCalls: 1, trajectoryLength: 1, verifierResult: 'OK' },
+  v3: { taskId: 't_valid', variant: 'V3_LEARNED', runValidity: 'VALID', verifiedSuccess: true, wallClockLatencyMs: 100, contextTokens: 100, agentInputTokens: 100, agentOutputTokens: 10, providerCostUSD: 0.01, toolCalls: 1, trajectoryLength: 1, verifierResult: 'OK' },
+  successDelta: 0, tokenDelta: 0, costDeltaUSD: 0, latencyDeltaMs: 0,
+}];
+const rep1 = VerifiedTaskEvaluator.evaluatePairedExperiment(singleValidPair, { minTasksForPromotion: 1 });
+assert.strictEqual(rep1.validPairs, 1);
+assert.strictEqual(rep1.invalidPairs, 0);
+console.log('  ✔ V2 VALID / V3 VALID pair included in validPairs');
+
+// Test Case 2: V2 PROVIDER_FAILURE / V3 VALID -> excluded
+const providerFailurePair: PairedTaskEvaluation[] = [{
+  taskId: 't_pf',
+  repo: 'express',
+  v2: { taskId: 't_pf', variant: 'V2_FROZEN', runValidity: 'PROVIDER_FAILURE', verifiedSuccess: null, wallClockLatencyMs: 100, contextTokens: 100, agentInputTokens: 100, agentOutputTokens: 10, providerCostUSD: null, toolCalls: 0, trajectoryLength: 0, verifierResult: 'FAIL' },
+  v3: { taskId: 't_pf', variant: 'V3_LEARNED', runValidity: 'VALID', verifiedSuccess: true, wallClockLatencyMs: 100, contextTokens: 100, agentInputTokens: 100, agentOutputTokens: 10, providerCostUSD: 0.01, toolCalls: 1, trajectoryLength: 1, verifierResult: 'OK' },
+  successDelta: 0, tokenDelta: 0, costDeltaUSD: 0, latencyDeltaMs: 0,
+}];
+const rep2 = VerifiedTaskEvaluator.evaluatePairedExperiment(providerFailurePair, { minTasksForPromotion: 1 });
+assert.strictEqual(rep2.validPairs, 0);
+assert.strictEqual(rep2.invalidPairs, 1);
+assert.strictEqual(rep2.invalidByReason['V2:PROVIDER_FAILURE'], 1);
+console.log('  ✔ V2 PROVIDER_FAILURE / V3 VALID excluded from validPairs');
+
+// Test Case 3: V2 VALID / V3 QUOTA_FAILURE -> excluded
+const quotaFailurePair: PairedTaskEvaluation[] = [{
+  taskId: 't_qf',
+  repo: 'express',
+  v2: { taskId: 't_qf', variant: 'V2_FROZEN', runValidity: 'VALID', verifiedSuccess: true, wallClockLatencyMs: 100, contextTokens: 100, agentInputTokens: 100, agentOutputTokens: 10, providerCostUSD: 0.01, toolCalls: 1, trajectoryLength: 1, verifierResult: 'OK' },
+  v3: { taskId: 't_qf', variant: 'V3_LEARNED', runValidity: 'QUOTA_FAILURE', verifiedSuccess: null, wallClockLatencyMs: 100, contextTokens: 100, agentInputTokens: 100, agentOutputTokens: 10, providerCostUSD: null, toolCalls: 0, trajectoryLength: 0, verifierResult: 'FAIL' },
+  successDelta: 0, tokenDelta: 0, costDeltaUSD: 0, latencyDeltaMs: 0,
+}];
+const rep3 = VerifiedTaskEvaluator.evaluatePairedExperiment(quotaFailurePair, { minTasksForPromotion: 1 });
+assert.strictEqual(rep3.validPairs, 0);
+assert.strictEqual(rep3.invalidPairs, 1);
+assert.strictEqual(rep3.invalidByReason['V3:QUOTA_FAILURE'], 1);
+console.log('  ✔ V2 VALID / V3 QUOTA_FAILURE excluded from validPairs');
+
+// Test Case 4: Both invalid -> excluded, tracked in reasons
+const bothInvalidPair: PairedTaskEvaluation[] = [{
+  taskId: 't_both',
+  repo: 'express',
+  v2: { taskId: 't_both', variant: 'V2_FROZEN', runValidity: 'AGENT_TIMEOUT', verifiedSuccess: null, wallClockLatencyMs: 100, contextTokens: 100, agentInputTokens: 100, agentOutputTokens: 10, providerCostUSD: null, toolCalls: 0, trajectoryLength: 0, verifierResult: 'TIMEOUT' },
+  v3: { taskId: 't_both', variant: 'V3_LEARNED', runValidity: 'TOOL_FAILURE', verifiedSuccess: null, wallClockLatencyMs: 100, contextTokens: 100, agentInputTokens: 100, agentOutputTokens: 10, providerCostUSD: null, toolCalls: 0, trajectoryLength: 0, verifierResult: 'ERROR' },
+  successDelta: 0, tokenDelta: 0, costDeltaUSD: 0, latencyDeltaMs: 0,
+}];
+const rep4 = VerifiedTaskEvaluator.evaluatePairedExperiment(bothInvalidPair, { minTasksForPromotion: 1 });
+assert.strictEqual(rep4.validPairs, 0);
+assert.strictEqual(rep4.invalidPairs, 1);
+assert.strictEqual(rep4.invalidByReason['V2:AGENT_TIMEOUT'], 1);
+assert.strictEqual(rep4.invalidByReason['V3:TOOL_FAILURE'], 1);
+console.log('  ✔ Both invalid excluded and accounted in invalidByReason');
+
+// Test Case 5: 30 attempted / 29 valid -> V3.1_INSUFFICIENT_EVIDENCE
+const pairs29Valid: PairedTaskEvaluation[] = [];
+for (let i = 0; i < 29; i++) {
+  pairs29Valid.push({
+    taskId: `t_${i}`,
+    repo: 'express',
+    v2: { taskId: `t_${i}`, variant: 'V2_FROZEN', runValidity: 'VALID', verifiedSuccess: true, wallClockLatencyMs: 100, contextTokens: 100, agentInputTokens: 100, agentOutputTokens: 10, providerCostUSD: 0.01, toolCalls: 1, trajectoryLength: 1, verifierResult: 'OK' },
+    v3: { taskId: `t_${i}`, variant: 'V3_LEARNED', runValidity: 'VALID', verifiedSuccess: true, wallClockLatencyMs: 100, contextTokens: 100, agentInputTokens: 100, agentOutputTokens: 10, providerCostUSD: 0.01, toolCalls: 1, trajectoryLength: 1, verifierResult: 'OK' },
+    successDelta: 0, tokenDelta: 0, costDeltaUSD: 0, latencyDeltaMs: 0,
+  });
+}
+pairs29Valid.push(quotaFailurePair[0]); // 30th is invalid
+const rep29 = VerifiedTaskEvaluator.evaluatePairedExperiment(pairs29Valid, { minTasksForPromotion: 30 });
+assert.strictEqual(rep29.attemptedPairs, 30);
+assert.strictEqual(rep29.validPairs, 29);
+assert.strictEqual(rep29.gateDecision, 'V3.1_INSUFFICIENT_EVIDENCE');
+console.log('  ✔ 30 attempted / 29 valid correctly yields V3.1_INSUFFICIENT_EVIDENCE');
+
+// Test Case 6: 30 attempted / 30 valid -> eligible
+const pairs30Valid: PairedTaskEvaluation[] = [];
+for (let i = 0; i < 30; i++) {
+  pairs30Valid.push({
+    taskId: `t_${i}`,
+    repo: 'express',
+    v2: { taskId: `t_${i}`, variant: 'V2_FROZEN', runValidity: 'VALID', verifiedSuccess: i % 2 === 0, wallClockLatencyMs: 100, contextTokens: 100, agentInputTokens: 100, agentOutputTokens: 10, providerCostUSD: 0.01, toolCalls: 1, trajectoryLength: 1, verifierResult: 'OK' },
+    v3: { taskId: `t_${i}`, variant: 'V3_LEARNED', runValidity: 'VALID', verifiedSuccess: true, wallClockLatencyMs: 100, contextTokens: 100, agentInputTokens: 100, agentOutputTokens: 10, providerCostUSD: 0.01, toolCalls: 1, trajectoryLength: 1, verifierResult: 'OK' },
+    successDelta: i % 2 === 0 ? 0 : 1, tokenDelta: 0, costDeltaUSD: 0, latencyDeltaMs: 0,
+  });
+}
+const rep30 = VerifiedTaskEvaluator.evaluatePairedExperiment(pairs30Valid, { minTasksForPromotion: 30 });
+assert.strictEqual(rep30.attemptedPairs, 30);
+assert.strictEqual(rep30.validPairs, 30);
+assert.strictEqual(rep30.gateDecision, 'V3.1_PROMOTION_GATE_PASSED');
+console.log('  ✔ 30 attempted / 30 valid with lift yields V3.1_PROMOTION_GATE_PASSED');
 
 console.log('\n🎉 ALL V3 BOOTSTRAP & EVAL TESTS PASSED CLEANLY!\n');

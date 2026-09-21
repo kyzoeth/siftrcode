@@ -5,34 +5,56 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BENCHMARKS_DIR="${ROOT_DIR}/benchmarks"
 mkdir -p "${BENCHMARKS_DIR}"
 
+COMMANDER_REPO_DIR="${BENCHMARKS_DIR}/commander-repo"
 EXPRESS_REPO_DIR="${BENCHMARKS_DIR}/express-repo"
-EXPRESS_PINNED_SHA="9a34acf03cb818ff3f8bc40e44176e277a25cbb9"
-
 FASTAPI_REPO_DIR="${BENCHMARKS_DIR}/fastapi-repo"
-FASTAPI_PINNED_SHA="50113da16fec53b66b80d75e80a89296de4fa5a5"
+V2_WORKTREE_DIR="${ROOT_DIR}/.v2-baseline-worktree"
+FROZEN_V2_SHA="1eedac03b0d83025ebf08ed2945e0ab015c46f6a"
+
+# Provision Commander
+if [ -d "${COMMANDER_REPO_DIR}/.git" ]; then
+  echo "Fetching Commander repo..."
+  git -C "${COMMANDER_REPO_DIR}" fetch --quiet origin 2>/dev/null || true
+else
+  echo "Cloning tj/commander.js..."
+  git clone --quiet https://github.com/tj/commander.js.git "${COMMANDER_REPO_DIR}"
+fi
 
 # Provision Express
 if [ -d "${EXPRESS_REPO_DIR}/.git" ]; then
-  echo "Checking out pinned SHA in existing Express repo..."
-  git -C "${EXPRESS_REPO_DIR}" fetch --quiet origin "${EXPRESS_PINNED_SHA}" 2>/dev/null || git -C "${EXPRESS_REPO_DIR}" fetch --quiet origin 2>/dev/null || true
-  git -C "${EXPRESS_REPO_DIR}" checkout --quiet "${EXPRESS_PINNED_SHA}"
+  echo "Fetching Express repo..."
+  git -C "${EXPRESS_REPO_DIR}" fetch --quiet origin 2>/dev/null || true
 else
   echo "Cloning expressjs/express..."
   git clone --quiet https://github.com/expressjs/express.git "${EXPRESS_REPO_DIR}"
-  git -C "${EXPRESS_REPO_DIR}" checkout --quiet "${EXPRESS_PINNED_SHA}"
 fi
-EXPRESS_ACTUAL_SHA="$(git -C "${EXPRESS_REPO_DIR}" rev-parse HEAD)"
-echo "Express pinned commit: ${EXPRESS_ACTUAL_SHA}"
 
 # Provision FastAPI
 if [ -d "${FASTAPI_REPO_DIR}/.git" ]; then
-  echo "Checking out pinned SHA in existing FastAPI repo..."
-  git -C "${FASTAPI_REPO_DIR}" fetch --quiet origin "${FASTAPI_PINNED_SHA}" 2>/dev/null || git -C "${FASTAPI_REPO_DIR}" fetch --quiet origin 2>/dev/null || true
-  git -C "${FASTAPI_REPO_DIR}" checkout --quiet "${FASTAPI_PINNED_SHA}"
+  echo "Fetching FastAPI repo..."
+  git -C "${FASTAPI_REPO_DIR}" fetch --quiet origin 2>/dev/null || true
 else
   echo "Cloning fastapi/fastapi..."
   git clone --quiet https://github.com/fastapi/fastapi.git "${FASTAPI_REPO_DIR}"
-  git -C "${FASTAPI_REPO_DIR}" checkout --quiet "${FASTAPI_PINNED_SHA}"
 fi
-FASTAPI_ACTUAL_SHA="$(git -C "${FASTAPI_REPO_DIR}" rev-parse HEAD)"
-echo "FastAPI pinned commit: ${FASTAPI_ACTUAL_SHA}"
+
+# Provision .v2-baseline-worktree
+if [ ! -d "${V2_WORKTREE_DIR}" ]; then
+  echo "Creating .v2-baseline-worktree at ${FROZEN_V2_SHA}..."
+  git worktree add -f "${V2_WORKTREE_DIR}" "${FROZEN_V2_SHA}"
+fi
+
+ACTUAL_V2_SHA="$(git -C "${V2_WORKTREE_DIR}" rev-parse HEAD)"
+if [ "${ACTUAL_V2_SHA}" != "${FROZEN_V2_SHA}" ]; then
+  echo "ERROR: .v2-baseline-worktree is at ${ACTUAL_V2_SHA}, expected ${FROZEN_V2_SHA}" >&2
+  exit 1
+fi
+echo "Frozen V2 verified at: ${ACTUAL_V2_SHA}"
+
+# Build frozen V2 inside worktree if dist is missing
+if [ ! -d "${V2_WORKTREE_DIR}/dist" ]; then
+  echo "Building frozen V2 in .v2-baseline-worktree..."
+  (cd "${V2_WORKTREE_DIR}" && npm ci && npm run build)
+fi
+
+echo "All benchmarks and frozen V2 provisioned successfully."
