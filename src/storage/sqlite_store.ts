@@ -9,6 +9,9 @@ import { CandidateObservationV2 } from '../telemetry/candidate_observation';
 import { ExposureDecisionV2, isExposedV2 } from '../telemetry/exposure_decision';
 import { TrajectoryEvent } from '../telemetry/trajectory_event';
 import { OutcomeEvidence } from '../telemetry/outcome_evidence';
+import { SourceProvenance } from '../rights/source_provenance';
+import { TrainingRow } from '../learning/lineage';
+import { DeletionAuditRecord } from '../rights/deletion_manager';
 
 export interface StoredGraphEdge {
   fromUnitId: string;
@@ -255,6 +258,68 @@ const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_task_outcome_task ON task_outcome_records(task_id);
       CREATE INDEX IF NOT EXISTS idx_task_outcome_session ON task_outcome_records(session_id);
       CREATE INDEX IF NOT EXISTS idx_task_outcome_verified ON task_outcome_records(verified_success);
+    `,
+  },
+  {
+    version: 4,
+    name: '004_rights_lineage_and_deletion',
+    sql: `
+      CREATE TABLE IF NOT EXISTS source_provenances (
+        provenance_id TEXT PRIMARY KEY,
+        origin TEXT NOT NULL,
+        repository TEXT NOT NULL UNIQUE,
+        license TEXT NOT NULL,
+        training_permission TEXT NOT NULL,
+        redistribution_permission TEXT NOT NULL,
+        cutoff_date TEXT NOT NULL,
+        verified INTEGER NOT NULL,
+        notes TEXT,
+        raw_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_prov_repo ON source_provenances(repository);
+      CREATE INDEX IF NOT EXISTS idx_prov_origin ON source_provenances(origin);
+      CREATE INDEX IF NOT EXISTS idx_prov_train ON source_provenances(training_permission);
+
+      CREATE TABLE IF NOT EXISTS training_rows (
+        row_id TEXT PRIMARY KEY,
+        dataset_version TEXT NOT NULL,
+        context_unit_id TEXT NOT NULL,
+        task_id TEXT NOT NULL,
+        repository TEXT NOT NULL,
+        tenant_id TEXT,
+        source_observation_ids TEXT NOT NULL,
+        labeler_version TEXT NOT NULL,
+        feature_builder_version TEXT NOT NULL,
+        label INTEGER NOT NULL,
+        confidence REAL NOT NULL,
+        outcome_label TEXT NOT NULL,
+        rights_reference TEXT NOT NULL,
+        raw_json TEXT NOT NULL,
+        exported_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_trow_dataset ON training_rows(dataset_version);
+      CREATE INDEX IF NOT EXISTS idx_trow_repo ON training_rows(repository);
+      CREATE INDEX IF NOT EXISTS idx_trow_task ON training_rows(task_id);
+      CREATE INDEX IF NOT EXISTS idx_trow_tenant ON training_rows(tenant_id);
+
+      CREATE TABLE IF NOT EXISTS deletion_audit_records (
+        deletion_id TEXT PRIMARY KEY,
+        requested_at TEXT NOT NULL,
+        executed_at TEXT NOT NULL,
+        criteria_json TEXT NOT NULL,
+        purged_observations_count INTEGER NOT NULL,
+        purged_training_rows_count INTEGER NOT NULL,
+        affected_datasets_json TEXT NOT NULL,
+        status TEXT NOT NULL,
+        details TEXT,
+        raw_json TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_del_time ON deletion_audit_records(executed_at);
     `,
   },
 ];
@@ -1019,6 +1084,228 @@ export class SqliteStore {
       .all(limit) as Array<{ raw_json: string }>;
 
     return rows.map((r) => JSON.parse(r.raw_json) as OutcomeEvidence);
+  }
+
+  // ==========================================
+  // SourceProvenance Operations (Section 51)
+  // ==========================================
+
+  public saveSourceProvenance(provenance: SourceProvenance): void {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO source_provenances (
+        provenance_id, origin, repository, license, training_permission,
+        redistribution_permission, cutoff_date, verified, notes, raw_json,
+        created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      provenance.provenanceId,
+      provenance.origin,
+      provenance.repository,
+      provenance.license,
+      provenance.trainingPermission,
+      provenance.redistributionPermission,
+      provenance.cutoffDate,
+      provenance.verified ? 1 : 0,
+      provenance.notes ?? null,
+      JSON.stringify(provenance),
+      provenance.createdAt,
+      provenance.updatedAt
+    );
+  }
+
+  public getSourceProvenance(repositoryOrId: string): SourceProvenance | undefined {
+    const row = this.db
+      .prepare(`
+        SELECT raw_json FROM source_provenances
+        WHERE repository = ? OR provenance_id = ?
+        LIMIT 1
+      `)
+      .get(repositoryOrId, repositoryOrId) as { raw_json: string } | undefined;
+
+    if (!row) return undefined;
+    return JSON.parse(row.raw_json) as SourceProvenance;
+  }
+
+  public listSourceProvenances(): SourceProvenance[] {
+    const rows = this.db
+      .prepare(`SELECT raw_json FROM source_provenances ORDER BY repository ASC`)
+      .all() as Array<{ raw_json: string }>;
+
+    return rows.map((r) => JSON.parse(r.raw_json) as SourceProvenance);
+  }
+
+  // ==========================================
+  // TrainingRow & Lineage Operations (Section 52)
+  // ==========================================
+
+  public saveTrainingRows(rows: TrainingRow[]): void {
+    if (rows.length === 0) return;
+
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO training_rows (
+        row_id, dataset_version, context_unit_id, task_id, repository,
+        tenant_id, source_observation_ids, labeler_version, feature_builder_version,
+        label, confidence, outcome_label, rights_reference, raw_json, exported_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const r of rows) {
+      stmt.run(
+        r.rowId,
+        r.datasetVersion,
+        r.contextUnitId,
+        r.taskId,
+        r.repository,
+        r.tenantId ?? null,
+        JSON.stringify(r.lineage.sourceObservationIds),
+        r.lineage.labelerVersion,
+        r.lineage.featureBuilderVersion,
+        r.label,
+        r.confidence,
+        r.outcomeLabel,
+        r.rightsReference,
+        JSON.stringify(r),
+        r.exportedAt
+      );
+    }
+  }
+
+  public getTrainingRow(rowId: string): TrainingRow | undefined {
+    const row = this.db
+      .prepare(`SELECT raw_json FROM training_rows WHERE row_id = ?`)
+      .get(rowId) as { raw_json: string } | undefined;
+
+    if (!row) return undefined;
+    return JSON.parse(row.raw_json) as TrainingRow;
+  }
+
+  public listTrainingRows(filter: { datasetVersion?: string; repository?: string; taskId?: string } = {}): TrainingRow[] {
+    let sql = 'SELECT raw_json FROM training_rows WHERE 1=1';
+    const params: string[] = [];
+
+    if (filter.datasetVersion) {
+      sql += ' AND dataset_version = ?';
+      params.push(filter.datasetVersion);
+    }
+    if (filter.repository) {
+      sql += ' AND repository = ?';
+      params.push(filter.repository);
+    }
+    if (filter.taskId) {
+      sql += ' AND task_id = ?';
+      params.push(filter.taskId);
+    }
+
+    sql += ' ORDER BY exported_at ASC';
+    const rows = this.db.prepare(sql).all(...params) as Array<{ raw_json: string }>;
+    return rows.map((r) => JSON.parse(r.raw_json) as TrainingRow);
+  }
+
+  public deleteTrainingRowsByCriteria(criteria: {
+    repository?: string;
+    tenantId?: string;
+    taskId?: string;
+    rowIds?: string[];
+  }): number {
+    let count = 0;
+    if (criteria.rowIds && criteria.rowIds.length > 0) {
+      const placeholders = criteria.rowIds.map(() => '?').join(',');
+      const res = this.db
+        .prepare(`DELETE FROM training_rows WHERE row_id IN (${placeholders})`)
+        .run(...criteria.rowIds);
+      count += Number(res.changes);
+    }
+    if (criteria.repository) {
+      const res = this.db
+        .prepare(`DELETE FROM training_rows WHERE repository = ?`)
+        .run(criteria.repository);
+      count += Number(res.changes);
+    }
+    if (criteria.tenantId) {
+      const res = this.db
+        .prepare(`DELETE FROM training_rows WHERE tenant_id = ?`)
+        .run(criteria.tenantId);
+      count += Number(res.changes);
+    }
+    if (criteria.taskId) {
+      const res = this.db
+        .prepare(`DELETE FROM training_rows WHERE task_id = ?`)
+        .run(criteria.taskId);
+      count += Number(res.changes);
+    }
+    return count;
+  }
+
+  public deleteObservationsByCriteria(criteria: {
+    taskIds?: string[];
+    observationIds?: string[];
+  }): number {
+    let count = 0;
+    if (criteria.observationIds && criteria.observationIds.length > 0) {
+      const placeholders = criteria.observationIds.map(() => '?').join(',');
+      const res = this.db
+        .prepare(`DELETE FROM candidate_observations WHERE observation_id IN (${placeholders})`)
+        .run(...criteria.observationIds);
+      count += Number(res.changes);
+    }
+    if (criteria.taskIds && criteria.taskIds.length > 0) {
+      const placeholders = criteria.taskIds.map(() => '?').join(',');
+      const res = this.db
+        .prepare(`DELETE FROM candidate_observations WHERE task_id IN (${placeholders})`)
+        .run(...criteria.taskIds);
+      count += Number(res.changes);
+
+      this.db
+        .prepare(`DELETE FROM exposure_decisions WHERE task_id IN (${placeholders})`)
+        .run(...criteria.taskIds);
+      this.db
+        .prepare(`DELETE FROM trajectory_events WHERE task_id IN (${placeholders})`)
+        .run(...criteria.taskIds);
+      this.db
+        .prepare(`DELETE FROM outcome_evidence WHERE task_id IN (${placeholders})`)
+        .run(...criteria.taskIds);
+      this.db
+        .prepare(`DELETE FROM task_outcome_records WHERE task_id IN (${placeholders})`)
+        .run(...criteria.taskIds);
+    }
+    return count;
+  }
+
+  // ==========================================
+  // Deletion Audit Log (Section 52)
+  // ==========================================
+
+  public saveDeletionAuditRecord(record: DeletionAuditRecord): void {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO deletion_audit_records (
+        deletion_id, requested_at, executed_at, criteria_json,
+        purged_observations_count, purged_training_rows_count,
+        affected_datasets_json, status, details, raw_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      record.deletionId,
+      record.requestedAt,
+      record.executedAt,
+      JSON.stringify(record.criteria),
+      record.purgedObservationsCount,
+      record.purgedTrainingRowsCount,
+      JSON.stringify(record.affectedDatasets),
+      record.status,
+      record.details ?? null,
+      JSON.stringify(record)
+    );
+  }
+
+  public listDeletionAuditRecords(): DeletionAuditRecord[] {
+    const rows = this.db
+      .prepare(`SELECT raw_json FROM deletion_audit_records ORDER BY executed_at DESC`)
+      .all() as Array<{ raw_json: string }>;
+
+    return rows.map((r) => JSON.parse(r.raw_json) as DeletionAuditRecord);
   }
 }
 
