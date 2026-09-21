@@ -27,8 +27,14 @@ import { ProviderUsageEvent } from '../token/provider_usage';
 import { JevSignalV1 } from '../providers/judgment/typesafe/jev_signal';
 import { SourceProvenance } from '../rights/source_provenance';
 import { TrainingRow, TrainingEvidenceRecord } from '../learning/lineage';
-import { TrainingExportResult, TrainingEvidenceExportResult } from '../learning/training_exporter';
-import { isSanctionedTrainingExport } from '../learning/training_persistence_brand';
+import {
+  TrainingExportResult,
+  TrainingEvidenceExportResult,
+  SanctionedTrainingExport,
+  SanctionedTrainingEvidenceExport,
+  isSanctionedTrainingExport,
+  isSanctionedTrainingEvidenceExport,
+} from '../learning/training_exporter';
 import { DeletionAuditRecord } from '../rights/deletion_manager';
 import { DataRights, createDefaultDataRights, DataClass, isDataClassPermitted } from '../rights/data_rights';
 import {
@@ -1838,27 +1844,22 @@ export class SqliteStore {
   // TrainingRow & Lineage Operations (Section 52)
   // ==========================================
 
-  public saveTrainingRows(input: TrainingExportResult | TrainingRow[]): void {
-    const rows = Array.isArray(input) ? input : input.rows;
-    const batchExportId = Array.isArray(input) ? undefined : input.exportId;
-    if (!rows || rows.length === 0) return;
-
-    // Enforce that filtered TrainingExporter output is the only sanctioned route into persistent training rows (Section 7.3)
+  public saveTrainingRows(input: SanctionedTrainingExport): void {
     if (Array.isArray(input)) {
-      for (const r of rows) {
-        if (!isSanctionedTrainingExport(r)) {
-          throw new Error(
-            `UNSANCTIONED_TRAINING_ROW_PERSISTENCE: Row '${r.rowId}' lacks an unforgeable TrainingExporter brand. Direct persistence of un-exported or forged training rows is strictly prohibited.`
-          );
-        }
-      }
-    } else {
-      if (!isSanctionedTrainingExport(input)) {
-        throw new Error(
-          `UNSANCTIONED_TRAINING_ROW_PERSISTENCE: TrainingExportResult lacks an unforgeable TrainingExporter brand. Direct persistence of un-exported or forged training rows is strictly prohibited.`
-        );
-      }
+      throw new Error(
+        `UNSANCTIONED_TRAINING_ROW_PERSISTENCE: Direct persistence of training row arrays is disallowed. Rows must be persisted via a sanctioned batch export from TrainingExporter.`
+      );
     }
+
+    if (!isSanctionedTrainingExport(input)) {
+      throw new Error(
+        `UNSANCTIONED_TRAINING_ROW_PERSISTENCE: TrainingExportResult lacks an unforgeable TrainingExporter brand. Direct persistence of un-exported or forged training rows is strictly prohibited.`
+      );
+    }
+
+    const rows = input.rows;
+    const batchExportId = input.exportId;
+    if (!rows || rows.length === 0) return;
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO training_rows (
@@ -2039,28 +2040,23 @@ export class SqliteStore {
   // ==========================================
 
   public saveTrainingEvidenceRecords(
-    input: TrainingEvidenceExportResult | TrainingEvidenceRecord[]
+    input: SanctionedTrainingEvidenceExport
   ): void {
-    const records = Array.isArray(input) ? input : input.records;
-    const batchExportId = Array.isArray(input) ? undefined : input.exportId;
-    if (!records || records.length === 0) return;
-
-    // Enforce that filtered TrainingExporter output is the only sanctioned route into persistent training evidence records (Section 7.3)
     if (Array.isArray(input)) {
-      for (const rec of records) {
-        if (!isSanctionedTrainingExport(rec)) {
-          throw new Error(
-            `UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE: Record '${rec.evidenceId}' lacks an unforgeable TrainingExporter brand. Direct persistence of un-exported or forged training evidence records is strictly prohibited.`
-          );
-        }
-      }
-    } else {
-      if (!isSanctionedTrainingExport(input)) {
-        throw new Error(
-          `UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE: TrainingEvidenceExportResult lacks an unforgeable TrainingExporter brand. Direct persistence of un-exported or forged training evidence records is strictly prohibited.`
-        );
-      }
+      throw new Error(
+        `UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE: Direct persistence of training evidence record arrays is disallowed. Records must be persisted via a sanctioned batch export from TrainingExporter.`
+      );
     }
+
+    if (!isSanctionedTrainingEvidenceExport(input)) {
+      throw new Error(
+        `UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE: TrainingEvidenceExportResult lacks an unforgeable TrainingExporter brand. Direct persistence of un-exported or forged training evidence records is strictly prohibited.`
+      );
+    }
+
+    const records = input.records;
+    const batchExportId = input.exportId;
+    if (!records || records.length === 0) return;
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO training_evidence_records (

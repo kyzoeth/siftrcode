@@ -389,7 +389,7 @@ export class JevShadowRunner {
 
           // Validate response structure and 4 heads strictly
           const prob = (x: unknown) => typeof x === 'number' && Number.isFinite(x) && x >= 0 && x <= 1 ? x : null;
-          const hasAnswers = result && result.answers && typeof result.answers === 'object';
+          const hasAnswers = Boolean(result && result.answers && typeof result.answers === 'object' && !Array.isArray(result.answers) && Object.keys(result.answers).length > 0);
           const sr = hasAnswers ? prob(result.answers?.semanticRelevance?.noul) : null;
           const ineed = hasAnswers ? prob(result.answers?.implementationNeeded?.noul) : null;
           const let_ = hasAnswers ? prob(result.answers?.likelyEditTarget?.noul) : null;

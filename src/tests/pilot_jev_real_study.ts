@@ -127,7 +127,9 @@ export interface LineageCoverageReport {
   mismatchedDecisionAgentEnvs: number;
   mismatchedPlanSnapshots: number;
   mismatchedJevSnapshots: number;
+  mismatchedDecisionSnapshots?: number;
   completeLineageCoverage: boolean;
+  lineageVerificationSucceeded?: boolean;
 }
 
 export interface LineageCoverage {
@@ -140,11 +142,17 @@ export interface LineageCoverage {
   orphanObservations: number;
   mismatchedAgentEnvs: number;
   mismatchedSnapshots: number;
+  mismatchedDecisionSnapshots?: number;
+  lineageVerificationSucceeded?: boolean;
 }
 
 export interface LiveMetrics {
   liveMode: boolean;
   totalTasks: number;
+  selectedTaskCount?: number;
+  completedTaskCount?: number;
+  tasksWithValidProviderSignal?: number;
+  harnessException?: string;
   maxHttpRequests: number;
   successfulCalls: number;
   failedCalls: number;
@@ -167,12 +175,24 @@ export interface LiveMetrics {
   providerSuccesses?: number;
   validSignals?: number;
   syntheticSignals?: number;
+  fallbackOnlySignals?: number;
   snapshotMismatches?: number;
   sessionMismatches?: number;
   agentEnvironmentMismatches?: number;
   orphanJevSignals?: number;
   orphanContextPlans?: number;
   orphanCandidateDecisions?: number;
+  orphanJevSession?: number;
+  orphanJevContextUnit?: number;
+  orphanJevContextPlan?: number;
+  orphanJevWorkspaceSnapshot?: number;
+  orphanContextPlanSession?: number;
+  orphanContextPlanWorkspaceSnapshot?: number;
+  orphanCandidateDecisionSession?: number;
+  orphanCandidateDecisionWorkspaceSnapshot?: number;
+  orphanTaskContextSession?: number;
+  orphanTaskContextWorkspaceSnapshot?: number;
+  mismatchedDecisionSnapshots?: number;
   totalJevSignals?: number;
   joinedJevSignals?: number;
   totalContextPlans?: number;
@@ -180,6 +200,7 @@ export interface LiveMetrics {
   totalCandidateDecisions?: number;
   joinedCandidateDecisions?: number;
   completeLineageCoverage?: boolean;
+  lineageVerificationSucceeded?: boolean;
   perTaskAttemptsExceeded?: boolean;
   httpRequestsExceededBudget?: boolean;
 }
@@ -206,24 +227,69 @@ export function evaluateLiveAcceptance(
     failed.push('clean build provenance');
   }
 
-  const tasksGotSignals = m.tasksWithSuccessfulSignal !== undefined
-    ? m.tasksWithSuccessfulSignal === m.totalTasks
-    : (m.successfulCalls >= m.totalTasks);
-  if (m.successfulCalls !== m.totalTasks && !tasksGotSignals) {
-    failed.push(`successfulCalls === totalTasks (${m.successfulCalls} vs ${m.totalTasks})`);
+  // Harness execution & completion (P0)
+  if (m.harnessException) {
+    failed.push(`harness execution without error (${m.harnessException})`);
   }
+  if (m.selectedTaskCount !== undefined && m.completedTaskCount !== undefined) {
+    if (m.completedTaskCount !== m.selectedTaskCount) {
+      failed.push(`completedTaskCount === selectedTaskCount (${m.completedTaskCount} vs ${m.selectedTaskCount})`);
+    }
+  }
+
+  // Minimum valid provider responses (P0)
+  const minValid = c?.minimumValidProviderResponses ?? 1;
+  if (!m.providerAttempts || m.providerAttempts <= 0) {
+    failed.push('providerAttempts > 0');
+  }
+  if ((m.providerSuccesses ?? 0) < minValid) {
+    failed.push(`providerSuccesses >= ${minValid} (got ${m.providerSuccesses ?? 0})`);
+  }
+  if ((m.validSignals ?? 0) < minValid) {
+    failed.push(`validSignals >= ${minValid} (got ${m.validSignals ?? 0})`);
+  }
+
+  // Strict smoke call health: zero failed calls and zero fallback-only signals
   if (m.failedCalls !== 0) {
     failed.push(`failedCalls === 0 (${m.failedCalls})`);
   }
+  if (m.fallbackOnlySignals !== undefined && m.fallbackOnlySignals > 0) {
+    failed.push(`fallbackOnlySignals === 0 (${m.fallbackOnlySignals})`);
+  }
+
+  // Synthetic signals forbidden in live mode (P0)
+  if (m.syntheticSignals !== undefined && m.syntheticSignals > 0) {
+    failed.push(`syntheticSignals === 0 (${m.syntheticSignals})`);
+  }
+
+  // Budgets (P0)
   if (m.totalHttpRequests > m.maxHttpRequests) {
     failed.push(`totalHttpRequests <= maxHttpRequests (${m.totalHttpRequests} > ${m.maxHttpRequests})`);
   }
+  if (m.perTaskAttemptsExceeded === true) {
+    failed.push('perTaskAttemptsExceeded === false');
+  }
+  if (m.httpRequestsExceededBudget === true) {
+    failed.push('httpRequestsExceededBudget === false');
+  }
+
+  // Plan invariance (100% normalized plan match)
   if (!m.planInvarianceHolds) {
     failed.push('planInvarianceHolds === true');
+  }
+
+  // Lineage coverage & referential integrity (P0)
+  if (m.lineageVerificationSucceeded === false) {
+    failed.push('lineageVerificationSucceeded === true');
+  }
+  if (m.completeLineageCoverage === false) {
+    failed.push('completeLineageCoverage === true');
   }
   if (!m.zeroLineageMismatches) {
     failed.push('zeroLineageMismatches === true');
   }
+
+  // Egress sanitization
   if (!m.zeroUnexpectedEgress) {
     failed.push('zeroUnexpectedEgress === true');
   }
@@ -235,6 +301,7 @@ export function evaluateLiveAcceptance(
     }
   }
 
+  // Final recommendation: strictly calculated from failed criteria
   const recommendation = failed.length === 0 ? 'PASS_TO_30_TASK_PILOT' : 'FIX_AND_REPEAT_SMOKE';
   return { recommendation, failed };
 }
@@ -255,6 +322,9 @@ export interface PilotReport {
   returnedProviderModels: string[];
   questionSetVersion: string;
   totalTasks: number;
+  selectedTaskCount?: number;
+  completedTaskCount?: number;
+  tasksWithValidProviderSignal?: number;
   tasksPerRepo: Record<PilotRepoKind, number>;
   tasksPerType: Record<PilotTaskType, number>;
   resolvedMaxCallsPerTask: number;
@@ -265,6 +335,13 @@ export interface PilotReport {
     retries: number;
     httpRequests: number;
     failuresByCategory: {
+      timeouts: number;
+      rateLimited: number;
+      malformed: number;
+      connectionErrors: number;
+      providerErrors: number;
+    };
+    httpAttemptFailures?: {
       timeouts: number;
       rateLimited: number;
       malformed: number;
@@ -672,6 +749,7 @@ function createRealPilotClient(
     apiKey?: string;
     isSmoke?: boolean;
     model?: string;
+    endpoint?: string;
     timeoutMs?: number;
     getTracker?: () => JevCallTracker | undefined;
     maxHttpRequestsPerTask?: number;
@@ -712,9 +790,10 @@ function createRealPilotClient(
       throw new Error('Live JEV evaluation requested (--live), but no API key was provided (set TYPESAFE_API_KEY or JEV_API_KEY).');
     }
     console.log(`  [Pilot] Using live TypeSafeSystemOneClient (TypeSafe key configured: true, mode: ${isSmoke ? 'SMOKE (max 1 connection retry)' : 'PILOT (max 2 retries)'})`);
+    const resolvedEndpoint = options.endpoint ?? process.env.TYPESAFE_BASE_URL ?? 'https://api.typesafe.ai';
     const liveClient = new TypeSafeSystemOneClient({
       apiKey,
-      baseURL: process.env.TYPESAFE_BASE_URL,
+      baseURL: resolvedEndpoint,
       defaultModel: options.model || process.env.SIFTR_JEV_MODEL || process.env.TYPESAFE_DEFAULT_MODEL || 'jev-latest',
       timeoutMs: options.timeoutMs ?? 15000,
       retry: { maxRetries: 0 },
@@ -747,6 +826,13 @@ function createRealPilotClient(
               (err instanceof APIError && (err.status === 429 || (err as any).statusCode === 429)) ||
               err?.status === 429 ||
               err?.statusCode === 429;
+
+            let attemptCategory: 'TIMEOUT' | 'RATE_LIMITED' | 'CONNECTION_ERROR' | 'PROVIDER_ERROR' = 'PROVIDER_ERROR';
+            if (isTimeout) attemptCategory = 'TIMEOUT';
+            else if (is429) attemptCategory = 'RATE_LIMITED';
+            else if (isConnection) attemptCategory = 'CONNECTION_ERROR';
+
+            tracker?.recordHttpAttemptFailure(attemptCategory);
 
             let canRetry = false;
             if (options.isSmoke) {
@@ -1005,6 +1091,7 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
   const envMaxCalls = process.env.SIFTR_JEV_MAX_CALLS ? parseInt(process.env.SIFTR_JEV_MAX_CALLS, 10) : undefined;
   const explicitMaxCalls = options.maxCallsPerTask ?? (callsArg ? parseInt(callsArg.split('=')[1], 10) : undefined);
   const maxCallsPerTask = explicitMaxCalls !== undefined ? explicitMaxCalls : (isSmoke ? 5 : (envMaxCalls ?? 20));
+  const resolvedMaxHttpRequestsPerTask = options.maxHttpRequestsPerTask ?? options.maxCallsPerTask ?? (isSmoke ? 10 : 60);
   const verbose = options.verbose ?? (isSmoke || process.argv.includes('--verbose'));
   const apiKey = options.apiKey || process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY;
 
@@ -1196,6 +1283,7 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
     budget: {
       maxCandidates: Math.min(maxCallsPerTask, 20),
       maxCallsPerTask,
+      maxHttpRequestsPerTask: resolvedMaxHttpRequestsPerTask,
       maxConcurrency: 4,
       maxInputCharacters: 8000,
     },
@@ -1278,6 +1366,13 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
   let totalProviderErrors = 0;
   let totalRedactionCount = 0;
   let snapshotMismatchesCount = 0;
+  let completedTaskCount = 0;
+  let tasksWithValidProviderSignal = 0;
+  let totalHttpAttemptTimeouts = 0;
+  let totalHttpAttemptRateLimited = 0;
+  let totalHttpAttemptMalformed = 0;
+  let totalHttpAttemptConnectionErrors = 0;
+  let totalHttpAttemptProviderErrors = 0;
 
   let taskLoopError: Error | undefined;
 
@@ -1438,6 +1533,11 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
         totalMalformed += stats.malformed;
         totalConnectionErrors += stats.connectionErrors;
         totalProviderErrors += stats.providerErrors;
+        totalHttpAttemptTimeouts += stats.httpAttemptFailures.timeouts;
+        totalHttpAttemptRateLimited += stats.httpAttemptFailures.rateLimited;
+        totalHttpAttemptMalformed += stats.httpAttemptFailures.malformed;
+        totalHttpAttemptConnectionErrors += stats.httpAttemptFailures.connectionErrors;
+        totalHttpAttemptProviderErrors += stats.httpAttemptFailures.providerErrors;
       }
 
       if (idx === 0) {
@@ -1642,6 +1742,31 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
       augmentedRecall10.push(computeRecall(augmentedRankedIds, groundTruthTargetUnitIds, 10));
       augmentedRecall20.push(computeRecall(augmentedRankedIds, groundTruthTargetUnitIds, 20));
       augmentedMrr.push(computeMRR(augmentedRankedIds, groundTruthTargetUnitIds));
+
+      completedTaskCount++;
+      const taskHasValidSignal = signals.some((sig) =>
+        sig.semanticRelevanceProbability !== null &&
+        sig.implementationNeededProbability !== null &&
+        sig.likelyEditTargetProbability !== null &&
+        sig.likelyRootCauseProbability !== null &&
+        typeof sig.semanticRelevanceProbability === 'number' &&
+        typeof sig.implementationNeededProbability === 'number' &&
+        typeof sig.likelyEditTargetProbability === 'number' &&
+        typeof sig.likelyRootCauseProbability === 'number' &&
+        Number.isFinite(sig.semanticRelevanceProbability) &&
+        Number.isFinite(sig.implementationNeededProbability) &&
+        Number.isFinite(sig.likelyEditTargetProbability) &&
+        Number.isFinite(sig.likelyRootCauseProbability) &&
+        sig.semanticRelevanceProbability >= 0 && sig.semanticRelevanceProbability <= 1 &&
+        sig.implementationNeededProbability >= 0 && sig.implementationNeededProbability <= 1 &&
+        sig.likelyEditTargetProbability >= 0 && sig.likelyEditTargetProbability <= 1 &&
+        sig.likelyRootCauseProbability >= 0 && sig.likelyRootCauseProbability <= 1 &&
+        sig.fallbackReason === undefined &&
+        (isLive ? sig.model !== 'synthetic-fake-client' : true)
+      );
+      if (taskHasValidSignal) {
+        tasksWithValidProviderSignal++;
+      }
     }
   } catch (err: any) {
     taskLoopError = err instanceof Error ? err : new Error(String(err));
@@ -1652,87 +1777,218 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
   console.log(`\nCompleted pilot evaluation in ${elapsedTotal}ms.`);
 
   // -------------------------------------------------------------------------
-  // Lineage Coverage Verification (Section 5)
+  // Lineage Coverage Verification (Section 5 & FINAL-3.1 P0)
   // -------------------------------------------------------------------------
   let totalSessions = 0;
+  let totalSnapshots = 0;
+  let totalContextUnits = 0;
+  let totalTaskContexts = 0;
   let totalJevSignals = 0;
   let joinedJevSignals = 0;
   let orphanJevSignals = 0;
+  let orphanJevSession = 0;
+  let orphanJevContextUnit = 0;
+  let orphanJevContextPlan = 0;
+  let orphanJevWorkspaceSnapshot = 0;
   let totalContextPlans = 0;
   let joinedContextPlans = 0;
   let orphanContextPlans = 0;
+  let orphanContextPlanSession = 0;
+  let orphanContextPlanWorkspaceSnapshot = 0;
   let totalCandidateDecisions = 0;
   let joinedCandidateDecisions = 0;
   let orphanCandidateDecisions = 0;
+  let orphanCandidateDecisionSession = 0;
+  let orphanCandidateDecisionWorkspaceSnapshot = 0;
+  let orphanTaskContextSession = 0;
+  let orphanTaskContextWorkspaceSnapshot = 0;
   let mismatchedJevAgentEnvs = 0;
   let mismatchedPlanAgentEnvs = 0;
   let mismatchedDecisionAgentEnvs = 0;
   let mismatchedPlanSnapshots = 0;
   let mismatchedJevSnapshots = 0;
+  let mismatchedDecisionSnapshots = 0;
   let completeLineageCoverage = false;
+  let lineageVerificationSucceeded = false;
 
   try {
     const db = (store as any).db;
     if (db) {
       totalSessions = (db.prepare('SELECT COUNT(*) as count FROM sessions').get() as any)?.count ?? 0;
+      totalSnapshots = (db.prepare('SELECT COUNT(*) as count FROM snapshots').get() as any)?.count ?? 0;
+      totalContextUnits = (db.prepare('SELECT COUNT(*) as count FROM context_units').get() as any)?.count ?? 0;
+      totalTaskContexts = (db.prepare('SELECT COUNT(*) as count FROM task_contexts').get() as any)?.count ?? 0;
 
       totalJevSignals = (db.prepare('SELECT COUNT(*) as count FROM jev_shadow_judgments').get() as any)?.count ?? 0;
       joinedJevSignals = (db.prepare('SELECT COUNT(*) as count FROM jev_shadow_judgments j JOIN sessions s ON j.session_id = s.session_id').get() as any)?.count ?? 0;
-      orphanJevSignals = (db.prepare('SELECT COUNT(*) as count FROM jev_shadow_judgments j LEFT JOIN sessions s ON j.session_id = s.session_id WHERE s.session_id IS NULL').get() as any)?.count ?? 0;
 
       totalContextPlans = (db.prepare('SELECT COUNT(*) as count FROM context_plans').get() as any)?.count ?? 0;
       joinedContextPlans = (db.prepare(`SELECT COUNT(*) as count FROM context_plans p JOIN sessions s ON json_extract(p.raw_json, '$.sessionId') = s.session_id`).get() as any)?.count ?? 0;
-      orphanContextPlans = (db.prepare(`SELECT COUNT(*) as count FROM context_plans p LEFT JOIN sessions s ON json_extract(p.raw_json, '$.sessionId') = s.session_id WHERE s.session_id IS NULL`).get() as any)?.count ?? 0;
 
       totalCandidateDecisions = (db.prepare('SELECT COUNT(*) as count FROM candidate_decision_observations').get() as any)?.count ?? 0;
       joinedCandidateDecisions = (db.prepare('SELECT COUNT(*) as count FROM candidate_decision_observations d JOIN sessions s ON d.session_id = s.session_id').get() as any)?.count ?? 0;
-      orphanCandidateDecisions = (db.prepare('SELECT COUNT(*) as count FROM candidate_decision_observations d LEFT JOIN sessions s ON d.session_id = s.session_id WHERE s.session_id IS NULL').get() as any)?.count ?? 0;
 
+      // Anti-joins checking missing parents or NULL/blank/'unknown' foreign keys:
+      // 1. JEV -> Session
+      orphanJevSession = (db.prepare(`
+        SELECT COUNT(*) as count FROM jev_shadow_judgments j
+        LEFT JOIN sessions s ON j.session_id = s.session_id
+        WHERE j.session_id IS NULL OR j.session_id = '' OR j.session_id = 'unknown' OR s.session_id IS NULL
+      `).get() as any)?.count ?? 0;
+
+      // 2. JEV -> ContextUnit
+      orphanJevContextUnit = (db.prepare(`
+        SELECT COUNT(*) as count FROM jev_shadow_judgments j
+        LEFT JOIN context_units u ON j.context_unit_id = u.unit_id
+        WHERE j.context_unit_id IS NULL OR j.context_unit_id = '' OR j.context_unit_id = 'unknown' OR u.unit_id IS NULL
+      `).get() as any)?.count ?? 0;
+
+      // 3. JEV -> ContextPlan
+      orphanJevContextPlan = (db.prepare(`
+        SELECT COUNT(*) as count FROM jev_shadow_judgments j
+        LEFT JOIN context_plans p ON j.context_plan_id = p.plan_id
+        WHERE j.context_plan_id IS NULL OR j.context_plan_id = '' OR j.context_plan_id = 'unknown' OR p.plan_id IS NULL
+      `).get() as any)?.count ?? 0;
+
+      // 4. JEV -> WorkspaceSnapshot
+      orphanJevWorkspaceSnapshot = (db.prepare(`
+        SELECT COUNT(*) as count FROM jev_shadow_judgments j
+        LEFT JOIN snapshots sn ON j.workspace_snapshot_id = sn.snapshot_id
+        WHERE j.workspace_snapshot_id IS NULL OR j.workspace_snapshot_id = '' OR j.workspace_snapshot_id = 'unknown' OR sn.snapshot_id IS NULL
+      `).get() as any)?.count ?? 0;
+
+      // 5. ContextPlan -> Session
+      orphanContextPlanSession = (db.prepare(`
+        SELECT COUNT(*) as count FROM context_plans p
+        LEFT JOIN sessions s ON json_extract(p.raw_json, '$.sessionId') = s.session_id
+        WHERE json_extract(p.raw_json, '$.sessionId') IS NULL OR json_extract(p.raw_json, '$.sessionId') = '' OR json_extract(p.raw_json, '$.sessionId') = 'unknown' OR s.session_id IS NULL
+      `).get() as any)?.count ?? 0;
+
+      // 6. ContextPlan -> WorkspaceSnapshot
+      orphanContextPlanWorkspaceSnapshot = (db.prepare(`
+        SELECT COUNT(*) as count FROM context_plans p
+        LEFT JOIN snapshots sn ON p.snapshot_id = sn.snapshot_id
+        WHERE p.snapshot_id IS NULL OR p.snapshot_id = '' OR p.snapshot_id = 'unknown' OR sn.snapshot_id IS NULL
+      `).get() as any)?.count ?? 0;
+
+      // 7. CandidateDecision -> Session
+      orphanCandidateDecisionSession = (db.prepare(`
+        SELECT COUNT(*) as count FROM candidate_decision_observations d
+        LEFT JOIN sessions s ON d.session_id = s.session_id
+        WHERE d.session_id IS NULL OR d.session_id = '' OR d.session_id = 'unknown' OR s.session_id IS NULL
+      `).get() as any)?.count ?? 0;
+
+      // 8. CandidateDecision -> WorkspaceSnapshot
+      orphanCandidateDecisionWorkspaceSnapshot = (db.prepare(`
+        SELECT COUNT(*) as count FROM candidate_decision_observations d
+        LEFT JOIN snapshots sn ON d.snapshot_id = sn.snapshot_id
+        WHERE d.snapshot_id IS NULL OR d.snapshot_id = '' OR d.snapshot_id = 'unknown' OR sn.snapshot_id IS NULL
+      `).get() as any)?.count ?? 0;
+
+      // 9. TaskContext -> Session
+      orphanTaskContextSession = (db.prepare(`
+        SELECT COUNT(*) as count FROM task_contexts t
+        LEFT JOIN sessions s ON json_extract(t.raw_json, '$.sessionId') = s.session_id
+        WHERE json_extract(t.raw_json, '$.sessionId') IS NULL
+           OR json_extract(t.raw_json, '$.sessionId') = ''
+           OR json_extract(t.raw_json, '$.sessionId') = 'unknown'
+           OR s.session_id IS NULL
+      `).get() as any)?.count ?? 0;
+
+      // 10. TaskContext -> WorkspaceSnapshot
+      orphanTaskContextWorkspaceSnapshot = (db.prepare(`
+        SELECT COUNT(*) as count FROM task_contexts t
+        LEFT JOIN snapshots sn ON t.snapshot_id = sn.snapshot_id
+        WHERE t.snapshot_id IS NULL OR t.snapshot_id = '' OR t.snapshot_id = 'unknown' OR sn.snapshot_id IS NULL
+      `).get() as any)?.count ?? 0;
+
+      // AgentEnvironment lineage against Session (canonical identity: systemConfigurationHash)
       mismatchedJevAgentEnvs = (db.prepare(`
-        SELECT COUNT(*) as count FROM jev_shadow_judgments j JOIN sessions s ON j.session_id = s.session_id 
-        WHERE j.agent_environment_id != s.agent_environment_id OR j.agent_environment_id IS NULL OR j.agent_environment_id = '' OR j.agent_environment_id = 'unknown'
+        SELECT COUNT(*) as count FROM jev_shadow_judgments j
+        LEFT JOIN sessions s ON j.session_id = s.session_id
+        WHERE j.agent_environment_id IS NULL OR j.agent_environment_id = '' OR j.agent_environment_id = 'unknown'
+           OR s.agent_environment_id IS NULL OR s.agent_environment_id = '' OR s.agent_environment_id = 'unknown'
+           OR j.agent_environment_id != s.agent_environment_id
       `).get() as any)?.count ?? 0;
 
       mismatchedPlanAgentEnvs = (db.prepare(`
-        SELECT COUNT(*) as count FROM context_plans p JOIN sessions s ON json_extract(p.raw_json, '$.sessionId') = s.session_id 
-        WHERE json_extract(p.raw_json, '$.agentEnvironmentId') != s.agent_environment_id
+        SELECT COUNT(*) as count FROM context_plans p
+        LEFT JOIN sessions s ON json_extract(p.raw_json, '$.sessionId') = s.session_id
+        WHERE json_extract(p.raw_json, '$.agentEnvironmentId') IS NULL OR json_extract(p.raw_json, '$.agentEnvironmentId') = '' OR json_extract(p.raw_json, '$.agentEnvironmentId') = 'unknown'
+           OR s.agent_environment_id IS NULL OR s.agent_environment_id = '' OR s.agent_environment_id = 'unknown'
+           OR json_extract(p.raw_json, '$.agentEnvironmentId') != s.agent_environment_id
       `).get() as any)?.count ?? 0;
 
       mismatchedDecisionAgentEnvs = (db.prepare(`
-        SELECT COUNT(*) as count FROM candidate_decision_observations d JOIN sessions s ON d.session_id = s.session_id 
-        WHERE json_extract(d.raw_json, '$.agentEnvironment.systemConfigurationHash') != s.agent_environment_id
+        SELECT COUNT(*) as count FROM candidate_decision_observations d
+        LEFT JOIN sessions s ON d.session_id = s.session_id
+        WHERE json_extract(d.raw_json, '$.agentEnvironment.systemConfigurationHash') IS NULL OR json_extract(d.raw_json, '$.agentEnvironment.systemConfigurationHash') = '' OR json_extract(d.raw_json, '$.agentEnvironment.systemConfigurationHash') = 'unknown'
+           OR s.agent_environment_id IS NULL OR s.agent_environment_id = '' OR s.agent_environment_id = 'unknown'
+           OR json_extract(d.raw_json, '$.agentEnvironment.systemConfigurationHash') != s.agent_environment_id
       `).get() as any)?.count ?? 0;
 
+      // Snapshot lineage against Session initial_snapshot_id
       mismatchedPlanSnapshots = (db.prepare(`
-        SELECT COUNT(*) as count FROM context_plans p JOIN sessions s ON json_extract(p.raw_json, '$.sessionId') = s.session_id 
-        WHERE p.snapshot_id != s.initial_snapshot_id OR p.snapshot_id IS NULL OR p.snapshot_id = ''
+        SELECT COUNT(*) as count FROM context_plans p
+        LEFT JOIN sessions s ON json_extract(p.raw_json, '$.sessionId') = s.session_id
+        WHERE p.snapshot_id IS NULL OR p.snapshot_id = '' OR p.snapshot_id = 'unknown'
+           OR s.initial_snapshot_id IS NULL OR s.initial_snapshot_id = '' OR s.initial_snapshot_id = 'unknown'
+           OR p.snapshot_id != s.initial_snapshot_id
       `).get() as any)?.count ?? 0;
 
       mismatchedJevSnapshots = (db.prepare(`
-        SELECT COUNT(*) as count FROM jev_shadow_judgments j JOIN sessions s ON j.session_id = s.session_id 
-        WHERE j.workspace_snapshot_id != s.initial_snapshot_id OR j.workspace_snapshot_id IS NULL OR j.workspace_snapshot_id = ''
+        SELECT COUNT(*) as count FROM jev_shadow_judgments j
+        LEFT JOIN sessions s ON j.session_id = s.session_id
+        WHERE j.workspace_snapshot_id IS NULL OR j.workspace_snapshot_id = '' OR j.workspace_snapshot_id = 'unknown'
+           OR s.initial_snapshot_id IS NULL OR s.initial_snapshot_id = '' OR s.initial_snapshot_id = 'unknown'
+           OR j.workspace_snapshot_id != s.initial_snapshot_id
       `).get() as any)?.count ?? 0;
 
+      mismatchedDecisionSnapshots = (db.prepare(`
+        SELECT COUNT(*) as count FROM candidate_decision_observations d
+        LEFT JOIN sessions s ON d.session_id = s.session_id
+        WHERE d.snapshot_id IS NULL OR d.snapshot_id = '' OR d.snapshot_id = 'unknown'
+           OR s.initial_snapshot_id IS NULL OR s.initial_snapshot_id = '' OR s.initial_snapshot_id = 'unknown'
+           OR d.snapshot_id != s.initial_snapshot_id
+      `).get() as any)?.count ?? 0;
+
+      orphanJevSignals = orphanJevSession + orphanJevContextUnit + orphanJevContextPlan + orphanJevWorkspaceSnapshot;
+      orphanContextPlans = orphanContextPlanSession + orphanContextPlanWorkspaceSnapshot;
+      orphanCandidateDecisions = orphanCandidateDecisionSession + orphanCandidateDecisionWorkspaceSnapshot;
+      const orphanTaskContexts = orphanTaskContextSession + orphanTaskContextWorkspaceSnapshot;
+
+      lineageVerificationSucceeded = true;
       completeLineageCoverage =
         orphanJevSignals === 0 &&
         orphanContextPlans === 0 &&
         orphanCandidateDecisions === 0 &&
-        totalJevSignals === joinedJevSignals &&
-        totalContextPlans === joinedContextPlans &&
-        totalCandidateDecisions === joinedCandidateDecisions &&
-        (isLive ? totalJevSignals > 0 : true) &&
-        totalContextPlans > 0;
+        orphanTaskContexts === 0 &&
+        mismatchedJevAgentEnvs === 0 &&
+        mismatchedPlanAgentEnvs === 0 &&
+        mismatchedDecisionAgentEnvs === 0 &&
+        mismatchedPlanSnapshots === 0 &&
+        mismatchedJevSnapshots === 0 &&
+        mismatchedDecisionSnapshots === 0 &&
+        totalSessions > 0 &&
+        totalContextPlans > 0 &&
+        totalCandidateDecisions > 0 &&
+        (isLive ? totalJevSignals > 0 : true);
     }
   } catch (dbErr) {
     console.error('Lineage database query error:', dbErr);
+    lineageVerificationSucceeded = false;
+    completeLineageCoverage = false;
   }
 
   const mismatchedAgentEnvs = mismatchedJevAgentEnvs + mismatchedPlanAgentEnvs + mismatchedDecisionAgentEnvs;
-  const mismatchedSnapshots = mismatchedPlanSnapshots + mismatchedJevSnapshots;
+  const mismatchedSnapshots = mismatchedPlanSnapshots + mismatchedJevSnapshots + mismatchedDecisionSnapshots;
   const zeroLineageMismatches =
+    lineageVerificationSucceeded &&
     orphanJevSignals === 0 &&
     orphanContextPlans === 0 &&
     orphanCandidateDecisions === 0 &&
+    orphanTaskContextSession === 0 &&
+    orphanTaskContextWorkspaceSnapshot === 0 &&
     mismatchedAgentEnvs === 0 &&
     mismatchedSnapshots === 0;
 
@@ -1748,19 +2004,24 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
     orphanObservations: orphanCandidateDecisions,
     mismatchedAgentEnvs,
     mismatchedSnapshots,
+    mismatchedDecisionSnapshots,
+    lineageVerificationSucceeded,
   };
 
   // -------------------------------------------------------------------------
   // Compute Acceptance Metrics & Recommendation
   // -------------------------------------------------------------------------
+  const isValidProb = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1;
   const validSignalsCount = allSignals.filter((s) =>
-    s.semanticRelevanceProbability !== null &&
-    s.implementationNeededProbability !== null &&
-    s.likelyEditTargetProbability !== null &&
-    s.likelyRootCauseProbability !== null &&
-    s.fallbackReason === undefined
+    isValidProb(s.semanticRelevanceProbability) &&
+    isValidProb(s.implementationNeededProbability) &&
+    isValidProb(s.likelyEditTargetProbability) &&
+    isValidProb(s.likelyRootCauseProbability) &&
+    s.fallbackReason === undefined &&
+    (isLive ? s.model !== 'synthetic-fake-client' : true)
   ).length;
   const fallbackSignalsCount = allSignals.length - validSignalsCount;
+  const fallbackOnlySignalsCount = allSignals.filter((s) => s.fallbackReason !== undefined).length;
   const syntheticSignalsCount = isLive ? allSignals.filter((s) => s.model === 'synthetic-fake-client').length : 0;
 
   const returnedProviderModels = Array.from(
@@ -1770,13 +2031,15 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
     returnedProviderModels.push('synthetic-fake-client');
   }
 
-  const maxRetriesPerCall = isSmoke ? 1 : 2;
-  const maxHttpRequestsPerTask = options.maxHttpRequestsPerTask ?? (maxCallsPerTask * (1 + maxRetriesPerCall));
-  const maxHttpRequests = maxHttpRequestsPerTask * selectedTasks.length;
+  const maxHttpRequests = resolvedMaxHttpRequestsPerTask * selectedTasks.length;
 
   const liveMetrics: LiveMetrics = {
     liveMode: isLive,
     totalTasks: selectedTasks.length,
+    selectedTaskCount: selectedTasks.length,
+    completedTaskCount,
+    tasksWithValidProviderSignal,
+    harnessException: taskLoopError ? taskLoopError.message : undefined,
     maxHttpRequests,
     successfulCalls: totalSuccessful,
     failedCalls: totalFailed,
@@ -1798,12 +2061,24 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
     providerSuccesses: totalSuccessful,
     validSignals: validSignalsCount,
     syntheticSignals: syntheticSignalsCount,
+    fallbackOnlySignals: fallbackOnlySignalsCount,
     snapshotMismatches: snapshotMismatchesCount + mismatchedSnapshots,
     sessionMismatches: 0,
     agentEnvironmentMismatches: mismatchedAgentEnvs,
     orphanJevSignals,
     orphanContextPlans,
     orphanCandidateDecisions,
+    orphanJevSession,
+    orphanJevContextUnit,
+    orphanJevContextPlan,
+    orphanJevWorkspaceSnapshot,
+    orphanContextPlanSession,
+    orphanContextPlanWorkspaceSnapshot,
+    orphanCandidateDecisionSession,
+    orphanCandidateDecisionWorkspaceSnapshot,
+    orphanTaskContextSession,
+    orphanTaskContextWorkspaceSnapshot,
+    mismatchedDecisionSnapshots,
     totalJevSignals,
     joinedJevSignals,
     totalContextPlans,
@@ -1811,6 +2086,7 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
     totalCandidateDecisions,
     joinedCandidateDecisions,
     completeLineageCoverage,
+    lineageVerificationSucceeded,
     perTaskAttemptsExceeded: callsPerTask.some((c) => c > maxCallsPerTask),
     httpRequestsExceededBudget: totalHttpRequests > maxHttpRequests,
   };
@@ -1825,11 +2101,15 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
       excludeProductionEndpointCheck: options.acceptanceConfig?.excludeProductionEndpointCheck ?? false,
     };
     const evalResult = evaluateLiveAcceptance(liveMetrics, acceptanceConfig);
-    recommendation = evalResult.recommendation;
     failedCriteria = [...evalResult.failed];
-    if (taskLoopError && !failedCriteria.includes('harness crash')) {
+    if (taskLoopError && !failedCriteria.some(fc => fc.includes('harness execution without error') || fc.includes('harness crash'))) {
       failedCriteria.push('harness execution error: ' + taskLoopError.message);
     }
+    // Calculate recommendation strictly last
+    recommendation = failedCriteria.length === 0 ? 'PASS_TO_30_TASK_PILOT' : 'FIX_AND_REPEAT_SMOKE';
+  } else {
+    recommendation = null;
+    failedCriteria = undefined;
   }
 
   const requestedModel = options.model ?? process.env.SIFTR_JEV_MODEL ?? process.env.TYPESAFE_DEFAULT_MODEL ?? (isLive ? 'jev-latest' : 'synthetic-fake-client');
@@ -1864,10 +2144,13 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
     returnedProviderModels,
     questionSetVersion: JEV_QUESTION_SET_VERSION_V1,
     totalTasks: selectedTasks.length,
+    selectedTaskCount: selectedTasks.length,
+    completedTaskCount,
+    tasksWithValidProviderSignal,
     tasksPerRepo,
     tasksPerType,
     resolvedMaxCallsPerTask: maxCallsPerTask,
-    selectedCandidates: totalSelectedCandidates || (selectedTasks.length * 5),
+    selectedCandidates: totalSelectedCandidates,
     provider: {
       attempts: totalSuccessful + totalFailed,
       successes: totalSuccessful,
@@ -1879,6 +2162,13 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
         malformed: totalMalformed,
         connectionErrors: totalConnectionErrors,
         providerErrors: totalProviderErrors,
+      },
+      httpAttemptFailures: {
+        timeouts: totalHttpAttemptTimeouts,
+        rateLimited: totalHttpAttemptRateLimited,
+        malformed: totalHttpAttemptMalformed,
+        connectionErrors: totalHttpAttemptConnectionErrors,
+        providerErrors: totalHttpAttemptProviderErrors,
       },
       rightsDenied: totalRightsDenied,
       trustDenied: totalTrustDenied,
@@ -1926,7 +2216,9 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
       mismatchedDecisionAgentEnvs,
       mismatchedPlanSnapshots,
       mismatchedJevSnapshots,
+      mismatchedDecisionSnapshots,
       completeLineageCoverage,
+      lineageVerificationSucceeded,
     },
     lineageCoverage,
     zeroLineageMismatches,
@@ -2030,13 +2322,20 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
   console.log(`SDK Version:             ${report.sdkVersion}`);
   console.log(`Requested Model:         ${report.requestedModel}`);
   console.log(`Returned Provider Models:${JSON.stringify(report.returnedProviderModels)}`);
-  console.log(`Question Set:            ${report.questionSetVersion}`);
-  console.log(`Tasks Evaluated:         ${report.totalTasks} (Express: ${report.tasksPerRepo.express}, FastAPI: ${report.tasksPerRepo.fastapi}, SiftrCode: ${report.tasksPerRepo.siftrcode})`);
+  console.log(`Tasks Evaluated:         ${report.completedTaskCount ?? report.totalTasks}/${report.selectedTaskCount ?? report.totalTasks} (Valid Signals: ${report.tasksWithValidProviderSignal ?? 0}, Express: ${report.tasksPerRepo.express}, FastAPI: ${report.tasksPerRepo.fastapi}, SiftrCode: ${report.tasksPerRepo.siftrcode})`);
   console.log(`Resolved Max Calls/Task: ${report.resolvedMaxCallsPerTask}`);
   console.log(`Selected Candidates:     ${report.selectedCandidates}`);
   console.log(`Decision Plan Invariance:${report.planInvarianceHolds ? 'PASSED (100% normalized decision plan match)' : 'FAILED'}`);
+  if (report.perTaskPlanInvariance && report.perTaskPlanInvariance.length > 0) {
+    for (const inv of report.perTaskPlanInvariance) {
+      console.log(`  Plan Invariance [${inv.taskId}]: baseline=${inv.baselinePlanHash.slice(0, 12)}... shadow=${inv.shadowPlanHash.slice(0, 12)}... match=${inv.invariant}`);
+    }
+  }
   console.log(`Provider Calls:          Attempts: ${report.provider.attempts}, Successes: ${report.provider.successes}, Retries: ${report.provider.retries}, HTTP Requests: ${report.provider.httpRequests}`);
-  console.log(`Failures by Category:    Timeouts: ${report.provider.failuresByCategory.timeouts}, RateLimited: ${report.provider.failuresByCategory.rateLimited}, Malformed: ${report.provider.failuresByCategory.malformed}, Connection: ${report.provider.failuresByCategory.connectionErrors}, ProviderErrors: ${report.provider.failuresByCategory.providerErrors}`);
+  console.log(`Terminal Failures:       Timeouts: ${report.provider.failuresByCategory.timeouts}, RateLimited: ${report.provider.failuresByCategory.rateLimited}, Malformed: ${report.provider.failuresByCategory.malformed}, Connection: ${report.provider.failuresByCategory.connectionErrors}, ProviderErrors: ${report.provider.failuresByCategory.providerErrors}`);
+  if (report.provider.httpAttemptFailures) {
+    console.log(`HTTP Attempt Failures:   Timeouts: ${report.provider.httpAttemptFailures.timeouts}, RateLimited: ${report.provider.httpAttemptFailures.rateLimited}, Malformed: ${report.provider.httpAttemptFailures.malformed}, Connection: ${report.provider.httpAttemptFailures.connectionErrors}, ProviderErrors: ${report.provider.httpAttemptFailures.providerErrors}`);
+  }
   console.log(`Rights / Trust / Budget: RightsDenied: ${report.provider.rightsDenied}, TrustDenied: ${report.provider.trustDenied}, BudgetSkipped: ${report.provider.budgetSkipped}`);
   console.log(`Signals Health:          Valid Signals: ${report.signals.validSignals}, Fallback Signals: ${report.signals.fallbackSignals}`);
   console.log(`P50 Latency (Success):   ${report.operational.latencySummary.median}ms (P95: ${report.operational.latencySummary.p95}ms)`);

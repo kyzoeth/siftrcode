@@ -376,6 +376,7 @@ TYPESAFE_API_KEY="your-api-key" node dist/tests/pilot_jev_real_study.js --live -
 - **Suite 13**: `WorkspaceSnapshot` equality, retry budgeting, and Railway application path smoke verification.
 - **Suite 14**: Aggregate live-provider operational metrics, metadata-only egress shape instrumentation, fail-closed continuous probability validation, and post-build stamping.
 - **Suite 15**: FINAL-3 remediation verification: in-process SystemOne mock, strict 4-head probability validation, SDK error classification, counted retry policy (Smoke: 1 retry for connection error only, 0 for 429; Pilot: 2 retries for connection/429), acceptance evaluation (`PASS_TO_30_TASK_PILOT` vs `FIX_AND_REPEAT_SMOKE`), lineage `LEFT JOIN` queries, source tree SHA-256 provenance gating, tri-state labels, and unforgeable training persistence brand.
+- **Suite 16**: FINAL-3.1 acceptance integrity & experimental trustworthiness: universal acceptance recommendation invariant (`recommendation === 'PASS_TO_30_TASK_PILOT'` if and only if `failedCriteria.length === 0`, exit code 2 on `FIX_AND_REPEAT_SMOKE`), partial harness execution failure protection, strict 4-head finite $[0, 1]$ probability validation, zero synthetic signals in live mode, relational integrity anti-joins across 10 foreign-key relationships, truthful endpoint provenance, attempt-level vs terminal failure category accounting, and closed training persistence trust boundary.
 
 ---
 

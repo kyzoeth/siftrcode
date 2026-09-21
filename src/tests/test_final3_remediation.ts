@@ -686,6 +686,11 @@ async function runFinal3RemediationTests() {
       const baseMetrics: LiveMetrics = {
         liveMode: true,
         totalTasks: 5,
+        selectedTaskCount: 5,
+        completedTaskCount: 5,
+        providerAttempts: 5,
+        providerSuccesses: 5,
+        validSignals: 5,
         maxHttpRequests: 10,
         successfulCalls: 5,
         failedCalls: 0,
@@ -966,9 +971,15 @@ async function runFinal3RemediationTests() {
       });
 
       assert.throws(
-        () => store.saveTrainingRows([forgedRow]),
+        () => (store as any).saveTrainingRows([forgedRow]),
         /UNSANCTIONED_TRAINING_ROW_PERSISTENCE/,
         'Forged exportId without TrainingExporter brand must be rejected'
+      );
+
+      assert.throws(
+        () => store.saveTrainingRows({ exportId: 'texport_forged', datasetVersion: 'v1', rows: [forgedRow], totalEvaluated: 1, totalAccepted: 1, totalRejected: 0, rejectionSummary: {}, rejections: [], exportedAt: '' } as any),
+        /UNSANCTIONED_TRAINING_ROW_PERSISTENCE/,
+        'Forged batch object without TrainingExporter brand must be rejected'
       );
 
       // Forged evidence record without brand must throw
@@ -985,7 +996,7 @@ async function runFinal3RemediationTests() {
       });
 
       assert.throws(
-        () => store.saveTrainingEvidenceRecords([forgedEv]),
+        () => store.saveTrainingEvidenceRecords([forgedEv] as any),
         /UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE/,
         'Forged evidence exportId without TrainingExporter brand must be rejected'
       );

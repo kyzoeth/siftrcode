@@ -9,6 +9,7 @@ export interface JevDecisionBudget {
   maxConcurrency: number;
   maxLatencyMs: number;
   maxInputCharacters?: number;
+  maxHttpRequestsPerTask?: number;
 }
 
 export const DEFAULT_JEV_DECISION_BUDGET: JevDecisionBudget = {
@@ -18,6 +19,14 @@ export const DEFAULT_JEV_DECISION_BUDGET: JevDecisionBudget = {
   maxLatencyMs: 2000,
   maxInputCharacters: 8000,
 };
+
+export interface FailureCategoryCounts {
+  timeouts: number;
+  rateLimited: number;
+  malformed: number;
+  connectionErrors: number;
+  providerErrors: number;
+}
 
 export interface JevCallStats {
   eligibleCandidates: number;
@@ -35,6 +44,8 @@ export interface JevCallStats {
   providerErrors: number;
   retries: number;
   httpRequests: number;
+  httpAttemptFailures: FailureCategoryCounts;
+  terminalFailures: FailureCategoryCounts;
 }
 
 export class JevCallTracker {
@@ -55,6 +66,20 @@ export class JevCallTracker {
     providerErrors: 0,
     retries: 0,
     httpRequests: 0,
+    httpAttemptFailures: {
+      timeouts: 0,
+      rateLimited: 0,
+      malformed: 0,
+      connectionErrors: 0,
+      providerErrors: 0,
+    },
+    terminalFailures: {
+      timeouts: 0,
+      rateLimited: 0,
+      malformed: 0,
+      connectionErrors: 0,
+      providerErrors: 0,
+    },
   };
 
   constructor(budget: Partial<JevDecisionBudget> = {}) {
@@ -102,19 +127,38 @@ export class JevCallTracker {
     this.stats.httpRequests++;
   }
 
+  public recordHttpAttemptFailure(category?: 'TIMEOUT' | 'RATE_LIMITED' | 'MALFORMED' | 'CONNECTION_ERROR' | 'PROVIDER_ERROR' | string): void {
+    if (category === 'TIMEOUT') {
+      this.stats.httpAttemptFailures.timeouts++;
+    } else if (category === 'RATE_LIMITED') {
+      this.stats.httpAttemptFailures.rateLimited++;
+    } else if (category === 'MALFORMED') {
+      this.stats.httpAttemptFailures.malformed++;
+    } else if (category === 'CONNECTION_ERROR') {
+      this.stats.httpAttemptFailures.connectionErrors++;
+    } else {
+      this.stats.httpAttemptFailures.providerErrors++;
+    }
+  }
+
   public recordCallFailure(category?: 'TIMEOUT' | 'RATE_LIMITED' | 'MALFORMED' | 'CONNECTION_ERROR' | 'PROVIDER_ERROR' | string): void {
     this.stats.failedCalls++;
     this.stats.fallbackCalls++;
     if (category === 'TIMEOUT') {
       this.stats.timeouts++;
+      this.stats.terminalFailures.timeouts++;
     } else if (category === 'RATE_LIMITED') {
       this.stats.rateLimited++;
+      this.stats.terminalFailures.rateLimited++;
     } else if (category === 'MALFORMED') {
       this.stats.malformed++;
+      this.stats.terminalFailures.malformed++;
     } else if (category === 'CONNECTION_ERROR') {
       this.stats.connectionErrors++;
+      this.stats.terminalFailures.connectionErrors++;
     } else {
       this.stats.providerErrors++;
+      this.stats.terminalFailures.providerErrors++;
     }
   }
 

@@ -509,7 +509,7 @@ export async function runRegressionTests() {
       'TrainingEvidenceRecord must preserve verifiedSuccess as null (not undefined or false)'
     );
 
-    store2.saveTrainingEvidenceRecords([persistedRecord]);
+    store2.saveTrainingEvidenceRecords(sanctionedResult);
 
     // Inspect direct SQLite row
     const rawRow: any = (store2 as any).db
@@ -1742,7 +1742,7 @@ export async function runRegressionTests() {
     });
 
     assert.throws(
-      () => store.saveTrainingRows([unsanctionedRow]),
+      () => store.saveTrainingRows([unsanctionedRow] as any),
       /UNSANCTIONED_TRAINING_ROW_PERSISTENCE/,
       'Direct persistence of unsanctioned training row lacking exportId must throw UNSANCTIONED_TRAINING_ROW_PERSISTENCE'
     );
@@ -1750,7 +1750,7 @@ export async function runRegressionTests() {
     // 3. Row with invalid exportId format must also be blocked
     const invalidPrefixRow = { ...unsanctionedRow, exportId: 'unauthorized_export_123' };
     assert.throws(
-      () => store.saveTrainingRows([invalidPrefixRow]),
+      () => store.saveTrainingRows([invalidPrefixRow] as any),
       /UNSANCTIONED_TRAINING_ROW_PERSISTENCE/,
       'Row with non-texport_ exportId must throw UNSANCTIONED_TRAINING_ROW_PERSISTENCE'
     );
@@ -1822,9 +1822,12 @@ export async function runRegressionTests() {
     assert.strictEqual(filteredRows.length, 1);
     assert.strictEqual(filteredRows[0].rowId, exportResult.rows[0].rowId);
 
-    // Persist via sanctioned rows array directly
-    store.saveTrainingRows(exportResult.rows);
-    assert.strictEqual(store.listTrainingRows({ exportId: exportResult.exportId }).length, 1);
+    // Direct array persistence without sanctioned export batch must be rejected
+    assert.throws(
+      () => (store as any).saveTrainingRows(exportResult.rows),
+      /UNSANCTIONED_TRAINING_ROW_PERSISTENCE/,
+      'Direct persistence of training row array without sanctioned batch wrapper must throw'
+    );
 
     // 5. TrainingEvidenceRecord: Migration 12 applied
     const mig12 = applied.find((m) => m.version === 12);
@@ -1853,7 +1856,7 @@ export async function runRegressionTests() {
     });
 
     assert.throws(
-      () => store.saveTrainingEvidenceRecords([unsanctionedEv]),
+      () => store.saveTrainingEvidenceRecords([unsanctionedEv] as any),
       /UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE/,
       'Direct persistence of unsanctioned training evidence record lacking exportId must throw UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE'
     );
@@ -1861,7 +1864,7 @@ export async function runRegressionTests() {
     // 7. Evidence record with invalid exportId format must also be blocked
     const invalidPrefixEv = { ...unsanctionedEv, exportId: 'texport_only_not_ev_123' };
     assert.throws(
-      () => store.saveTrainingEvidenceRecords([invalidPrefixEv]),
+      () => store.saveTrainingEvidenceRecords([invalidPrefixEv] as any),
       /UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE/,
       'Evidence record with non-texport_ev_ exportId must throw UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE'
     );
@@ -1893,9 +1896,12 @@ export async function runRegressionTests() {
     assert.strictEqual(filteredEvs.length, 1);
     assert.strictEqual(filteredEvs[0].evidenceId, evExportResult.records[0].evidenceId);
 
-    // Persist via sanctioned records array directly
-    store.saveTrainingEvidenceRecords(evExportResult.records);
-    assert.strictEqual(store.listTrainingEvidenceRecords({ exportId: evExportResult.exportId }).length, 1);
+    // Direct array persistence without sanctioned export batch must be rejected
+    assert.throws(
+      () => (store as any).saveTrainingEvidenceRecords(evExportResult.records),
+      /UNSANCTIONED_TRAINING_EVIDENCE_PERSISTENCE/,
+      'Direct persistence of training evidence record array without sanctioned batch wrapper must throw'
+    );
 
     store.close();
     console.log('  ✔ Suite 12 passed: Sanctioned TrainingExporter route, exportId lineage, and Migrations 11 & 12 verified\n');

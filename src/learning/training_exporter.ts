@@ -19,7 +19,28 @@ import { DataRights } from '../rights/data_rights';
 import { SourceProvenance } from '../rights/source_provenance';
 import { RightsFilter, RightsFilterConfig } from '../rights/rights_filter';
 import { TrainingRow, createTrainingRow, TrainingEvidenceRecord } from './lineage';
-import { markSanctionedExport } from './training_persistence_brand';
+
+const SANCTIONED_BRAND = Symbol('SANCTIONED_TRAINING_EXPORT_BRAND');
+
+export type SanctionedTrainingExport = TrainingExportResult & {
+  readonly [SANCTIONED_BRAND]?: true;
+};
+
+export type SanctionedTrainingEvidenceExport = TrainingEvidenceExportResult & {
+  readonly [SANCTIONED_BRAND]?: true;
+};
+
+// Module-scoped WeakSet private to training_exporter.ts.
+// Outside callers cannot access this set or mark arbitrary objects as sanctioned.
+const sanctionedExports = new WeakSet<object>();
+
+export function isSanctionedTrainingExport(obj: unknown): obj is SanctionedTrainingExport {
+  return Boolean(obj && typeof obj === 'object' && sanctionedExports.has(obj));
+}
+
+export function isSanctionedTrainingEvidenceExport(obj: unknown): obj is SanctionedTrainingEvidenceExport {
+  return Boolean(obj && typeof obj === 'object' && sanctionedExports.has(obj));
+}
 
 export interface TrainingExportOptions {
   datasetVersion: string;
@@ -156,7 +177,7 @@ export class TrainingExporter {
       rows.push(trainingRow);
     }
 
-    return markSanctionedExport({
+    const result: SanctionedTrainingExport = {
       exportId,
       datasetVersion: options.datasetVersion,
       rows,
@@ -166,7 +187,10 @@ export class TrainingExporter {
       rejectionSummary,
       rejections,
       exportedAt,
-    }, rows);
+      [SANCTIONED_BRAND]: true,
+    };
+    sanctionedExports.add(result);
+    return result;
   }
 
   /**
@@ -231,7 +255,7 @@ export class TrainingExporter {
       });
     }
 
-    return markSanctionedExport({
+    const result: SanctionedTrainingEvidenceExport = {
       exportId,
       datasetVersion: options.datasetVersion,
       records,
@@ -241,6 +265,9 @@ export class TrainingExporter {
       rejectionSummary,
       rejections,
       exportedAt,
-    }, records);
+      [SANCTIONED_BRAND]: true,
+    };
+    sanctionedExports.add(result);
+    return result;
   }
 }

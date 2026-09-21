@@ -455,7 +455,7 @@ export async function runRightsLineageEnforcementTests(): Promise<void> {
   assert(allProvs.length === 2, 'Listed 2 stored source provenances');
 
   // Save & retrieve TrainingRows
-  store.saveTrainingRows(exportResult.rows);
+  store.saveTrainingRows(exportResult);
   const retrievedRow = store.getTrainingRow(exportResult.rows[0].rowId);
   assert(retrievedRow !== undefined, 'Retrieved TrainingRow from SQLite');
   assert(retrievedRow?.datasetVersion === 'v2.0.0-beta', 'Preserved datasetVersion');
