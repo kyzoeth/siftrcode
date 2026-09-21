@@ -1,17 +1,21 @@
 {
   "schemaVersion": "siftrcode-verified-task-eval-v1",
-  "evaluatedAt": "2026-09-21T22:36:41.558Z",
+  "evaluatedAt": "2026-09-21T23:08:05.307Z",
   "totalPairedTasks": 1,
+  "attemptedPairs": 1,
+  "validPairs": 1,
+  "invalidPairs": 0,
+  "invalidByReason": {},
   "v2Summary": {
     "variant": "V2_FROZEN",
     "evaluatedTasks": 1,
     "successfulTasks": 0,
     "successRate": 0,
-    "totalContextTokens": 7156,
-    "meanContextTokensPerTask": 7156,
-    "totalCostUSD": 0.0052,
-    "meanCostPerTaskUSD": 0.0052,
-    "meanLatencyMs": 18532,
+    "totalContextTokens": 7994,
+    "meanContextTokensPerTask": 7994,
+    "totalCostUSD": 0.02,
+    "meanCostPerTaskUSD": 0.02,
+    "meanLatencyMs": 14893,
     "cpvstUSD": null
   },
   "v3Summary": {
@@ -19,18 +23,18 @@
     "evaluatedTasks": 1,
     "successfulTasks": 0,
     "successRate": 0,
-    "totalContextTokens": 7156,
-    "meanContextTokensPerTask": 7156,
-    "totalCostUSD": 0.0052,
-    "meanCostPerTaskUSD": 0.0052,
-    "meanLatencyMs": 14506,
+    "totalContextTokens": 7994,
+    "meanContextTokensPerTask": 7994,
+    "totalCostUSD": 0.0178,
+    "meanCostPerTaskUSD": 0.0178,
+    "meanLatencyMs": 16127,
     "cpvstUSD": null
   },
   "pairedDeltas": {
     "successRateDelta": 0,
     "meanTokenDelta": 0,
-    "meanCostDeltaUSD": 0,
-    "meanLatencyDeltaMs": -4026,
+    "meanCostDeltaUSD": -0.0022,
+    "meanLatencyDeltaMs": 1234,
     "cpvstDeltaUSD": null,
     "v3Wins": 0,
     "v2Wins": 0,
@@ -44,36 +48,36 @@
     }
   },
   "gateDecision": "V3.1_INSUFFICIENT_EVIDENCE",
-  "decisionRationale": "Evaluated 1 tasks, which is below the threshold of 30 independent verified episodes required for production promotion.",
+  "decisionRationale": "Evaluated 1 VALID task pairs (0 invalid runs excluded), which is below the threshold of 30 independent valid verified episodes required for production promotion.",
   "pairedTasks": [
     {
-      "taskId": "final_cmd_01_case_sensitive_option",
+      "taskId": "nat_cmd_01_negative_flag_declaration_order",
       "repo": "commander",
       "v2": {
-        "taskId": "final_cmd_01_case_sensitive_option",
+        "taskId": "nat_cmd_01_negative_flag_declaration_order",
         "variant": "V2_FROZEN",
         "runValidity": "VALID",
         "verifiedSuccess": false,
-        "wallClockLatencyMs": 18532,
-        "contextTokens": 7156,
-        "agentInputTokens": 50555,
-        "agentOutputTokens": 360,
-        "providerCostUSD": 0.0052,
+        "wallClockLatencyMs": 14893,
+        "contextTokens": 7994,
+        "agentInputTokens": 198058,
+        "agentOutputTokens": 377,
+        "providerCostUSD": 0.019957,
         "costStatus": "VALID",
         "toolCalls": 5,
         "trajectoryLength": 5,
         "verifierResult": "exitCode: 1\nSTDOUT:\n\nSTDERR:\n"
       },
       "v3": {
-        "taskId": "final_cmd_01_case_sensitive_option",
+        "taskId": "nat_cmd_01_negative_flag_declaration_order",
         "variant": "V3_LEARNED",
         "runValidity": "VALID",
         "verifiedSuccess": false,
-        "wallClockLatencyMs": 14506,
-        "contextTokens": 7156,
-        "agentInputTokens": 51088,
-        "agentOutputTokens": 296,
-        "providerCostUSD": 0.005227,
+        "wallClockLatencyMs": 16127,
+        "contextTokens": 7994,
+        "agentInputTokens": 176651,
+        "agentOutputTokens": 401,
+        "providerCostUSD": 0.017826,
         "costStatus": "VALID",
         "toolCalls": 5,
         "trajectoryLength": 5,
@@ -81,14 +85,14 @@
       },
       "successDelta": 0,
       "tokenDelta": 0,
-      "costDeltaUSD": 0.00003,
-      "latencyDeltaMs": -4026
+      "costDeltaUSD": -0.00213,
+      "latencyDeltaMs": 1234
     }
   ],
   "meta": {
     "model": "gemini-3.6-flash",
     "randomizationSeed": 42,
     "totalHoldoutTasks": 1,
-    "evaluatedAt": "2026-09-21T22:36:41.558Z"
+    "evaluatedAt": "2026-09-21T23:08:05.308Z"
   }
 }
