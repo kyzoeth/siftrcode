@@ -5,6 +5,8 @@ export * from './skeleton/golang';
 export * from './skeleton/rust';
 export * from './skeleton/dispatcher';
 export * from './jev/client';
+export * from './jev/judgment_provider';
+export * from './jev/jev_judgment_provider';
 export * from './core/packer';
 export * from './core/auditor';
 export * from './core/installer';

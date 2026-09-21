@@ -1,6 +1,9 @@
 import * as https from 'https';
 import * as http from 'http';
 
+/**
+ * @deprecated V1 JevDecisionRequest. In SiftrCode V2, use JudgmentProvider and JudgmentGraphContext instead.
+ */
 export interface JevDecisionRequest {
   state: string; // The file path, symbols, imports, and task description
   questions: {
@@ -18,6 +21,10 @@ export interface JevDecisionRequest {
   };
 }
 
+/**
+ * @deprecated V1 JevDecisionResponse. In SiftrCode V2, use JudgmentResult with independent signals
+ * (semanticRelevance, implementationNeeded, likelyEditTarget, likelyRootCause, confidence) instead.
+ */
 export interface JevDecisionResponse {
   classification: 'RootCandidate' | 'TypeDependencyOnly' | 'DeadWeight';
   score: number;
@@ -26,6 +33,9 @@ export interface JevDecisionResponse {
   source: 'typesafe-api' | 'local-heuristic';
 }
 
+/**
+ * @deprecated V1 JevClient. In SiftrCode V2, use JevJudgmentProvider implementing JudgmentProvider.
+ */
 export class JevClient {
   private apiKey: string | null;
   private endpoint: string;
@@ -36,8 +46,7 @@ export class JevClient {
   }
 
   /**
-   * Evaluates a file's relevance to the active developer task using Jev's RLCD primitives.
-   * Falls back to high-accuracy local heuristics if no API key is set.
+   * @deprecated Evaluates file relevance using V1 classification. In SiftrCode V2, use JevJudgmentProvider.judge().
    */
   public async evaluate(
     filePath: string,

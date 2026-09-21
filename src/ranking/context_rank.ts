@@ -5,6 +5,7 @@
 
 import { ContextFeaturesV1 } from './feature_schema';
 import { ContextUnitKind } from '../context/context_unit';
+import { JudgmentResult } from '../jev/judgment_provider';
 
 export interface ScoreBreakdown {
   runtimeEvidence: number;
@@ -12,6 +13,7 @@ export interface ScoreBreakdown {
   lexicalRelevance: number;
   graphProximity: number;
   gitCoChange: number;
+  judgmentBoost?: number;
   penalties: number;
 }
 
@@ -22,6 +24,7 @@ export interface RankedCandidate {
   scoreBreakdown: ScoreBreakdown;
   reasons: string[];
   features: ContextFeaturesV1;
+  judgment?: JudgmentResult;
 }
 
 export interface RankingWeights {
@@ -37,6 +40,9 @@ export interface RankingWeights {
   graphHop2Weight: number;
   coChangeWeight: number;
   recentChangeWeight: number;
+  jevSemanticWeight: number;
+  jevEditTargetWeight: number;
+  jevRootCauseWeight: number;
   lockfilePenalty: number;
   testFileUnrelatedPenalty: number;
 }
@@ -54,6 +60,9 @@ export const DEFAULT_RANKING_WEIGHTS: RankingWeights = {
   graphHop2Weight: 10,
   coChangeWeight: 15,
   recentChangeWeight: 2, // Multiplied by recent frequency
+  jevSemanticWeight: 15,
+  jevEditTargetWeight: 25,
+  jevRootCauseWeight: 20,
   lockfilePenalty: -30,
   testFileUnrelatedPenalty: -10,
 };
@@ -67,16 +76,42 @@ export class ContextRanker {
 
   /**
    * Rank a list of candidate feature sets with deterministic tie-breaking.
+   * Consumes optional JudgmentResults (Section 46) providing independent signals
+   * for semantic relevance, likely edit targets, and root causes without JEV picking the resolution.
    */
-  public rank(candidates: ContextFeaturesV1[]): RankedCandidate[] {
+  public rank(
+    candidates: ContextFeaturesV1[],
+    judgments?: Map<string, JudgmentResult>
+  ): RankedCandidate[] {
     const scoredList: Array<Omit<RankedCandidate, 'rank'>> = candidates.map((f) => {
       let runtimeEvidence = 0;
       let exactMatch = 0;
       let lexicalRelevance = 0;
       let graphProximity = 0;
       let gitCoChange = 0;
+      let judgmentBoost = 0;
       let penalties = 0;
       const reasons: string[] = [];
+
+      // 0. Independent Judgment Signals (Section 46)
+      const judgment = judgments?.get(f.contextUnitId);
+      if (judgment) {
+        if (judgment.likelyEditTarget) {
+          const boost = this.weights.jevEditTargetWeight * judgment.confidence;
+          judgmentBoost += boost;
+          reasons.push(`jev_likely_edit_target (+${boost.toFixed(1)})`);
+        }
+        if (judgment.likelyRootCause) {
+          const boost = this.weights.jevRootCauseWeight * judgment.confidence;
+          judgmentBoost += boost;
+          reasons.push(`jev_likely_root_cause (+${boost.toFixed(1)})`);
+        }
+        if (judgment.semanticRelevance > 0) {
+          const boost = this.weights.jevSemanticWeight * judgment.semanticRelevance * judgment.confidence;
+          judgmentBoost += boost;
+          reasons.push(`jev_semantic_relevance (+${boost.toFixed(1)})`);
+        }
+      }
 
       // 1. Runtime Evidence
       if (f.inStackTrace) {
@@ -148,7 +183,15 @@ export class ContextRanker {
       }
 
       const finalScore = Number(
-        (runtimeEvidence + exactMatch + lexicalRelevance + graphProximity + gitCoChange + penalties).toFixed(2)
+        (
+          runtimeEvidence +
+          exactMatch +
+          lexicalRelevance +
+          graphProximity +
+          gitCoChange +
+          judgmentBoost +
+          penalties
+        ).toFixed(2)
       );
 
       return {
@@ -160,10 +203,12 @@ export class ContextRanker {
           lexicalRelevance: Number(lexicalRelevance.toFixed(2)),
           graphProximity,
           gitCoChange: Number(gitCoChange.toFixed(2)),
+          judgmentBoost: Number(judgmentBoost.toFixed(2)),
           penalties,
         },
         reasons,
         features: f,
+        judgment,
       };
     });
 
