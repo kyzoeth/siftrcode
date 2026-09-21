@@ -22,7 +22,6 @@ import { ContextRanker, RankedCandidate } from '../ranking/context_rank';
 import { BundleComposer } from '../context/bundle_composer';
 import { BudgetSolver, BudgetLimits, BUDGET_PROFILES, BudgetProfileName } from '../context/budget_solver';
 import { ContextResolution } from '../context/context_resolution';
-import { skeletonizeFile } from '../skeleton/dispatcher';
 import { createExposureDecision, ExposureDecision } from '../telemetry/exposure_decision';
 import { TrajectoryLogger } from '../telemetry/trajectory_event';
 import { ContextPlan, PlannedUnit } from './context_plan';
@@ -31,7 +30,9 @@ import { RepositoryIndexer } from '../indexing/repository_index';
 import { GraphBuilder } from '../graph/graph_builder';
 import { TaskEvidence, TaskEvidenceKind, UserPromptEvidence, DiffEvidence } from '../context/task_evidence';
 import { createAgentEnvironment } from '../agents/agent_environment';
-
+import { ContextUnitMaterializer, DefaultContextUnitMaterializer } from '../materialization/context_unit_materializer';
+import { WorkspaceSnapshot, createWorkspaceSnapshot } from '../workspace/workspace_snapshot';
+import { DefaultWorkspaceSourceReader } from '../workspace/workspace_source_reader';
 
 export interface ContextEngineOptions {
   repoRootDir?: string;
@@ -41,6 +42,7 @@ export interface ContextEngineOptions {
   budgetLimits?: BudgetLimits;
   dirtyPaths?: string[];
   seedUnitIds?: string[];
+  materializer?: ContextUnitMaterializer;
 }
 
 export interface OptimizeWorkspaceOptions {
@@ -91,6 +93,7 @@ export class ContextEngine {
   private dataRights: DataRights;
   private budgetProfile: BudgetProfileName;
   private budgetLimits: BudgetLimits;
+  private materializer: ContextUnitMaterializer;
 
   constructor(options: ContextEngineOptions = {}) {
     this.repoRootDir = options.repoRootDir;
@@ -99,6 +102,9 @@ export class ContextEngine {
     this.budgetProfile = options.budgetProfile || 'BALANCED';
     this.budgetLimits = options.budgetLimits || (
       this.budgetProfile !== 'CUSTOM' ? BUDGET_PROFILES[this.budgetProfile] : { maxTokens: 16000 }
+    );
+    this.materializer = options.materializer || new DefaultContextUnitMaterializer(
+      new DefaultWorkspaceSourceReader(this.repoRootDir || process.cwd())
     );
   }
 
@@ -113,6 +119,7 @@ export class ContextEngine {
     featureCutoff?: FeatureCutoff;
     dirtyPaths?: string[];
     seedUnitIds?: string[];
+    snapshot?: WorkspaceSnapshot;
   }): ContextPlan {
     const {
       task,
@@ -122,6 +129,16 @@ export class ContextEngine {
       featureCutoff,
       dirtyPaths = [],
       seedUnitIds = [],
+      snapshot = createWorkspaceSnapshot({
+        repositories: [
+          {
+            repositoryId: 'root',
+            baseCommitSha: 'HEAD',
+            trackedTreeHash: 'root',
+            dirtyPatchHash: 'clean',
+          },
+        ],
+      }),
     } = params;
 
     const planId = 'cplan_' + crypto.randomUUID().replace(/-/g, '').slice(0, 16);
@@ -194,8 +211,8 @@ export class ContextEngine {
       const u = unitsMap.get(alloc.contextUnitId);
       if (!u) continue;
 
-      const rawContent = this.loadUnitContent(u);
-      const materializedContent = this.materializeContent(rawContent, u, alloc.resolution);
+      const mat = this.materializer.materializeSync(u, alloc.resolution, snapshot);
+      const materializedContent = mat.content;
 
       plannedUnits.push({
         contextUnitId: u.id,
@@ -203,7 +220,7 @@ export class ContextEngine {
         path: u.path,
         resolution: alloc.resolution,
         content: materializedContent,
-        tokenEstimate: alloc.tokenCost,
+        tokenEstimate: mat.actualTokenCount || alloc.tokenCost,
         reason: alloc.justification,
       });
 
@@ -275,62 +292,6 @@ export class ContextEngine {
       dataRights: this.dataRights,
       createdAt,
     };
-  }
-
-  /**
-   * Helper to load raw content for a unit from metadata or disk.
-   */
-  private loadUnitContent(unit: ContextUnit): string {
-    if (typeof unit.metadata?.content === 'string') {
-      return unit.metadata.content;
-    }
-
-    if (this.repoRootDir && unit.path) {
-      const fullPath = path.resolve(this.repoRootDir, unit.path);
-      try {
-        if (fs.existsSync(fullPath)) {
-          return fs.readFileSync(fullPath, 'utf8');
-        }
-      } catch {
-        // Fallback below
-      }
-    }
-
-    return `// ${unit.title} (${unit.path || 'in repository'})`;
-  }
-
-  /**
-   * Materializes the content for a unit given its resolution level.
-   */
-  private materializeContent(
-    rawContent: string,
-    unit: ContextUnit,
-    resolution: ContextResolution
-  ): string {
-    switch (resolution) {
-      case ContextResolution.FULL:
-      case ContextResolution.BODY:
-        return rawContent;
-
-      case ContextResolution.SKELETON: {
-        const filePath = unit.path || (unit.title.endsWith('.ts') ? unit.title : `${unit.title}.ts`);
-        const skeleton = skeletonizeFile(rawContent, filePath);
-        return skeleton.skeletonContent || rawContent;
-      }
-
-      case ContextResolution.SIGNATURE: {
-        const lines = rawContent.split('\n');
-        // Take signature header (up to opening brace or first 3 lines)
-        return lines.slice(0, 3).join('\n');
-      }
-
-      case ContextResolution.NAME:
-        return `// [EXISTS] ${unit.path || unit.title}`;
-
-      case ContextResolution.OMIT:
-      default:
-        return '';
-    }
   }
 
   /**
@@ -448,6 +409,7 @@ export class ContextEngine {
       gitIntelligence,
       dirtyPaths,
       seedUnitIds: options.seedUnitIds,
+      snapshot,
     });
 
     return {

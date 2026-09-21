@@ -47,10 +47,10 @@ export class StackTraceRetriever {
       // Check path match
       if (normTarget.endsWith(normUnitPath) || normUnitPath.endsWith(normTarget)) {
         if (functionName && isCodeSymbolUnit(unit)) {
-          if (
-            unit.symbolName.toLowerCase() === functionName.toLowerCase() ||
-            unit.qualifiedName.toLowerCase().endsWith(functionName.toLowerCase())
-          ) {
+          const sym = unit.symbolName?.toLowerCase();
+          const qual = unit.qualifiedName?.toLowerCase();
+          const fn = functionName.toLowerCase();
+          if ((sym && sym === fn) || (qual && qual.endsWith(fn))) {
             results.push({
               unitId: unit.id,
               matchedFrame: `${filePath}:${functionName}`,

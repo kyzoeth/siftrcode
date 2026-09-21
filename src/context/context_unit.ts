@@ -61,6 +61,12 @@ export interface CodeSymbolUnit extends ContextUnit {
   language: string;
   startLine: number;
   endLine: number;
+  sourceRange?: {
+    startByte?: number;
+    endByte?: number;
+    startLine: number;
+    endLine: number;
+  };
   signature?: string;
   contentHash: string;
 }
@@ -96,5 +102,5 @@ export function generateContextUnitId(
 }
 
 export function isCodeSymbolUnit(unit: ContextUnit): unit is CodeSymbolUnit {
-  return unit.kind === ContextUnitKind.CODE_SYMBOL && 'qualifiedName' in unit;
+  return unit.kind === ContextUnitKind.CODE_SYMBOL && typeof (unit as any).symbolName === 'string';
 }
