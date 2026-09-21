@@ -476,55 +476,9 @@ export function describeMetadataOnlyPayloadShape(data: any): any {
 
 /**
  * Validates that dist/ was built cleanly from the current Git HEAD commit.
- * Throws MANDATORY_CLEAN_BUILD_REQUIRED or STALE_BUILD_ERROR if dist/build_info.json is missing or stale.
  */
-export function verifyCleanBuild(
-  rootDir: string,
-  options: { mandatory?: boolean } = {}
-): { buildCommit: string; currentGitCommit: string; isClean: boolean } {
-  let currentGitCommit = 'unknown';
-  try {
-    currentGitCommit = execSync('git rev-parse HEAD', { cwd: rootDir, stdio: ['ignore', 'pipe', 'ignore'] })
-      .toString()
-      .trim();
-  } catch (_) {}
-
-  const buildInfoPath = path.join(rootDir, 'dist/build_info.json');
-  if (!fs.existsSync(buildInfoPath)) {
-    if (options.mandatory ?? true) {
-      const err = new Error(`MANDATORY_CLEAN_BUILD_REQUIRED: dist/build_info.json not found. A clean build ('npm run build') is mandatory before pilot execution.`);
-      (err as any).code = 'MANDATORY_CLEAN_BUILD_REQUIRED';
-      throw err;
-    }
-    return { buildCommit: 'unbuilt', currentGitCommit, isClean: false };
-  }
-
-  let buildInfo: any;
-  try {
-    buildInfo = JSON.parse(fs.readFileSync(buildInfoPath, 'utf8'));
-  } catch (e: any) {
-    if (options.mandatory ?? true) {
-      const err = new Error(`MANDATORY_CLEAN_BUILD_REQUIRED: Failed to parse dist/build_info.json: ${e?.message}`);
-      (err as any).code = 'MANDATORY_CLEAN_BUILD_REQUIRED';
-      throw err;
-    }
-    return { buildCommit: 'unreadable', currentGitCommit, isClean: false };
-  }
-
-  const buildCommit = buildInfo.buildCommit;
-  if (!buildCommit || (currentGitCommit !== 'unknown' && buildCommit !== currentGitCommit)) {
-    if (options.mandatory ?? true) {
-      const err = new Error(
-        `STALE_BUILD_ERROR: dist/ was built with commit ${buildCommit}, but current git commit is ${currentGitCommit}. A clean build ('npm run build') is mandatory before execution.`
-      );
-      (err as any).code = 'STALE_BUILD_ERROR';
-      throw err;
-    }
-    return { buildCommit: buildCommit || 'unknown', currentGitCommit, isClean: false };
-  }
-
-  return { buildCommit, currentGitCommit, isClean: true };
-}
+import { verifyCleanBuild, computeSourceTreeHash, gitState } from '../provenance/build_provenance';
+export { verifyCleanBuild, computeSourceTreeHash, gitState };
 
 // ---------------------------------------------------------------------------
 // High-Fidelity Evaluator for Real Repositories
@@ -819,6 +773,12 @@ export async function runTypeSafeJevPilotStudy(options: {
   verbose?: boolean;
   isSmoke?: boolean;
   requireCleanBuild?: boolean;
+  endpoint?: string;
+  allowNonproductionEndpoint?: boolean;
+  timeoutMs?: number;
+  minimumValidProviderResponses?: number;
+  minProviderSuccessFraction?: number;
+  reportJsonPath?: string;
 } = {}): Promise<PilotReport> {
   const isLive = options.useLive ?? (process.env.JEV_LIVE === 'true' || process.argv.includes('--live'));
   const isSmoke = options.isSmoke ?? process.argv.includes('--smoke');
@@ -831,6 +791,10 @@ export async function runTypeSafeJevPilotStudy(options: {
   const verbose = options.verbose ?? (isSmoke || process.argv.includes('--verbose'));
   const apiKey = options.apiKey || process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY;
 
+  const endpoint = options.endpoint || process.env.TYPESAFE_BASE_URL || 'https://api.typesafe.ai';
+  const endpointIsProduction = endpoint === 'https://api.typesafe.ai';
+  const allowNonproductionEndpoint = options.allowNonproductionEndpoint ?? process.argv.includes('--allow-nonproduction-endpoint');
+
   const rootDir = process.cwd();
   const expressDir = path.resolve(rootDir, 'benchmarks/express-repo');
   const fastapiDir = path.resolve(rootDir, 'benchmarks/fastapi-repo');
@@ -841,8 +805,14 @@ export async function runTypeSafeJevPilotStudy(options: {
   let testedGitCommit = cleanBuildResult.buildCommit !== 'unbuilt' ? cleanBuildResult.buildCommit : cleanBuildResult.currentGitCommit;
 
   console.log('\n================================================================');
-  console.log(`  SIFTRCODE V2: TYPESAFE JEV REAL-WORLD PILOT STUDY (${maxTasks} TASKS)   `);
-  console.log(`  Mode: ${isLive ? 'LIVE REMOTE (TypeSafe SystemOne)' : 'OFFLINE CALIBRATED'}`);
+  if (!isLive) {
+    console.log(`  OFFLINE SYNTHETIC RUN — NOT JEV EVIDENCE (${maxTasks} TASKS)   `);
+    console.log(`  Mode: OFFLINE_SYNTHETIC`);
+  } else {
+    console.log(`  SIFTRCODE V2: TYPESAFE JEV REAL-WORLD PILOT STUDY (${maxTasks} TASKS)   `);
+    console.log(`  Mode: LIVE REMOTE (TypeSafe SystemOne)`);
+  }
+  console.log(`  Endpoint: ${endpoint}${endpointIsProduction ? ' (Production)' : ' (Non-Production)'}`);
   console.log(`  Tested Git Commit: ${testedGitCommit}`);
   console.log(`  Clean Build Verification: ${cleanBuildResult.isClean ? 'PASSED (Stamped & In-Sync)' : 'SKIPPED (Non-Mandatory)'}`);
   console.log(`  TypeSafe key configured: ${Boolean(apiKey)}`);
@@ -1435,7 +1405,7 @@ export async function runTypeSafeJevPilotStudy(options: {
   }
 
   const report: PilotReport = {
-    testedGitCommit,
+    testedGitCommit: testedGitCommit || undefined,
     totalTasks: selectedTasks.length,
     tasksPerRepo,
     tasksPerType,

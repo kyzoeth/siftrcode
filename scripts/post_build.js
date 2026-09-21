@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 const rootDir = path.resolve(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
@@ -13,34 +12,64 @@ if (fs.existsSync(srcPython)) {
   fs.copyFileSync(srcPython, destPython);
 }
 
-// 2. Derive build git commit
-let buildCommit = 'unknown';
-try {
-  buildCommit = execSync('git rev-parse HEAD', { cwd: rootDir, stdio: ['ignore', 'pipe', 'ignore'] })
-    .toString()
-    .trim();
-} catch (_) {
+// 2. Load build_provenance from compiled dist
+const provenanceModule = path.join(distDir, 'provenance/build_provenance.js');
+let computeSourceTreeHash;
+let gitState;
+if (fs.existsSync(provenanceModule)) {
+  try {
+    const prov = require(provenanceModule);
+    computeSourceTreeHash = prov.computeSourceTreeHash;
+    gitState = prov.gitState;
+  } catch (_) {}
+}
+
+let buildCommit = 'untracked';
+let dirty = null;
+if (gitState) {
+  const git = gitState(rootDir);
+  if (git && git.commit) {
+    buildCommit = git.commit;
+    dirty = git.dirty;
+  }
+}
+
+if (buildCommit === 'untracked') {
   buildCommit =
     process.env.GIT_COMMIT ||
     process.env.RAILWAY_GIT_COMMIT_SHA ||
     process.env.VERCEL_GIT_COMMIT_SHA ||
     'untracked';
+  dirty = null;
 }
 
-// 3. Read package version
+let sourceTreeHash = 'unknown';
+if (computeSourceTreeHash) {
+  try {
+    sourceTreeHash = computeSourceTreeHash(rootDir);
+  } catch (_) {}
+}
+
+let sdkVersion = 'unknown';
+try {
+  sdkVersion = require('@typesafe-ai/sdk/package.json').version;
+} catch (_) {}
+
 let version = 'unknown';
 try {
   const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
   version = pkg.version || 'unknown';
 } catch (_) {}
 
-// 4. Write dist/build_info.json
 const buildInfo = {
   buildCommit,
+  dirty,
+  sourceTreeHash,
+  sdkVersion,
   builtAt: new Date().toISOString(),
   version,
 };
 
 fs.mkdirSync(distDir, { recursive: true });
 fs.writeFileSync(path.join(distDir, 'build_info.json'), JSON.stringify(buildInfo, null, 2) + '\n');
-console.log(`✔ Build stamped with commit ${buildCommit} (v${version})`);
+console.log(`✔ Build stamped with commit ${buildCommit} (dirty: ${dirty}, sdk: ${sdkVersion}, v${version})`);

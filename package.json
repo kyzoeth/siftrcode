@@ -16,7 +16,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc && node -e \"if (require('fs').existsSync('scripts/post_build.js')) require('./scripts/post_build.js'); else { require('fs').mkdirSync('dist/skeleton', { recursive: true }); require('fs').copyFileSync('src/skeleton/python_ast.py', 'dist/skeleton/python_ast.py'); }\"",
+    "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && tsc && node scripts/post_build.js",
     "start": "node dist/server/web.js",
     "serve": "node dist/server/web.js",
     "cli": "node dist/bin/siftrcode.js",
