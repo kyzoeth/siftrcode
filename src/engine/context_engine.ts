@@ -20,7 +20,7 @@ import { FeatureBuilderV1 } from '../ranking/feature_builder';
 import { ContextFeaturesV1 } from '../ranking/feature_schema';
 import { ContextRanker, RankedCandidate } from '../ranking/context_rank';
 import { BundleComposer } from '../context/bundle_composer';
-import { BudgetSolver, BudgetLimits, BUDGET_PROFILES, BudgetProfileName } from '../context/budget_solver';
+import { BudgetSolver, BudgetLimits, BUDGET_PROFILES, BudgetProfileName, BudgetAllocationPlan, SolvedUnitAllocation, calculateCostUSD } from '../context/budget_solver';
 import { ContextResolution } from '../context/context_resolution';
 import { ResolutionRanker } from '../context/resolution_rank';
 import { createExposureDecision, createExposureDecisionV2, ExposureDecision, ExposureDecisionV2 } from '../telemetry/exposure_decision';
@@ -350,18 +350,23 @@ export class ContextEngine {
       const fullUnits = plannedUnits.filter((pu) => pu.resolution === ContextResolution.FULL);
       if (fullUnits.length > 0) {
         const target = fullUnits.find((u) => !mandatoryUnitIds.has(u.contextUnitId)) || fullUnits[fullUnits.length - 1];
-        target.resolution = ContextResolution.BODY;
-        degraded = true;
+        const u = unitsMap.get(target.contextUnitId);
+        const minUseful = (u ? minimumUsefulResolutions.get(u.id) : undefined) ?? ContextResolution.NAME;
+        if (u && ContextResolution.BODY >= minUseful && this.materializer.supports(u, ContextResolution.BODY)) {
+          target.resolution = ContextResolution.BODY;
+          degraded = true;
+        }
       }
 
-      // 2. Degrade BODY -> SKELETON on optional units where safe
+      // 2. Degrade BODY -> SKELETON on optional units where safe and >= minUseful
       if (!degraded) {
         const bodyOptionalUnits = plannedUnits.filter(
           (pu) => pu.resolution === ContextResolution.BODY && !mandatoryUnitIds.has(pu.contextUnitId)
         );
         for (const bu of bodyOptionalUnits) {
           const u = unitsMap.get(bu.contextUnitId);
-          if (u && this.materializer.supports(u.kind, ContextResolution.SKELETON)) {
+          const minUseful = (u ? minimumUsefulResolutions.get(u.id) : undefined) ?? ContextResolution.NAME;
+          if (u && ContextResolution.SKELETON >= minUseful && this.materializer.supports(u, ContextResolution.SKELETON)) {
             bu.resolution = ContextResolution.SKELETON;
             degraded = true;
             break;
@@ -369,29 +374,41 @@ export class ContextEngine {
         }
       }
 
-      // 3. Degrade SKELETON -> SIGNATURE on optional units
+      // 3. Degrade SKELETON -> SIGNATURE on optional units where safe and >= minUseful
       if (!degraded) {
         const skelOptionalUnits = plannedUnits.filter(
           (pu) => pu.resolution === ContextResolution.SKELETON && !mandatoryUnitIds.has(pu.contextUnitId)
         );
-        if (skelOptionalUnits.length > 0) {
-          skelOptionalUnits[skelOptionalUnits.length - 1].resolution = ContextResolution.SIGNATURE;
-          degraded = true;
+        for (let i = skelOptionalUnits.length - 1; i >= 0; i--) {
+          const su = skelOptionalUnits[i];
+          const u = unitsMap.get(su.contextUnitId);
+          const minUseful = (u ? minimumUsefulResolutions.get(u.id) : undefined) ?? ContextResolution.NAME;
+          if (u && ContextResolution.SIGNATURE >= minUseful && this.materializer.supports(u, ContextResolution.SIGNATURE)) {
+            su.resolution = ContextResolution.SIGNATURE;
+            degraded = true;
+            break;
+          }
         }
       }
 
-      // 4. Degrade SIGNATURE -> NAME on optional units
+      // 4. Degrade SIGNATURE -> NAME on optional units where safe and >= minUseful
       if (!degraded) {
         const sigOptionalUnits = plannedUnits.filter(
           (pu) => pu.resolution === ContextResolution.SIGNATURE && !mandatoryUnitIds.has(pu.contextUnitId)
         );
-        if (sigOptionalUnits.length > 0) {
-          sigOptionalUnits[sigOptionalUnits.length - 1].resolution = ContextResolution.NAME;
-          degraded = true;
+        for (let i = sigOptionalUnits.length - 1; i >= 0; i--) {
+          const su = sigOptionalUnits[i];
+          const u = unitsMap.get(su.contextUnitId);
+          const minUseful = (u ? minimumUsefulResolutions.get(u.id) : undefined) ?? ContextResolution.NAME;
+          if (u && ContextResolution.NAME >= minUseful && this.materializer.supports(u, ContextResolution.NAME)) {
+            su.resolution = ContextResolution.NAME;
+            degraded = true;
+            break;
+          }
         }
       }
 
-      // 5. Remove optional units completely
+      // 5. Remove optional units completely if they cannot be degraded further without breaching minUseful
       if (!degraded) {
         const optionalIndices = plannedUnits
           .map((pu, idx) => ({ pu, idx }))
@@ -540,6 +557,44 @@ export class ContextEngine {
       }
     }
 
+    // Reconcile Final Allocation & truth-in-advertising metrics (Audit Section 8)
+    const finalAllocations: SolvedUnitAllocation[] = [];
+    let finalAllocatedTokens = 0;
+
+    for (const pu of plannedUnits) {
+      const initialAlloc = budgetPlan.allocations.find((a) => a.contextUnitId === pu.contextUnitId);
+      const rawTokens = initialAlloc?.rawTokens ?? pu.tokenEstimate;
+      finalAllocations.push({
+        contextUnitId: pu.contextUnitId,
+        resolution: pu.resolution,
+        tokenCost: pu.tokenEstimate,
+        rawTokens,
+        justification: pu.reason || `Allocated at ${pu.resolution}`,
+      });
+      finalAllocatedTokens += pu.tokenEstimate;
+    }
+
+    const tokensSaved = Math.max(0, budgetPlan.rawTotalTokens - finalAllocatedTokens);
+    const savingsPercentage = budgetPlan.rawTotalTokens > 0
+      ? Number(((tokensSaved / budgetPlan.rawTotalTokens) * 100).toFixed(1))
+      : 0;
+
+    const estimatedCostUSD = calculateCostUSD(
+      finalAllocatedTokens,
+      task.agentEnvironment?.model || 'default'
+    );
+    const costSavedUSD = Math.max(0, Number((budgetPlan.baselineCostUSD - estimatedCostUSD).toFixed(6)));
+
+    const reconciledBudgetPlan: BudgetAllocationPlan = {
+      ...budgetPlan,
+      allocations: finalAllocations,
+      totalTokens: finalAllocatedTokens,
+      tokensSaved,
+      savingsPercentage,
+      estimatedCostUSD,
+      costSavedUSD,
+    };
+
     const detailedEstimate = this.tokenCostEstimator.getDetailedEstimate
       ? this.tokenCostEstimator.getDetailedEstimate(formattedContext.promptText, task.agentEnvironment)
       : defaultTokenizerRegistry.estimate(formattedContext.promptText, task.agentEnvironment);
@@ -549,13 +604,13 @@ export class ContextEngine {
     trajectoryLogger.logEvent('CONTEXT_ALLOCATED', {
       planId,
       totalUnits: plannedUnits.length,
-      allocatedTokens: budgetPlan.totalTokens,
+      allocatedTokens: reconciledBudgetPlan.totalTokens,
       estimatedRenderedTokens,
       actualRenderedTokens: estimatedRenderedTokens,
       tokenEstimationMethod: detailedEstimate.method,
       tokenSafetyMargin: detailedEstimate.safetyMargin,
-      savingsPercentage: budgetPlan.savingsPercentage,
-      costSavedUSD: budgetPlan.costSavedUSD,
+      savingsPercentage: reconciledBudgetPlan.savingsPercentage,
+      costSavedUSD: reconciledBudgetPlan.costSavedUSD,
       overflowReason,
       policyId,
       policyVersion,
@@ -564,7 +619,7 @@ export class ContextEngine {
     const contextPlan: ContextPlan = {
       taskId: task.taskId,
       planId,
-      budgetPlan,
+      budgetPlan: reconciledBudgetPlan,
       units: plannedUnits,
       formattedContext,
       exposureDecisions,
@@ -597,7 +652,8 @@ export class ContextEngine {
         this.sqliteStore.saveTrajectoryEvents(
           trajectoryLogger.getEvents(),
           undefined,
-          snapshot.workspaceSnapshotId
+          snapshot.workspaceSnapshotId,
+          this.dataRights
         );
       } catch (storeErr) {
         console.warn('[ContextEngine] Failed to persist local learning records:', storeErr);
@@ -668,7 +724,7 @@ export class ContextEngine {
         }
 
         const graphBuilder = new GraphBuilder();
-        const graph = graphBuilder.buildGraph(units, { repoDir: rootDir });
+        const graph = graphBuilder.buildGraph(units, { repoDir: rootDir, sourceReader, snapshot });
 
         const gitIntelligence = new GitGraphIntelligence({ repoDir: rootDir });
 
@@ -839,8 +895,9 @@ export class ContextEngine {
     });
     const units = indexResult.units;
 
+    const sourceReader = new DefaultWorkspaceSourceReader(rootDir);
     const graphBuilder = new GraphBuilder();
-    const graph = graphBuilder.buildGraph(units, { repoDir: rootDir });
+    const graph = graphBuilder.buildGraph(units, { repoDir: rootDir, sourceReader, snapshot });
     const gitIntelligence = new GitGraphIntelligence({ repoDir: rootDir });
 
     const taskId = `task_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;

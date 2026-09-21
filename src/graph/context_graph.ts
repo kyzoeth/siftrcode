@@ -27,12 +27,23 @@ export interface GraphNode {
   metadata: Record<string, unknown>;
 }
 
+export type EdgeProvenanceSource =
+  | 'compiler'
+  | 'typescript_ast'
+  | 'typescript_typechecker'
+  | 'scip'
+  | 'tree-sitter'
+  | 'tree_sitter'
+  | 'git'
+  | 'runtime'
+  | 'heuristic';
+
 export interface GraphEdge {
   from: string;
   to: string;
   kind: EdgeKind;
   confidence: number;
-  source: 'compiler' | 'scip' | 'tree-sitter' | 'git' | 'runtime' | 'heuristic';
+  source: EdgeProvenanceSource;
   weight?: number;
   metadata?: Record<string, unknown>;
 }

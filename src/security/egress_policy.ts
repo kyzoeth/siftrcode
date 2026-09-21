@@ -90,12 +90,13 @@ export interface EnforcedProviderCall<T> {
   units: ContextUnit[];
   contents: string[];
   rights: DataRights;
-  execute: () => Promise<T>;
+  execute: (sanitizedContents: string[]) => Promise<T>;
 }
 
 /**
- * Section 42: Enforced wrapper around provider calls (JEV, embeddings, rerankers, Siftr Cloud).
- * Verifies DataRights + TrustLevel + SecretFilter + EgressPolicy before any external transmission.
+ * Section 42 & Audit Section 18: Enforced wrapper around provider calls (JEV, embeddings, rerankers, Siftr Cloud).
+ * Verifies DataRights + TrustLevel + SecretFilter + EgressPolicy before any external transmission,
+ * and structurally forces the execution callback to receive only sanitized/redacted contents.
  */
 export class EnforcedEgressGateway {
   private egressPolicy: ProviderEgressPolicy;
@@ -109,6 +110,7 @@ export class EnforcedEgressGateway {
     egressDecisions: EgressCheckResult[];
   }> {
     const egressDecisions: EgressCheckResult[] = [];
+    const sanitizedContents: string[] = [];
 
     for (let i = 0; i < call.units.length; i++) {
       const unit = call.units[i];
@@ -121,9 +123,10 @@ export class EnforcedEgressGateway {
           `Egress security violation for provider "${call.providerName}": ${decision.reason || 'blocked by policy'}`
         );
       }
+      sanitizedContents.push(decision.sanitizedContent !== undefined ? decision.sanitizedContent : content);
     }
 
-    const result = await call.execute();
+    const result = await call.execute(sanitizedContents);
     return { result, egressDecisions };
   }
 
@@ -132,12 +135,13 @@ export class EnforcedEgressGateway {
     units: ContextUnit[];
     contents: string[];
     rights: DataRights;
-    executeSync: () => T;
+    executeSync: (sanitizedContents: string[]) => T;
   }): {
     result: T;
     egressDecisions: EgressCheckResult[];
   } {
     const egressDecisions: EgressCheckResult[] = [];
+    const sanitizedContents: string[] = [];
 
     for (let i = 0; i < call.units.length; i++) {
       const unit = call.units[i];
@@ -150,9 +154,26 @@ export class EnforcedEgressGateway {
           `Egress security violation for provider "${call.providerName}": ${decision.reason || 'blocked by policy'}`
         );
       }
+      sanitizedContents.push(decision.sanitizedContent !== undefined ? decision.sanitizedContent : content);
     }
 
-    const result = call.executeSync();
+    const result = call.executeSync(sanitizedContents);
     return { result, egressDecisions };
+  }
+
+  public async execute<T>(
+    units: ContextUnit[],
+    contents: string[],
+    rights: DataRights,
+    providerName: string,
+    executeFn: (sanitizedContents: string[]) => Promise<T>
+  ): Promise<{ result: T; egressDecisions: EgressCheckResult[] }> {
+    return this.executeWithEgressEnforcement({
+      providerName,
+      units,
+      contents,
+      rights,
+      execute: executeFn,
+    });
   }
 }

@@ -73,7 +73,7 @@ export class JevJudgmentProvider implements JudgmentProvider {
             units: [candidate],
             contents: [task.primaryPrompt + ' ' + (candidate.path || '')],
             rights: this.dataRights,
-            execute: () => this.callRemoteApi(task, candidate, graphContext, startTime),
+            execute: (sanitized) => this.callRemoteApi(task, candidate, graphContext, startTime),
           })
           .then((r) => r.result);
       } catch (err: any) {

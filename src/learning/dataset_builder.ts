@@ -8,6 +8,7 @@ import {
 } from '../telemetry/candidate_observation';
 import { CandidateDecisionObservation } from '../telemetry/decision_observation';
 import { OutcomeEvidence } from '../telemetry/outcome_evidence';
+import { TrainingEvidenceRecord, createTrainingEvidenceRecord } from './lineage';
 
 export interface BuildObservationOptions {
   decision: CandidateDecisionObservation;
@@ -118,6 +119,59 @@ export class DatasetBuilder {
         outcomeId,
         rightsReference,
       });
+    });
+  }
+
+  /**
+   * Builds a multi-dimensional TrainingEvidenceRecord preserving granular signals (Audit Section 13).
+   */
+  public static buildTrainingEvidenceRecord(params: {
+    decision: CandidateDecisionObservation;
+    behavior?: ObservedBehavior;
+    outcomeEvidence?: OutcomeEvidence;
+    datasetVersion?: string;
+    repository?: string;
+    tenantId?: string;
+    rightsReference?: string;
+  }): TrainingEvidenceRecord {
+    const { decision, behavior, outcomeEvidence } = params;
+    const read = behavior?.read === true;
+    const edited = behavior?.edited === true;
+
+    return createTrainingEvidenceRecord({
+      datasetVersion: params.datasetVersion || 'v2.0.0-evidence',
+      contextUnitId: decision.contextUnitId,
+      taskId: decision.taskId,
+      sessionId: `sess_${decision.taskId}`,
+      repository: params.repository || 'unknown',
+      tenantId: params.tenantId,
+      features: decision.features,
+      semanticRelevance: decision.features.heuristicScore,
+      readEvidence: {
+        wasRead: read,
+        readCount: read ? 1 : 0,
+        confidence: read ? 0.95 : 0.7,
+      },
+      editEvidence: {
+        wasEdited: edited,
+        editCount: edited ? 1 : 0,
+        confidence: edited ? 0.99 : 0.8,
+      },
+      testEvidence: {
+        testsPassed: outcomeEvidence?.publicTestsPassed,
+        regressionTestsPassed: outcomeEvidence?.regressionTestsPassed,
+        confidence: outcomeEvidence ? outcomeEvidence.confidence : 0.5,
+      },
+      rootCauseEvidence: {
+        isRootCause: edited && outcomeEvidence?.verifiedSuccess === true,
+        confidence: outcomeEvidence?.confidence || 0.5,
+      },
+      verifiedOutcomeAssociation: {
+        verifiedSuccess: outcomeEvidence?.verifiedSuccess === null ? undefined : outcomeEvidence?.verifiedSuccess,
+        confidence: outcomeEvidence?.confidence || 0.5,
+      },
+      sourceObservationIds: [decision.decisionObservationId],
+      rightsReference: params.rightsReference || `rights_${decision.workspaceSnapshotId}`,
     });
   }
 }

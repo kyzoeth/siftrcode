@@ -21,8 +21,13 @@ import { ExposureDecisionV2, isExposedV2 } from '../telemetry/exposure_decision'
 import { TrajectoryEvent } from '../telemetry/trajectory_event';
 import { OutcomeEvidence } from '../telemetry/outcome_evidence';
 import { SourceProvenance } from '../rights/source_provenance';
-import { TrainingRow } from '../learning/lineage';
+import { TrainingRow, TrainingEvidenceRecord } from '../learning/lineage';
 import { DeletionAuditRecord } from '../rights/deletion_manager';
+import { DataRights, createDefaultDataRights } from '../rights/data_rights';
+import { sanitizeContextPlanForPersistence, ContextPlanMetadataRecord } from './rights_aware_dto';
+
+export { sanitizeContextPlanForPersistence, ContextPlanMetadataRecord } from './rights_aware_dto';
+export { TrainingEvidenceRecord } from '../learning/lineage';
 
 export interface StoredGraphEdge {
   fromUnitId: string;
@@ -355,6 +360,30 @@ const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_dec_obs_unit ON candidate_decision_observations(context_unit_id);
     `,
   },
+  {
+    version: 7,
+    name: '007_training_evidence_records',
+    sql: `
+      CREATE TABLE IF NOT EXISTS training_evidence_records (
+        evidence_id TEXT PRIMARY KEY,
+        dataset_version TEXT NOT NULL,
+        task_id TEXT NOT NULL,
+        context_unit_id TEXT NOT NULL,
+        repository TEXT NOT NULL,
+        tenant_id TEXT,
+        was_read INTEGER NOT NULL,
+        was_edited INTEGER NOT NULL,
+        verified_success INTEGER,
+        rights_reference TEXT NOT NULL,
+        raw_json TEXT NOT NULL,
+        exported_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_evrec_dataset ON training_evidence_records(dataset_version);
+      CREATE INDEX IF NOT EXISTS idx_evrec_task ON training_evidence_records(task_id);
+      CREATE INDEX IF NOT EXISTS idx_evrec_repo ON training_evidence_records(repository);
+    `,
+  },
 ];
 
 export class SqliteStore {
@@ -669,6 +698,9 @@ export class SqliteStore {
   // ==========================================
 
   public saveContextPlan(plan: ContextPlan, snapshotId: string = 'default'): void {
+    const rights = plan.dataRights || createDefaultDataRights();
+    const sanitizedRecord = sanitizeContextPlanForPersistence(plan, rights, snapshotId);
+
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO context_plans (plan_id, task_id, snapshot_id, raw_json, created_at)
       VALUES (?, ?, ?, ?, ?)
@@ -678,7 +710,7 @@ export class SqliteStore {
       plan.planId,
       plan.taskId,
       snapshotId,
-      JSON.stringify(plan),
+      JSON.stringify(sanitizedRecord),
       plan.createdAt
     );
   }
@@ -920,8 +952,11 @@ export class SqliteStore {
   // TrajectoryEvent Operations (Section 25)
   // ==========================================
 
-  public saveTrajectoryEvents(events: TrajectoryEvent[], sessionId?: string, snapshotId?: string): void {
+  public saveTrajectoryEvents(events: TrajectoryEvent[], sessionId?: string, snapshotId?: string, rights?: DataRights): void {
     if (events.length === 0) return;
+    if (rights && rights.trajectoryRetentionAllowed === false) {
+      return;
+    }
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO trajectory_events (
@@ -1414,6 +1449,74 @@ export class SqliteStore {
       .all() as Array<{ raw_json: string }>;
 
     return rows.map((r) => JSON.parse(r.raw_json) as DeletionAuditRecord);
+  }
+
+  // ==========================================
+  // TrainingEvidenceRecord Operations (Audit Section 13)
+  // ==========================================
+
+  public saveTrainingEvidenceRecords(records: TrainingEvidenceRecord[]): void {
+    if (records.length === 0) return;
+
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO training_evidence_records (
+        evidence_id, dataset_version, task_id, context_unit_id,
+        repository, tenant_id, was_read, was_edited, verified_success,
+        rights_reference, raw_json, exported_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const rec of records) {
+      stmt.run(
+        rec.evidenceId,
+        rec.datasetVersion,
+        rec.taskId,
+        rec.contextUnitId,
+        rec.repository,
+        rec.tenantId ?? null,
+        rec.readEvidence.wasRead ? 1 : 0,
+        rec.editEvidence.wasEdited ? 1 : 0,
+        rec.verifiedOutcomeAssociation.verifiedSuccess !== undefined
+          ? (rec.verifiedOutcomeAssociation.verifiedSuccess ? 1 : 0)
+          : null,
+        rec.rightsReference,
+        JSON.stringify(rec),
+        rec.exportedAt
+      );
+    }
+  }
+
+  public getTrainingEvidenceRecord(evidenceId: string): TrainingEvidenceRecord | undefined {
+    const row = this.db
+      .prepare('SELECT raw_json FROM training_evidence_records WHERE evidence_id = ?')
+      .get(evidenceId) as { raw_json: string } | undefined;
+
+    if (!row) return undefined;
+    return JSON.parse(row.raw_json) as TrainingEvidenceRecord;
+  }
+
+  public listTrainingEvidenceRecords(
+    filter: { datasetVersion?: string; repository?: string; taskId?: string } = {}
+  ): TrainingEvidenceRecord[] {
+    let sql = 'SELECT raw_json FROM training_evidence_records WHERE 1=1';
+    const params: string[] = [];
+
+    if (filter.datasetVersion) {
+      sql += ' AND dataset_version = ?';
+      params.push(filter.datasetVersion);
+    }
+    if (filter.repository) {
+      sql += ' AND repository = ?';
+      params.push(filter.repository);
+    }
+    if (filter.taskId) {
+      sql += ' AND task_id = ?';
+      params.push(filter.taskId);
+    }
+
+    sql += ' ORDER BY exported_at ASC';
+    const rows = this.db.prepare(sql).all(...params) as Array<{ raw_json: string }>;
+    return rows.map((r) => JSON.parse(r.raw_json) as TrainingEvidenceRecord);
   }
 }
 

@@ -42,7 +42,8 @@ const tests = [
   { name: 'V2 WorkspaceSnapshot Immutability & Replanning (PR 0.2) Tests', file: 'test_workspace_immutability.js' },
   { name: 'V2 Observability & AgentEnvironment Truth (PR 0.3) Tests', file: 'test_agent_environment_truth.js' },
   { name: 'V2 Learning Plane Runtime & Decision Observations (PR 0.4) Tests', file: 'test_learning_plane_runtime.js' },
-  { name: 'V2 Token Accounting Semantics & Closure Gate (PR 0.5) Tests', file: 'test_token_accounting_semantics.js' }
+  { name: 'V2 Token Accounting Semantics & Closure Gate (PR 0.5) Tests', file: 'test_token_accounting_semantics.js' },
+  { name: 'V2 Audit Remediation Closure (PR 0.6) Tests', file: 'test_audit_remediation_closure.js' }
 ];
 
 

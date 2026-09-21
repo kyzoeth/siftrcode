@@ -4,12 +4,16 @@ import * as ts from 'typescript';
 import { ContextUnit, ContextUnitKind, isCodeSymbolUnit, CodeSymbolUnit } from '../context/context_unit';
 import { ContextGraph, EdgeKind, GraphNode, GraphEdge } from './context_graph';
 import { ScipIndexer, ScipIngestionPolicy } from './scip_indexer';
+import { WorkspaceSourceReader } from '../workspace/workspace_source_reader';
+import { WorkspaceSnapshot } from '../workspace/workspace_snapshot';
 
 export interface GraphBuilderOptions {
   repoDir?: string;
   confidenceThreshold?: number;
   scipPolicy?: ScipIngestionPolicy;
   scipIndexPath?: string;
+  sourceReader?: WorkspaceSourceReader;
+  snapshot?: WorkspaceSnapshot;
 }
 
 export class GraphBuilder {
@@ -157,8 +161,8 @@ export class GraphBuilder {
     }
 
     // 5. CALLS, REFERENCES, TYPE_USES, IMPORTS, IMPLEMENTS, INHERITS from source code
-    if (options.repoDir && fs.existsSync(options.repoDir)) {
-      this.enrichFromSourceCode(options.repoDir, fileUnitsByPath, symbolsByPath, symbolsByName, graph);
+    if ((options.repoDir && fs.existsSync(options.repoDir)) || (options.sourceReader && options.snapshot)) {
+      this.enrichFromSourceCode(options.repoDir || '', fileUnitsByPath, symbolsByPath, symbolsByName, graph, options);
     }
 
     // 6. Optional SCIP Ingestion (Section 35)
@@ -176,18 +180,31 @@ export class GraphBuilder {
     fileUnitsByPath: Map<string, ContextUnit>,
     symbolsByPath: Map<string, CodeSymbolUnit[]>,
     symbolsByName: Map<string, CodeSymbolUnit[]>,
-    graph: ContextGraph
+    graph: ContextGraph,
+    options: GraphBuilderOptions = {}
   ): void {
     for (const [filePath, fileUnit] of fileUnitsByPath.entries()) {
-      const fullPath = path.join(repoDir, filePath);
-      if (!fs.existsSync(fullPath)) continue;
-
       let code = '';
-      try {
-        code = fs.readFileSync(fullPath, 'utf-8');
-      } catch {
-        continue;
+
+      if (options.sourceReader && options.snapshot) {
+        try {
+          const res = options.sourceReader.readFileSync(options.snapshot, fileUnit.repositoryId || 'root', filePath);
+          if (res.status === 'OK') {
+            code = res.content;
+          }
+        } catch {}
       }
+
+      if (!code && repoDir) {
+        const fullPath = path.join(repoDir, filePath);
+        if (fs.existsSync(fullPath)) {
+          try {
+            code = fs.readFileSync(fullPath, 'utf-8');
+          } catch {}
+        }
+      }
+
+      if (!code) continue;
 
       const ext = path.extname(filePath).toLowerCase();
       const isTsOrJs = ext === '.ts' || ext === '.tsx' || ext === '.js' || ext === '.jsx';
@@ -266,8 +283,8 @@ export class GraphBuilder {
                   from: fileUnit.id,
                   to: targetUnit.id,
                   kind: EdgeKind.IMPORTS,
-                  confidence: 0.98,
-                  source: 'compiler',
+                  confidence: 0.90,
+                  source: 'typescript_ast',
                 });
               }
             }
@@ -296,16 +313,16 @@ export class GraphBuilder {
                     from: sourceId,
                     to: target.id,
                     kind: EdgeKind.IMPLEMENTS,
-                    confidence: 0.95,
-                    source: 'compiler',
+                    confidence: 0.85,
+                    source: 'typescript_ast',
                   });
                 } else if (isExtends) {
                   graph.addEdge({
                     from: sourceId,
                     to: target.id,
                     kind: EdgeKind.INHERITS,
-                    confidence: 0.95,
-                    source: 'compiler',
+                    confidence: 0.85,
+                    source: 'typescript_ast',
                   });
                 }
                 // Heritage also constitutes explicit TYPE_USES
@@ -313,8 +330,8 @@ export class GraphBuilder {
                   from: sourceId,
                   to: target.id,
                   kind: EdgeKind.TYPE_USES,
-                  confidence: 0.95,
-                  source: 'compiler',
+                  confidence: 0.85,
+                  source: 'typescript_ast',
                 });
               }
             }
@@ -356,8 +373,8 @@ export class GraphBuilder {
                 from: callerId,
                 to: target.id,
                 kind: EdgeKind.CALLS,
-                confidence: 0.9,
-                source: 'compiler',
+                confidence: 0.70,
+                source: 'typescript_ast',
               });
             }
           }
@@ -377,8 +394,8 @@ export class GraphBuilder {
               from: sourceId,
               to: target.id,
               kind: EdgeKind.TYPE_USES,
-              confidence: 0.92,
-              source: 'compiler',
+              confidence: 0.80,
+              source: 'typescript_ast',
             });
           }
         }
@@ -397,8 +414,8 @@ export class GraphBuilder {
               from: sourceId,
               to: target.id,
               kind: EdgeKind.REFERENCES,
-              confidence: 0.85,
-              source: 'compiler',
+              confidence: 0.70,
+              source: 'typescript_ast',
             });
           }
         }

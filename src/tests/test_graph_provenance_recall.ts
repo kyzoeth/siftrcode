@@ -146,9 +146,9 @@ class PythonHelper:
     const allEdges = graph.getAllEdges();
     assert(allEdges.length > 0, `Graph constructed with ${allEdges.length} edges`);
 
-    // Compiler AST edges
-    const compilerEdges = allEdges.filter((e) => e.source === 'compiler');
-    assert(compilerEdges.length > 0, `Extracted ${compilerEdges.length} true compiler AST edges`);
+    // Compiler / TypeScript AST edges
+    const astEdges = allEdges.filter((e) => e.source === 'typescript_ast' || e.source === 'compiler');
+    assert(astEdges.length > 0, `Extracted ${astEdges.length} true AST edges`);
 
     // Heuristic edges
     const heuristicEdges = allEdges.filter((e) => e.source === 'heuristic');

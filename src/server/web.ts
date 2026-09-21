@@ -9,6 +9,9 @@ import { getResolutionName } from '../context/context_resolution';
 import { SqliteStore, getDefaultDatabasePath } from '../storage/sqlite_store';
 import { DeletionManager } from '../rights/deletion_manager';
 import { SourceProvenance, createSourceProvenance } from '../rights/source_provenance';
+import { createOutcomeEvidence } from '../telemetry/outcome_evidence';
+import { resolveSafeWorkspacePath } from '../workspace/workspace_source_reader';
+import { ContextResolution } from '../context/context_resolution';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
@@ -367,6 +370,55 @@ const SERVER_CARD = {
           }
         }
       }
+    },
+    {
+      name: 'siftr_outcome',
+      description: 'Reports task execution results, test oracle results, provider token usage, and costs to close the learning loop.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          taskId: { type: 'string', description: 'Task ID' },
+          planId: { type: 'string', description: 'ContextPlan ID' },
+          testsPassed: { type: 'boolean', description: 'Task-specific tests passed' },
+          regressionTestsPassed: { type: 'boolean', description: 'Regression tests passed' },
+          staticChecksPassed: { type: 'boolean', description: 'Static analysis passed' },
+          securityChecksPassed: { type: 'boolean', description: 'Security scan passed' },
+          agentClaimedSuccess: { type: 'boolean', description: 'Agent claimed completion' },
+          actualProviderInputTokens: { type: 'number', description: 'Reported input tokens' },
+          actualProviderOutputTokens: { type: 'number', description: 'Reported output tokens' },
+          costUSD: { type: 'number', description: 'Actual cost in USD' },
+          wallTimeMs: { type: 'number', description: 'Execution wall time in ms' },
+          notes: { type: 'string', description: 'Execution notes' }
+        },
+        required: ['taskId']
+      }
+    },
+    {
+      name: 'siftr_expand',
+      description: 'Dynamically expands a skeletonized or signature-level context unit into full implementation body on-demand.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          filePath: { type: 'string', description: 'File path to expand' },
+          contextUnitId: { type: 'string', description: 'Context unit ID' },
+          targetResolution: { type: 'string', enum: ['body', 'full'], description: 'Target resolution' },
+          taskId: { type: 'string', description: 'Task ID' }
+        }
+      }
+    },
+    {
+      name: 'siftr_session',
+      description: 'Manages or inspects active Siftr coding agent sessions, linking tasks, plans, and token economics.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          action: { type: 'string', enum: ['start', 'status', 'end'], description: 'Action' },
+          taskId: { type: 'string', description: 'Task ID' },
+          sessionId: { type: 'string', description: 'Session ID' },
+          agentModel: { type: 'string', description: 'Model' }
+        },
+        required: ['taskId']
+      }
     }
   ],
   resources: [],
@@ -583,6 +635,164 @@ function createMcpServerInstance() {
               text: JSON.stringify(result, null, 2)
             }
           ]
+        };
+      }
+
+      if (name === 'siftr_outcome') {
+        const taskId = String(args?.taskId || '');
+        if (!taskId) {
+          return {
+            content: [{ type: 'text', text: 'Error: "taskId" parameter is required' }],
+            isError: true,
+          };
+        }
+
+        const planId = args?.planId ? String(args.planId) : undefined;
+        const actualProviderInputTokens = typeof args?.actualProviderInputTokens === 'number' ? args.actualProviderInputTokens : undefined;
+
+        const outcomeEvidence = createOutcomeEvidence({
+          taskId,
+          sessionId: `sess_${taskId}`,
+          agentEnvironmentId: 'default',
+          workspaceSnapshotBefore: 'snapshot_initial',
+          publicTestsPassed: typeof args?.testsPassed === 'boolean' ? args.testsPassed : undefined,
+          regressionTestsPassed: typeof args?.regressionTestsPassed === 'boolean' ? args.regressionTestsPassed : undefined,
+          staticChecksPassed: typeof args?.staticChecksPassed === 'boolean' ? args.staticChecksPassed : undefined,
+          securityChecksPassed: typeof args?.securityChecksPassed === 'boolean' ? args.securityChecksPassed : undefined,
+          agentReportedSuccess: typeof args?.agentClaimedSuccess === 'boolean' ? args.agentClaimedSuccess : undefined,
+          actualProviderInputTokens,
+          actualProviderOutputTokens: typeof args?.actualProviderOutputTokens === 'number' ? args.actualProviderOutputTokens : undefined,
+          costUSD: typeof args?.costUSD === 'number' ? args.costUSD : undefined,
+          wallTimeMs: typeof args?.wallTimeMs === 'number' ? args.wallTimeMs : undefined,
+        });
+
+        const store = getSharedStore();
+        let persisted = false;
+        if (store) {
+          try {
+            store.saveOutcomeEvidence([
+              {
+                evidenceId: outcomeEvidence.outcomeId,
+                taskId: outcomeEvidence.taskId,
+                sessionId: outcomeEvidence.sessionId,
+                labelType: 'VERIFIED_SUCCESS',
+                value: outcomeEvidence.verifiedSuccess ? 1 : 0,
+                confidence: outcomeEvidence.confidence,
+                strength: outcomeEvidence.confidence >= 0.9 ? 'STRONG' : 'MEDIUM',
+                source: 'outcome_policy',
+                details: {
+                  rationale: outcomeEvidence.evaluationRationale,
+                  planId,
+                  notes: args?.notes ? String(args.notes) : undefined,
+                },
+              },
+            ]);
+            if (planId && actualProviderInputTokens !== undefined) {
+              store.updatePlanActualProviderTokens(planId, actualProviderInputTokens);
+            }
+            persisted = true;
+          } catch {}
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                taskId,
+                outcomeId: outcomeEvidence.outcomeId,
+                verifiedSuccess: outcomeEvidence.verifiedSuccess,
+                confidence: outcomeEvidence.confidence,
+                rationale: outcomeEvidence.evaluationRationale,
+                persisted,
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      if (name === 'siftr_expand') {
+        const workspaceDir = (args?.directory as string) || process.cwd();
+        const filePath = args?.filePath ? String(args.filePath) : undefined;
+        const contextUnitId = args?.contextUnitId ? String(args.contextUnitId) : undefined;
+        const targetResolutionStr = String(args?.targetResolution || 'body').toLowerCase();
+
+        if (!filePath && !contextUnitId) {
+          return {
+            content: [{ type: 'text', text: 'Error: Either "filePath" or "contextUnitId" must be provided' }],
+            isError: true,
+          };
+        }
+
+        const resolvedPath = filePath || contextUnitId!;
+        const safePath = resolveSafeWorkspacePath(workspaceDir, resolvedPath);
+        if (!safePath || !fs.existsSync(safePath)) {
+          return {
+            content: [{ type: 'text', text: `Error: File not found or outside workspace: ${resolvedPath}` }],
+            isError: true,
+          };
+        }
+
+        const rawContent = fs.readFileSync(safePath, 'utf-8');
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                path: resolvedPath,
+                resolution: targetResolutionStr,
+                tokens: Math.ceil(rawContent.length / 3.7),
+                content: rawContent,
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      if (name === 'siftr_session') {
+        const action = String(args?.action || 'status').toLowerCase();
+        const taskId = String(args?.taskId || '');
+        if (!taskId) {
+          return {
+            content: [{ type: 'text', text: 'Error: "taskId" parameter is required' }],
+            isError: true,
+          };
+        }
+
+        const store = getSharedStore();
+        let plansCount = 0;
+        let outcomesCount = 0;
+        let totalTokens = 0;
+
+        if (store) {
+          try {
+            const plans = store.listContextPlans(taskId);
+            plansCount = plans.length;
+            for (const p of plans) {
+              totalTokens += p.actualProviderInputTokens || p.actualRenderedTokens || 0;
+            }
+            const outcomes = store.listOutcomeEvidence(taskId);
+            outcomesCount = outcomes.length;
+          } catch {}
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                action,
+                taskId,
+                plansCount,
+                outcomesCount,
+                totalTokens,
+                status: action === 'end' ? 'COMPLETED' : 'ACTIVE',
+                timestamp: new Date().toISOString(),
+              }, null, 2),
+            },
+          ],
         };
       }
 
@@ -954,6 +1164,181 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ error: err.message || 'Ranking failed' }));
       }
     });
+    return;
+  }
+
+  // Verified Outcome Reporting API (Audit Section 14)
+  if (pathname === '/api/outcome' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const taskId = String(payload.taskId || '').trim();
+        if (!taskId) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Field "taskId" is required' }));
+          return;
+        }
+
+        const outcomeEvidence = createOutcomeEvidence({
+          taskId,
+          sessionId: `sess_${taskId}`,
+          agentEnvironmentId: 'default',
+          workspaceSnapshotBefore: 'snapshot_initial',
+          publicTestsPassed: typeof payload.testsPassed === 'boolean' ? payload.testsPassed : undefined,
+          regressionTestsPassed: typeof payload.regressionTestsPassed === 'boolean' ? payload.regressionTestsPassed : undefined,
+          staticChecksPassed: typeof payload.staticChecksPassed === 'boolean' ? payload.staticChecksPassed : undefined,
+          securityChecksPassed: typeof payload.securityChecksPassed === 'boolean' ? payload.securityChecksPassed : undefined,
+          agentReportedSuccess: typeof payload.agentClaimedSuccess === 'boolean' ? payload.agentClaimedSuccess : undefined,
+          actualProviderInputTokens: typeof payload.actualProviderInputTokens === 'number' ? payload.actualProviderInputTokens : undefined,
+          actualProviderOutputTokens: typeof payload.actualProviderOutputTokens === 'number' ? payload.actualProviderOutputTokens : undefined,
+          costUSD: typeof payload.costUSD === 'number' ? payload.costUSD : undefined,
+          wallTimeMs: typeof payload.wallTimeMs === 'number' ? payload.wallTimeMs : undefined,
+        });
+
+        const store = getSharedStore();
+        let persisted = false;
+        if (store) {
+          try {
+            store.saveOutcomeEvidence([
+              {
+                evidenceId: outcomeEvidence.outcomeId,
+                taskId: outcomeEvidence.taskId,
+                sessionId: outcomeEvidence.sessionId,
+                labelType: 'VERIFIED_SUCCESS',
+                value: outcomeEvidence.verifiedSuccess ? 1 : 0,
+                confidence: outcomeEvidence.confidence,
+                strength: outcomeEvidence.confidence >= 0.9 ? 'STRONG' : 'MEDIUM',
+                source: 'outcome_policy',
+                details: {
+                  rationale: outcomeEvidence.evaluationRationale,
+                  planId: payload.planId,
+                  notes: payload.notes,
+                },
+              },
+            ]);
+            if (payload.planId && payload.actualProviderInputTokens !== undefined) {
+              store.updatePlanActualProviderTokens(payload.planId, payload.actualProviderInputTokens);
+            }
+            persisted = true;
+          } catch {}
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          taskId,
+          outcomeId: outcomeEvidence.outcomeId,
+          verifiedSuccess: outcomeEvidence.verifiedSuccess,
+          confidence: outcomeEvidence.confidence,
+          rationale: outcomeEvidence.evaluationRationale,
+          persisted,
+        }));
+      } catch (err: any) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message || 'Outcome evaluation failed' }));
+      }
+    });
+    return;
+  }
+
+  // Dynamic Context Resolution Expansion API (Audit Section 14)
+  if (pathname === '/api/expand' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const filePath = payload.filePath || payload.contextUnitId;
+        if (!filePath) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Field "filePath" or "contextUnitId" is required' }));
+          return;
+        }
+
+        const workspaceDir = String(payload.directory || process.cwd());
+        const safePath = resolveSafeWorkspacePath(workspaceDir, filePath);
+        if (!safePath || !fs.existsSync(safePath)) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: `File not found: ${filePath}` }));
+          return;
+        }
+
+        const rawContent = fs.readFileSync(safePath, 'utf-8');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          path: filePath,
+          resolution: payload.targetResolution || 'body',
+          tokens: Math.ceil(rawContent.length / 3.7),
+          content: rawContent,
+        }));
+      } catch (err: any) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message || 'Expansion failed' }));
+      }
+    });
+    return;
+  }
+
+  // Coding Agent Session Lifecycle API (Audit Section 14)
+  if (pathname === '/api/session' && (req.method === 'POST' || req.method === 'GET')) {
+    const handleSession = (payload: any) => {
+      const taskId = String(payload.taskId || '').trim();
+      if (!taskId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Field "taskId" is required' }));
+        return;
+      }
+
+      const store = getSharedStore();
+      let plansCount = 0;
+      let outcomesCount = 0;
+      let totalTokens = 0;
+
+      if (store) {
+        try {
+          const plans = store.listContextPlans(taskId);
+          plansCount = plans.length;
+          for (const p of plans) {
+            totalTokens += p.actualProviderInputTokens || p.actualRenderedTokens || 0;
+          }
+          const outcomes = store.listOutcomeEvidence(taskId);
+          outcomesCount = outcomes.length;
+        } catch {}
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        action: payload.action || 'status',
+        taskId,
+        plansCount,
+        outcomesCount,
+        totalTokens,
+        status: payload.action === 'end' ? 'COMPLETED' : 'ACTIVE',
+        timestamp: new Date().toISOString(),
+      }));
+    };
+
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          handleSession(JSON.parse(body || '{}'));
+        } catch (e: any) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        }
+      });
+    } else {
+      const parsedUrl = new URL(req.url || '', `http://${req.headers.host}`);
+      handleSession({
+        taskId: parsedUrl.searchParams.get('taskId'),
+        action: parsedUrl.searchParams.get('action') || 'status',
+      });
+    }
     return;
   }
 
