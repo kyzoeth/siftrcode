@@ -20,7 +20,11 @@ try {
     .toString()
     .trim();
 } catch (_) {
-  buildCommit = process.env.GIT_COMMIT || 'untracked';
+  buildCommit =
+    process.env.GIT_COMMIT ||
+    process.env.RAILWAY_GIT_COMMIT_SHA ||
+    process.env.VERCEL_GIT_COMMIT_SHA ||
+    'untracked';
 }
 
 // 3. Read package version
@@ -37,5 +41,6 @@ const buildInfo = {
   version,
 };
 
+fs.mkdirSync(distDir, { recursive: true });
 fs.writeFileSync(path.join(distDir, 'build_info.json'), JSON.stringify(buildInfo, null, 2) + '\n');
 console.log(`✔ Build stamped with commit ${buildCommit} (v${version})`);

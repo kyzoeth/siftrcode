@@ -11,11 +11,12 @@
   "files": [
     "dist",
     "src/skeleton/python_ast.py",
+    "scripts",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc && node scripts/post_build.js",
+    "build": "tsc && node -e \"if (require('fs').existsSync('scripts/post_build.js')) require('./scripts/post_build.js'); else { require('fs').mkdirSync('dist/skeleton', { recursive: true }); require('fs').copyFileSync('src/skeleton/python_ast.py', 'dist/skeleton/python_ast.py'); }\"",
     "start": "node dist/server/web.js",
     "serve": "node dist/server/web.js",
     "cli": "node dist/bin/siftrcode.js",

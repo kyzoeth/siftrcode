@@ -1,9 +1,10 @@
 # SiftrCode Railway Production Dockerfile
 FROM node:22-slim
 
-# Install Python 3 for Python AST skeletonizer
+# Install Python 3 for Python AST skeletonizer and git for build stamping
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -12,10 +13,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
-# Copy source and web assets
+# Copy source, scripts and web assets
 COPY tsconfig.json ./
 COPY src/ ./src/
 COPY web/ ./web/
+COPY scripts/ ./scripts/
 COPY README.md LICENSE ./
 
 # Build TypeScript and prepare distribution
