@@ -340,6 +340,8 @@ export interface PilotReport {
   tasksPerRepo: Record<PilotRepoKind, number>;
   tasksPerType: Record<PilotTaskType, number>;
   resolvedMaxCallsPerTask: number;
+  resolvedMaxHttpRequestsPerTask: number;
+  retriesConfigured: number;
   selectedCandidates: number;
   provider: {
     attempts: number;
@@ -806,12 +808,13 @@ function createRealPilotClient(
     if (!apiKey) {
       throw new Error('Live JEV evaluation requested (--live), but no API key was provided (set TYPESAFE_API_KEY or JEV_API_KEY).');
     }
-    console.log(`  [Pilot] Using live TypeSafeSystemOneClient (TypeSafe key configured: true, mode: ${isSmoke ? 'SMOKE (max 1 connection retry)' : 'PILOT (max 2 retries)'})`);
+    console.log(`  [Pilot] Using live TypeSafeSystemOneClient (TypeSafe key configured: true, mode: ${isSmoke ? 'SMOKE (zero retries)' : 'PILOT (max 2 retries)'})`);
     const resolvedEndpoint = options.endpoint ?? process.env.TYPESAFE_BASE_URL ?? 'https://api.typesafe.ai';
+    const resolvedModel = options.model ?? process.env.SIFTR_JEV_MODEL ?? process.env.TYPESAFE_DEFAULT_MODEL ?? 'jev-latest';
     const liveClient = new TypeSafeSystemOneClient({
       apiKey,
       baseURL: resolvedEndpoint,
-      defaultModel: options.model || process.env.SIFTR_JEV_MODEL || process.env.TYPESAFE_DEFAULT_MODEL || 'jev-latest',
+      defaultModel: resolvedModel,
       timeoutMs: options.timeoutMs ?? 15000,
       retry: { maxRetries: 0 },
     });
@@ -852,10 +855,10 @@ function createRealPilotClient(
             tracker?.recordHttpAttemptFailure(attemptCategory);
 
             let canRetry = false;
-            const maxConfiguredRetries = options.retriesConfigured ?? (options.isSmoke ? 1 : 2);
+            const maxConfiguredRetries = options.retriesConfigured ?? (options.isSmoke ? 0 : 2);
             if (options.isSmoke) {
-              // Smoke: at most maxConfiguredRetries connection retry, only for APIConnectionError (fixes stale keep-alive UND_ERR_SOCKET resets). No retry on timeout or 429.
-              canRetry = isConnection && retries < maxConfiguredRetries;
+              // Smoke: zero retries configured by default (maxConfiguredRetries = 0).
+              canRetry = maxConfiguredRetries > 0 && isConnection && retries < maxConfiguredRetries;
             } else {
               // Pilot: at most maxConfiguredRetries retries for 429 and connection errors, honoring err.retryAfterMs when present
               canRetry = (is429 || isConnection) && retries < maxConfiguredRetries;
@@ -1129,7 +1132,7 @@ export function resolvePilotConfig(options: PilotStudyOptions = {}): ResolvedPil
   const envMaxCalls = process.env.SIFTR_JEV_MAX_CALLS ? parseInt(process.env.SIFTR_JEV_MAX_CALLS, 10) : undefined;
   const explicitMaxCalls = options.maxCallsPerTask ?? (callsArg ? parseInt(callsArg.split('=')[1], 10) : undefined);
   const maxCallsPerTask = explicitMaxCalls !== undefined ? explicitMaxCalls : (isSmoke ? 5 : (envMaxCalls ?? 20));
-  const maxHttpRequestsPerTask = options.maxHttpRequestsPerTask ?? options.maxCallsPerTask ?? (isSmoke ? 10 : 60);
+  const maxHttpRequestsPerTask = options.maxHttpRequestsPerTask ?? (isSmoke ? 10 : 60);
   const verbose = options.verbose ?? (isSmoke || process.argv.includes('--verbose'));
   const apiKey = options.apiKey || process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY;
 
@@ -1155,7 +1158,7 @@ export function resolvePilotConfig(options: PilotStudyOptions = {}): ResolvedPil
 
   const requireCleanBuild = options.requireCleanBuild ?? (process.argv.includes('--require-clean-build') || isLive);
   const model = options.model ?? process.env.SIFTR_JEV_MODEL ?? process.env.TYPESAFE_DEFAULT_MODEL ?? (isLive ? 'jev-latest' : 'synthetic-fake-client');
-  const retriesConfigured = isSmoke ? 1 : 2;
+  const retriesConfigured = isSmoke ? 0 : 2;
 
   return Object.freeze({
     isLive,
@@ -1184,23 +1187,50 @@ export function validateReportConsistency(
 ): { consistent: boolean; diffs: string[] } {
   const diffs: string[] = [];
 
-  // Mode consistency
+  // Mode semantics and consistency
   const expectedMode = config.isLive ? (config.isSmoke ? 'LIVE_SMOKE' : 'LIVE_PILOT') : 'OFFLINE_SYNTHETIC';
   if (report.mode !== expectedMode) {
     diffs.push(`report.mode "${report.mode}" !== expected "${expectedMode}"`);
   }
+  if (report.mode === 'LIVE_SMOKE' && (!config.isLive || !config.isSmoke)) {
+    diffs.push(`report.mode is LIVE_SMOKE but config isLive=${config.isLive}, isSmoke=${config.isSmoke}`);
+  }
+  if (report.mode === 'LIVE_PILOT' && (!config.isLive || config.isSmoke)) {
+    diffs.push(`report.mode is LIVE_PILOT but config isLive=${config.isLive}, isSmoke=${config.isSmoke}`);
+  }
+  if (report.mode === 'OFFLINE_SYNTHETIC' && config.isLive) {
+    diffs.push(`report.mode is OFFLINE_SYNTHETIC but config isLive=true`);
+  }
+  if (report.mode === 'OFFLINE_SYNTHETIC' && report.recommendation !== null) {
+    diffs.push(`offline report recommendation must be null (got ${report.recommendation})`);
+  }
 
   // Endpoint consistency
   if (report.endpoint !== config.endpoint) {
-    diffs.push(`report.endpoint "${report.endpoint}" !== expected "${config.endpoint}"`);
+    diffs.push(`report.endpoint "${report.endpoint}" !== config.endpoint "${config.endpoint}"`);
   }
   if (report.endpointIsProduction !== config.endpointIsProduction) {
-    diffs.push(`report.endpointIsProduction "${report.endpointIsProduction}" !== expected "${config.endpointIsProduction}"`);
+    diffs.push(`report.endpointIsProduction "${report.endpointIsProduction}" !== config.endpointIsProduction "${config.endpointIsProduction}"`);
   }
 
-  // Max calls per task
+  // Requested model consistency
+  if (report.requestedModel !== config.model) {
+    diffs.push(`report.requestedModel "${report.requestedModel}" !== config.model "${config.model}"`);
+  }
+
+  // Max calls per task consistency
   if (report.resolvedMaxCallsPerTask !== config.maxCallsPerTask) {
     diffs.push(`report.resolvedMaxCallsPerTask (${report.resolvedMaxCallsPerTask}) !== config.maxCallsPerTask (${config.maxCallsPerTask})`);
+  }
+
+  // Max HTTP requests per task consistency
+  if (report.resolvedMaxHttpRequestsPerTask !== config.maxHttpRequestsPerTask) {
+    diffs.push(`report.resolvedMaxHttpRequestsPerTask (${report.resolvedMaxHttpRequestsPerTask}) !== config.maxHttpRequestsPerTask (${config.maxHttpRequestsPerTask})`);
+  }
+
+  // Retries configured consistency
+  if (report.retriesConfigured !== config.retriesConfigured) {
+    diffs.push(`report.retriesConfigured (${report.retriesConfigured}) !== config.retriesConfigured (${config.retriesConfigured})`);
   }
 
   // Task count consistency
@@ -1287,7 +1317,7 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
   const fastapiDir = path.resolve(rootDir, 'benchmarks/fastapi-repo');
 
   // Mandatory clean build verification
-  const requireCleanBuild = options.requireCleanBuild ?? (process.argv.includes('--require-clean-build') || isLive);
+  const requireCleanBuild = config.requireCleanBuild;
   const cleanBuildResult = verifyCleanBuild(rootDir, { mandatory: requireCleanBuild });
   let testedGitCommit = cleanBuildResult.buildCommit !== 'unbuilt' ? cleanBuildResult.buildCommit : cleanBuildResult.currentGitCommit;
 
@@ -2285,7 +2315,7 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
     failedCriteria = undefined;
   }
 
-  const requestedModel = options.model ?? process.env.SIFTR_JEV_MODEL ?? process.env.TYPESAFE_DEFAULT_MODEL ?? (isLive ? 'jev-latest' : 'synthetic-fake-client');
+  const requestedModel = config.model;
 
   const bNdcg5 = computeStats(baselineNdcg5).mean;
   const bNdcg10 = computeStats(baselineNdcg10).mean;
@@ -2324,6 +2354,8 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
     tasksPerRepo,
     tasksPerType,
     resolvedMaxCallsPerTask: maxCallsPerTask,
+    resolvedMaxHttpRequestsPerTask,
+    retriesConfigured: config.retriesConfigured,
     selectedCandidates: totalSelectedCandidates,
     provider: {
       attempts: totalSuccessful + totalFailed,
@@ -2464,7 +2496,7 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
         ],
       },
       fallback: {
-        strategy: isLive ? (isSmoke ? 'smoke_single_connection_retry' : 'pilot_two_retries_with_backoff') : 'offline_calibrated_lexical',
+        strategy: isLive ? (isSmoke ? 'smoke_zero_retry' : 'pilot_two_retries_with_backoff') : 'offline_calibrated_lexical',
         retriesConfigured: config.retriesConfigured,
         failClosedOnZeroRemoteProbabilities: true,
       },

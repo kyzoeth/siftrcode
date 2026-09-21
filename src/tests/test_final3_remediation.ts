@@ -585,7 +585,7 @@ async function runFinal3RemediationTests() {
     // =========================================================================
     console.log('\n--- Test 4: Harness Counted Retry Policy (Smoke vs Pilot) ---');
     {
-      // In Smoke mode: connection error retried once, 429 NOT retried
+      // In Smoke mode: ZERO retries (connection errors and 429 NOT retried)
       let smokeConnAttempts = 0;
       mockServer.setHandler((req, res) => {
         smokeConnAttempts++;
@@ -618,7 +618,7 @@ async function runFinal3RemediationTests() {
 
             let canRetry = false;
             if (isSmoke) {
-              canRetry = isConnection && retries < 1;
+              canRetry = false; // Smoke has 0 retries
             } else {
               canRetry = (is429 || isConnection) && retries < 2;
             }
@@ -633,13 +633,15 @@ async function runFinal3RemediationTests() {
         }
       }
 
-      // Smoke connection retry: 1st fails, 2nd succeeds
-      const smokeRes = await callHarnessClient(true);
-      assert.strictEqual(smokeRes.answers.semanticRelevance?.noul, 0.85);
-      assert.strictEqual(smokeConnAttempts, 2);
-      assert.strictEqual(tracker.getStats().httpRequests, 2);
-      assert.strictEqual(tracker.getStats().retries, 1);
-      console.log('  ✔ Smoke retried connection error once and succeeded (2 HTTP requests, 1 retry)');
+      // Smoke connection error: ZERO retries, throws on 1st attempt
+      await assert.rejects(
+        () => callHarnessClient(true),
+        /socket|connection|ECONNRESET|hang up/i
+      );
+      assert.strictEqual(smokeConnAttempts, 1);
+      assert.strictEqual(tracker.getStats().httpRequests, 1);
+      assert.strictEqual(tracker.getStats().retries, 0);
+      console.log('  ✔ Smoke mode has ZERO retries on connection error (1 HTTP request, 0 retries)');
 
       // Smoke 429: NOT retried
       mockServer.setHandler((req, res) => {

@@ -32,8 +32,27 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
+    - name: Provision benchmark repositories
+      run: bash scripts/provision_benchmarks.sh
+
+    - name: Verify benchmark repositories
+      run: |
+        EXPRESS_SHA=$(git -C benchmarks/express-repo rev-parse HEAD)
+        FASTAPI_SHA=$(git -C benchmarks/fastapi-repo rev-parse HEAD)
+        echo "Express pinned commit: $EXPRESS_SHA"
+        echo "FastAPI pinned commit: $FASTAPI_SHA"
+        if [ "$EXPRESS_SHA" != "9a34acf03cb818ff3f8bc40e44176e277a25cbb9" ]; then
+          echo "Error: Express commit $EXPRESS_SHA does not match expected 9a34acf03cb818ff3f8bc40e44176e277a25cbb9"
+          exit 1
+        fi
+        if [ "$FASTAPI_SHA" != "50113da16fec53b66b80d75e80a89296de4fa5a5" ]; then
+          echo "Error: FastAPI commit $FASTAPI_SHA does not match expected 50113da16fec53b66b80d75e80a89296de4fa5a5"
+          exit 1
+        fi
+
     - name: Build TypeScript
       run: npm run build
 
     - name: Run Test Suites
       run: npm test
+

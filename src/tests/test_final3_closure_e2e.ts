@@ -24,6 +24,7 @@ import { ContextFeaturesV1 } from '../ranking/feature_schema';
 import { createDefaultDataRights, DataClass, DataRights } from '../rights/data_rights';
 import { createSourceProvenance } from '../rights/source_provenance';
 import { createTrainingEvidenceRecord, TrainingEvidenceRecord } from '../learning/lineage';
+import { JevCallTracker } from '../providers/judgment/typesafe/jev_budget';
 import {
   evaluateLiveAcceptance,
   LiveMetrics,
@@ -101,14 +102,20 @@ async function runClosureE2ETests() {
   // =========================================================================
   console.log('--- Test 1: Resolved Pilot Config & Call Wiring ---');
   {
-    // Default smoke config
+    // Default smoke config (zero retries)
     const defaultConfig = resolvePilotConfig({ isSmoke: true });
     assert.strictEqual(defaultConfig.isSmoke, true);
     assert.strictEqual(defaultConfig.maxTasks, 5);
     assert.strictEqual(defaultConfig.maxCallsPerTask, 5);
     assert.strictEqual(defaultConfig.maxHttpRequestsPerTask, 10);
-    assert.strictEqual(defaultConfig.retriesConfigured, 1);
+    assert.strictEqual(defaultConfig.retriesConfigured, 0);
     assert.strictEqual(Object.isFrozen(defaultConfig), true, 'ResolvedPilotConfig must be frozen');
+
+    // Default pilot config (bounded 2 retries)
+    const defaultPilotConfig = resolvePilotConfig({ isSmoke: false });
+    assert.strictEqual(defaultPilotConfig.isSmoke, false);
+    assert.strictEqual(defaultPilotConfig.retriesConfigured, 2);
+    assert.strictEqual(Object.isFrozen(defaultPilotConfig), true, 'Pilot config must be frozen');
 
     // Attempting to mutate config throws in strict mode
     assert.throws(() => {
@@ -360,6 +367,8 @@ async function runClosureE2ETests() {
       tasksPerRepo: { express: 2, fastapi: 2, siftrcode: 1 },
       tasksPerType: { BUG_FIX: 2, TEST_FAILURE: 1, FEATURE_ADDITION: 1, REFACTOR: 1 },
       resolvedMaxCallsPerTask: 5,
+      resolvedMaxHttpRequestsPerTask: 10,
+      retriesConfigured: 0,
       selectedCandidates: 25,
       provider: {
         attempts: 25,
@@ -437,12 +446,32 @@ async function runClosureE2ETests() {
     assert.strictEqual(rEndpoint.consistent, false);
     assert.ok(rEndpoint.diffs.some(d => d.includes('report.endpoint')));
 
-    // 4. Task counts inconsistency
+    // 4. Requested model discrepancy
+    const rModel = validateReportConsistency({ ...validReport, requestedModel: 'other-model' }, config);
+    assert.strictEqual(rModel.consistent, false);
+    assert.ok(rModel.diffs.some(d => d.includes('report.requestedModel')));
+
+    // 5. Max calls per task discrepancy
+    const rMaxCalls = validateReportConsistency({ ...validReport, resolvedMaxCallsPerTask: 99 }, config);
+    assert.strictEqual(rMaxCalls.consistent, false);
+    assert.ok(rMaxCalls.diffs.some(d => d.includes('report.resolvedMaxCallsPerTask')));
+
+    // 6. Max HTTP requests per task discrepancy
+    const rMaxHttp = validateReportConsistency({ ...validReport, resolvedMaxHttpRequestsPerTask: 99 }, config);
+    assert.strictEqual(rMaxHttp.consistent, false);
+    assert.ok(rMaxHttp.diffs.some(d => d.includes('report.resolvedMaxHttpRequestsPerTask')));
+
+    // 7. Retries configured discrepancy
+    const rRetries = validateReportConsistency({ ...validReport, retriesConfigured: 2 }, config);
+    assert.strictEqual(rRetries.consistent, false);
+    assert.ok(rRetries.diffs.some(d => d.includes('report.retriesConfigured')));
+
+    // 8. Task counts inconsistency
     const rTaskCount = validateReportConsistency({ ...validReport, selectedTaskCount: 10 }, config);
     assert.strictEqual(rTaskCount.consistent, false);
     assert.ok(rTaskCount.diffs.some(d => d.includes('selectedTaskCount')));
 
-    // 5. Tasks per repo sum discrepancy
+    // 9. Tasks per repo sum discrepancy
     const rRepoSum = validateReportConsistency({
       ...validReport,
       tasksPerRepo: { express: 1, fastapi: 1, siftrcode: 1 }, // sum 3 != completed 5
@@ -450,7 +479,7 @@ async function runClosureE2ETests() {
     assert.strictEqual(rRepoSum.consistent, false);
     assert.ok(rRepoSum.diffs.some(d => d.includes('tasksPerRepo sum')));
 
-    // 6. Provider attempts arithmetic discrepancy
+    // 10. Provider attempts arithmetic discrepancy
     const rAttempts = validateReportConsistency({
       ...validReport,
       provider: { ...validReport.provider, attempts: 30 }, // 30 != 25 + 0
@@ -458,7 +487,7 @@ async function runClosureE2ETests() {
     assert.strictEqual(rAttempts.consistent, false);
     assert.ok(rAttempts.diffs.some(d => d.includes('provider.attempts')));
 
-    // 7. Ranking ablation delta arithmetic discrepancy
+    // 11. Ranking ablation delta arithmetic discrepancy
     const rDelta = validateReportConsistency({
       ...validReport,
       rankingAblation: { ...validReport.rankingAblation, ndcg10Delta: 0.99 },
@@ -466,7 +495,7 @@ async function runClosureE2ETests() {
     assert.strictEqual(rDelta.consistent, false);
     assert.ok(rDelta.diffs.some(d => d.includes('ndcg10Delta')));
 
-    // 8. Recommendation invariant: PASS but failedCriteria non-empty
+    // 12. Recommendation invariant: PASS but failedCriteria non-empty
     const rPassFailed = validateReportConsistency({
       ...validReport,
       failedCriteria: ['some failure'],
@@ -474,6 +503,47 @@ async function runClosureE2ETests() {
     }, config);
     assert.strictEqual(rPassFailed.consistent, false);
     assert.ok(rPassFailed.diffs.some(d => d.includes('recommendation PASS_TO_30_TASK_PILOT but failedCriteria is non-empty')));
+
+    // 13. Verify that in live evaluation, any inconsistent report forces FIX_AND_REPEAT_SMOKE
+    for (const badReport of [rMode, rEndpoint, rModel, rMaxCalls, rMaxHttp, rRetries]) {
+      const liveEval = evaluateLiveAcceptance({
+        liveMode: true,
+        totalTasks: 5,
+        selectedTaskCount: 5,
+        startedTaskCount: 5,
+        completedTaskCount: 5,
+        tasksWithValidProviderSignal: 5,
+        maxHttpRequests: 50,
+        successfulCalls: 25,
+        failedCalls: 0,
+        rateLimitedCalls: 0,
+        timeoutCalls: 0,
+        malformedCalls: 0,
+        connectionErrorCalls: 0,
+        totalHttpRequests: 25,
+        totalRetries: 0,
+        trustDeniedCalls: 0,
+        rightsDeniedCalls: 0,
+        planInvarianceHolds: true,
+        zeroLineageMismatches: true,
+        zeroUnexpectedEgress: true,
+        endpoint: 'https://api.typesafe.ai',
+        endpointIsProduction: true,
+        provenanceClean: true,
+        providerAttempts: 25,
+        providerSuccesses: 25,
+        validSignals: 25,
+        syntheticSignals: 0,
+        fallbackOnlySignals: 0,
+        snapshotMismatches: 0,
+        completeLineageCoverage: true,
+        lineageVerificationSucceeded: true,
+        perTaskAttemptsExceeded: false,
+        httpRequestsExceededBudget: false,
+        reportConsistencyCheck: badReport.consistent,
+      });
+      assert.strictEqual(liveEval.recommendation, 'FIX_AND_REPEAT_SMOKE');
+    }
 
     console.log('  ✔ validateReportConsistency detected every simulated report discrepancy accurately');
   }
@@ -606,6 +676,75 @@ async function runClosureE2ETests() {
     }
 
     console.log('  ✔ Universal invariant proven: recommendation is PASS_TO_30_TASK_PILOT if and only if failed.length === 0');
+  }
+
+  // =========================================================================
+  // Test 7: Zero-Retry Smoke vs Bounded Pilot Retry Accounting
+  // =========================================================================
+  console.log('\n--- Test 7: Zero-Retry Smoke vs Bounded Pilot Retry Accounting ---');
+  {
+    // Part A: Zero-retry smoke:
+    // Stub: first remote request -> APIConnectionError
+    // Expected: HTTP requests = 1, retries = 0, terminal connection error = 1, recommendation = FIX_AND_REPEAT_SMOKE
+    // It must NOT perform request #2.
+    const smokeFailureMetrics: LiveMetrics = {
+      liveMode: true,
+      totalTasks: 5,
+      selectedTaskCount: 5,
+      startedTaskCount: 5,
+      completedTaskCount: 5,
+      tasksWithValidProviderSignal: 0,
+      maxHttpRequests: 50,
+      successfulCalls: 0,
+      failedCalls: 1, // Connection error
+      rateLimitedCalls: 0,
+      timeoutCalls: 0,
+      malformedCalls: 0,
+      connectionErrorCalls: 1,
+      totalHttpRequests: 1,
+      totalRetries: 0,
+      trustDeniedCalls: 0,
+      rightsDeniedCalls: 0,
+      planInvarianceHolds: true,
+      zeroLineageMismatches: true,
+      zeroUnexpectedEgress: true,
+      endpoint: 'https://api.typesafe.ai',
+      endpointIsProduction: true,
+      provenanceClean: true,
+      providerAttempts: 1,
+      providerSuccesses: 0,
+      validSignals: 0,
+      syntheticSignals: 0,
+      fallbackOnlySignals: 0,
+      snapshotMismatches: 0,
+      completeLineageCoverage: true,
+      lineageVerificationSucceeded: true,
+      perTaskAttemptsExceeded: false,
+      httpRequestsExceededBudget: false,
+      reportConsistencyCheck: true,
+    };
+    const smokeEval = evaluateLiveAcceptance(smokeFailureMetrics);
+    assert.strictEqual(smokeEval.recommendation, 'FIX_AND_REPEAT_SMOKE');
+    assert.ok(smokeEval.failed.some(f => f.includes('failedCalls === 0')));
+
+    // Part B: Pilot retry accounting:
+    // attempt 1 -> 429, attempt 2 -> success
+    // Expected: HTTP requests = 2, retries = 1, logical success = 1, attempt-level 429 = 1
+    const pilotTracker = new JevCallTracker({ maxCallsPerTask: 10 });
+    pilotTracker.recordHttpRequest();
+    pilotTracker.recordHttpAttemptFailure('RATE_LIMITED');
+    pilotTracker.recordRetry();
+    pilotTracker.recordHttpRequest();
+    pilotTracker.recordCallSuccess();
+
+    const pilotStats = pilotTracker.getStats();
+    assert.strictEqual(pilotStats.httpRequests, 2, 'Pilot executed 2 HTTP requests');
+    assert.strictEqual(pilotStats.retries, 1, 'Pilot recorded 1 retry');
+    assert.strictEqual(pilotStats.successfulCalls, 1, 'Pilot recorded 1 successful call');
+    assert.strictEqual(pilotStats.failedCalls, 0, 'Terminal failedCalls is 0 because retry succeeded');
+    assert.strictEqual(pilotStats.httpAttemptFailures.rateLimited, 1, 'Attempt-level 429 is 1');
+    assert.strictEqual(pilotStats.terminalFailures.rateLimited, 0, 'Terminal 429 is 0');
+    console.log('  ✔ Zero-retry smoke and bounded pilot retry accounting verified');
   }
 
   console.log('\n🎉 ALL FINAL-3 CLOSURE & ADVERSARIAL E2E TESTS PASSED CLEANLY!\n');
