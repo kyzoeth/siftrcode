@@ -1345,14 +1345,108 @@
 
   <!-- Dedicated Token Economics Section -->
   <section id="economics" class="py-10 sm:py-16 px-3 sm:px-4 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800">
-    <div class="max-w-4xl mx-auto space-y-6 sm:space-y-7">
+    <div class="max-w-4xl mx-auto space-y-7 sm:space-y-9">
 
       <!-- Section Header -->
-      <div class="text-center space-y-1.5 max-w-2xl mx-auto">
-        <h2 class="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-ink font-serif">Token Economics</h2>
-        <p class="text-xs sm:text-sm md:text-base text-ink-secondary">
-          The math is easy. You could be saving thousands in agent fees*
+      <div class="text-center space-y-2.5 max-w-2xl mx-auto">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          Outcome-Aware Context Economics
+        </div>
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-ink font-serif">Token Economics &amp; ROI</h2>
+        <p class="text-xs sm:text-sm md:text-base text-ink-secondary leading-relaxed">
+          Smarter context allocation, not naive stripping. SiftrCode V2 maximizes marginal agent utility per token—cutting typical context payloads by 60%–88% while guaranteeing 100% full implementation fidelity on direct edit targets.
         </p>
+      </div>
+
+      <!-- V2 Budget Profile Selector -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800">
+        <div class="flex items-center gap-2 pl-2">
+          <span class="text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold">Budget Profile:</span>
+          <span id="econProfileDesc" class="text-xs font-mono text-zinc-700 dark:text-zinc-300">Balanced (Default) • Optimal Quality &amp; Cost</span>
+        </div>
+        <div class="inline-flex rounded-md p-1 bg-zinc-200/70 dark:bg-zinc-800/80 border border-zinc-300/80 dark:border-zinc-700/80 text-xs font-mono w-full sm:w-auto justify-center">
+          <button id="btnProfileBalanced" onclick="setEconProfile('balanced')" class="px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer bg-white dark:bg-zinc-900 text-ink shadow-2xs font-semibold">
+            Balanced (~79%)
+          </button>
+          <button id="btnProfileAggressive" onclick="setEconProfile('aggressive')" class="px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer text-zinc-600 dark:text-zinc-400 hover:text-ink">
+            Aggressive (~88%)
+          </button>
+          <button id="btnProfileThorough" onclick="setEconProfile('thorough')" class="px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer text-zinc-600 dark:text-zinc-400 hover:text-ink">
+            Thorough (~62%)
+          </button>
+        </div>
+      </div>
+
+      <!-- 3-Way Variable-Resolution Breakdown: The V2 Allocation Advantage -->
+      <div class="space-y-2.5">
+        <div class="flex items-center justify-between px-1">
+          <span class="text-[10px] sm:text-xs font-mono font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            Variable-Resolution Allocation (85,000 Raw Tokens)
+          </span>
+          <span class="text-[10px] sm:text-xs font-mono text-emerald-600 dark:text-emerald-400 font-medium">
+            Stage 05 &bull; ResolutionRank
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+          <!-- Tier 1: Direct Edit & Failure Targets -->
+          <div class="p-4 rounded-md bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-2 shadow-2xs">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono font-bold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-950/80 px-2 py-0.5 rounded border border-blue-300 dark:border-blue-800">
+                100% BODY RESOLUTION
+              </span>
+              <span id="econAllocTargetPct" class="text-[10px] font-mono text-zinc-500">16.5% of raw</span>
+            </div>
+            <div>
+              <div class="font-serif text-base text-ink font-normal">Edit &amp; Failure Targets</div>
+              <div class="text-xs font-mono text-blue-600 dark:text-blue-400 font-bold mt-0.5">
+                <span id="econAllocTargetTokens">14,000</span> tokens &bull; 0% fidelity loss
+              </div>
+            </div>
+            <p class="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              Full function bodies preserved for files the agent modifies or inspects. Zero missing lines, zero hallucinated edits, zero re-try loops.
+            </p>
+          </div>
+
+          <!-- Tier 2: Structural Dependencies & Signatures -->
+          <div class="p-4 rounded-md bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-2 shadow-2xs">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800">
+                88% AST COMPRESSION
+              </span>
+              <span id="econAllocSkelPct" class="text-[10px] font-mono text-zinc-500">4.9% of raw</span>
+            </div>
+            <div>
+              <div class="font-serif text-base text-ink font-normal">Structural Dependencies</div>
+              <div class="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
+                <span id="econAllocSkelTokens">4,200</span> tokens &bull; Signatures &amp; Types
+              </div>
+            </div>
+            <p class="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              Distant callers and imports synthesized into compiler-verified AST skeletons. Retains all interfaces, types, and docs while collapsing bodies.
+            </p>
+          </div>
+
+          <!-- Tier 3: Distractor Bloat Pruned -->
+          <div class="p-4 rounded-md bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-2 shadow-2xs">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono font-bold text-zinc-600 dark:text-zinc-400 bg-zinc-200/80 dark:bg-zinc-800/80 px-2 py-0.5 rounded border border-zinc-300 dark:border-zinc-700">
+                100% PRUNED BLOAT
+              </span>
+              <span id="econAllocPrunedPct" class="text-[10px] font-mono text-zinc-500">78.6% dropped</span>
+            </div>
+            <div>
+              <div class="font-serif text-base text-ink font-normal">Transitive Distractors</div>
+              <div class="text-xs font-mono text-zinc-500 dark:text-zinc-400 font-bold mt-0.5">
+                <span id="econAllocPrunedTokens">66,800</span> tokens &bull; 0 ingested
+              </div>
+            </div>
+            <p class="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              Unrelated services, test fixtures, and noise files omitted safely before prompt ingestion, shielding the LLM from distraction and context drift.
+            </p>
+          </div>
+        </div>
       </div>
 
       <!-- Visual Comparative Bar Charts -->
@@ -1365,8 +1459,8 @@
               <span class="text-[10px] font-mono font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Context Window</span>
               <h3 class="font-serif text-lg sm:text-xl text-ink font-normal mt-0.5">Payload per Turn</h3>
             </div>
-            <span class="text-xs font-mono text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-100 dark:bg-emerald-950/80 px-2.5 py-1 rounded border border-emerald-300 dark:border-emerald-800">
-              −92% Tokens
+            <span id="econPillPayloadSavings" class="text-xs font-mono text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-100 dark:bg-emerald-950/80 px-2.5 py-1 rounded border border-emerald-300 dark:border-emerald-800 transition-all duration-500">
+              −78.6% Tokens
             </span>
           </div>
 
@@ -1376,10 +1470,10 @@
               <!-- Subtle dashed grid guidelines -->
               <div class="absolute inset-x-0 top-0 bottom-0 flex flex-col justify-between pointer-events-none opacity-40">
                 <div class="border-b border-dashed border-zinc-300 dark:border-zinc-700 w-full flex justify-end">
-                  <span class="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 -mt-2 pr-1">125k</span>
+                  <span class="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 -mt-2 pr-1">85k</span>
                 </div>
                 <div class="border-b border-dashed border-zinc-300 dark:border-zinc-700 w-full flex justify-end">
-                  <span class="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 -mt-2 pr-1">62k</span>
+                  <span class="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 -mt-2 pr-1">42k</span>
                 </div>
                 <div></div>
               </div>
@@ -1387,23 +1481,23 @@
               <!-- Bar 1: Without SiftrCode -->
               <div class="flex flex-col items-center justify-end h-full flex-1 max-w-[85px] sm:max-w-[110px] z-10">
                 <div class="mb-1.5 text-center">
-                  <div id="econValPayloadRaw" class="text-xs sm:text-sm font-mono font-bold text-zinc-800 dark:text-zinc-200">125,000</div>
-                  <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">tokens (100%)</div>
+                  <div id="econValPayloadRaw" class="text-xs sm:text-sm font-mono font-bold text-zinc-800 dark:text-zinc-200">85,000</div>
+                  <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">raw tokens (100%)</div>
                 </div>
-                <div id="econBarPayloadRaw" class="w-full rounded-t bg-zinc-300 dark:bg-zinc-700 border-t border-x border-zinc-400/70 dark:border-zinc-600/70 flex flex-col items-center justify-center p-1 shadow-2xs overflow-hidden transition-colors" style="height: 72%;">
+                <div id="econBarPayloadRaw" class="w-full rounded-t bg-zinc-300 dark:bg-zinc-700 border-t border-x border-zinc-400/70 dark:border-zinc-600/70 flex flex-col items-center justify-center p-1 shadow-2xs overflow-hidden transition-colors" style="height: 75%;">
                   <span class="text-[10px] font-mono font-semibold text-zinc-700 dark:text-zinc-200 uppercase tracking-wide">Raw</span>
                 </div>
               </div>
 
-              <!-- Bar 2: With SiftrCode -->
+              <!-- Bar 2: With SiftrCode V2 -->
               <div class="flex flex-col items-center justify-end h-full flex-1 max-w-[85px] sm:max-w-[110px] z-10">
                 <div class="mb-1.5 text-center">
-                  <span id="econPillPayloadSavings" class="inline-block text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/90 px-1.5 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 mb-0.5 transition-all duration-500">−92.2%</span>
-                  <div id="econValPayloadSkel" class="text-xs sm:text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">9,800</div>
-                  <div class="text-[10px] font-mono text-emerald-600/80 dark:text-emerald-400/80">tokens</div>
+                  <span id="econPillPayloadTag" class="inline-block text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/90 px-1.5 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 mb-0.5 transition-all duration-500">−78.6%</span>
+                  <div id="econValPayloadSkel" class="text-xs sm:text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">18,200</div>
+                  <div class="text-[10px] font-mono text-emerald-600/80 dark:text-emerald-400/80">optimized</div>
                 </div>
-                <div id="econBarPayloadSkel" class="w-full rounded-t bg-emerald-500 border-t border-x border-emerald-400/60 flex items-center justify-center shadow-2xs overflow-hidden" style="height: 14%;">
-                  <span class="text-[9px] font-mono font-bold text-white uppercase tracking-wider">AST</span>
+                <div id="econBarPayloadSkel" class="w-full rounded-t bg-emerald-500 border-t border-x border-emerald-400/60 flex items-center justify-center shadow-2xs overflow-hidden" style="height: 16%;">
+                  <span class="text-[9px] font-mono font-bold text-white uppercase tracking-wider">V2</span>
                 </div>
               </div>
             </div>
@@ -1414,13 +1508,13 @@
                 <span class="text-[11px] sm:text-xs font-mono font-medium text-zinc-600 dark:text-zinc-400">Without Siftr</span>
               </div>
               <div class="flex-1 max-w-[85px] sm:max-w-[110px] text-center">
-                <span class="text-[11px] sm:text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">With SiftrCode</span>
+                <span class="text-[11px] sm:text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">SiftrCode V2</span>
               </div>
             </div>
           </div>
 
-          <p class="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 pt-2 border-t border-zinc-200/80 dark:border-zinc-800/80 truncate" title="Method bodies dissolved • 100% signatures &amp; types preserved.">
-            Method bodies dissolved • 100% signatures &amp; types preserved.
+          <p id="econPayloadDesc" class="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 pt-2 border-t border-zinc-200/80 dark:border-zinc-800/80 truncate" title="100% full bodies on edit targets • 88% AST skeletons on dependencies.">
+            100% full bodies on edit targets &bull; 88% AST skeletons on dependencies.
           </p>
         </div>
 
@@ -1431,8 +1525,8 @@
               <span class="text-[10px] font-mono font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Claude Spend</span>
               <h3 class="font-serif text-lg sm:text-xl text-ink font-normal mt-0.5">Monthly Cost / Dev</h3>
             </div>
-            <span class="text-xs font-mono text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-100 dark:bg-emerald-950/80 px-2.5 py-1 rounded border border-emerald-300 dark:border-emerald-800">
-              Save $380 / mo
+            <span id="econPillCostSavings" class="text-xs font-mono text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-100 dark:bg-emerald-950/80 px-2.5 py-1 rounded border border-emerald-300 dark:border-emerald-800 transition-all duration-500">
+              Save $280 / mo
             </span>
           </div>
 
@@ -1442,10 +1536,10 @@
               <!-- Subtle dashed grid guidelines -->
               <div class="absolute inset-x-0 top-0 bottom-0 flex flex-col justify-between pointer-events-none opacity-40">
                 <div class="border-b border-dashed border-zinc-300 dark:border-zinc-700 w-full flex justify-end">
-                  <span class="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 -mt-2 pr-1">$412</span>
+                  <span class="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 -mt-2 pr-1">$357</span>
                 </div>
                 <div class="border-b border-dashed border-zinc-300 dark:border-zinc-700 w-full flex justify-end">
-                  <span class="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 -mt-2 pr-1">$200</span>
+                  <span class="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 -mt-2 pr-1">$178</span>
                 </div>
                 <div></div>
               </div>
@@ -1454,26 +1548,26 @@
               <div class="flex flex-col items-center justify-end h-full flex-1 max-w-[85px] sm:max-w-[110px] z-10">
                 <div class="mb-1.5 text-center">
                   <div class="text-xs sm:text-sm font-mono font-bold text-zinc-800 dark:text-zinc-200">
-                    <span id="econValCostRaw">$412.50</span><span class="text-[10px] font-normal">/mo</span>
+                    <span id="econValCostRaw">$357.00</span><span class="text-[10px] font-normal">/mo</span>
                   </div>
-                  <div id="econValCostRawAnnual" class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">$4,950 / yr</div>
+                  <div id="econValCostRawAnnual" class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">$4,284 / yr</div>
                 </div>
-                <div id="econBarCostRaw" class="w-full rounded-t bg-zinc-300 dark:bg-zinc-700 border-t border-x border-zinc-400/70 dark:border-zinc-600/70 flex flex-col items-center justify-center p-1 shadow-2xs overflow-hidden transition-colors" style="height: 72%;">
-                  <span class="text-[10px] font-mono font-semibold text-zinc-700 dark:text-zinc-200 uppercase tracking-wide">$0.38/turn</span>
+                <div id="econBarCostRaw" class="w-full rounded-t bg-zinc-300 dark:bg-zinc-700 border-t border-x border-zinc-400/70 dark:border-zinc-600/70 flex flex-col items-center justify-center p-1 shadow-2xs overflow-hidden transition-colors" style="height: 75%;">
+                  <span class="text-[10px] font-mono font-semibold text-zinc-700 dark:text-zinc-200 uppercase tracking-wide">$0.255/turn</span>
                 </div>
               </div>
 
-              <!-- Bar 2: With SiftrCode -->
+              <!-- Bar 2: With SiftrCode V2 -->
               <div class="flex flex-col items-center justify-end h-full flex-1 max-w-[85px] sm:max-w-[110px] z-10">
                 <div class="mb-1.5 text-center">
-                  <span id="econPillCostSavings" class="inline-block text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/90 px-1.5 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 mb-0.5 transition-all duration-500">Save $380</span>
+                  <span id="econPillCostTag" class="inline-block text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/90 px-1.5 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 mb-0.5 transition-all duration-500">Save $280</span>
                   <div class="text-xs sm:text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                    <span id="econValCostSkel">$32.34</span><span class="text-[10px] font-normal">/mo</span>
+                    <span id="econValCostSkel">$76.44</span><span class="text-[10px] font-normal">/mo</span>
                   </div>
-                  <div id="econValCostSkelAnnual" class="text-[10px] font-mono text-emerald-600/80 dark:text-emerald-400/80">$388 / yr</div>
+                  <div id="econValCostSkelAnnual" class="text-[10px] font-mono text-emerald-600/80 dark:text-emerald-400/80">$917 / yr</div>
                 </div>
-                <div id="econBarCostSkel" class="w-full rounded-t bg-emerald-500 border-t border-x border-emerald-400/60 flex items-center justify-center shadow-2xs overflow-hidden" style="height: 14%;">
-                  <span class="text-[9px] font-mono font-bold text-white uppercase tracking-wider">$0.03/turn</span>
+                <div id="econBarCostSkel" class="w-full rounded-t bg-emerald-500 border-t border-x border-emerald-400/60 flex items-center justify-center shadow-2xs overflow-hidden" style="height: 16%;">
+                  <span id="econBarCostTurnLabel" class="text-[9px] font-mono font-bold text-white uppercase tracking-wider">$0.055/turn</span>
                 </div>
               </div>
             </div>
@@ -1484,62 +1578,150 @@
                 <span class="text-[11px] sm:text-xs font-mono font-medium text-zinc-600 dark:text-zinc-400">Without Siftr</span>
               </div>
               <div class="flex-1 max-w-[85px] sm:max-w-[110px] text-center">
-                <span class="text-[11px] sm:text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">With SiftrCode</span>
+                <span class="text-[11px] sm:text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">SiftrCode V2</span>
               </div>
             </div>
           </div>
 
-          <p class="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 pt-2 border-t border-zinc-200/80 dark:border-zinc-800/80 truncate" title="Saves $0.35/turn • $4,560 net annual savings per engineer.">
-            Saves $0.35/turn • $4,560 net annual savings per engineer.
+          <p id="econSummaryTurnSavings" class="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 pt-2 border-t border-zinc-200/80 dark:border-zinc-800/80 truncate" title="Saves $0.20/turn • $3,367 net annual savings per engineer.">
+            Saves $0.20/turn &bull; $3,367 net annual savings per engineer.
           </p>
         </div>
 
       </div>
 
-      <!-- ROI Summary Strip & Audit Callout -->
+      <!-- Multi-Model Economics Matrix -->
+      <div class="space-y-2.5">
+        <div class="flex items-center justify-between px-1">
+          <span class="text-[10px] sm:text-xs font-mono font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            Multi-Model Impact per Turn (85k Raw &rarr; V2 Optimized)
+          </span>
+          <span class="text-[10px] sm:text-xs font-mono text-zinc-400">
+            Current Frontier Pricing
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <!-- Model 1: Claude 3.7 / 3.5 Sonnet -->
+          <div class="p-3.5 sm:p-4 rounded-md bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-1.5 shadow-2xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-semibold text-ink">Claude 3.7 Sonnet</span>
+              <span class="text-[10px] font-mono text-zinc-400">$3.00 / MTok</span>
+            </div>
+            <div class="flex items-baseline justify-between pt-1">
+              <div>
+                <span class="text-[10px] font-mono text-zinc-400 line-through mr-1.5">$0.255</span>
+                <span id="modelCostSonnet" class="text-base sm:text-lg font-mono font-bold text-emerald-600 dark:text-emerald-400">$0.055</span>
+                <span class="text-[10px] font-mono text-zinc-500">/ turn</span>
+              </div>
+              <span id="modelSaveSonnet" class="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-1.5 py-0.5 rounded">
+                −78.6%
+              </span>
+            </div>
+          </div>
+
+          <!-- Model 2: OpenAI GPT-4o -->
+          <div class="p-3.5 sm:p-4 rounded-md bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-1.5 shadow-2xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-semibold text-ink">OpenAI GPT-4o</span>
+              <span class="text-[10px] font-mono text-zinc-400">$2.50 / MTok</span>
+            </div>
+            <div class="flex items-baseline justify-between pt-1">
+              <div>
+                <span class="text-[10px] font-mono text-zinc-400 line-through mr-1.5">$0.213</span>
+                <span id="modelCostGpt" class="text-base sm:text-lg font-mono font-bold text-emerald-600 dark:text-emerald-400">$0.046</span>
+                <span class="text-[10px] font-mono text-zinc-500">/ turn</span>
+              </div>
+              <span id="modelSaveGpt" class="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-1.5 py-0.5 rounded">
+                −78.6%
+              </span>
+            </div>
+          </div>
+
+          <!-- Model 3: Claude 3 Opus / Reasoning -->
+          <div class="p-3.5 sm:p-4 rounded-md bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-1.5 shadow-2xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-semibold text-ink">Claude 3 Opus / o1</span>
+              <span class="text-[10px] font-mono text-zinc-400">$15.00 / MTok</span>
+            </div>
+            <div class="flex items-baseline justify-between pt-1">
+              <div>
+                <span class="text-[10px] font-mono text-zinc-400 line-through mr-1.5">$1.275</span>
+                <span id="modelCostOpus" class="text-base sm:text-lg font-mono font-bold text-emerald-600 dark:text-emerald-400">$0.273</span>
+                <span class="text-[10px] font-mono text-zinc-500">/ turn</span>
+              </div>
+              <span id="modelSaveOpus" class="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-1.5 py-0.5 rounded">
+                Save $1.00/t
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROI Summary Strip & CLI Quickstart -->
       <div id="roiSummaryStrip" class="p-3.5 sm:p-5 rounded-md bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 flex flex-col md:flex-row items-center justify-between gap-3.5 sm:gap-4 shadow-2xs">
-        <!-- Metrics Grid (3 cols on all devices, with elegant divide-x borders and responsive vertical unit stacking on mobile) -->
+        <!-- Metrics Grid -->
         <div class="grid grid-cols-3 divide-x divide-emerald-200/80 dark:divide-emerald-800/80 w-full md:w-auto text-center md:text-left">
           <div class="px-2 sm:px-4 md:px-5 first:pl-0">
             <div class="text-[9px] sm:text-[10px] md:text-xs font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold truncate">Net ROI</div>
             <div class="text-sm sm:text-xl md:text-2xl font-extrabold text-emerald-900 dark:text-emerald-100 font-mono tracking-tight mt-0.5">
-              +$4,560<span class="block sm:inline text-[9px] sm:text-xs font-normal text-emerald-700/80 dark:text-emerald-300/80 sm:ml-1">/ dev</span>
+              <span id="econRoiPerDev">+$3,367</span><span class="block sm:inline text-[9px] sm:text-xs font-normal text-emerald-700/80 dark:text-emerald-300/80 sm:ml-1">/ dev</span>
             </div>
           </div>
 
           <div class="px-2 sm:px-4 md:px-5">
-            <div class="text-[9px] sm:text-[10px] md:text-xs font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold truncate">Latency</div>
+            <div class="text-[9px] sm:text-[10px] md:text-xs font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold truncate">Prompt Speed</div>
             <div class="text-sm sm:text-xl md:text-2xl font-extrabold text-emerald-900 dark:text-emerald-100 font-mono tracking-tight mt-0.5">
-              11x<span class="block sm:inline text-[9px] sm:text-xs font-normal text-emerald-700/80 dark:text-emerald-300/80 sm:ml-1">faster</span>
+              <span id="econSpeedup">4.7x</span><span class="block sm:inline text-[9px] sm:text-xs font-normal text-emerald-700/80 dark:text-emerald-300/80 sm:ml-1">faster</span>
             </div>
           </div>
 
           <div class="px-2 sm:px-4 md:px-5 last:pr-0">
             <div class="text-[9px] sm:text-[10px] md:text-xs font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold truncate">10-Dev Team</div>
             <div class="text-sm sm:text-xl md:text-2xl font-extrabold text-emerald-900 dark:text-emerald-100 font-mono tracking-tight mt-0.5">
-              +$45.6k<span class="block sm:inline text-[9px] sm:text-xs font-normal text-emerald-700/80 dark:text-emerald-300/80 sm:ml-1">/ yr</span>
+              <span id="econRoiTeam">+$33.7k</span><span class="block sm:inline text-[9px] sm:text-xs font-normal text-emerald-700/80 dark:text-emerald-300/80 sm:ml-1">/ yr</span>
             </div>
           </div>
         </div>
 
-        <!-- Audit CLI Callout -->
+        <!-- CLI Quickstart Box -->
         <div class="w-full md:w-auto flex items-center justify-center pt-2.5 md:pt-0 border-t md:border-t-0 border-emerald-200/80 dark:border-emerald-800/60">
-          <div class="flex items-center justify-between w-full max-w-[280px] sm:max-w-xs md:w-auto gap-2 bg-white dark:bg-zinc-900/90 p-1 pl-2.5 rounded-md border border-emerald-200 dark:border-zinc-800 shadow-2xs">
+          <div class="flex items-center justify-between w-full max-w-[320px] sm:max-w-sm md:w-auto gap-2 bg-white dark:bg-zinc-900/90 p-1 pl-2.5 rounded-md border border-emerald-200 dark:border-zinc-800 shadow-2xs">
             <code class="text-xs font-mono font-semibold text-ink flex items-center gap-1.5 truncate min-w-0">
               <span class="text-emerald-500 dark:text-emerald-400 font-bold select-none shrink-0 bash-dollar-flash">$</span>
-              <span class="truncate">npx siftrcode audit</span>
+              <span id="econCliSnippet" class="truncate">npx siftrcode optimize --profile balanced</span>
             </code>
-            <button onclick="copySnippet('npx siftrcode audit', this)" class="shrink-0 text-xs font-mono text-zinc-700 dark:text-zinc-300 hover:text-ink px-2.5 py-1 rounded bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 transition cursor-pointer font-medium btn-press" title="Copy command">
+            <button onclick="copySnippet(document.getElementById('econCliSnippet')?.innerText || 'npx siftrcode optimize', this)" class="shrink-0 text-xs font-mono text-zinc-700 dark:text-zinc-300 hover:text-ink px-2.5 py-1 rounded bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 transition cursor-pointer font-medium btn-press" title="Copy command">
               COPY
             </button>
           </div>
         </div>
       </div>
 
+      <!-- Truthful Token Accounting Callout -->
+      <div class="p-3.5 sm:p-4 rounded-md bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+        <div class="flex items-start sm:items-center gap-2.5">
+          <div class="w-7 h-7 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-300 dark:border-emerald-800">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <div>
+            <div class="font-mono font-semibold text-ink text-xs">Truthful Token Accounting &bull; TokenizerRegistry Calibrated</div>
+            <div class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+              Tracks <code class="text-zinc-700 dark:text-zinc-300">estimatedRenderedTokens</code> calibrated against Claude BPE (~3.7 chars/tok) and GPT cl100k/o200k (~3.6 chars/tok) with measured <code class="text-zinc-700 dark:text-zinc-300">actualProviderInputTokens</code> reconciliation. Zero hidden context overflow.
+            </div>
+          </div>
+        </div>
+        <a href="#benchmark" class="shrink-0 font-mono text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
+          Audit telemetry &rarr;
+        </a>
+      </div>
+
       <!-- Pricing Footnote -->
       <div class="text-center pt-1">
         <p class="text-[11px] sm:text-xs text-zinc-400 dark:text-zinc-500 font-mono">
-          * Analysis for Claude 3.7 Sonnet ($3.00/MTok in) based on 50 agent turns / day.
+          * Modeled on typical 85k-token repository payload at 50 turns/day, 28 work days/mo (1,400 turns/mo per dev). Claude 3.7 Sonnet ($3.00/MTok in), GPT-4o ($2.50/MTok in), Claude 3 Opus ($15.00/MTok in).
         </p>
       </div>
 
@@ -3989,98 +4171,329 @@ ${renderedRaw}
     }, 1200);
 
     // ==========================================
-    // TOKEN ECONOMICS ANIMATED CHARTS
+    // TOKEN ECONOMICS: V2 PROFILES & ANIMATION
     // ==========================================
-    function triggerEconomicsAnimation() {
+    const ECON_PROFILES = {
+      balanced: {
+        name: 'Balanced (Default) • Optimal Quality & Cost',
+        cli: 'npx siftrcode optimize --profile balanced',
+        rawTokens: 85000,
+        v2Tokens: 18200,
+        savingsPct: '−78.6% Tokens',
+        savingsBadge: '−78.6%',
+        targetTokens: 14000,
+        targetPct: '16.5% of raw',
+        skelTokens: 4200,
+        skelPct: '4.9% of raw',
+        prunedTokens: 66800,
+        prunedPct: '78.6% dropped',
+        rawBarHeight: '75%',
+        v2BarHeight: '16%',
+        costPerTurnRaw: 0.255,
+        costPerTurnV2: 0.0546,
+        costPerTurnV2Label: '$0.055/turn',
+        monthlyRaw: 357.00,
+        monthlyV2: 76.44,
+        monthlySavingsBadge: 'Save $280 / mo',
+        monthlySavingsTag: 'Save $280',
+        annualRaw: 4284,
+        annualV2: 917,
+        annualSavingsPerDev: '+$3,367',
+        turnSavingsLabel: 'Saves $0.20/turn • $3,367 net annual savings per engineer.',
+        payloadDesc: '100% full bodies on edit targets • 88% AST skeletons on dependencies.',
+        speedup: '4.7x',
+        teamRoi: '+$33.7k',
+        modelSonnet: '$0.055',
+        modelSonnetSave: '−78.6%',
+        modelGpt: '$0.046',
+        modelGptSave: '−78.6%',
+        modelOpus: '$0.273',
+        modelOpusSave: 'Save $1.00/t'
+      },
+      aggressive: {
+        name: 'Aggressive • Max Throughput & Large Repos',
+        cli: 'npx siftrcode optimize --profile aggressive',
+        rawTokens: 85000,
+        v2Tokens: 10500,
+        savingsPct: '−87.6% Tokens',
+        savingsBadge: '−87.6%',
+        targetTokens: 7500,
+        targetPct: '8.8% of raw',
+        skelTokens: 3000,
+        skelPct: '3.5% of raw',
+        prunedTokens: 74500,
+        prunedPct: '87.6% dropped',
+        rawBarHeight: '75%',
+        v2BarHeight: '9.5%',
+        costPerTurnRaw: 0.255,
+        costPerTurnV2: 0.0315,
+        costPerTurnV2Label: '$0.032/turn',
+        monthlyRaw: 357.00,
+        monthlyV2: 44.10,
+        monthlySavingsBadge: 'Save $313 / mo',
+        monthlySavingsTag: 'Save $313',
+        annualRaw: 4284,
+        annualV2: 529,
+        annualSavingsPerDev: '+$3,755',
+        turnSavingsLabel: 'Saves $0.22/turn • $3,755 net annual savings per engineer.',
+        payloadDesc: 'Target bodies focused on edit targets • 92% AST skeletons for caller context.',
+        speedup: '8.1x',
+        teamRoi: '+$37.5k',
+        modelSonnet: '$0.032',
+        modelSonnetSave: '−87.6%',
+        modelGpt: '$0.026',
+        modelGptSave: '−87.6%',
+        modelOpus: '$0.158',
+        modelOpusSave: 'Save $1.12/t'
+      },
+      thorough: {
+        name: 'Thorough • Multi-File Architecture & Deep Edits',
+        cli: 'npx siftrcode optimize --profile thorough',
+        rawTokens: 85000,
+        v2Tokens: 32000,
+        savingsPct: '−62.4% Tokens',
+        savingsBadge: '−62.4%',
+        targetTokens: 25000,
+        targetPct: '29.4% of raw',
+        skelTokens: 7000,
+        skelPct: '8.2% of raw',
+        prunedTokens: 53000,
+        prunedPct: '62.4% dropped',
+        rawBarHeight: '75%',
+        v2BarHeight: '28%',
+        costPerTurnRaw: 0.255,
+        costPerTurnV2: 0.096,
+        costPerTurnV2Label: '$0.096/turn',
+        monthlyRaw: 357.00,
+        monthlyV2: 134.40,
+        monthlySavingsBadge: 'Save $223 / mo',
+        monthlySavingsTag: 'Save $223',
+        annualRaw: 4284,
+        annualV2: 1613,
+        annualSavingsPerDev: '+$2,671',
+        turnSavingsLabel: 'Saves $0.16/turn • $2,671 net annual savings per engineer.',
+        payloadDesc: 'Expansive full bodies across all candidate edits + multi-tier AST skeletons.',
+        speedup: '2.7x',
+        teamRoi: '+$26.7k',
+        modelSonnet: '$0.096',
+        modelSonnetSave: '−62.4%',
+        modelGpt: '$0.080',
+        modelGptSave: '−62.4%',
+        modelOpus: '$0.480',
+        modelOpusSave: 'Save $0.80/t'
+      }
+    };
+
+    let currentEconProfile = 'balanced';
+    let currentV2Tokens = 18200;
+    let currentMonthlyV2 = 76.44;
+    let currentAnnualV2 = 917;
+
+    function setEconProfile(profileKey) {
+      if (!ECON_PROFILES[profileKey]) return;
+      currentEconProfile = profileKey;
+      const prof = ECON_PROFILES[profileKey];
+
+      // Update button styling
+      ['balanced', 'aggressive', 'thorough'].forEach(k => {
+        const btn = document.getElementById(`btnProfile${k.charAt(0).toUpperCase() + k.slice(1)}`);
+        if (!btn) return;
+        if (k === profileKey) {
+          btn.className = 'px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer bg-white dark:bg-zinc-900 text-ink shadow-2xs font-semibold';
+        } else {
+          btn.className = 'px-3 py-1.5 rounded text-xs font-medium transition cursor-pointer text-zinc-600 dark:text-zinc-400 hover:text-ink';
+        }
+      });
+
+      // Update header info & CLI snippet
+      const descEl = document.getElementById('econProfileDesc');
+      if (descEl) descEl.textContent = prof.name;
+      const cliEl = document.getElementById('econCliSnippet');
+      if (cliEl) cliEl.textContent = prof.cli;
+
+      // Update Resolution breakdown cards
+      const targetTokensEl = document.getElementById('econAllocTargetTokens');
+      if (targetTokensEl) targetTokensEl.textContent = prof.targetTokens.toLocaleString();
+      const targetPctEl = document.getElementById('econAllocTargetPct');
+      if (targetPctEl) targetPctEl.textContent = prof.targetPct;
+
+      const skelTokensEl = document.getElementById('econAllocSkelTokens');
+      if (skelTokensEl) skelTokensEl.textContent = prof.skelTokens.toLocaleString();
+      const skelPctEl = document.getElementById('econAllocSkelPct');
+      if (skelPctEl) skelPctEl.textContent = prof.skelPct;
+
+      const prunedTokensEl = document.getElementById('econAllocPrunedTokens');
+      if (prunedTokensEl) prunedTokensEl.textContent = prof.prunedTokens.toLocaleString();
+      const prunedPctEl = document.getElementById('econAllocPrunedPct');
+      if (prunedPctEl) prunedPctEl.textContent = prof.prunedPct;
+
+      // Update multi-model table
+      const mSonnet = document.getElementById('modelCostSonnet');
+      if (mSonnet) mSonnet.textContent = prof.modelSonnet;
+      const mSonnetSave = document.getElementById('modelSaveSonnet');
+      if (mSonnetSave) mSonnetSave.textContent = prof.modelSonnetSave;
+
+      const mGpt = document.getElementById('modelCostGpt');
+      if (mGpt) mGpt.textContent = prof.modelCostGpt;
+      const mGptSave = document.getElementById('modelSaveGpt');
+      if (mGptSave) mGptSave.textContent = prof.modelGptSave;
+
+      const mOpus = document.getElementById('modelCostOpus');
+      if (mOpus) mOpus.textContent = prof.modelCostOpus;
+      const mOpusSave = document.getElementById('modelSaveOpus');
+      if (mOpusSave) mOpusSave.textContent = prof.modelOpusSave;
+
+      // Update ROI summary strip
+      const roiDevEl = document.getElementById('econRoiPerDev');
+      if (roiDevEl) roiDevEl.textContent = prof.annualSavingsPerDev;
+      const speedupEl = document.getElementById('econSpeedup');
+      if (speedupEl) speedupEl.textContent = prof.speedup;
+      const roiTeamEl = document.getElementById('econRoiTeam');
+      if (roiTeamEl) roiTeamEl.textContent = prof.teamRoi;
+
+      // Update footer descriptions & labels
+      const turnSavingsEl = document.getElementById('econSummaryTurnSavings');
+      if (turnSavingsEl) {
+        turnSavingsEl.textContent = prof.turnSavingsLabel;
+        turnSavingsEl.setAttribute('title', prof.turnSavingsLabel);
+      }
+      const payloadDescEl = document.getElementById('econPayloadDesc');
+      if (payloadDescEl) {
+        payloadDescEl.textContent = prof.payloadDesc;
+        payloadDescEl.setAttribute('title', prof.payloadDesc);
+      }
+      const barCostTurnLabel = document.getElementById('econBarCostTurnLabel');
+      if (barCostTurnLabel) barCostTurnLabel.textContent = prof.costPerTurnV2Label;
+
+      // Update pills
+      const pillPayload = document.getElementById('econPillPayloadSavings');
+      if (pillPayload) pillPayload.textContent = prof.savingsPct;
+      const pillPayloadTag = document.getElementById('econPillPayloadTag');
+      if (pillPayloadTag) pillPayloadTag.textContent = prof.savingsBadge;
+
+      const pillCost = document.getElementById('econPillCostSavings');
+      if (pillCost) pillCost.textContent = prof.monthlySavingsBadge;
+      const pillCostTag = document.getElementById('econPillCostTag');
+      if (pillCostTag) pillCostTag.textContent = prof.monthlySavingsTag;
+
+      // Smoothly animate V2 bars & numbers without resetting raw bars to 0
+      triggerEconomicsAnimation(false);
+    }
+
+    function triggerEconomicsAnimation(fromZero = true) {
       const barPayloadRaw = document.getElementById('econBarPayloadRaw');
       const barPayloadSkel = document.getElementById('econBarPayloadSkel');
       const barCostRaw = document.getElementById('econBarCostRaw');
       const barCostSkel = document.getElementById('econBarCostSkel');
 
       const pillPayload = document.getElementById('econPillPayloadSavings');
+      const pillPayloadTag = document.getElementById('econPillPayloadTag');
       const pillCost = document.getElementById('econPillCostSavings');
+      const pillCostTag = document.getElementById('econPillCostTag');
 
       if (!barPayloadRaw || !barPayloadSkel || !barCostRaw || !barCostSkel) return;
 
-      // Reset bars to 0% height without transition
-      barPayloadRaw.style.transition = 'none';
-      barPayloadSkel.style.transition = 'none';
-      barCostRaw.style.transition = 'none';
-      barCostSkel.style.transition = 'none';
-
-      barPayloadRaw.style.height = '0%';
-      barPayloadSkel.style.height = '0%';
-      barCostRaw.style.height = '0%';
-      barCostSkel.style.height = '0%';
-
-      // Reset savings badges
-      if (pillPayload) {
-        pillPayload.style.transition = 'none';
-        pillPayload.style.opacity = '0';
-        pillPayload.style.transform = 'scale(0.5)';
-      }
-      if (pillCost) {
-        pillCost.style.transition = 'none';
-        pillCost.style.opacity = '0';
-        pillCost.style.transform = 'scale(0.5)';
-      }
-
-      // Reset text values
-      const valPayloadRaw = document.getElementById('econValPayloadRaw');
-      const valPayloadSkel = document.getElementById('econValPayloadSkel');
-      const valCostRaw = document.getElementById('econValCostRaw');
-      const valCostRawAnnual = document.getElementById('econValCostRawAnnual');
-      const valCostSkel = document.getElementById('econValCostSkel');
-      const valCostSkelAnnual = document.getElementById('econValCostSkelAnnual');
-
-      if (valPayloadRaw) valPayloadRaw.innerText = '0';
-      if (valPayloadSkel) valPayloadSkel.innerText = '0';
-      if (valCostRaw) valCostRaw.innerText = '$0.00';
-      if (valCostRawAnnual) valCostRawAnnual.innerText = '$0 / yr';
-      if (valCostSkel) valCostSkel.innerText = '$0.00';
-      if (valCostSkelAnnual) valCostSkelAnnual.innerText = '$0 / yr';
-
-      // Force browser reflow
-      void barPayloadRaw.offsetHeight;
-
-      const duration = 1100;
+      const prof = ECON_PROFILES[currentEconProfile];
+      const duration = 900;
       const easeCurve = 'cubic-bezier(0.16, 1, 0.3, 1)';
 
-      // 1. Raw bloat bars rise up first
-      barPayloadRaw.style.transition = `height ${duration}ms ${easeCurve}`;
-      barCostRaw.style.transition = `height ${duration}ms ${easeCurve}`;
-      barPayloadRaw.style.height = '72%';
-      barCostRaw.style.height = '72%';
+      if (fromZero) {
+        // Reset bars to 0% height without transition
+        barPayloadRaw.style.transition = 'none';
+        barPayloadSkel.style.transition = 'none';
+        barCostRaw.style.transition = 'none';
+        barCostSkel.style.transition = 'none';
 
-      animateNumber('econValPayloadRaw', 0, 125000, duration, v => Math.round(v).toLocaleString());
-      animateNumber('econValCostRaw', 0, 412.5, duration, v => `$${v.toFixed(2)}`);
-      animateNumber('econValCostRawAnnual', 0, 4950, duration, v => `$${Math.round(v).toLocaleString()} / yr`);
+        barPayloadRaw.style.height = '0%';
+        barPayloadSkel.style.height = '0%';
+        barCostRaw.style.height = '0%';
+        barCostSkel.style.height = '0%';
 
-      // 2. SiftrCode AST bars animate with a 130ms stagger to emphasize the radical 92% compression
-      setTimeout(() => {
-        barPayloadSkel.style.transition = `height ${duration - 100}ms ${easeCurve}`;
-        barCostSkel.style.transition = `height ${duration - 100}ms ${easeCurve}`;
-        barPayloadSkel.style.height = '14%';
-        barCostSkel.style.height = '14%';
+        // Reset savings badges
+        [pillPayload, pillPayloadTag, pillCost, pillCostTag].forEach(el => {
+          if (!el) return;
+          el.style.transition = 'none';
+          el.style.opacity = '0';
+          el.style.transform = 'scale(0.5)';
+        });
 
-        animateNumber('econValPayloadSkel', 0, 9800, duration - 100, v => Math.round(v).toLocaleString());
-        animateNumber('econValCostSkel', 0, 32.34, duration - 100, v => `$${v.toFixed(2)}`);
-        animateNumber('econValCostSkelAnnual', 0, 388, duration - 100, v => `$${Math.round(v).toLocaleString()} / yr`);
-      }, 130);
+        // Reset text values
+        const valPayloadRaw = document.getElementById('econValPayloadRaw');
+        const valPayloadSkel = document.getElementById('econValPayloadSkel');
+        const valCostRaw = document.getElementById('econValCostRaw');
+        const valCostRawAnnual = document.getElementById('econValCostRawAnnual');
+        const valCostSkel = document.getElementById('econValCostSkel');
+        const valCostSkelAnnual = document.getElementById('econValCostSkelAnnual');
 
-      // 3. Savings badges pop in with bounce
-      setTimeout(() => {
-        if (pillPayload) {
-          pillPayload.style.transition = 'opacity 400ms ease, transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)';
-          pillPayload.style.opacity = '1';
-          pillPayload.style.transform = 'scale(1)';
-        }
-        if (pillCost) {
-          pillCost.style.transition = 'opacity 400ms ease, transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)';
-          pillCost.style.opacity = '1';
-          pillCost.style.transform = 'scale(1)';
-        }
-      }, 650);
+        if (valPayloadRaw) valPayloadRaw.innerText = '0';
+        if (valPayloadSkel) valPayloadSkel.innerText = '0';
+        if (valCostRaw) valCostRaw.innerText = '$0.00';
+        if (valCostRawAnnual) valCostRawAnnual.innerText = '$0 / yr';
+        if (valCostSkel) valCostSkel.innerText = '$0.00';
+        if (valCostSkelAnnual) valCostSkelAnnual.innerText = '$0 / yr';
+
+        // Force browser reflow
+        void barPayloadRaw.offsetHeight;
+
+        // 1. Raw bloat bars rise up
+        barPayloadRaw.style.transition = `height ${duration}ms ${easeCurve}`;
+        barCostRaw.style.transition = `height ${duration}ms ${easeCurve}`;
+        barPayloadRaw.style.height = prof.rawBarHeight;
+        barCostRaw.style.height = prof.rawBarHeight;
+
+        animateNumber('econValPayloadRaw', 0, prof.rawTokens, duration, v => Math.round(v).toLocaleString());
+        animateNumber('econValCostRaw', 0, prof.monthlyRaw, duration, v => `$${v.toFixed(2)}`);
+        animateNumber('econValCostRawAnnual', 0, prof.annualRaw, duration, v => `$${Math.round(v).toLocaleString()} / yr`);
+
+        // 2. SiftrCode V2 bars animate with 130ms stagger
+        setTimeout(() => {
+          barPayloadSkel.style.transition = `height ${duration - 100}ms ${easeCurve}`;
+          barCostSkel.style.transition = `height ${duration - 100}ms ${easeCurve}`;
+          barPayloadSkel.style.height = prof.v2BarHeight;
+          barCostSkel.style.height = prof.v2BarHeight;
+
+          animateNumber('econValPayloadSkel', 0, prof.v2Tokens, duration - 100, v => Math.round(v).toLocaleString());
+          animateNumber('econValCostSkel', 0, prof.monthlyV2, duration - 100, v => `$${v.toFixed(2)}`);
+          animateNumber('econValCostSkelAnnual', 0, prof.annualV2, duration - 100, v => `$${Math.round(v).toLocaleString()} / yr`);
+
+          currentV2Tokens = prof.v2Tokens;
+          currentMonthlyV2 = prof.monthlyV2;
+          currentAnnualV2 = prof.annualV2;
+        }, 130);
+
+        // 3. Savings badges pop in
+        setTimeout(() => {
+          [pillPayload, pillPayloadTag, pillCost, pillCostTag].forEach(el => {
+            if (!el) return;
+            el.style.transition = 'opacity 400ms ease, transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+            el.style.opacity = '1';
+            el.style.transform = 'scale(1)';
+          });
+        }, 550);
+      } else {
+        // Smooth transition to new profile values
+        barPayloadSkel.style.transition = `height 600ms ${easeCurve}`;
+        barCostSkel.style.transition = `height 600ms ${easeCurve}`;
+        barPayloadSkel.style.height = prof.v2BarHeight;
+        barCostSkel.style.height = prof.v2BarHeight;
+
+        animateNumber('econValPayloadSkel', currentV2Tokens, prof.v2Tokens, 600, v => Math.round(v).toLocaleString());
+        animateNumber('econValCostSkel', currentMonthlyV2, prof.monthlyV2, 600, v => `$${v.toFixed(2)}`);
+        animateNumber('econValCostSkelAnnual', currentAnnualV2, prof.annualV2, 600, v => `$${Math.round(v).toLocaleString()} / yr`);
+
+        currentV2Tokens = prof.v2Tokens;
+        currentMonthlyV2 = prof.monthlyV2;
+        currentAnnualV2 = prof.annualV2;
+
+        // Little bounce on the badges
+        [pillPayload, pillPayloadTag, pillCost, pillCostTag].forEach(el => {
+          if (!el) return;
+          el.style.transform = 'scale(1.15)';
+          setTimeout(() => {
+            el.style.transform = 'scale(1)';
+          }, 200);
+        });
+      }
     }
 
     function initEconomicsObserver() {
@@ -4092,7 +4505,7 @@ ${renderedRaw}
       }
 
       if (!('IntersectionObserver' in window)) {
-        triggerEconomicsAnimation();
+        triggerEconomicsAnimation(true);
         return;
       }
 
@@ -4102,21 +4515,26 @@ ${renderedRaw}
       const barCostRaw = document.getElementById('econBarCostRaw');
       const barCostSkel = document.getElementById('econBarCostSkel');
       const pillPayload = document.getElementById('econPillPayloadSavings');
+      const pillPayloadTag = document.getElementById('econPillPayloadTag');
       const pillCost = document.getElementById('econPillCostSavings');
+      const pillCostTag = document.getElementById('econPillCostTag');
 
       if (barPayloadRaw) barPayloadRaw.style.height = '0%';
       if (barPayloadSkel) barPayloadSkel.style.height = '0%';
       if (barCostRaw) barCostRaw.style.height = '0%';
       if (barCostSkel) barCostSkel.style.height = '0%';
-      if (pillPayload) { pillPayload.style.opacity = '0'; pillPayload.style.transform = 'scale(0.5)'; }
-      if (pillCost) { pillCost.style.opacity = '0'; pillCost.style.transform = 'scale(0.5)'; }
+      [pillPayload, pillPayloadTag, pillCost, pillCostTag].forEach(el => {
+        if (!el) return;
+        el.style.opacity = '0';
+        el.style.transform = 'scale(0.5)';
+      });
 
       let hasTriggered = false;
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting && !hasTriggered) {
             hasTriggered = true;
-            triggerEconomicsAnimation();
+            triggerEconomicsAnimation(true);
           }
         });
       }, {
