@@ -86,6 +86,10 @@ export class GeminiCodingAgent {
     const startTime = Date.now();
     const toolHistory: ToolExecutionResult[] = [];
 
+    if (options?.taskVerifierCommand) {
+      this.sandbox.setTaskVerifierCommand(options.taskVerifierCommand);
+    }
+
     let totalPromptTokens = 0;
     let totalCandidateTokens = 0;
     let totalThoughtsTokens = 0;

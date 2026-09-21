@@ -196,7 +196,10 @@ async function runSingleVariant(
 
   try {
     // Copy the verifier file into the ephemeral workspace
-    const verifierSrc = path.join(rootDir, 'benchmarks/verifiers/final_holdout', verifierFilename);
+    let verifierSrc = path.join(rootDir, 'benchmarks/verifiers/final_natural', verifierFilename);
+    if (!fs.existsSync(verifierSrc)) {
+      verifierSrc = path.join(rootDir, 'benchmarks/verifiers/final_holdout', verifierFilename);
+    }
     const verifierDst = path.join(ws.dir, verifierFilename);
     if (!fs.existsSync(verifierSrc)) {
       throw new Error(`Verifier file missing at ${verifierSrc}`);
@@ -236,12 +239,12 @@ async function runSingleVariant(
 export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
   const rootDir = path.resolve(__dirname, '../..');
   const dataDir = path.join(rootDir, 'data');
-  const finalExpDir = path.join(rootDir, 'experiments/v3-1-final');
+  const finalExpDir = path.join(rootDir, 'experiments/v3-1-final-natural');
   const legacyResultsDir = path.join(rootDir, 'experiments/results/v3-verified-tasks');
   fs.mkdirSync(finalExpDir, { recursive: true });
   fs.mkdirSync(legacyResultsDir, { recursive: true });
 
-  const manifestPath = options.manifestPath || path.join(dataDir, 'siftrbench_v3_1_final_holdout.json');
+  const manifestPath = options.manifestPath || path.join(finalExpDir, 'natural_holdout_manifest.json');
   const gbdtArtifactPath = path.join(dataDir, 'models/gbdt_pairwise_v1.json');
 
   console.log('⚖️  [Verified Task Evaluator] Initializing Paired A/B Evaluation (V2 vs V3)...');
@@ -255,7 +258,17 @@ export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
   const manifest: SiftrBenchManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   const gbdtArtifact = JSON.parse(fs.readFileSync(gbdtArtifactPath, 'utf8'));
   const v3TreeRanker = TreeRanker.fromArtifact(gbdtArtifact);
-  const v2DeterministicRanker = new ContextRanker();
+
+  // Load frozen authoritative V2 ContextRanker from compiled baseline worktree
+  let v2DeterministicRanker: any;
+  try {
+    const v2Module = require(path.join(rootDir, '.v2-baseline-worktree/dist'));
+    v2DeterministicRanker = new v2Module.ContextRanker();
+    console.log('🏛️  [Verified Task Evaluator] Loaded frozen authoritative V2 ContextRanker (.v2-baseline-worktree/dist @ 1eedac0)');
+  } catch (err) {
+    v2DeterministicRanker = new ContextRanker();
+    console.log('ℹ️  [Verified Task Evaluator] Using local ContextRanker fallback');
+  }
 
   let episodes = manifest.episodes;
   if (options.taskFilter) {
@@ -290,7 +303,7 @@ export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
     express: path.join(rootDir, 'benchmarks/express-repo'),
     fastapi: path.join(rootDir, 'benchmarks/fastapi-repo'),
     commander: path.join(rootDir, 'benchmarks/commander-repo'),
-    siftrcode: rootDir,
+    siftrcode: path.join(rootDir, '.v2-baseline-worktree'),
   };
 
   const repoFilters: Record<string, any> = {

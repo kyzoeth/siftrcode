@@ -28,16 +28,56 @@ export class GeminiWorkspaceSandbox {
   private readonly workspaceRoot: string;
   private readonly maxOutputBytes: number;
   private readonly timeoutMs: number;
+  private taskVerifierCommand?: string;
 
-  constructor(workspaceRoot: string, options?: { maxOutputBytes?: number; timeoutMs?: number }) {
+  constructor(workspaceRoot: string, options?: { maxOutputBytes?: number; timeoutMs?: number; taskVerifierCommand?: string }) {
     const resolvedRoot = path.resolve(workspaceRoot);
     this.workspaceRoot = fs.existsSync(resolvedRoot) ? fs.realpathSync(resolvedRoot) : resolvedRoot;
     this.maxOutputBytes = options?.maxOutputBytes ?? 100_000;
     this.timeoutMs = options?.timeoutMs ?? 60_000;
+    this.taskVerifierCommand = options?.taskVerifierCommand;
 
     if (!fs.existsSync(this.workspaceRoot)) {
       throw new Error(`Workspace path does not exist: ${this.workspaceRoot}`);
     }
+  }
+
+  public setTaskVerifierCommand(cmd?: string): void {
+    this.taskVerifierCommand = cmd;
+  }
+
+  public runTaskVerifier(): { stdout: string; stderr: string; exitCode: number } {
+    if (!this.taskVerifierCommand) {
+      return { stdout: '', stderr: 'No task verifier configured for this task.', exitCode: 1 };
+    }
+    return this.runCommand(this.taskVerifierCommand);
+  }
+
+  public runTests(): { stdout: string; stderr: string; exitCode: number } {
+    if (fs.existsSync(path.join(this.workspaceRoot, 'package.json'))) {
+      return this.runCommand('npm test');
+    }
+    if (fs.existsSync(path.join(this.workspaceRoot, 'venv/bin/pytest'))) {
+      return this.runCommand('./venv/bin/pytest -q');
+    }
+    return this.runCommand('pytest -q');
+  }
+
+  public runTypecheck(): { stdout: string; stderr: string; exitCode: number } {
+    if (fs.existsSync(path.join(this.workspaceRoot, 'tsconfig.json'))) {
+      return this.runCommand('npx tsc --noEmit');
+    }
+    if (fs.existsSync(path.join(this.workspaceRoot, 'venv/bin/mypy'))) {
+      return this.runCommand('./venv/bin/mypy .');
+    }
+    return { stdout: 'Typecheck not configured for this project.', stderr: '', exitCode: 0 };
+  }
+
+  public runBuild(): { stdout: string; stderr: string; exitCode: number } {
+    if (fs.existsSync(path.join(this.workspaceRoot, 'package.json'))) {
+      return this.runCommand('npm run build');
+    }
+    return { stdout: 'Build not required for this project.', stderr: '', exitCode: 0 };
   }
 
   /**
@@ -341,6 +381,18 @@ export class GeminiWorkspaceSandbox {
         case 'git_status':
           output = this.gitStatus();
           break;
+        case 'run_task_verifier':
+          output = this.runTaskVerifier();
+          break;
+        case 'run_tests':
+          output = this.runTests();
+          break;
+        case 'run_typecheck':
+          output = this.runTypecheck();
+          break;
+        case 'run_build':
+          output = this.runBuild();
+          break;
         case 'run_command':
           output = this.runCommand(String(args.command));
           break;
@@ -475,8 +527,44 @@ export const GEMINI_TOOL_DECLARATIONS = [
     },
   },
   {
+    name: 'run_task_verifier',
+    description: 'Runs the task-specific verification test script for this episode to check if requirements are met.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'run_tests',
+    description: 'Runs the test suite for the project (e.g. npm test or pytest).',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'run_typecheck',
+    description: 'Runs TypeScript or Python typechecker on the workspace.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'run_build',
+    description: 'Executes the project build command (e.g. npm run build) to compile sources.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {},
+      required: [],
+    },
+  },
+  {
     name: 'run_command',
-    description: 'Executes a shell command in the workspace directory (e.g. running tests or build scripts).',
+    description: 'Executes a sandboxed shell command in the workspace directory.',
     parameters: {
       type: Type.OBJECT,
       properties: {
