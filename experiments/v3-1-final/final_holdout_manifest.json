@@ -1,0 +1,1243 @@
+{
+  "schemaVersion": "siftrbench-manifest-v1",
+  "benchmarkVersion": "siftrbench-v1",
+  "createdAt": "2026-09-21T22:25:05.226Z",
+  "totalEpisodes": 34,
+  "repositoryDistribution": {
+    "commander": 6,
+    "express": 10,
+    "fastapi": 10,
+    "siftrcode": 8
+  },
+  "taskTypeDistribution": {
+    "FEATURE_ADDITION": 33,
+    "BUG_FIX": 1
+  },
+  "checksum": "a78b867fb1bc3d6e941ef631441ce56bb8c805b8b378b37ea84d322c2a67ef3b",
+  "episodes": [
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_commander_01",
+      "taskId": "final_cmd_01_case_sensitive_option",
+      "repositoryId": "commander",
+      "repositoryOrigin": "https://github.com/tj/commander.js.git",
+      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
+      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
+      "taskPrompt": "Add .caseSensitive(enabled = true) and .isCaseSensitive() methods to Option class in lib/option.js so options can configure case preservation.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/option.js"
+      ],
+      "expectedRelatedPaths": [
+        "tests/options.flags.test.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_cmd_01.js",
+        "metadata": {
+          "verifierFilename": "verify_final_cmd_01.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_commander_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_commander_fresh",
+      "metadata": {
+        "taskIndex": 0,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_commander_02",
+      "taskId": "final_cmd_02_option_deprecated_helper",
+      "repositoryId": "commander",
+      "repositoryOrigin": "https://github.com/tj/commander.js.git",
+      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
+      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
+      "taskPrompt": "Add .deprecated(message) and .isDeprecated() to Option class in lib/option.js to mark CLI options as deprecated with a warning note.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/option.js"
+      ],
+      "expectedRelatedPaths": [
+        "tests/options.flags.test.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_cmd_02.js",
+        "metadata": {
+          "verifierFilename": "verify_final_cmd_02.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_commander_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_commander_fresh",
+      "metadata": {
+        "taskIndex": 1,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_commander_03",
+      "taskId": "final_cmd_03_custom_help_header",
+      "repositoryId": "commander",
+      "repositoryOrigin": "https://github.com/tj/commander.js.git",
+      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
+      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
+      "taskPrompt": "Add .helpHeader(text) to Command class in lib/command.js so that custom header text appears above usage in helpInformation().",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/command.js"
+      ],
+      "expectedRelatedPaths": [
+        "tests/command.help.test.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_cmd_03.js",
+        "metadata": {
+          "verifierFilename": "verify_final_cmd_03.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_commander_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_commander_fresh",
+      "metadata": {
+        "taskIndex": 2,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_commander_04",
+      "taskId": "final_cmd_04_custom_help_footer",
+      "repositoryId": "commander",
+      "repositoryOrigin": "https://github.com/tj/commander.js.git",
+      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
+      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
+      "taskPrompt": "Add .helpFooter(text) to Command class in lib/command.js so that custom footer text appears at the bottom of helpInformation().",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/command.js"
+      ],
+      "expectedRelatedPaths": [
+        "tests/command.help.test.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_cmd_04.js",
+        "metadata": {
+          "verifierFilename": "verify_final_cmd_04.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_commander_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_commander_fresh",
+      "metadata": {
+        "taskIndex": 3,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_commander_05",
+      "taskId": "final_cmd_05_argument_deprecated_helper",
+      "repositoryId": "commander",
+      "repositoryOrigin": "https://github.com/tj/commander.js.git",
+      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
+      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
+      "taskPrompt": "Add .deprecated(message) and .isDeprecated() to Argument class in lib/argument.js to mark positional arguments as deprecated.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/argument.js"
+      ],
+      "expectedRelatedPaths": [
+        "tests/command.createArgument.test.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_cmd_05.js",
+        "metadata": {
+          "verifierFilename": "verify_final_cmd_05.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_commander_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_commander_fresh",
+      "metadata": {
+        "taskIndex": 4,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_commander_06",
+      "taskId": "final_cmd_06_suggest_similarity_threshold",
+      "repositoryId": "commander",
+      "repositoryOrigin": "https://github.com/tj/commander.js.git",
+      "baseCommit": "ba6d13ddb4243e5913367734f8c159089ffe7834",
+      "workspaceSnapshotId": "ws_snap_commander_ba6d13dd",
+      "taskPrompt": "In lib/suggestSimilar.js, support custom minSimilarityThreshold parameter in suggestSimilar(word, candidates, minSimilarityThreshold).",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/suggestSimilar.js"
+      ],
+      "expectedRelatedPaths": [
+        "tests/help.suggestion.test.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_cmd_06.js",
+        "metadata": {
+          "verifierFilename": "verify_final_cmd_06.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_commander_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_commander_fresh",
+      "metadata": {
+        "taskIndex": 5,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_express_07",
+      "taskId": "final_exp_01_res_etag_weak_flag",
+      "repositoryId": "express",
+      "repositoryOrigin": "https://github.com/expressjs/express.git",
+      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
+      "taskPrompt": "Add res.etag(body, { weak: true }) helper to lib/response.js to produce a weak etag formatted with W/ prefix.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/response.js"
+      ],
+      "expectedRelatedPaths": [
+        "test/res.format.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_exp_01.js",
+        "metadata": {
+          "verifierFilename": "verify_final_exp_01.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_express_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_express_fresh",
+      "metadata": {
+        "taskIndex": 6,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_express_08",
+      "taskId": "final_exp_02_req_has_header_helper",
+      "repositoryId": "express",
+      "repositoryOrigin": "https://github.com/expressjs/express.git",
+      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
+      "taskPrompt": "Add req.hasHeader(name) to lib/request.js returning boolean indicating if header is present in request.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/request.js"
+      ],
+      "expectedRelatedPaths": [
+        "test/req.get.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_exp_02.js",
+        "metadata": {
+          "verifierFilename": "verify_final_exp_02.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_express_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_express_fresh",
+      "metadata": {
+        "taskIndex": 7,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_express_09",
+      "taskId": "final_exp_03_app_prefix_mount",
+      "repositoryId": "express",
+      "repositoryOrigin": "https://github.com/expressjs/express.git",
+      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
+      "taskPrompt": "Add app.prefix(prefix, router) to lib/application.js for mounting sub-routers under a path prefix.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/application.js"
+      ],
+      "expectedRelatedPaths": [
+        "test/app.use.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_exp_03.js",
+        "metadata": {
+          "verifierFilename": "verify_final_exp_03.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_express_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_express_fresh",
+      "metadata": {
+        "taskIndex": 8,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_express_10",
+      "taskId": "final_exp_04_app_mountpath_array",
+      "repositoryId": "express",
+      "repositoryOrigin": "https://github.com/expressjs/express.git",
+      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
+      "taskPrompt": "Add app.getMountpaths() to lib/application.js returning an array of mount paths where the app is mounted.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/application.js"
+      ],
+      "expectedRelatedPaths": [
+        "test/app.use.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_exp_04.js",
+        "metadata": {
+          "verifierFilename": "verify_final_exp_04.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_express_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_express_fresh",
+      "metadata": {
+        "taskIndex": 9,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_express_11",
+      "taskId": "final_exp_05_res_has_header_check",
+      "repositoryId": "express",
+      "repositoryOrigin": "https://github.com/expressjs/express.git",
+      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
+      "taskPrompt": "Add res.hasHeader(name) to lib/response.js returning boolean if header is currently set on response.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/response.js"
+      ],
+      "expectedRelatedPaths": [
+        "test/res.get.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_exp_05.js",
+        "metadata": {
+          "verifierFilename": "verify_final_exp_05.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_express_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_express_fresh",
+      "metadata": {
+        "taskIndex": 10,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_express_12",
+      "taskId": "final_exp_06_view_root_accessor",
+      "repositoryId": "express",
+      "repositoryOrigin": "https://github.com/expressjs/express.git",
+      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
+      "taskPrompt": "Add View.prototype.getRootDirectory() to lib/view.js returning the root directory configured for the view instance.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/view.js"
+      ],
+      "expectedRelatedPaths": [
+        "test/view.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_exp_06.js",
+        "metadata": {
+          "verifierFilename": "verify_final_exp_06.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_express_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_express_fresh",
+      "metadata": {
+        "taskIndex": 11,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_express_13",
+      "taskId": "final_exp_07_request_is_json",
+      "repositoryId": "express",
+      "repositoryOrigin": "https://github.com/expressjs/express.git",
+      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
+      "taskPrompt": "Add req.isJson() helper method to lib/request.js returning boolean if Content-Type is application/json or ends with +json.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/request.js"
+      ],
+      "expectedRelatedPaths": [
+        "test/req.is.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_exp_07.js",
+        "metadata": {
+          "verifierFilename": "verify_final_exp_07.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_express_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_express_fresh",
+      "metadata": {
+        "taskIndex": 12,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_express_14",
+      "taskId": "final_exp_08_utils_append_header",
+      "repositoryId": "express",
+      "repositoryOrigin": "https://github.com/expressjs/express.git",
+      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
+      "taskPrompt": "Add appendHeader(res, field, val) to lib/utils.js merging header values without overwriting.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/utils.js"
+      ],
+      "expectedRelatedPaths": [
+        "test/res.append.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_exp_08.js",
+        "metadata": {
+          "verifierFilename": "verify_final_exp_08.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_express_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_express_fresh",
+      "metadata": {
+        "taskIndex": 13,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_express_15",
+      "taskId": "final_exp_09_express_version_helper",
+      "repositoryId": "express",
+      "repositoryOrigin": "https://github.com/expressjs/express.git",
+      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
+      "taskPrompt": "Add express.getVersion() helper function to lib/express.js returning package version.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/express.js"
+      ],
+      "expectedRelatedPaths": [
+        "test/express.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_exp_09.js",
+        "metadata": {
+          "verifierFilename": "verify_final_exp_09.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_express_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_express_fresh",
+      "metadata": {
+        "taskIndex": 14,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_express_16",
+      "taskId": "final_exp_10_app_get_env_helper",
+      "repositoryId": "express",
+      "repositoryOrigin": "https://github.com/expressjs/express.git",
+      "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+      "workspaceSnapshotId": "ws_snap_express_9a34acf0",
+      "taskPrompt": "Add app.getEnv() to lib/application.js returning the configured application environment string.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "lib/application.js"
+      ],
+      "expectedRelatedPaths": [
+        "test/app.get.js"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_exp_10.js",
+        "metadata": {
+          "verifierFilename": "verify_final_exp_10.js"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_express_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_express_fresh",
+      "metadata": {
+        "taskIndex": 15,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_fastapi_17",
+      "taskId": "final_fa_01_uploadfile_is_empty",
+      "repositoryId": "fastapi",
+      "repositoryOrigin": "https://github.com/fastapi/fastapi.git",
+      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
+      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
+      "taskPrompt": "Add is_empty() method to UploadFile in fastapi/datastructures.py returning boolean if file content is empty.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "fastapi/datastructures.py"
+      ],
+      "expectedRelatedPaths": [
+        "tests/test_upload_file.py"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "python3 verify_final_fa_01.py",
+        "metadata": {
+          "verifierFilename": "verify_final_fa_01.py"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_fastapi_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_fastapi_fresh",
+      "metadata": {
+        "taskIndex": 16,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_fastapi_18",
+      "taskId": "final_fa_02_api_key_scheme_name_helper",
+      "repositoryId": "fastapi",
+      "repositoryOrigin": "https://github.com/fastapi/fastapi.git",
+      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
+      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
+      "taskPrompt": "Add get_scheme_name() helper to APIKeyBase in fastapi/security/api_key.py.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "fastapi/security/api_key.py"
+      ],
+      "expectedRelatedPaths": [
+        "tests/test_security_api_key.py"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "python3 verify_final_fa_02.py",
+        "metadata": {
+          "verifierFilename": "verify_final_fa_02.py"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_fastapi_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_fastapi_fresh",
+      "metadata": {
+        "taskIndex": 17,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_fastapi_19",
+      "taskId": "final_fa_03_route_summary_docstring_fallback",
+      "repositoryId": "fastapi",
+      "repositoryOrigin": "https://github.com/fastapi/fastapi.git",
+      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
+      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
+      "taskPrompt": "Add get_summary_or_doc() method to APIRoute in fastapi/routing.py returning summary or first line of docstring.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "fastapi/routing.py"
+      ],
+      "expectedRelatedPaths": [
+        "tests/test_routing.py"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "python3 verify_final_fa_03.py",
+        "metadata": {
+          "verifierFilename": "verify_final_fa_03.py"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_fastapi_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_fastapi_fresh",
+      "metadata": {
+        "taskIndex": 18,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_fastapi_20",
+      "taskId": "final_fa_04_openapi_tag_metadata_dedup",
+      "repositoryId": "fastapi",
+      "repositoryOrigin": "https://github.com/fastapi/fastapi.git",
+      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
+      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
+      "taskPrompt": "Add deduplicate_tags(tags) helper to fastapi.openapi.utils in fastapi/openapi/utils.py.",
+      "taskType": "BUG_FIX",
+      "expectedTargetPaths": [
+        "fastapi/openapi/utils.py"
+      ],
+      "expectedRelatedPaths": [
+        "tests/test_openapi.py"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "python3 verify_final_fa_04.py",
+        "metadata": {
+          "verifierFilename": "verify_final_fa_04.py"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_fastapi_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_fastapi_fresh",
+      "metadata": {
+        "taskIndex": 19,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_fastapi_21",
+      "taskId": "final_fa_05_param_get_type_helper",
+      "repositoryId": "fastapi",
+      "repositoryOrigin": "https://github.com/fastapi/fastapi.git",
+      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
+      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
+      "taskPrompt": "Add get_param_type() method to Param in fastapi/params.py returning location string (query, header, path).",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "fastapi/params.py"
+      ],
+      "expectedRelatedPaths": [
+        "tests/test_params.py"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "python3 verify_final_fa_05.py",
+        "metadata": {
+          "verifierFilename": "verify_final_fa_05.py"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_fastapi_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_fastapi_fresh",
+      "metadata": {
+        "taskIndex": 20,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_fastapi_22",
+      "taskId": "final_fa_06_app_has_middleware_check",
+      "repositoryId": "fastapi",
+      "repositoryOrigin": "https://github.com/fastapi/fastapi.git",
+      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
+      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
+      "taskPrompt": "Add has_middleware(cls) helper to FastAPI in fastapi/applications.py.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "fastapi/applications.py"
+      ],
+      "expectedRelatedPaths": [
+        "tests/test_application.py"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "python3 verify_final_fa_06.py",
+        "metadata": {
+          "verifierFilename": "verify_final_fa_06.py"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_fastapi_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_fastapi_fresh",
+      "metadata": {
+        "taskIndex": 21,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_fastapi_23",
+      "taskId": "final_fa_07_encoder_deterministic_set_sort",
+      "repositoryId": "fastapi",
+      "repositoryOrigin": "https://github.com/fastapi/fastapi.git",
+      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
+      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
+      "taskPrompt": "Add encode_set_deterministic(s) function in fastapi/encoders.py for stably sorted set encoding.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "fastapi/encoders.py"
+      ],
+      "expectedRelatedPaths": [
+        "tests/test_encoders.py"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "python3 verify_final_fa_07.py",
+        "metadata": {
+          "verifierFilename": "verify_final_fa_07.py"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_fastapi_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_fastapi_fresh",
+      "metadata": {
+        "taskIndex": 22,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_fastapi_24",
+      "taskId": "final_fa_08_routing_get_route_by_name",
+      "repositoryId": "fastapi",
+      "repositoryOrigin": "https://github.com/fastapi/fastapi.git",
+      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
+      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
+      "taskPrompt": "Add get_route_by_name(name) method to APIRouter in fastapi/routing.py.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "fastapi/routing.py"
+      ],
+      "expectedRelatedPaths": [
+        "tests/test_routing.py"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "python3 verify_final_fa_08.py",
+        "metadata": {
+          "verifierFilename": "verify_final_fa_08.py"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_fastapi_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_fastapi_fresh",
+      "metadata": {
+        "taskIndex": 23,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_fastapi_25",
+      "taskId": "final_fa_09_exception_status_code_getter",
+      "repositoryId": "fastapi",
+      "repositoryOrigin": "https://github.com/fastapi/fastapi.git",
+      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
+      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
+      "taskPrompt": "Add get_status_code() method to HTTPException in fastapi/exceptions.py.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "fastapi/exceptions.py"
+      ],
+      "expectedRelatedPaths": [
+        "tests/test_exceptions.py"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "python3 verify_final_fa_09.py",
+        "metadata": {
+          "verifierFilename": "verify_final_fa_09.py"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_fastapi_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_fastapi_fresh",
+      "metadata": {
+        "taskIndex": 24,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_fastapi_26",
+      "taskId": "final_fa_10_uploadfile_get_size",
+      "repositoryId": "fastapi",
+      "repositoryOrigin": "https://github.com/fastapi/fastapi.git",
+      "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
+      "workspaceSnapshotId": "ws_snap_fastapi_50113da1",
+      "taskPrompt": "Add get_size() method to UploadFile in fastapi/datastructures.py returning byte length.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "fastapi/datastructures.py"
+      ],
+      "expectedRelatedPaths": [
+        "tests/test_upload_file.py"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "python3 verify_final_fa_10.py",
+        "metadata": {
+          "verifierFilename": "verify_final_fa_10.py"
+        }
+      },
+      "temporalCutoff": "2024-01-01T00:00:00.000Z",
+      "rightsReference": "rights_fastapi_oss",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_fastapi_fresh",
+      "metadata": {
+        "taskIndex": 25,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_siftrcode_27",
+      "taskId": "final_siftr_01_token_curve_monotone",
+      "repositoryId": "siftrcode",
+      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
+      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
+      "taskPrompt": "Add verifyMonotonicity(curve) method to DefaultTokenCostEstimator in src/token/token_cost_estimator.ts verifying NAME <= SIGNATURE <= SKELETON <= BODY <= FULL.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "src/token/token_cost_estimator.ts"
+      ],
+      "expectedRelatedPaths": [
+        "src/tests/test_token_cost_estimator.ts"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_siftr_01.js",
+        "metadata": {
+          "verifierFilename": "verify_final_siftr_01.js"
+        }
+      },
+      "temporalCutoff": "2026-09-21T13:41:44.000Z",
+      "rightsReference": "rights_siftrcode_firstparty",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_siftrcode_fresh",
+      "metadata": {
+        "taskIndex": 26,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_siftrcode_28",
+      "taskId": "final_siftr_02_budget_slack_reservation",
+      "repositoryId": "siftrcode",
+      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
+      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
+      "taskPrompt": "Add getReservedSlack() and setReservedSlack(tokens) to BudgetSolver in src/context/budget_solver.ts.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "src/context/budget_solver.ts"
+      ],
+      "expectedRelatedPaths": [
+        "src/tests/test_budget_solver.ts"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_siftr_02.js",
+        "metadata": {
+          "verifierFilename": "verify_final_siftr_02.js"
+        }
+      },
+      "temporalCutoff": "2026-09-21T13:41:44.000Z",
+      "rightsReference": "rights_siftrcode_firstparty",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_siftrcode_fresh",
+      "metadata": {
+        "taskIndex": 27,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_siftrcode_29",
+      "taskId": "final_siftr_03_materializer_truncate_marker",
+      "repositoryId": "siftrcode",
+      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
+      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
+      "taskPrompt": "Add getTruncationMarker() method to DefaultContextUnitMaterializer in src/materialization/context_unit_materializer.ts.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "src/materialization/context_unit_materializer.ts"
+      ],
+      "expectedRelatedPaths": [
+        "src/tests/test_context_materializer.ts"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_siftr_03.js",
+        "metadata": {
+          "verifierFilename": "verify_final_siftr_03.js"
+        }
+      },
+      "temporalCutoff": "2026-09-21T13:41:44.000Z",
+      "rightsReference": "rights_siftrcode_firstparty",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_siftrcode_fresh",
+      "metadata": {
+        "taskIndex": 28,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_siftrcode_30",
+      "taskId": "final_siftr_04_rights_filter_permissive",
+      "repositoryId": "siftrcode",
+      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
+      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
+      "taskPrompt": "Add isPermissiveLicense(license: string): boolean helper to RightsFilter in src/rights/rights_filter.ts.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "src/rights/rights_filter.ts"
+      ],
+      "expectedRelatedPaths": [
+        "src/tests/test_rights_filter.ts"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_siftr_04.js",
+        "metadata": {
+          "verifierFilename": "verify_final_siftr_04.js"
+        }
+      },
+      "temporalCutoff": "2026-09-21T13:41:44.000Z",
+      "rightsReference": "rights_siftrcode_firstparty",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_siftrcode_fresh",
+      "metadata": {
+        "taskIndex": 29,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_siftrcode_31",
+      "taskId": "final_siftr_05_graph_cycle_detection",
+      "repositoryId": "siftrcode",
+      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
+      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
+      "taskPrompt": "Add hasCycles(): boolean method to dependency graph built by GraphBuilder in src/graph/graph_builder.ts.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "src/graph/graph_builder.ts"
+      ],
+      "expectedRelatedPaths": [
+        "src/tests/test_graph_builder.ts"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_siftr_05.js",
+        "metadata": {
+          "verifierFilename": "verify_final_siftr_05.js"
+        }
+      },
+      "temporalCutoff": "2026-09-21T13:41:44.000Z",
+      "rightsReference": "rights_siftrcode_firstparty",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_siftrcode_fresh",
+      "metadata": {
+        "taskIndex": 30,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_siftrcode_32",
+      "taskId": "final_siftr_06_rights_dto_schema_version",
+      "repositoryId": "siftrcode",
+      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
+      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
+      "taskPrompt": "Add getStorageSchemaVersion(): number helper in src/storage/rights_aware_dto.ts returning schema version 1.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "src/storage/rights_aware_dto.ts"
+      ],
+      "expectedRelatedPaths": [
+        "src/tests/test_storage.ts"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_siftr_06.js",
+        "metadata": {
+          "verifierFilename": "verify_final_siftr_06.js"
+        }
+      },
+      "temporalCutoff": "2026-09-21T13:41:44.000Z",
+      "rightsReference": "rights_siftrcode_firstparty",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_siftrcode_fresh",
+      "metadata": {
+        "taskIndex": 31,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_siftrcode_33",
+      "taskId": "final_siftr_07_materializer_raw_fallback",
+      "repositoryId": "siftrcode",
+      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
+      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
+      "taskPrompt": "Add supportsRawFallback(): boolean method to DefaultContextUnitMaterializer in src/materialization/context_unit_materializer.ts.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "src/materialization/context_unit_materializer.ts"
+      ],
+      "expectedRelatedPaths": [
+        "src/tests/test_context_materializer.ts"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_siftr_07.js",
+        "metadata": {
+          "verifierFilename": "verify_final_siftr_07.js"
+        }
+      },
+      "temporalCutoff": "2026-09-21T13:41:44.000Z",
+      "rightsReference": "rights_siftrcode_firstparty",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_siftrcode_fresh",
+      "metadata": {
+        "taskIndex": 32,
+        "isFreshFinalHoldout": true
+      }
+    },
+    {
+      "schemaVersion": "siftrbench-v1",
+      "episodeId": "sb_final_siftrcode_34",
+      "taskId": "final_siftr_08_bundle_composer_max_tokens",
+      "repositoryId": "siftrcode",
+      "repositoryOrigin": "https://github.com/kyzoeth/siftrcode.git",
+      "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+      "workspaceSnapshotId": "ws_snap_siftrcode_1eedac03",
+      "taskPrompt": "Add getMaxBundleTokens() and setMaxBundleTokens(tokens) to BundleComposer in src/context/bundle_composer.ts.",
+      "taskType": "FEATURE_ADDITION",
+      "expectedTargetPaths": [
+        "src/context/bundle_composer.ts"
+      ],
+      "expectedRelatedPaths": [
+        "src/tests/test_bundle_composer.ts"
+      ],
+      "verifier": {
+        "type": "custom_command",
+        "command": "node verify_final_siftr_08.js",
+        "metadata": {
+          "verifierFilename": "verify_final_siftr_08.js"
+        }
+      },
+      "temporalCutoff": "2026-09-21T13:41:44.000Z",
+      "rightsReference": "rights_siftrcode_firstparty",
+      "provenance": {
+        "source": "siftrbench_final_fresh_holdout_v1",
+        "sourceVersion": "v1.0.0",
+        "importedAt": "2026-09-21T22:25:05.224Z"
+      },
+      "splitGroupId": "split_final_siftrcode_fresh",
+      "metadata": {
+        "taskIndex": 33,
+        "isFreshFinalHoldout": true
+      }
+    }
+  ]
+}
