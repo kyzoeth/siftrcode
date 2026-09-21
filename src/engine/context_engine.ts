@@ -454,9 +454,11 @@ export class ContextEngine {
       });
       const lines = statusOut.split('\n');
       for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.length > 3) {
-          const p = trimmed.slice(3).trim();
+        if (line.length > 3) {
+          let p = line.substring(3).trim();
+          if (p.includes(' -> ')) {
+            p = p.split(' -> ')[1].trim();
+          }
           if (p) dirtyPaths.push(p);
         }
       }
