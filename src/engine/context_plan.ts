@@ -32,6 +32,7 @@ export interface ContextPlan {
   dataRights: DataRights;
   actualRenderedTokens: number;
   overflowReason?: string;
+  replanningAttempts?: number;
   createdAt: string;
 }
 

@@ -32,10 +32,12 @@ import { GraphBuilder } from '../graph/graph_builder';
 import { TaskEvidence, TaskEvidenceKind, UserPromptEvidence, DiffEvidence } from '../context/task_evidence';
 import { createAgentEnvironment } from '../agents/agent_environment';
 import { ContextUnitMaterializer, DefaultContextUnitMaterializer } from '../materialization/context_unit_materializer';
-import { WorkspaceSnapshot, createWorkspaceSnapshot } from '../workspace/workspace_snapshot';
+import { WorkspaceSnapshot, createWorkspaceSnapshot, WorkspaceChangedError, isWorkspaceChangedError } from '../workspace/workspace_snapshot';
 import { DefaultWorkspaceSourceReader } from '../workspace/workspace_source_reader';
 import { TokenCostEstimator, DefaultTokenCostEstimator, ResolutionOption } from '../token/token_cost_estimator';
 import { SqliteStore } from '../storage/sqlite_store';
+
+export { WorkspaceChangedError, isWorkspaceChangedError } from '../workspace/workspace_snapshot';
 
 export interface ContextEngineOptions {
   repoRootDir?: string;
@@ -48,6 +50,7 @@ export interface ContextEngineOptions {
   materializer?: ContextUnitMaterializer;
   tokenCostEstimator?: TokenCostEstimator;
   sqliteStore?: SqliteStore;
+  maxReplanningRetries?: number;
 }
 
 export interface OptimizeWorkspaceOptions {
@@ -64,6 +67,7 @@ export interface OptimizeWorkspaceOptions {
   dirtyPaths?: string[];
   excludePatterns?: string[];
   includePatterns?: string[];
+  maxReplanningRetries?: number;
 }
 
 export interface OptimizeWorkspaceResult {
@@ -74,6 +78,7 @@ export interface OptimizeWorkspaceResult {
   task: TaskContext;
   formattedContext: FormattedContext;
   contextString: string;
+  replanningAttempts?: number;
 }
 
 
@@ -110,9 +115,10 @@ export class ContextEngine {
     this.budgetLimits = options.budgetLimits || (
       this.budgetProfile !== 'CUSTOM' ? BUDGET_PROFILES[this.budgetProfile] : { maxTokens: 16000 }
     );
-    this.materializer = options.materializer || new DefaultContextUnitMaterializer(
-      new DefaultWorkspaceSourceReader(this.repoRootDir || process.cwd())
-    );
+    this.materializer = options.materializer || new DefaultContextUnitMaterializer({
+      sourceReader: new DefaultWorkspaceSourceReader(this.repoRootDir || process.cwd()),
+      throwOnWorkspaceChanged: true,
+    });
     this.tokenCostEstimator = options.tokenCostEstimator || new DefaultTokenCostEstimator(this.materializer);
     this.sqliteStore = options.sqliteStore;
   }
@@ -255,6 +261,16 @@ export class ContextEngine {
 
       const mat = this.materializer.materializeSync(u, alloc.resolution, snapshot);
       const materializedContent = mat.content;
+
+      if (materializedContent.startsWith('// [WORKSPACE_CHANGED]')) {
+        throw new WorkspaceChangedError({
+          workspaceSnapshotId: snapshot?.workspaceSnapshotId || 'unknown',
+          filePath: u.path || 'unknown',
+          expectedHash: 'recorded',
+          actualHash: 'mutated',
+          message: `Workspace changed concurrently during materialization for "${u.path}".`,
+        });
+      }
 
       plannedUnits.push({
         contextUnitId: u.id,
@@ -539,130 +555,174 @@ export class ContextEngine {
   public static async optimizeWorkspace(options: OptimizeWorkspaceOptions): Promise<OptimizeWorkspaceResult> {
     const rootDir = path.resolve(options.workspaceDir || process.cwd());
     const workspaceManager = new WorkspaceManager({ rootDir });
-    const snapshot = await workspaceManager.captureSnapshot();
+    const maxReplanningRetries = options.maxReplanningRetries ?? 2;
 
-    const dirtyPaths: string[] = options.dirtyPaths ? [...options.dirtyPaths] : [];
-    try {
-      const statusOut = require('child_process').execSync('git status --porcelain', {
-        cwd: rootDir,
-        stdio: ['pipe', 'pipe', 'ignore'],
-        encoding: 'utf-8',
-      });
-      const lines = statusOut.split('\n');
-      for (const line of lines) {
-        if (line.length > 3) {
-          let p = line.substring(3).trim();
-          if (p.includes(' -> ')) {
-            p = p.split(' -> ')[1].trim();
+    let attempt = 0;
+    while (attempt <= maxReplanningRetries) {
+      try {
+        const snapshot = await workspaceManager.captureSnapshot();
+
+        const dirtyPaths: string[] = options.dirtyPaths ? [...options.dirtyPaths] : [];
+        try {
+          const statusOut = require('child_process').execSync('git status --porcelain', {
+            cwd: rootDir,
+            stdio: ['pipe', 'pipe', 'ignore'],
+            encoding: 'utf-8',
+          });
+          const lines = statusOut.split('\n');
+          for (const line of lines) {
+            if (line.length > 3) {
+              let p = line.substring(3).trim();
+              if (p.includes(' -> ')) {
+                p = p.split(' -> ')[1].trim();
+              }
+              if (p) dirtyPaths.push(p);
+            }
           }
-          if (p) dirtyPaths.push(p);
+        } catch {
+          // Non-git directory
         }
+
+        const indexer = new RepositoryIndexer();
+        const indexResult = await indexer.indexRepository(rootDir, {
+          workspaceSnapshotId: snapshot.workspaceSnapshotId,
+          excludePatterns: options.excludePatterns,
+          includePatterns: options.includePatterns,
+        });
+        const units = indexResult.units;
+
+        // Record expected file hashes on sourceReader for this snapshot to ensure immutability
+        const sourceReader = new DefaultWorkspaceSourceReader(rootDir);
+        const recordedPaths = new Set<string>();
+        for (const u of units) {
+          if (u.path && !recordedPaths.has(u.path)) {
+            recordedPaths.add(u.path);
+            const safePath = path.resolve(rootDir, u.path);
+            if (fs.existsSync(safePath)) {
+              try {
+                const fileHash = crypto.createHash('sha256').update(fs.readFileSync(safePath)).digest('hex');
+                sourceReader.recordExpectedHash(snapshot.workspaceSnapshotId, u.path, fileHash);
+              } catch {
+                // Ignore read errors
+              }
+            }
+          }
+        }
+
+        const graphBuilder = new GraphBuilder();
+        const graph = graphBuilder.buildGraph(units, { repoDir: rootDir });
+
+        const gitIntelligence = new GitGraphIntelligence({ repoDir: rootDir });
+
+        const kind = options.agentKind || (options.agentModel?.toLowerCase().includes('cursor') ? 'cursor' : 'claude_code');
+        let adapter: AgentAdapter;
+        if (kind === 'cursor') {
+          adapter = new CursorAdapter();
+        } else if (kind === 'generic_mcp') {
+          adapter = new GenericMcpAdapter();
+        } else {
+          adapter = new ClaudeCodeAdapter();
+        }
+
+        const taskId = `task_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+        const userPromptEvidence: UserPromptEvidence = {
+          evidenceId: 'ev_' + crypto.randomUUID().slice(0, 8),
+          kind: TaskEvidenceKind.USER_PROMPT,
+          timestamp: new Date().toISOString(),
+          prompt: options.prompt,
+        };
+        const evidenceList: TaskEvidence[] = [userPromptEvidence];
+
+        if (dirtyPaths.length > 0) {
+          const diffEvidence: DiffEvidence = {
+            evidenceId: 'ev_' + crypto.randomUUID().slice(0, 8),
+            kind: TaskEvidenceKind.DIFF,
+            timestamp: new Date().toISOString(),
+            patchText: '',
+            changedFiles: dirtyPaths,
+          };
+          evidenceList.push(diffEvidence);
+        }
+
+        const task = createTaskContext({
+          taskId,
+          workspaceSnapshotId: snapshot.workspaceSnapshotId,
+          primaryPrompt: options.prompt,
+          evidence: evidenceList,
+          agentEnvironment: createAgentEnvironment({
+            agentProvider: kind === 'cursor' ? 'cursor' : 'anthropic',
+            agentVersion: '1.0.0',
+            model: options.agentModel || 'claude-3-5-sonnet-20241022',
+            harnessVersion: 'v2',
+            availableTools: ['read_file', 'edit_file'],
+          }),
+        });
+
+        let budgetLimits = options.budgetLimits;
+        if (!budgetLimits) {
+          const profile = options.budgetProfile || 'BALANCED';
+          const baseLimits = (profile !== 'CUSTOM' && (BUDGET_PROFILES as any)[profile])
+            ? (BUDGET_PROFILES as any)[profile]
+            : BUDGET_PROFILES.BALANCED;
+          const resolvedLimits: BudgetLimits = { ...baseLimits };
+          if (options.tokenBudget !== undefined) {
+            resolvedLimits.maxTokens = options.tokenBudget;
+          }
+          if (options.maxCostUSD !== undefined) {
+            resolvedLimits.maxCostUSD = options.maxCostUSD;
+          }
+          budgetLimits = resolvedLimits;
+        }
+
+        const materializer = new DefaultContextUnitMaterializer({
+          sourceReader,
+          throwOnWorkspaceChanged: true,
+        });
+
+        const engine = new ContextEngine({
+          repoRootDir: rootDir,
+          adapter,
+          dataRights: options.dataRights,
+          budgetProfile: options.budgetProfile,
+          budgetLimits,
+          materializer,
+        });
+
+        const plan = engine.generatePlan({
+          task,
+          units,
+          graph,
+          gitIntelligence,
+          dirtyPaths,
+          seedUnitIds: options.seedUnitIds,
+          snapshot,
+        });
+
+        plan.replanningAttempts = attempt;
+
+        return {
+          plan,
+          engine,
+          units,
+          graph,
+          task,
+          formattedContext: plan.formattedContext,
+          contextString: plan.formattedContext.promptText,
+          replanningAttempts: attempt,
+        };
+      } catch (err: unknown) {
+        if (isWorkspaceChangedError(err) && attempt < maxReplanningRetries) {
+          attempt++;
+          console.warn(
+            `[ContextEngine] Workspace changed on disk for "${err.filePath}". Replanning with fresh snapshot (attempt ${attempt}/${maxReplanningRetries})...`
+          );
+          continue;
+        }
+        throw err;
       }
-    } catch {
-      // Non-git directory
     }
 
-    const indexer = new RepositoryIndexer();
-    const indexResult = await indexer.indexRepository(rootDir, {
-      workspaceSnapshotId: snapshot.workspaceSnapshotId,
-      excludePatterns: options.excludePatterns,
-      includePatterns: options.includePatterns,
-    });
-    const units = indexResult.units;
-
-    const graphBuilder = new GraphBuilder();
-    const graph = graphBuilder.buildGraph(units, { repoDir: rootDir });
-
-    const gitIntelligence = new GitGraphIntelligence({ repoDir: rootDir });
-
-    const kind = options.agentKind || (options.agentModel?.toLowerCase().includes('cursor') ? 'cursor' : 'claude_code');
-    let adapter: AgentAdapter;
-    if (kind === 'cursor') {
-      adapter = new CursorAdapter();
-    } else if (kind === 'generic_mcp') {
-      adapter = new GenericMcpAdapter();
-    } else {
-      adapter = new ClaudeCodeAdapter();
-    }
-
-    const taskId = `task_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-    const userPromptEvidence: UserPromptEvidence = {
-      evidenceId: 'ev_' + crypto.randomUUID().slice(0, 8),
-      kind: TaskEvidenceKind.USER_PROMPT,
-      timestamp: new Date().toISOString(),
-      prompt: options.prompt,
-    };
-    const evidenceList: TaskEvidence[] = [userPromptEvidence];
-
-    if (dirtyPaths.length > 0) {
-      const diffEvidence: DiffEvidence = {
-        evidenceId: 'ev_' + crypto.randomUUID().slice(0, 8),
-        kind: TaskEvidenceKind.DIFF,
-        timestamp: new Date().toISOString(),
-        patchText: '',
-        changedFiles: dirtyPaths,
-      };
-      evidenceList.push(diffEvidence);
-    }
-
-    const task = createTaskContext({
-      taskId,
-      workspaceSnapshotId: snapshot.workspaceSnapshotId,
-      primaryPrompt: options.prompt,
-      evidence: evidenceList,
-      agentEnvironment: createAgentEnvironment({
-        agentProvider: kind === 'cursor' ? 'cursor' : 'anthropic',
-        agentVersion: '1.0.0',
-        model: options.agentModel || 'claude-3-5-sonnet-20241022',
-        harnessVersion: 'v2',
-        availableTools: ['read_file', 'edit_file'],
-      }),
-    });
-
-    let budgetLimits = options.budgetLimits;
-    if (!budgetLimits) {
-      const profile = options.budgetProfile || 'BALANCED';
-      const baseLimits = (profile !== 'CUSTOM' && (BUDGET_PROFILES as any)[profile])
-        ? (BUDGET_PROFILES as any)[profile]
-        : BUDGET_PROFILES.BALANCED;
-      const resolvedLimits: BudgetLimits = { ...baseLimits };
-      if (options.tokenBudget !== undefined) {
-        resolvedLimits.maxTokens = options.tokenBudget;
-      }
-      if (options.maxCostUSD !== undefined) {
-        resolvedLimits.maxCostUSD = options.maxCostUSD;
-      }
-      budgetLimits = resolvedLimits;
-    }
-
-    const engine = new ContextEngine({
-      repoRootDir: rootDir,
-      adapter,
-      dataRights: options.dataRights,
-      budgetProfile: options.budgetProfile,
-      budgetLimits,
-    });
-
-    const plan = engine.generatePlan({
-      task,
-      units,
-      graph,
-      gitIntelligence,
-      dirtyPaths,
-      seedUnitIds: options.seedUnitIds,
-      snapshot,
-    });
-
-    return {
-      plan,
-      engine,
-      units,
-      graph,
-      task,
-      formattedContext: plan.formattedContext,
-      contextString: plan.formattedContext.promptText,
-    };
-
+    throw new Error('Unreachable: Replanning loop terminated unexpectedly.');
   }
 
   /**

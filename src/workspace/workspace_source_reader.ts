@@ -8,6 +8,8 @@ export type SourceReadStatus = 'OK' | 'WORKSPACE_CHANGED' | 'FILE_NOT_FOUND' | '
 export interface SourceReadResult {
   content: string;
   contentHash: string;
+  expectedHash?: string;
+  actualHash?: string;
   byteLength: number;
   status: SourceReadStatus;
   errorMessage?: string;
@@ -25,6 +27,17 @@ export interface WorkspaceSourceReader {
     repositoryId: string,
     relativePath: string
   ): SourceReadResult;
+
+  recordExpectedHash(
+    snapshotId: string,
+    relativePath: string,
+    expectedHash: string
+  ): void;
+
+  recordExpectedHashes?(
+    snapshotId: string,
+    fileHashes: Record<string, string>
+  ): void;
 
   resolveSafeWorkspacePath(
     workspaceRoot: string,
@@ -95,9 +108,21 @@ export class DefaultWorkspaceSourceReader implements WorkspaceSourceReader {
   /**
    * Records expected file hash for a snapshot to detect WORKSPACE_CHANGED on materialization.
    */
+  /**
+   * Records expected file hash for a snapshot to detect WORKSPACE_CHANGED on materialization.
+   */
   public recordExpectedHash(snapshotId: string, relativePath: string, expectedHash: string): void {
     const key = `${snapshotId}:${relativePath.replace(/\\/g, '/')}`;
     this.knownFileHashes.set(key, expectedHash);
+  }
+
+  /**
+   * Batch records expected file hashes for a snapshot.
+   */
+  public recordExpectedHashes(snapshotId: string, fileHashes: Record<string, string>): void {
+    for (const [relPath, hash] of Object.entries(fileHashes)) {
+      this.recordExpectedHash(snapshotId, relPath, hash);
+    }
   }
 
   /**
@@ -142,21 +167,30 @@ export class DefaultWorkspaceSourceReader implements WorkspaceSourceReader {
       // Check if this file had an expected hash associated with this snapshot
       const normRelPath = relativePath.replace(/\\/g, '/');
       const key = `${snapshot.workspaceSnapshotId}:${normRelPath}`;
-      const expectedHash = this.knownFileHashes.get(key);
+      const expectedHash = this.knownFileHashes.get(key) || snapshot.fileHashes?.[normRelPath];
 
       if (expectedHash && expectedHash !== contentHash) {
         return {
           content,
           contentHash,
+          expectedHash,
+          actualHash: contentHash,
           byteLength: rawBuffer.length,
           status: 'WORKSPACE_CHANGED',
           errorMessage: `File content hash "${contentHash.slice(0, 12)}" does not match snapshot hash "${expectedHash.slice(0, 12)}" for ${relativePath}.`,
         };
       }
 
+      // Record expected hash for this snapshot if not already recorded
+      if (!this.knownFileHashes.has(key)) {
+        this.knownFileHashes.set(key, contentHash);
+      }
+
       return {
         content,
         contentHash,
+        expectedHash: expectedHash || contentHash,
+        actualHash: contentHash,
         byteLength: rawBuffer.length,
         status: 'OK',
       };

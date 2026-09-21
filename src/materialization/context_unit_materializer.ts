@@ -7,9 +7,17 @@ import {
   isResolutionSupported,
 } from '../context/context_resolution';
 import { WorkspaceSnapshot } from '../workspace/workspace_snapshot';
+import { WorkspaceChangedError } from '../workspace/workspace_errors';
 import { AgentEnvironment } from '../agents/agent_environment';
 import { WorkspaceSourceReader, DefaultWorkspaceSourceReader } from '../workspace/workspace_source_reader';
 import { skeletonizeFile } from '../skeleton/dispatcher';
+
+export { WorkspaceChangedError } from '../workspace/workspace_errors';
+
+export interface ContextUnitMaterializerOptions {
+  sourceReader?: WorkspaceSourceReader;
+  throwOnWorkspaceChanged?: boolean;
+}
 
 export interface MaterializedContext {
   contextUnitId: string;
@@ -44,18 +52,26 @@ export interface ContextUnitMaterializer {
 
   supports(unitOrKind: ContextUnit | ContextUnitKind, resolution: ContextResolution): boolean;
 
-  getResolutionCapabilities?(unit: ContextUnit): ResolutionCapabilities;
-
   getNearestSafeAlternative?(unit: ContextUnit, resolution: ContextResolution): ContextResolution;
+
+  getResolutionCapabilities?(unit: ContextUnit): ResolutionCapabilities;
 }
 
 export class DefaultContextUnitMaterializer implements ContextUnitMaterializer {
   public static readonly VERSION = '2.1.0';
 
   private sourceReader: WorkspaceSourceReader;
+  private throwOnWorkspaceChanged: boolean;
 
-  constructor(sourceReader?: WorkspaceSourceReader) {
-    this.sourceReader = sourceReader || new DefaultWorkspaceSourceReader();
+  constructor(sourceReaderOrOptions?: WorkspaceSourceReader | ContextUnitMaterializerOptions) {
+    if (sourceReaderOrOptions && 'readFile' in sourceReaderOrOptions) {
+      this.sourceReader = sourceReaderOrOptions;
+      this.throwOnWorkspaceChanged = false;
+    } else {
+      const opts = (sourceReaderOrOptions as ContextUnitMaterializerOptions) || {};
+      this.sourceReader = opts.sourceReader || new DefaultWorkspaceSourceReader();
+      this.throwOnWorkspaceChanged = opts.throwOnWorkspaceChanged ?? false;
+    }
   }
 
   /**
@@ -547,6 +563,15 @@ export class DefaultContextUnitMaterializer implements ContextUnitMaterializer {
       }
 
       if (readResult.status === 'WORKSPACE_CHANGED') {
+        if (this.throwOnWorkspaceChanged) {
+          throw new WorkspaceChangedError({
+            workspaceSnapshotId: snapshot.workspaceSnapshotId,
+            filePath: unit.path,
+            expectedHash: readResult.expectedHash || 'unknown',
+            actualHash: readResult.actualHash || readResult.contentHash,
+            message: readResult.errorMessage,
+          });
+        }
         return `// [WORKSPACE_CHANGED] File ${unit.path} was modified after snapshot ${snapshot.workspaceSnapshotId}\n${readResult.content}`;
       }
     }
@@ -574,6 +599,15 @@ export class DefaultContextUnitMaterializer implements ContextUnitMaterializer {
       }
 
       if (readResult.status === 'WORKSPACE_CHANGED') {
+        if (this.throwOnWorkspaceChanged) {
+          throw new WorkspaceChangedError({
+            workspaceSnapshotId: snapshot.workspaceSnapshotId,
+            filePath: unit.path,
+            expectedHash: readResult.expectedHash || 'unknown',
+            actualHash: readResult.actualHash || readResult.contentHash,
+            message: readResult.errorMessage,
+          });
+        }
         // Section 7: If workspace changed, return error header or propagate
         return `// [WORKSPACE_CHANGED] File ${unit.path} was modified after snapshot ${snapshot.workspaceSnapshotId}\n${readResult.content}`;
       }

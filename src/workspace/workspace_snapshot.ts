@@ -1,11 +1,14 @@
 import * as crypto from 'crypto';
 import { RepositoryState, computeRepositoryCompositeHash } from './repository_state';
 
+export * from './workspace_errors';
+
 export interface WorkspaceSnapshot {
   workspaceSnapshotId: string;
   repositories: RepositoryState[];
   contentRootHash: string;
   parentSnapshotId?: string;
+  fileHashes?: Record<string, string>;
   createdAt: string;
 }
 
@@ -29,6 +32,7 @@ export function computeWorkspaceSnapshotId(
 export function createWorkspaceSnapshot(params: {
   repositories: RepositoryState[];
   parentSnapshotId?: string;
+  fileHashes?: Record<string, string>;
   createdAt?: string;
 }): WorkspaceSnapshot {
   const contentRootHash = computeWorkspaceContentRootHash(params.repositories);
@@ -39,6 +43,7 @@ export function createWorkspaceSnapshot(params: {
     repositories: params.repositories.map((r) => ({ ...r })),
     contentRootHash,
     parentSnapshotId: params.parentSnapshotId,
+    fileHashes: params.fileHashes ? { ...params.fileHashes } : undefined,
     createdAt: params.createdAt || new Date().toISOString(),
   };
 }
