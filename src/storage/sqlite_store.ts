@@ -407,7 +407,7 @@ const MIGRATIONS: Migration[] = [
         repository TEXT NOT NULL,
         tenant_id TEXT,
         was_read INTEGER,
-        was_edited INTEGER NOT NULL,
+        was_edited INTEGER,
         verified_success INTEGER,
         rights_reference TEXT NOT NULL,
         raw_json TEXT NOT NULL,
@@ -546,6 +546,46 @@ const MIGRATIONS: Migration[] = [
     sql: `
       ALTER TABLE jev_shadow_judgments ADD COLUMN agent_environment_id TEXT;
       CREATE INDEX IF NOT EXISTS idx_jev_shadow_agent_env ON jev_shadow_judgments(agent_environment_id);
+    `,
+  },
+  {
+    version: 14,
+    name: '014_training_evidence_records_nullable_was_edited',
+    sql: `
+      CREATE TABLE IF NOT EXISTS training_evidence_records_new (
+        evidence_id TEXT PRIMARY KEY,
+        dataset_version TEXT NOT NULL,
+        task_id TEXT NOT NULL,
+        context_unit_id TEXT NOT NULL,
+        repository TEXT NOT NULL,
+        tenant_id TEXT,
+        was_read INTEGER,
+        was_edited INTEGER,
+        verified_success INTEGER,
+        rights_reference TEXT NOT NULL,
+        raw_json TEXT NOT NULL,
+        exported_at TEXT NOT NULL,
+        export_id TEXT
+      );
+
+      INSERT OR REPLACE INTO training_evidence_records_new (
+        evidence_id, dataset_version, task_id, context_unit_id,
+        repository, tenant_id, was_read, was_edited, verified_success,
+        rights_reference, raw_json, exported_at, export_id
+      )
+      SELECT
+        evidence_id, dataset_version, task_id, context_unit_id,
+        repository, tenant_id, was_read, was_edited, verified_success,
+        rights_reference, raw_json, exported_at, export_id
+      FROM training_evidence_records;
+
+      DROP TABLE training_evidence_records;
+      ALTER TABLE training_evidence_records_new RENAME TO training_evidence_records;
+
+      CREATE INDEX IF NOT EXISTS idx_evrec_dataset ON training_evidence_records(dataset_version);
+      CREATE INDEX IF NOT EXISTS idx_evrec_task ON training_evidence_records(task_id);
+      CREATE INDEX IF NOT EXISTS idx_evrec_repo ON training_evidence_records(repository);
+      CREATE INDEX IF NOT EXISTS idx_evrec_export ON training_evidence_records(export_id);
     `,
   },
 ];
@@ -2081,7 +2121,9 @@ export class SqliteStore {
         rec.readEvidence.wasRead !== null && rec.readEvidence.wasRead !== undefined
           ? (rec.readEvidence.wasRead ? 1 : 0)
           : null,
-        rec.editEvidence.wasEdited ? 1 : 0,
+        rec.editEvidence.wasEdited !== null && rec.editEvidence.wasEdited !== undefined
+          ? (rec.editEvidence.wasEdited ? 1 : 0)
+          : null,
         rec.verifiedOutcomeAssociation.verifiedSuccess !== null &&
           rec.verifiedOutcomeAssociation.verifiedSuccess !== undefined
           ? (rec.verifiedOutcomeAssociation.verifiedSuccess ? 1 : 0)

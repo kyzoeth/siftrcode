@@ -49,7 +49,8 @@ const tests = [
   { name: 'V2 JEV Shadow Integration & Learning-Loop Closure (PR J6) Tests', file: 'test_jev_shadow_closure.js' },
   { name: 'V2 Rights, Evidence Tri-State, Telemetry & Study Integrity Regression Tests', file: 'test_rights_evidence_telemetry_regression.js' },
   { name: 'V2 FINAL-3 Remediation Verification Tests', file: 'test_final3_remediation.js' },
-  { name: 'V2 FINAL-3.1 Acceptance Integrity & Trustworthiness Tests', file: 'test_final3_1_acceptance.js' }
+  { name: 'V2 FINAL-3.1 Acceptance Integrity & Trustworthiness Tests', file: 'test_final3_1_acceptance.js' },
+  { name: 'V2 FINAL-3 Closure & Adversarial Verification E2E Tests', file: 'test_final3_closure_e2e.js' }
 ];
 
 

@@ -30,16 +30,44 @@ export type SanctionedTrainingEvidenceExport = TrainingEvidenceExportResult & {
   readonly [SANCTIONED_BRAND]?: true;
 };
 
+export function deepFreeze<T>(obj: T): Readonly<T> {
+  if (obj === null || typeof obj !== 'object' || Object.isFrozen(obj)) {
+    return obj;
+  }
+  Object.freeze(obj);
+  for (const key of Object.getOwnPropertyNames(obj)) {
+    const prop = (obj as any)[key];
+    if (prop !== null && typeof prop === 'object') {
+      deepFreeze(prop);
+    }
+  }
+  return obj;
+}
+
 // Module-scoped WeakSet private to training_exporter.ts.
 // Outside callers cannot access this set or mark arbitrary objects as sanctioned.
 const sanctionedExports = new WeakSet<object>();
 
 export function isSanctionedTrainingExport(obj: unknown): obj is SanctionedTrainingExport {
-  return Boolean(obj && typeof obj === 'object' && sanctionedExports.has(obj));
+  return Boolean(
+    obj &&
+    typeof obj === 'object' &&
+    Object.isFrozen(obj) &&
+    Array.isArray((obj as any).rows) &&
+    Object.isFrozen((obj as any).rows) &&
+    sanctionedExports.has(obj)
+  );
 }
 
 export function isSanctionedTrainingEvidenceExport(obj: unknown): obj is SanctionedTrainingEvidenceExport {
-  return Boolean(obj && typeof obj === 'object' && sanctionedExports.has(obj));
+  return Boolean(
+    obj &&
+    typeof obj === 'object' &&
+    Object.isFrozen(obj) &&
+    Array.isArray((obj as any).records) &&
+    Object.isFrozen((obj as any).records) &&
+    sanctionedExports.has(obj)
+  );
 }
 
 export interface TrainingExportOptions {
@@ -189,6 +217,7 @@ export class TrainingExporter {
       exportedAt,
       [SANCTIONED_BRAND]: true,
     };
+    deepFreeze(result);
     sanctionedExports.add(result);
     return result;
   }
@@ -267,6 +296,7 @@ export class TrainingExporter {
       exportedAt,
       [SANCTIONED_BRAND]: true,
     };
+    deepFreeze(result);
     sanctionedExports.add(result);
     return result;
   }

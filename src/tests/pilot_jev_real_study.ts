@@ -150,6 +150,7 @@ export interface LiveMetrics {
   liveMode: boolean;
   totalTasks: number;
   selectedTaskCount?: number;
+  startedTaskCount?: number;
   completedTaskCount?: number;
   tasksWithValidProviderSignal?: number;
   harnessException?: string;
@@ -203,6 +204,7 @@ export interface LiveMetrics {
   lineageVerificationSucceeded?: boolean;
   perTaskAttemptsExceeded?: boolean;
   httpRequestsExceededBudget?: boolean;
+  reportConsistencyCheck?: boolean;
 }
 
 export interface LiveAcceptanceConfig {
@@ -230,6 +232,11 @@ export function evaluateLiveAcceptance(
   // Harness execution & completion (P0)
   if (m.harnessException) {
     failed.push(`harness execution without error (${m.harnessException})`);
+  }
+  if (m.startedTaskCount !== undefined && m.selectedTaskCount !== undefined) {
+    if (m.startedTaskCount !== m.selectedTaskCount) {
+      failed.push(`startedTaskCount === selectedTaskCount (${m.startedTaskCount} vs ${m.selectedTaskCount})`);
+    }
   }
   if (m.selectedTaskCount !== undefined && m.completedTaskCount !== undefined) {
     if (m.completedTaskCount !== m.selectedTaskCount) {
@@ -294,6 +301,10 @@ export function evaluateLiveAcceptance(
     failed.push('zeroUnexpectedEgress === true');
   }
 
+  if (m.reportConsistencyCheck === false) {
+    failed.push('reportConsistencyCheck === true');
+  }
+
   if (c?.minProviderSuccessFraction !== undefined && m.providerAttempts && m.providerAttempts > 0) {
     const fraction = (m.providerSuccesses ?? 0) / m.providerAttempts;
     if (fraction < c.minProviderSuccessFraction) {
@@ -323,6 +334,7 @@ export interface PilotReport {
   questionSetVersion: string;
   totalTasks: number;
   selectedTaskCount?: number;
+  startedTaskCount?: number;
   completedTaskCount?: number;
   tasksWithValidProviderSignal?: number;
   tasksPerRepo: Record<PilotRepoKind, number>;
@@ -413,6 +425,10 @@ export interface PilotReport {
     mrrDelta: number;
   };
   metadata?: PilotMetadata;
+  reportConsistency?: {
+    consistent: boolean;
+    diffs: string[];
+  };
   failedCriteria?: string[];
   recommendation: 'PASS_TO_30_TASK_PILOT' | 'FIX_AND_REPEAT_SMOKE' | null;
   error?: string;
@@ -753,6 +769,7 @@ function createRealPilotClient(
     timeoutMs?: number;
     getTracker?: () => JevCallTracker | undefined;
     maxHttpRequestsPerTask?: number;
+    retriesConfigured?: number;
   } = {}
 ): SystemOneClient {
   const isLive = options.useLive ?? (process.env.JEV_LIVE === 'true' || process.argv.includes('--live'));
@@ -835,12 +852,13 @@ function createRealPilotClient(
             tracker?.recordHttpAttemptFailure(attemptCategory);
 
             let canRetry = false;
+            const maxConfiguredRetries = options.retriesConfigured ?? (options.isSmoke ? 1 : 2);
             if (options.isSmoke) {
-              // Smoke: at most 1 retry, only for APIConnectionError (fixes stale keep-alive UND_ERR_SOCKET resets). No retry on timeout or 429.
-              canRetry = isConnection && retries < 1;
+              // Smoke: at most maxConfiguredRetries connection retry, only for APIConnectionError (fixes stale keep-alive UND_ERR_SOCKET resets). No retry on timeout or 429.
+              canRetry = isConnection && retries < maxConfiguredRetries;
             } else {
-              // Pilot: at most 2 retries for 429 and connection errors, honoring err.retryAfterMs when present
-              canRetry = (is429 || isConnection) && retries < 2;
+              // Pilot: at most maxConfiguredRetries retries for 429 and connection errors, honoring err.retryAfterMs when present
+              canRetry = (is429 || isConnection) && retries < maxConfiguredRetries;
             }
 
             if (canRetry) {
@@ -1082,7 +1100,27 @@ export interface PilotStudyOptions {
   acceptanceConfig?: LiveAcceptanceConfig;
 }
 
-export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}): Promise<PilotReport> {
+export interface ResolvedPilotConfig {
+  readonly isLive: boolean;
+  readonly isSmoke: boolean;
+  readonly maxTasks: number;
+  readonly maxCallsPerTask: number;
+  readonly maxHttpRequestsPerTask: number;
+  readonly retriesConfigured: number;
+  readonly endpoint: string;
+  readonly endpointIsProduction: boolean;
+  readonly allowNonproductionEndpoint: boolean;
+  readonly apiKey?: string;
+  readonly model: string;
+  readonly timeoutMs: number;
+  readonly minValidResponses: number;
+  readonly minSuccessFraction?: number;
+  readonly reportJsonPath?: string;
+  readonly verbose: boolean;
+  readonly requireCleanBuild: boolean;
+}
+
+export function resolvePilotConfig(options: PilotStudyOptions = {}): ResolvedPilotConfig {
   const isLive = options.useLive ?? (process.env.JEV_LIVE === 'true' || process.argv.includes('--live'));
   const isSmoke = options.isSmoke ?? options.smoke ?? process.argv.includes('--smoke');
   const tasksArg = process.argv.find((a) => a.startsWith('--tasks='));
@@ -1091,7 +1129,7 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
   const envMaxCalls = process.env.SIFTR_JEV_MAX_CALLS ? parseInt(process.env.SIFTR_JEV_MAX_CALLS, 10) : undefined;
   const explicitMaxCalls = options.maxCallsPerTask ?? (callsArg ? parseInt(callsArg.split('=')[1], 10) : undefined);
   const maxCallsPerTask = explicitMaxCalls !== undefined ? explicitMaxCalls : (isSmoke ? 5 : (envMaxCalls ?? 20));
-  const resolvedMaxHttpRequestsPerTask = options.maxHttpRequestsPerTask ?? options.maxCallsPerTask ?? (isSmoke ? 10 : 60);
+  const maxHttpRequestsPerTask = options.maxHttpRequestsPerTask ?? options.maxCallsPerTask ?? (isSmoke ? 10 : 60);
   const verbose = options.verbose ?? (isSmoke || process.argv.includes('--verbose'));
   const apiKey = options.apiKey || process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY;
 
@@ -1104,16 +1142,145 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
   }
 
   const minValidArg = process.argv.find((a) => a.startsWith('--min-valid-responses='));
-  const minValid = options.minimumValidProviderResponses ?? (minValidArg ? parseInt(minValidArg.split('=')[1], 10) : 1);
+  const minValidResponses = options.minimumValidProviderResponses ?? (minValidArg ? parseInt(minValidArg.split('=')[1], 10) : 1);
 
   const minFracArg = process.argv.find((a) => a.startsWith('--min-success-fraction='));
-  const minFrac = options.minProviderSuccessFraction ?? (minFracArg ? parseFloat(minFracArg.split('=')[1]) : undefined);
+  const minSuccessFraction = options.minProviderSuccessFraction ?? (minFracArg ? parseFloat(minFracArg.split('=')[1]) : undefined);
 
   const reportJsonArg = process.argv.find((a) => a.startsWith('--report-json='));
   const reportJsonPath = options.reportJsonPath ?? options.reportJson ?? (reportJsonArg ? reportJsonArg.split('=')[1].replace(/^["']|["']$/g, '') : undefined);
 
   const timeoutArg = process.argv.find((a) => a.startsWith('--timeout-ms='));
-  const timeoutMs = options.timeoutMs ?? (timeoutArg ? parseInt(timeoutArg.split('=')[1], 10) : undefined);
+  const timeoutMs = options.timeoutMs ?? (timeoutArg ? parseInt(timeoutArg.split('=')[1], 10) : 15000);
+
+  const requireCleanBuild = options.requireCleanBuild ?? (process.argv.includes('--require-clean-build') || isLive);
+  const model = options.model ?? process.env.SIFTR_JEV_MODEL ?? process.env.TYPESAFE_DEFAULT_MODEL ?? (isLive ? 'jev-latest' : 'synthetic-fake-client');
+  const retriesConfigured = isSmoke ? 1 : 2;
+
+  return Object.freeze({
+    isLive,
+    isSmoke,
+    maxTasks,
+    maxCallsPerTask,
+    maxHttpRequestsPerTask,
+    retriesConfigured,
+    endpoint,
+    endpointIsProduction,
+    allowNonproductionEndpoint,
+    apiKey,
+    model,
+    timeoutMs,
+    minValidResponses,
+    minSuccessFraction,
+    reportJsonPath,
+    verbose,
+    requireCleanBuild,
+  });
+}
+
+export function validateReportConsistency(
+  report: PilotReport,
+  config: ResolvedPilotConfig
+): { consistent: boolean; diffs: string[] } {
+  const diffs: string[] = [];
+
+  // Mode consistency
+  const expectedMode = config.isLive ? (config.isSmoke ? 'LIVE_SMOKE' : 'LIVE_PILOT') : 'OFFLINE_SYNTHETIC';
+  if (report.mode !== expectedMode) {
+    diffs.push(`report.mode "${report.mode}" !== expected "${expectedMode}"`);
+  }
+
+  // Endpoint consistency
+  if (report.endpoint !== config.endpoint) {
+    diffs.push(`report.endpoint "${report.endpoint}" !== expected "${config.endpoint}"`);
+  }
+  if (report.endpointIsProduction !== config.endpointIsProduction) {
+    diffs.push(`report.endpointIsProduction "${report.endpointIsProduction}" !== expected "${config.endpointIsProduction}"`);
+  }
+
+  // Max calls per task
+  if (report.resolvedMaxCallsPerTask !== config.maxCallsPerTask) {
+    diffs.push(`report.resolvedMaxCallsPerTask (${report.resolvedMaxCallsPerTask}) !== config.maxCallsPerTask (${config.maxCallsPerTask})`);
+  }
+
+  // Task count consistency
+  const expectedSelected = config.isSmoke ? 5 : config.maxTasks;
+  if (report.selectedTaskCount !== undefined && report.selectedTaskCount !== expectedSelected) {
+    diffs.push(`report.selectedTaskCount (${report.selectedTaskCount}) !== expected (${expectedSelected})`);
+  }
+  if (report.completedTaskCount !== undefined && report.completedTaskCount > (report.selectedTaskCount ?? expectedSelected)) {
+    diffs.push(`report.completedTaskCount (${report.completedTaskCount}) > selectedTaskCount (${report.selectedTaskCount})`);
+  }
+
+  // Repo / type count sums must match completedTaskCount
+  if (report.completedTaskCount !== undefined) {
+    const repoSum = report.tasksPerRepo.express + report.tasksPerRepo.fastapi + report.tasksPerRepo.siftrcode;
+    if (repoSum !== report.completedTaskCount) {
+      diffs.push(`tasksPerRepo sum (${repoSum}) !== completedTaskCount (${report.completedTaskCount})`);
+    }
+    const typeSum = report.tasksPerType.BUG_FIX + report.tasksPerType.TEST_FAILURE + report.tasksPerType.FEATURE_ADDITION + report.tasksPerType.REFACTOR;
+    if (typeSum !== report.completedTaskCount) {
+      diffs.push(`tasksPerType sum (${typeSum}) !== completedTaskCount (${report.completedTaskCount})`);
+    }
+  }
+
+  // Provider calls arithmetic consistency
+  const failuresSum =
+    report.provider.failuresByCategory.timeouts +
+    report.provider.failuresByCategory.rateLimited +
+    report.provider.failuresByCategory.malformed +
+    report.provider.failuresByCategory.connectionErrors +
+    report.provider.failuresByCategory.providerErrors;
+  if (report.provider.attempts !== report.provider.successes + failuresSum) {
+    diffs.push(`provider.attempts (${report.provider.attempts}) !== successes (${report.provider.successes}) + failures (${failuresSum})`);
+  }
+
+  // Ranking ablation arithmetic consistency
+  const expectedNdcg10Delta = +(report.rankingAblation.jevAugmented.ndcg10 - report.rankingAblation.baseline.ndcg10).toFixed(4);
+  if (report.rankingAblation.ndcg10Delta !== expectedNdcg10Delta) {
+    diffs.push(`ndcg10Delta (${report.rankingAblation.ndcg10Delta}) !== calculated (${expectedNdcg10Delta})`);
+  }
+  const expectedRecall10Delta = +(report.rankingAblation.jevAugmented.recall10 - report.rankingAblation.baseline.recall10).toFixed(4);
+  if (report.rankingAblation.recall10Delta !== expectedRecall10Delta) {
+    diffs.push(`recall10Delta (${report.rankingAblation.recall10Delta}) !== calculated (${expectedRecall10Delta})`);
+  }
+  const expectedMrrDelta = +(report.rankingAblation.jevAugmented.mrr - report.rankingAblation.baseline.mrr).toFixed(4);
+  if (report.rankingAblation.mrrDelta !== expectedMrrDelta) {
+    diffs.push(`mrrDelta (${report.rankingAblation.mrrDelta}) !== calculated (${expectedMrrDelta})`);
+  }
+
+  // Recommendation invariant
+  if (report.recommendation === 'PASS_TO_30_TASK_PILOT') {
+    if (report.failedCriteria && report.failedCriteria.length > 0) {
+      diffs.push(`recommendation PASS_TO_30_TASK_PILOT but failedCriteria is non-empty (${report.failedCriteria.join(', ')})`);
+    }
+  } else if (report.recommendation === 'FIX_AND_REPEAT_SMOKE') {
+    if (!report.failedCriteria || report.failedCriteria.length === 0) {
+      diffs.push('recommendation FIX_AND_REPEAT_SMOKE but failedCriteria is empty');
+    }
+  }
+
+  return {
+    consistent: diffs.length === 0,
+    diffs,
+  };
+}
+
+export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}): Promise<PilotReport> {
+  const config = resolvePilotConfig(options);
+  const isLive = config.isLive;
+  const isSmoke = config.isSmoke;
+  const maxTasks = config.maxTasks;
+  const maxCallsPerTask = config.maxCallsPerTask;
+  const resolvedMaxHttpRequestsPerTask = config.maxHttpRequestsPerTask;
+  const verbose = config.verbose;
+  const apiKey = config.apiKey;
+  const endpoint = config.endpoint;
+  const endpointIsProduction = config.endpointIsProduction;
+  const minValid = config.minValidResponses;
+  const minFrac = config.minSuccessFraction;
+  const reportJsonPath = config.reportJsonPath;
+  const timeoutMs = config.timeoutMs;
 
   const rootDir = process.cwd();
   const expressDir = path.resolve(rootDir, 'benchmarks/express-repo');
@@ -1130,15 +1297,15 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
     console.log('This run used a local synthetic mock client. It validates');
     console.log('harness plumbing only. It does NOT demonstrate live provider');
     console.log('feasibility, latency, cost, or accuracy.');
+    console.log('Mode: OFFLINE CALIBRATED');
     console.log('================================================================\n');
   } else {
     console.log('\n================================================================');
     console.log(`  SIFTRCODE V2: TYPESAFE JEV REAL-WORLD PILOT STUDY (${isSmoke ? 5 : maxTasks} TASKS)   `);
-    console.log(`  Mode: LIVE REMOTE (TypeSafe SystemOne)`);
+    console.log(`  Mode: LIVE REMOTE (TypeSafe SystemOne) | TypeSafe key configured: ${Boolean(apiKey)}`);
     console.log(`  Endpoint: ${endpoint}${endpointIsProduction ? ' (Production)' : ' (Non-Production)'}`);
     console.log(`  Tested Git Commit: ${testedGitCommit}`);
     console.log(`  Clean Build Verification: ${cleanBuildResult.isClean ? 'PASSED (Stamped & In-Sync)' : 'SKIPPED (Non-Mandatory)'}`);
-    console.log(`  TypeSafe key configured: ${Boolean(apiKey)}`);
     console.log('================================================================\n');
   }
 
@@ -1268,22 +1435,25 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
   // Create TypeSafe client & runner
   let activeRunner: JevShadowRunner | undefined;
   const client = createRealPilotClient(masterUnitsMap, {
-    useLive: isLive,
-    apiKey: options.apiKey,
-    isSmoke,
-    model: options.model,
-    timeoutMs,
+    useLive: config.isLive,
+    apiKey: config.apiKey,
+    isSmoke: config.isSmoke,
+    model: config.model,
+    endpoint: config.endpoint,
+    timeoutMs: config.timeoutMs,
+    maxHttpRequestsPerTask: config.maxHttpRequestsPerTask,
+    retriesConfigured: config.retriesConfigured,
     getTracker: () => activeRunner?.getLastTracker(),
   });
   const runner = new JevShadowRunner({
     client,
     mode: JevMode.SHADOW,
     sqliteStore: store,
-    model: options.model,
+    model: config.model,
     budget: {
-      maxCandidates: Math.min(maxCallsPerTask, 20),
-      maxCallsPerTask,
-      maxHttpRequestsPerTask: resolvedMaxHttpRequestsPerTask,
+      maxCandidates: Math.min(config.maxCallsPerTask, 20),
+      maxCallsPerTask: config.maxCallsPerTask,
+      maxHttpRequestsPerTask: config.maxHttpRequestsPerTask,
       maxConcurrency: 4,
       maxInputCharacters: 8000,
     },
@@ -1366,6 +1536,7 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
   let totalProviderErrors = 0;
   let totalRedactionCount = 0;
   let snapshotMismatchesCount = 0;
+  let startedTaskCount = 0;
   let completedTaskCount = 0;
   let tasksWithValidProviderSignal = 0;
   let totalHttpAttemptTimeouts = 0;
@@ -1379,8 +1550,7 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
   try {
     for (let idx = 0; idx < selectedTasks.length; idx++) {
       const taskSpec = selectedTasks[idx];
-      tasksPerRepo[taskSpec.repo]++;
-      tasksPerType[taskSpec.type]++;
+      startedTaskCount++;
 
       // Select repository context
       let repoRootDir: string;
@@ -1744,6 +1914,8 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
       augmentedMrr.push(computeMRR(augmentedRankedIds, groundTruthTargetUnitIds));
 
       completedTaskCount++;
+      tasksPerRepo[taskSpec.repo]++;
+      tasksPerType[taskSpec.type]++;
       const taskHasValidSignal = signals.some((sig) =>
         sig.semanticRelevanceProbability !== null &&
         sig.implementationNeededProbability !== null &&
@@ -2037,6 +2209,7 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
     liveMode: isLive,
     totalTasks: selectedTasks.length,
     selectedTaskCount: selectedTasks.length,
+    startedTaskCount,
     completedTaskCount,
     tasksWithValidProviderSignal,
     harnessException: taskLoopError ? taskLoopError.message : undefined,
@@ -2145,6 +2318,7 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
     questionSetVersion: JEV_QUESTION_SET_VERSION_V1,
     totalTasks: selectedTasks.length,
     selectedTaskCount: selectedTasks.length,
+    startedTaskCount,
     completedTaskCount,
     tasksWithValidProviderSignal,
     tasksPerRepo,
@@ -2291,7 +2465,7 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
       },
       fallback: {
         strategy: isLive ? (isSmoke ? 'smoke_single_connection_retry' : 'pilot_two_retries_with_backoff') : 'offline_calibrated_lexical',
-        retriesConfigured: isSmoke ? 1 : 2,
+        retriesConfigured: config.retriesConfigured,
         failClosedOnZeroRemoteProbabilities: true,
       },
       sampleSanitizedPayloadShape: typeof (client as any).getFirstCallPayloadShape === 'function'
@@ -2306,6 +2480,37 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
     error: taskLoopError?.message,
   };
 
+  const consistencyResult = validateReportConsistency(report, config);
+  report.reportConsistency = consistencyResult;
+
+  if (isLive) {
+    if (!consistencyResult.consistent) {
+      if (!failedCriteria) failedCriteria = [];
+      for (const diff of consistencyResult.diffs) {
+        if (!failedCriteria.some(fc => fc.includes(diff))) {
+          failedCriteria.push(`report consistency violation: ${diff}`);
+        }
+      }
+      recommendation = 'FIX_AND_REPEAT_SMOKE';
+      report.failedCriteria = failedCriteria;
+      report.recommendation = recommendation;
+    }
+
+    // Authoritative final assertion: PASS requires 100% zero failed criteria
+    if (recommendation === 'PASS_TO_30_TASK_PILOT') {
+      if (failedCriteria && failedCriteria.length > 0) {
+        throw new Error(`INVALID_ACCEPTANCE_STATE: Invariant violated: recommendation is PASS_TO_30_TASK_PILOT but failedCriteria is non-empty: ${JSON.stringify(failedCriteria)}`);
+      }
+      if (!consistencyResult.consistent) {
+        throw new Error(`INVALID_ACCEPTANCE_STATE: Invariant violated: recommendation is PASS_TO_30_TASK_PILOT but reportConsistency has diffs: ${JSON.stringify(consistencyResult.diffs)}`);
+      }
+    } else if (recommendation === 'FIX_AND_REPEAT_SMOKE') {
+      if (!failedCriteria || failedCriteria.length === 0) {
+        throw new Error('INVALID_ACCEPTANCE_STATE: Invariant violated: recommendation is FIX_AND_REPEAT_SMOKE but failedCriteria is empty');
+      }
+    }
+  }
+
   // -------------------------------------------------------------------------
   // Print Pilot Summary Tables
   // -------------------------------------------------------------------------
@@ -2316,7 +2521,7 @@ export async function runTypeSafeJevPilotStudy(options: PilotStudyOptions = {}):
   console.log('\n================================================================');
   console.log(`                     ${reportHeader}                      `);
   console.log('================================================================');
-  console.log(`Mode:                    ${report.mode}`);
+  console.log(`Mode:                    ${report.mode === 'LIVE_SMOKE' || report.mode === 'LIVE_PILOT' ? `LIVE REMOTE (TypeSafe SystemOne) | TypeSafe key configured: ${Boolean(apiKey)}` : 'OFFLINE CALIBRATED'}`);
   console.log(`Endpoint:                ${report.endpoint} (${report.endpointIsProduction ? 'Production' : 'Non-Production'})`);
   console.log(`Tested Git Commit:       ${report.testedGitCommit || 'unknown'} (dirty: ${report.provenance.dirty}, hash: ${report.provenance.sourceTreeHash?.slice(0, 12)}...)`);
   console.log(`SDK Version:             ${report.sdkVersion}`);
