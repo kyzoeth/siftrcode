@@ -52,5 +52,6 @@ export * from './telemetry/candidate_observation';
 export * from './telemetry/trajectory_event';
 export * from './workspace/workspace_source_reader';
 export * from './materialization/context_unit_materializer';
+export * from './token/token_cost_estimator';
 export * from './engine/context_plan';
 export * from './engine/context_engine';

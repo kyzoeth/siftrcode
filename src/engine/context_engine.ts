@@ -33,6 +33,7 @@ import { createAgentEnvironment } from '../agents/agent_environment';
 import { ContextUnitMaterializer, DefaultContextUnitMaterializer } from '../materialization/context_unit_materializer';
 import { WorkspaceSnapshot, createWorkspaceSnapshot } from '../workspace/workspace_snapshot';
 import { DefaultWorkspaceSourceReader } from '../workspace/workspace_source_reader';
+import { TokenCostEstimator, DefaultTokenCostEstimator } from '../token/token_cost_estimator';
 
 export interface ContextEngineOptions {
   repoRootDir?: string;
@@ -43,6 +44,7 @@ export interface ContextEngineOptions {
   dirtyPaths?: string[];
   seedUnitIds?: string[];
   materializer?: ContextUnitMaterializer;
+  tokenCostEstimator?: TokenCostEstimator;
 }
 
 export interface OptimizeWorkspaceOptions {
@@ -94,6 +96,7 @@ export class ContextEngine {
   private budgetProfile: BudgetProfileName;
   private budgetLimits: BudgetLimits;
   private materializer: ContextUnitMaterializer;
+  private tokenCostEstimator: TokenCostEstimator;
 
   constructor(options: ContextEngineOptions = {}) {
     this.repoRootDir = options.repoRootDir;
@@ -106,6 +109,7 @@ export class ContextEngine {
     this.materializer = options.materializer || new DefaultContextUnitMaterializer(
       new DefaultWorkspaceSourceReader(this.repoRootDir || process.cwd())
     );
+    this.tokenCostEstimator = options.tokenCostEstimator || new DefaultTokenCostEstimator(this.materializer);
   }
 
   /**
@@ -234,11 +238,146 @@ export class ContextEngine {
     }
 
     // 8. Format Context for target Agent Adapter
-    const formattedContext = this.adapter.formatContext(resolvedForAdapter, {
+    let formattedContext = this.adapter.formatContext(resolvedForAdapter, {
       includeInstructions: true,
       instructionPrefix: `Task Prompt: ${task.primaryPrompt}`,
       maxTokens: this.budgetLimits.maxTokens,
     });
+
+    // 8.5 Hard Post-Render Budget Gate (Sections 12 & 13)
+    let actualRenderedTokens = this.tokenCostEstimator.estimateMaterialized(
+      formattedContext.promptText,
+      task.agentEnvironment
+    );
+
+    const maxAllowedTokens = this.budgetLimits.maxTokens;
+    let overflowReason: string | undefined = undefined;
+
+    // Identify mandatory units: edit targets from dirtyPaths, seedUnitIds, or stack trace evidence
+    const mandatoryUnitIds = new Set<string>();
+    for (const seedId of seedUnitIds) {
+      mandatoryUnitIds.add(seedId);
+    }
+    for (const u of units) {
+      if (u.path && dirtyPaths.some((dp) => dp.replace(/\\/g, '/').endsWith(u.path!.replace(/\\/g, '/')))) {
+        mandatoryUnitIds.add(u.id);
+      }
+    }
+    for (const ev of task.evidence || []) {
+      if (ev.kind === TaskEvidenceKind.STACK_TRACE && (ev as any).frames) {
+        for (const f of (ev as any).frames) {
+          for (const u of units) {
+            if (u.path && f.filePath && f.filePath.replace(/\\/g, '/').endsWith(u.path.replace(/\\/g, '/'))) {
+              mandatoryUnitIds.add(u.id);
+            }
+          }
+        }
+      }
+    }
+
+    // Post-render budget gate loop:
+    // Degradation order:
+    // 1 remove lowest marginal utility optional unit
+    // 2 FULL -> BODY
+    // 3 BODY -> SKELETON where safe
+    // 4 SKELETON -> SIGNATURE
+    // 5 SIGNATURE -> NAME
+    // 6 remove optional NAME
+    while (actualRenderedTokens > maxAllowedTokens) {
+      let degraded = false;
+
+      // 1. Degrade FULL -> BODY on any unit (prefer optional first)
+      const fullUnits = plannedUnits.filter((pu) => pu.resolution === ContextResolution.FULL);
+      if (fullUnits.length > 0) {
+        const target = fullUnits.find((u) => !mandatoryUnitIds.has(u.contextUnitId)) || fullUnits[fullUnits.length - 1];
+        target.resolution = ContextResolution.BODY;
+        degraded = true;
+      }
+
+      // 2. Degrade BODY -> SKELETON on optional units where safe
+      if (!degraded) {
+        const bodyOptionalUnits = plannedUnits.filter(
+          (pu) => pu.resolution === ContextResolution.BODY && !mandatoryUnitIds.has(pu.contextUnitId)
+        );
+        for (const bu of bodyOptionalUnits) {
+          const u = unitsMap.get(bu.contextUnitId);
+          if (u && this.materializer.supports(u.kind, ContextResolution.SKELETON)) {
+            bu.resolution = ContextResolution.SKELETON;
+            degraded = true;
+            break;
+          }
+        }
+      }
+
+      // 3. Degrade SKELETON -> SIGNATURE on optional units
+      if (!degraded) {
+        const skelOptionalUnits = plannedUnits.filter(
+          (pu) => pu.resolution === ContextResolution.SKELETON && !mandatoryUnitIds.has(pu.contextUnitId)
+        );
+        if (skelOptionalUnits.length > 0) {
+          skelOptionalUnits[skelOptionalUnits.length - 1].resolution = ContextResolution.SIGNATURE;
+          degraded = true;
+        }
+      }
+
+      // 4. Degrade SIGNATURE -> NAME on optional units
+      if (!degraded) {
+        const sigOptionalUnits = plannedUnits.filter(
+          (pu) => pu.resolution === ContextResolution.SIGNATURE && !mandatoryUnitIds.has(pu.contextUnitId)
+        );
+        if (sigOptionalUnits.length > 0) {
+          sigOptionalUnits[sigOptionalUnits.length - 1].resolution = ContextResolution.NAME;
+          degraded = true;
+        }
+      }
+
+      // 5. Remove optional units completely
+      if (!degraded) {
+        const optionalIndices = plannedUnits
+          .map((pu, idx) => ({ pu, idx }))
+          .filter(({ pu }) => !mandatoryUnitIds.has(pu.contextUnitId));
+
+        if (optionalIndices.length > 0) {
+          const toRemove = optionalIndices[optionalIndices.length - 1];
+          plannedUnits.splice(toRemove.idx, 1);
+          degraded = true;
+        }
+      }
+
+      // If only mandatory units remain and still exceeding budget
+      if (!degraded) {
+        overflowReason = `MANDATORY_CONTEXT_OVERFLOW: Mandatory context requires ${actualRenderedTokens} actual rendered tokens exceeding budget limit of ${maxAllowedTokens} tokens.`;
+        break;
+      }
+
+      // Re-render and re-format
+      resolvedForAdapter.length = 0;
+      for (const pu of plannedUnits) {
+        const u = unitsMap.get(pu.contextUnitId);
+        if (!u) continue;
+        const mat = this.materializer.materializeSync(u, pu.resolution, snapshot);
+        pu.content = mat.content;
+        pu.tokenEstimate = mat.actualTokenCount;
+        resolvedForAdapter.push({
+          unitId: u.id,
+          title: u.title,
+          filePath: u.path,
+          resolution: pu.resolution,
+          content: mat.content,
+        });
+      }
+
+      formattedContext = this.adapter.formatContext(resolvedForAdapter, {
+        includeInstructions: true,
+        instructionPrefix: `Task Prompt: ${task.primaryPrompt}`,
+        maxTokens: this.budgetLimits.maxTokens,
+      });
+
+      actualRenderedTokens = this.tokenCostEstimator.estimateMaterialized(
+        formattedContext.promptText,
+        task.agentEnvironment
+      );
+    }
 
     // 9. Telemetry: Record Exposure Decisions & Trajectory Log
     const exposureDecisions: ExposureDecision[] = [];
@@ -278,8 +417,10 @@ export class ContextEngine {
       planId,
       totalUnits: plannedUnits.length,
       allocatedTokens: budgetPlan.totalTokens,
+      actualRenderedTokens,
       savingsPercentage: budgetPlan.savingsPercentage,
       costSavedUSD: budgetPlan.costSavedUSD,
+      overflowReason,
     });
 
     return {
@@ -290,6 +431,8 @@ export class ContextEngine {
       formattedContext,
       exposureDecisions,
       dataRights: this.dataRights,
+      actualRenderedTokens,
+      overflowReason,
       createdAt,
     };
   }

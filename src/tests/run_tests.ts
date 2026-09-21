@@ -25,6 +25,7 @@ const tests = [
   { name: 'V2 ResolutionRank (Variable-Resolution Safety) Tests', file: 'test_resolution_rank.js' },
   { name: 'V2 BudgetSolver (Token & Cost Optimization) Tests', file: 'test_budget_solver.js' },
   { name: 'V2 ContextUnit Materialization & WorkspaceSourceReader Tests', file: 'test_materialization.js' },
+  { name: 'V2 Real Token Accounting & Budget Gate Tests', file: 'test_token_accounting.js' },
   { name: 'V2 ContextEngine (End-to-End Orchestration) Tests', file: 'test_context_engine.js' },
   { name: 'V2 CLI & MCP Server Integration Tests', file: 'test_v2_integration.js' }
 ];

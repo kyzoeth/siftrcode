@@ -27,5 +27,7 @@ export interface ContextPlan {
   formattedContext: FormattedContext;
   exposureDecisions: ExposureDecision[];
   dataRights: DataRights;
+  actualRenderedTokens: number;
+  overflowReason?: string;
   createdAt: string;
 }
