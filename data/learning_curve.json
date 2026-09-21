@@ -1,16 +1,16 @@
 [
   {
     "taskCount": 10,
-    "pairCount": 1786,
-    "valNdcg10": 0.4792,
-    "valRecall10": 0.6136,
-    "valMrr": 0.4499
+    "pairCount": 1436,
+    "valNdcg10": 0.5925,
+    "valRecall10": 0.7273,
+    "valMrr": 0.5513
   },
   {
     "taskCount": 25,
-    "pairCount": 4786,
-    "valNdcg10": 0.4822,
-    "valRecall10": 0.6136,
-    "valMrr": 0.4539
+    "pairCount": 4112,
+    "valNdcg10": 0.5411,
+    "valRecall10": 0.6364,
+    "valMrr": 0.5169
   }
 ]

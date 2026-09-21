@@ -31,9 +31,9 @@ export function runBuildBenchmark() {
   // Partition Leakage-Safe Splits
   console.log('\n🔒 [Split Manager] Partitioning leakage-safe splits by splitGroupId...');
   const splitResult = SplitManager.partition(episodes, {
-    trainRatio: 0.60,
-    valRatio: 0.15,
-    testRatio: 0.25,
+    trainRatio: 0.55,
+    valRatio: 0.18,
+    testRatio: 0.27,
     seed: 42,
   });
 

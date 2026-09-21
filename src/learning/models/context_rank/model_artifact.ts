@@ -38,10 +38,16 @@ export interface ModelArtifactV3 {
   modelType: 'pairwise_gbdt' | 'linear_margin_pairwise';
   status: 'RESEARCH' | 'SHADOW' | 'CANDIDATE' | 'PROMOTED' | 'RETIRED';
   trainingCodeGitSha: string;
+  baselineGitSha: string;
   datasetVersion: string;
+  datasetSha256?: string;
   featureSetVersion: string;
-  trainSplitHash: string;
-  validationSplitHash: string;
+  featureSchemaSha256?: string;
+  trainSplitHash?: string;
+  validationSplitHash?: string;
+  trainSplitSha256: string;
+  validationSplitSha256: string;
+  testSplitSha256?: string;
   hyperparameters: ModelHyperparameters;
   randomSeed: number;
   libraryVersions: {
@@ -94,8 +100,19 @@ export class ModelArtifactVerifier {
     if (!artifact.trainingCodeGitSha || artifact.trainingCodeGitSha.length !== 40) {
       errors.push(`Invalid trainingCodeGitSha: ${artifact.trainingCodeGitSha}`);
     }
+    if (!artifact.baselineGitSha || artifact.baselineGitSha.length !== 40) {
+      errors.push(`Invalid baselineGitSha: ${artifact.baselineGitSha}`);
+    }
     if (!artifact.featureSetVersion) {
       errors.push('Missing featureSetVersion');
+    }
+    const trainHash = artifact.trainSplitSha256 || artifact.trainSplitHash;
+    if (!trainHash || trainHash.length !== 64) {
+      errors.push(`Invalid trainSplitSha256: expected 64-char hex SHA-256, got '${trainHash}'`);
+    }
+    const valHash = artifact.validationSplitSha256 || artifact.validationSplitHash;
+    if (!valHash || valHash.length !== 64) {
+      errors.push(`Invalid validationSplitSha256: expected 64-char hex SHA-256, got '${valHash}'`);
     }
 
     const { artifactChecksum, ...unsigned } = artifact;

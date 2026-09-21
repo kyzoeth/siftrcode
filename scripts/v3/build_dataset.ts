@@ -3,6 +3,8 @@
  * SiftrCode V3 - Build Sanctioned Dataset Script (Phase V3.1C & D)
  *
  * Extracts ContextFeaturesV3_1 across all SiftrBench v1 episodes,
+ * guarantees point-in-time correctness via EpisodeWorkspaceResolver,
+ * separates benchmark target relevance from behavioral telemetry,
  * routes through RightsFilter to enforce UNKNOWN != NEGATIVE,
  * and builds within-task pairwise ranking instances.
  */
@@ -21,6 +23,7 @@ import { SiftrDatasetV1Builder, DatasetRowV1, SiftrContextDatasetV1 } from '../.
 import { PairwiseBuilder, PairwiseDatasetV1 } from '../../src/learning/datasets/pairwise_builder';
 import { SiftrBenchManifest } from '../../src/benchmark/siftrbench/episode_schema';
 import { SplitManifest, SplitName } from '../../src/benchmark/siftrbench/split_manager';
+import { EpisodeWorkspaceResolver } from '../../src/benchmark/siftrbench/episode_workspace_resolver';
 import { RepositoryOrigin, createDefaultRepositoryTrustPolicy } from '../../src/security/trust';
 
 export async function runBuildDataset(options: { maxCandidates?: number } = {}) {
@@ -44,13 +47,10 @@ export async function runBuildDataset(options: { maxCandidates?: number } = {}) 
     splitMap.set(a.episodeId, a.split);
   }
 
-  // Configure benchmark repository paths
-  const repoConfigs = {
+  // Configure benchmark repository filter options
+  const repoFilterConfigs: Record<string, any> = {
     express: {
-      path: path.join(rootDir, 'benchmarks/express-repo'),
       options: {
-        includePatterns: ['lib/**'],
-        excludePatterns: ['**/test/**', '**/examples/**', '**/benchmarks/**'],
         trustPolicy: createDefaultRepositoryTrustPolicy({
           repositoryId: 'express',
           origin: RepositoryOrigin.CLONED_EXTERNAL,
@@ -58,7 +58,6 @@ export async function runBuildDataset(options: { maxCandidates?: number } = {}) 
       },
     },
     fastapi: {
-      path: path.join(rootDir, 'benchmarks/fastapi-repo'),
       options: {
         includePatterns: ['fastapi/**'],
         excludePatterns: ['**/tests/**', '**/docs/**', '**/__pycache__/**'],
@@ -69,7 +68,6 @@ export async function runBuildDataset(options: { maxCandidates?: number } = {}) 
       },
     },
     siftrcode: {
-      path: rootDir,
       options: {
         includePatterns: ['src/**'],
         excludePatterns: ['**/node_modules/**', '**/dist/**', '**/temp_*/**', '**/benchmarks/**'],
@@ -81,34 +79,80 @@ export async function runBuildDataset(options: { maxCandidates?: number } = {}) 
     },
   };
 
-  console.log('📚 Indexing repositories on disk...');
-  const repoData: Record<string, any> = {};
-  for (const [rId, config] of Object.entries(repoConfigs)) {
-    if (fs.existsSync(config.path)) {
-      process.stdout.write(`   Indexing ${rId}... `);
-      const indexer = new RepositoryIndexer();
-      const idx = await indexer.indexRepository(config.path, config.options);
-      const gb = new GraphBuilder();
-      const graph = gb.buildGraph(idx.units, { repoDir: config.path });
-      let gitInt: GitGraphIntelligence | undefined;
-      try {
-        gitInt = new GitGraphIntelligence({ repoDir: config.path });
-      } catch (e) {}
-      repoData[rId] = { units: idx.units, graph, gitInt, path: config.path };
-      console.log(`done (${idx.units.length} units, ${graph.getAllNodes().length} graph nodes)`);
+  // Find all unique (repositoryId, baseCommit) pairs
+  const uniqueRepoCommits = new Map<string, { repoId: string; baseCommit: string }>();
+  for (const ep of manifest.episodes) {
+    const key = `${ep.repositoryId}:${ep.baseCommit}`;
+    if (!uniqueRepoCommits.has(key)) {
+      uniqueRepoCommits.set(key, { repoId: ep.repositoryId, baseCommit: ep.baseCommit });
     }
+  }
+
+  console.log('📚 Resolving point-in-time workspaces and indexing repositories on disk...');
+  const repoData: Record<string, any> = {};
+  for (const [key, { repoId, baseCommit }] of uniqueRepoCommits.entries()) {
+    const resolved = EpisodeWorkspaceResolver.resolveWorkspace(repoId, baseCommit);
+    EpisodeWorkspaceResolver.assertCommit(resolved.workspacePath, baseCommit, repoId);
+
+    process.stdout.write(`   Indexing ${repoId} @ ${baseCommit.slice(0, 8)} (${resolved.isWorktree ? 'isolated worktree' : 'source repo'})... `);
+    const indexer = new RepositoryIndexer();
+    const filterOptions = repoFilterConfigs[repoId]?.options;
+    const idx = await indexer.indexRepository(resolved.workspacePath, filterOptions);
+    const gb = new GraphBuilder();
+    const graph = gb.buildGraph(idx.units, { repoDir: resolved.workspacePath });
+    let gitInt: GitGraphIntelligence | undefined;
+    try {
+      gitInt = new GitGraphIntelligence({ repoDir: resolved.workspacePath });
+      const origExtract = gitInt.extractCoChangePairs.bind(gitInt);
+      const coChangeMap = new Map();
+      (gitInt as any).extractCoChangePairs = (cutoff: any) => {
+        const k = cutoff ? cutoff.timestamp : 'head';
+        if (!coChangeMap.has(k)) {
+          coChangeMap.set(k, origExtract(cutoff));
+        }
+        return coChangeMap.get(k);
+      };
+
+      const origFreq = gitInt.getFileChangeFrequency.bind(gitInt);
+      const freqMap = new Map();
+      (gitInt as any).getFileChangeFrequency = (file: string, cutoff: any) => {
+        const k = `${file}|${cutoff ? cutoff.timestamp : 'head'}`;
+        if (!freqMap.has(k)) {
+          freqMap.set(k, origFreq(file, cutoff));
+        }
+        return freqMap.get(k);
+      };
+
+      const origRecent = gitInt.getRecentChangeFrequency.bind(gitInt);
+      const recentMap = new Map();
+      (gitInt as any).getRecentChangeFrequency = (file: string, days: number, cutoff: any) => {
+        const k = `${file}|${days}|${cutoff ? cutoff.timestamp : 'head'}`;
+        if (!recentMap.has(k)) {
+          recentMap.set(k, origRecent(file, days, cutoff));
+        }
+        return recentMap.get(k);
+      };
+    } catch (e) {}
+
+    repoData[key] = { units: idx.units, graph, gitInt, path: resolved.workspacePath, baseCommit };
+    console.log(`done (${idx.units.length} units, ${graph.getAllNodes().length} graph nodes)`);
   }
 
   console.log(`\n🔍 Generating candidate features for ${manifest.episodes.length} episodes...`);
   const datasetBuilder = new SiftrDatasetV1Builder();
   const rows: DatasetRowV1[] = [];
   const candGen = new CandidateGenerator({ maxCandidates });
-  const defaultRights = createDefaultDataRights();
+  const defaultRights = createDefaultDataRights({ trainingAllowed: true });
 
   for (let i = 0; i < manifest.episodes.length; i++) {
     const ep = manifest.episodes[i];
-    const rInfo = repoData[ep.repositoryId];
+    const epKey = `${ep.repositoryId}:${ep.baseCommit}`;
+    const rInfo = repoData[epKey];
     if (!rInfo) continue;
+
+    if ((i + 1) % 20 === 0 || i === manifest.episodes.length - 1) {
+      process.stdout.write(`   Progress: ${i + 1}/${manifest.episodes.length} episodes (${rows.length} rows extracted)...\n`);
+    }
 
     const split = splitMap.get(ep.episodeId) || 'train';
     const taskCtx = createTaskContext({
@@ -117,6 +161,11 @@ export async function runBuildDataset(options: { maxCandidates?: number } = {}) 
       workspaceRoot: rInfo.path,
       agentEnvironment: createAgentEnvironment({ agentKind: 'generic_mcp' }),
     });
+
+    const featureCutoff = {
+      timestamp: ep.temporalCutoff,
+      workspaceSnapshotId: ep.workspaceSnapshotId,
+    };
 
     const candidates = candGen.generateCandidates(taskCtx, rInfo.units, rInfo.graph, rInfo.gitInt);
     const unitsMap = new Map();
@@ -154,8 +203,9 @@ export async function runBuildDataset(options: { maxCandidates?: number } = {}) 
     for (const cf of candidateFeatures) {
       const { cand, u, features } = cf;
       const isExposed = exposedUnitIds.has(cand.contextUnitId);
-      const isTarget = u.path ? ep.expectedTargetPaths.some(tp => u.path.toLowerCase().endsWith(tp.toLowerCase()) || u.path.toLowerCase().includes(tp.toLowerCase())) : false;
 
+      // Separate benchmark relevance from behavioral telemetry:
+      // Do NOT invent read/edited/taskSucceeded from ground-truth membership!
       const row = datasetBuilder.createRow({
         episode: ep,
         split,
@@ -164,10 +214,7 @@ export async function runBuildDataset(options: { maxCandidates?: number } = {}) 
         features,
         candidateSources: cand.retrievalSources,
         isExposed,
-        observability: isExposed ? 'FULL_TOOL_TRACE' : 'UNOBSERVED',
-        read: isExposed && isTarget,
-        edited: isExposed && isTarget,
-        taskSucceeded: true,
+        observability: isExposed ? 'LIMITED_TELEMETRY' : 'UNOBSERVED',
         dataRights: defaultRights,
       });
 
@@ -182,9 +229,10 @@ export async function runBuildDataset(options: { maxCandidates?: number } = {}) 
   const datasetPath = path.join(dataDir, 'siftr_dataset_v1.json');
   fs.writeFileSync(datasetPath, JSON.stringify({ ...dataset, rowsByEpisode: undefined }, null, 2), 'utf8');
   console.log(`✔ Persisted Sanctioned Dataset: ${datasetPath}`);
-  console.log(`   Positive rows:      ${dataset.summary.positiveRows}`);
-  console.log(`   Weak-Negative rows: ${dataset.summary.weakNegativeRows}`);
-  console.log(`   Unknown rows:       ${dataset.summary.unknownRows} (strictly excluded from negatives)`);
+  console.log(`   Benchmark Target Positives:    ${dataset.summary.benchmarkPositives}`);
+  console.log(`   Benchmark Non-Targets:         ${dataset.summary.benchmarkNonTargets}`);
+  console.log(`   Behavioral Observed Negatives: ${dataset.summary.behavioralObservedNegatives} (real telemetry)`);
+  console.log(`   Behavioral Unknown:            ${dataset.summary.behavioralUnknown} (strictly preserved)`);
 
   console.log('\n⚖️  Building within-task pairwise ranking pairs...');
   const pairwiseDataset = PairwiseBuilder.buildPairs(dataset, { includeJev: true });
@@ -195,6 +243,9 @@ export async function runBuildDataset(options: { maxCandidates?: number } = {}) 
   console.log(`   Train Pairs: ${pairwiseDataset.report.pairsPerSplit.train}`);
   console.log(`   Val Pairs:   ${pairwiseDataset.report.pairsPerSplit.validation}`);
   console.log(`   Test Pairs:  ${pairwiseDataset.report.pairsPerSplit.test}`);
+  console.log(`   Benchmark Positives Used:   ${pairwiseDataset.report.benchmarkPositivesUsed}`);
+  console.log(`   Benchmark Non-Targets Used: ${pairwiseDataset.report.benchmarkNonTargetsUsed}`);
+  console.log(`   Unknown Rows Excluded:      ${pairwiseDataset.report.unknownRowsExcluded}`);
 
   return { dataset, pairwiseDataset };
 }

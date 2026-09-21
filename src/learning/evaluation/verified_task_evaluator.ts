@@ -62,6 +62,8 @@ export interface VerifiedTaskEvaluationReport {
   schemaVersion: 'siftrcode-verified-task-eval-v1';
   evaluatedAt: string;
   totalPairedTasks: number;
+  blockReason?: string;
+  missingDependencies?: string[];
   v2Summary: VerifiedEvaluationSummary;
   v3Summary: VerifiedEvaluationSummary;
   pairedDeltas: {
@@ -73,6 +75,21 @@ export interface VerifiedTaskEvaluationReport {
     v3Wins: number;
     v2Wins: number;
     ties: number;
+    mcNemar?: {
+      statistic: number;
+      pValue: number;
+      discordantCount: number;
+      isSignificantAt05: boolean;
+      summary: string;
+    };
+  };
+  proxyOfflineMetrics?: {
+    totalTasks: number;
+    v2TargetBundleSuccessRate: number;
+    v3TargetBundleSuccessRate: number;
+    delta: number;
+    modeledCostPerTargetCoveredTaskV2USD: number;
+    modeledCostPerTargetCoveredTaskV3USD: number;
   };
   gateDecision: GateDecision;
   decisionRationale: string;
@@ -90,8 +107,8 @@ export class VerifiedTaskEvaluator {
     const n = Math.max(1, runs.length);
     const successes = runs.filter((r) => r.verifiedSuccess === true).length;
     const totalTokens = runs.reduce((acc, r) => acc + r.contextTokens, 0);
-    const totalCost = runs.reduce((acc, r) => acc + r.providerCostUSD, 0);
-    const totalLatency = runs.reduce((acc, r) => acc + r.wallClockLatencyMs, 0);
+    const totalCost = runs.reduce((acc, r) => acc + (r.providerCostUSD || 0), 0);
+    const totalLatency = runs.reduce((acc, r) => acc + (r.wallClockLatencyMs || 0), 0);
 
     const cpvstUSD = successes > 0 ? Number((totalCost / successes).toFixed(4)) : null;
 
@@ -110,6 +127,66 @@ export class VerifiedTaskEvaluator {
   }
 
   /**
+   * Computes McNemar exact test with continuity correction and exact binomial p-value.
+   */
+  public static computeMcNemarTest(v3Wins: number, v2Wins: number): {
+    statistic: number;
+    pValue: number;
+    discordantCount: number;
+    isSignificantAt05: boolean;
+    summary: string;
+  } {
+    const b = v3Wins;
+    const c = v2Wins;
+    const totalDiscordant = b + c;
+
+    if (totalDiscordant === 0) {
+      return {
+        statistic: 0,
+        pValue: 1.0,
+        discordantCount: 0,
+        isSignificantAt05: false,
+        summary: 'No discordant pairs (b=0, c=0); p = 1.0000',
+      };
+    }
+
+    // Chi-squared with Edwards continuity correction: (|b - c| - 1)^2 / (b + c)
+    const num = Math.max(0, Math.abs(b - c) - 1);
+    const statistic = Number(((num * num) / totalDiscordant).toFixed(4));
+
+    // Exact two-tailed binomial p-value: 2 * sum_{k=0}^{min(b,c)} binom(n, k) * 0.5^n
+    const minVal = Math.min(b, c);
+    let cumulativeProb = 0;
+    for (let k = 0; k <= minVal; k++) {
+      cumulativeProb += this.binomialCoeff(totalDiscordant, k) * Math.pow(0.5, totalDiscordant);
+    }
+    const pValue = Number(Math.min(1.0, 2 * cumulativeProb).toFixed(4));
+    const isSignificantAt05 = pValue < 0.05;
+
+    const summary = isSignificantAt05
+      ? `Statistically significant paired lift (V3 wins: ${b}, V2 wins: ${c}, p = ${pValue})`
+      : `Directionally positive but not statistically significant at alpha = 0.05 (V3 wins: ${b}, V2 wins: ${c}, p = ${pValue})`;
+
+    return {
+      statistic,
+      pValue,
+      discordantCount: totalDiscordant,
+      isSignificantAt05,
+      summary,
+    };
+  }
+
+  private static binomialCoeff(n: number, k: number): number {
+    if (k < 0 || k > n) return 0;
+    if (k === 0 || k === n) return 1;
+    let c = 1;
+    for (let i = 1; i <= k; i++) {
+      c = (c * (n - (k - i))) / i;
+    }
+    return c;
+  }
+
+  /**
    * Evaluates paired A/B results and produces the final V3.1 Gate Decision.
    */
   public static evaluatePairedExperiment(
@@ -118,6 +195,16 @@ export class VerifiedTaskEvaluator {
       minTasksForPromotion?: number;
       minSuccessDelta?: number;
       allowCostReductionAtEqualSuccess?: boolean;
+      blockedReason?: string;
+      missingDependencies?: string[];
+      proxyOfflineMetrics?: {
+        totalTasks: number;
+        v2TargetBundleSuccessRate: number;
+        v3TargetBundleSuccessRate: number;
+        delta: number;
+        modeledCostPerTargetCoveredTaskV2USD: number;
+        modeledCostPerTargetCoveredTaskV3USD: number;
+      };
     } = {}
   ): VerifiedTaskEvaluationReport {
     const minTasks = options.minTasksForPromotion ?? 30;
@@ -152,16 +239,29 @@ export class VerifiedTaskEvaluator {
       cpvstDeltaUSD = Number((v3Summary.cpvstUSD - v2Summary.cpvstUSD).toFixed(4));
     }
 
+    const mcNemar = this.computeMcNemarTest(v3Wins, v2Wins);
+
     // Determine Gate Decision
     let gateDecision: GateDecision;
     let decisionRationale: string;
 
-    if (pairedTasks.length < minTasks) {
+    if (options.blockedReason) {
+      gateDecision = 'V3.1_INSUFFICIENT_EVIDENCE';
+      decisionRationale = options.blockedReason;
+    } else if (pairedTasks.length < minTasks) {
       gateDecision = 'V3.1_INSUFFICIENT_EVIDENCE';
       decisionRationale = `Evaluated ${pairedTasks.length} tasks, which is below the threshold of ${minTasks} independent verified episodes required for production promotion.`;
+    } else if (v3Summary.successRate < v2Summary.successRate) {
+      gateDecision = 'V3.1_FAILED_TO_BEAT_BASELINE';
+      decisionRationale = `Learned ContextRank V3 verified success rate (${(v3Summary.successRate * 100).toFixed(1)}%) is lower than frozen V2 baseline (${(v2Summary.successRate * 100).toFixed(1)}%). Baseline remains standard.`;
     } else if (successRateDelta > minSuccessDelta) {
-      gateDecision = 'V3.1_PROMOTION_GATE_PASSED';
-      decisionRationale = `Learned ContextRank V3 demonstrated statistically meaningful lift in verified task success (${(v3Summary.successRate * 100).toFixed(1)}% vs ${(v2Summary.successRate * 100).toFixed(1)}%, delta +${(successRateDelta * 100).toFixed(1)}%) with CPVST of $${v3Summary.cpvstUSD}.`;
+      if (mcNemar.isSignificantAt05 || v3Wins >= 3) {
+        gateDecision = 'V3.1_PROMOTION_GATE_PASSED';
+        decisionRationale = `Learned ContextRank V3 demonstrated lift in verified task success (${(v3Summary.successRate * 100).toFixed(1)}% vs ${(v2Summary.successRate * 100).toFixed(1)}%, delta +${(successRateDelta * 100).toFixed(1)}%) with CPVST of $${v3Summary.cpvstUSD}. McNemar test: ${mcNemar.summary}.`;
+      } else {
+        gateDecision = 'V3.1_INSUFFICIENT_EVIDENCE';
+        decisionRationale = `Learned ContextRank V3 showed directional lift (+${(successRateDelta * 100).toFixed(1)}%) but insufficient statistical confidence (${mcNemar.summary}). Additional evaluation episodes required.`;
+      }
     } else if (successRateDelta === 0 && cpvstDeltaUSD !== null && cpvstDeltaUSD < 0) {
       gateDecision = 'V3.1_PROMOTION_GATE_PASSED';
       decisionRationale = `Learned ContextRank V3 matched baseline verified success (${(v3Summary.successRate * 100).toFixed(1)}%) while reducing CPVST by $${Math.abs(cpvstDeltaUSD)} per successful task.`;
@@ -174,6 +274,8 @@ export class VerifiedTaskEvaluator {
       schemaVersion: 'siftrcode-verified-task-eval-v1',
       evaluatedAt: new Date().toISOString(),
       totalPairedTasks: pairedTasks.length,
+      blockReason: options.blockedReason,
+      missingDependencies: options.missingDependencies,
       v2Summary,
       v3Summary,
       pairedDeltas: {
@@ -185,7 +287,9 @@ export class VerifiedTaskEvaluator {
         v3Wins,
         v2Wins,
         ties,
+        mcNemar,
       },
+      proxyOfflineMetrics: options.proxyOfflineMetrics,
       gateDecision,
       decisionRationale,
       pairedTasks,

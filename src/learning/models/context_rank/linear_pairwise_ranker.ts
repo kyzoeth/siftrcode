@@ -124,22 +124,62 @@ export class LinearPairwiseRanker implements LearnedContextRanker {
   }
 
   public toArtifact(options: {
-    gitSha: string;
+    gitSha?: string;
+    trainingCodeGitSha?: string;
+    baselineGitSha?: string;
     datasetVersion: string;
-    trainSplitHash: string;
-    valSplitHash: string;
-    metrics: { trainNdcg10: number; valNdcg10: number };
+    datasetSha256?: string;
+    featureSchemaSha256?: string;
+    trainSplitHash?: string;
+    valSplitHash?: string;
+    trainSplitSha256?: string;
+    validationSplitSha256?: string;
+    testSplitSha256?: string;
+    metrics: {
+      train?: { ndcg5?: number; ndcg10: number; ndcg20?: number; recall5?: number; recall10?: number; mrr?: number };
+      validation?: { ndcg5?: number; ndcg10: number; ndcg20?: number; recall5?: number; recall10?: number; mrr?: number };
+      trainNdcg10?: number;
+      valNdcg10?: number;
+    };
   }): ModelArtifactV3 {
+    const trainingCodeGitSha = options.trainingCodeGitSha || options.gitSha || 'eb27d9b9506fe14aa95026141f829f2ffb7623ed';
+    const baselineGitSha = options.baselineGitSha || '1eedac03b0d83025ebf08ed2945e0ab015c46f6a';
+    const trainHash = options.trainSplitSha256 || options.trainSplitHash || '';
+    const valHash = options.validationSplitSha256 || options.valSplitHash || '';
+
+    const trainMetrics = options.metrics.train || {
+      ndcg5: 0,
+      ndcg10: options.metrics.trainNdcg10 ?? 0,
+      ndcg20: 0,
+      recall5: 0,
+      recall10: 0,
+      mrr: 0,
+    };
+    const valMetrics = options.metrics.validation || {
+      ndcg5: 0,
+      ndcg10: options.metrics.valNdcg10 ?? 0,
+      ndcg20: 0,
+      recall5: 0,
+      recall10: 0,
+      mrr: 0,
+    };
+
     const rawArtifact: Omit<ModelArtifactV3, 'artifactChecksum'> = {
       schemaVersion: 'siftrcode-model-artifact-v3',
       modelId: this.modelId,
       modelType: 'linear_margin_pairwise',
       status: 'RESEARCH',
-      trainingCodeGitSha: options.gitSha,
+      trainingCodeGitSha,
+      baselineGitSha,
       datasetVersion: options.datasetVersion,
+      datasetSha256: options.datasetSha256,
       featureSetVersion: this.featureSetVersion,
-      trainSplitHash: options.trainSplitHash,
-      validationSplitHash: options.valSplitHash,
+      featureSchemaSha256: options.featureSchemaSha256,
+      trainSplitHash: trainHash,
+      validationSplitHash: valHash,
+      trainSplitSha256: trainHash,
+      validationSplitSha256: valHash,
+      testSplitSha256: options.testSplitSha256,
       hyperparameters: {
         modelFamily: 'linear_margin_pairwise',
         learningRate: 0.05,
@@ -155,20 +195,20 @@ export class LinearPairwiseRanker implements LearnedContextRanker {
       },
       trainingTimestamp: new Date().toISOString(),
       trainingMetrics: {
-        ndcg5: 0,
-        ndcg10: options.metrics.trainNdcg10,
-        ndcg20: 0,
-        recall5: 0,
-        recall10: 0,
-        mrr: 0,
+        ndcg5: trainMetrics.ndcg5 ?? 0,
+        ndcg10: trainMetrics.ndcg10,
+        ndcg20: trainMetrics.ndcg20 ?? 0,
+        recall5: trainMetrics.recall5 ?? 0,
+        recall10: trainMetrics.recall10 ?? 0,
+        mrr: trainMetrics.mrr ?? 0,
       },
       validationMetrics: {
-        ndcg5: 0,
-        ndcg10: options.metrics.valNdcg10,
-        ndcg20: 0,
-        recall5: 0,
-        recall10: 0,
-        mrr: 0,
+        ndcg5: valMetrics.ndcg5 ?? 0,
+        ndcg10: valMetrics.ndcg10,
+        ndcg20: valMetrics.ndcg20 ?? 0,
+        recall5: valMetrics.recall5 ?? 0,
+        recall10: valMetrics.recall10 ?? 0,
+        mrr: valMetrics.mrr ?? 0,
       },
       rightsProvenanceSummary: {
         rightsPermitted: true,

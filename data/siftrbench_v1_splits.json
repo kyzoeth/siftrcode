@@ -1,7 +1,7 @@
 {
   "schemaVersion": "siftrbench-split-manifest-v1",
   "benchmarkVersion": "siftrbench-v1",
-  "createdAt": "2026-09-21T20:15:18.175Z",
+  "createdAt": "2026-09-21T20:31:44.844Z",
   "splitCodeVersion": "v3.1.0",
   "randomSeed": 42,
   "ratios": {
@@ -10,17 +10,17 @@
     "test": 0.15
   },
   "counts": {
-    "train": 39,
-    "validation": 44,
-    "test": 38,
+    "train": 66,
+    "validation": 22,
+    "test": 33,
     "total": 121
   },
   "groupCounts": {
-    "train": 11,
-    "validation": 5,
+    "train": 19,
+    "validation": 10,
     "test": 12
   },
-  "checksum": "f95c1bbe22a870a4fbd3154614f7d6c5c40de0f2d19fdf06ce26df8d147d959b",
+  "checksum": "be0b260ad528ba1730ff761172c03e154f65a2f32619c18ab97e57348b0d26b9",
   "assignments": [
     {
       "episodeId": "sb1_exp_01_route_dispatch",
@@ -45,7 +45,7 @@
       "taskId": "exp_03_query_parser_fn",
       "repositoryId": "express",
       "splitGroupId": "split_express_middleware",
-      "split": "test",
+      "split": "validation",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -53,8 +53,8 @@
       "episodeId": "sb1_exp_04_response_charset",
       "taskId": "exp_04_response_charset",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_response",
+      "split": "test",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -62,7 +62,7 @@
       "episodeId": "sb1_exp_05_mountpath_prefix",
       "taskId": "exp_05_mountpath_prefix",
       "repositoryId": "express",
-      "splitGroupId": "split_express_core",
+      "splitGroupId": "split_express_application",
       "split": "train",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
@@ -80,8 +80,8 @@
       "episodeId": "sb1_exp_07_cookie_signature",
       "taskId": "exp_07_cookie_signature",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_request",
+      "split": "train",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -90,7 +90,7 @@
       "taskId": "exp_08_view_lookup_cache",
       "repositoryId": "express",
       "splitGroupId": "split_express_view",
-      "split": "test",
+      "split": "train",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -99,7 +99,7 @@
       "taskId": "exp_09_json_max_bytes",
       "repositoryId": "express",
       "splitGroupId": "split_express_core",
-      "split": "train",
+      "split": "validation",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -107,8 +107,8 @@
       "episodeId": "sb1_exp_10_range_header_boundary",
       "taskId": "exp_10_range_header_boundary",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_response",
+      "split": "test",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -125,8 +125,8 @@
       "episodeId": "sb1_exp_12_req_accepts_encodings",
       "taskId": "exp_12_req_accepts_encodings",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_request",
+      "split": "train",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -134,7 +134,7 @@
       "episodeId": "sb1_exp_13_app_engine_registration",
       "taskId": "exp_13_app_engine_registration",
       "repositoryId": "express",
-      "splitGroupId": "split_express_core",
+      "splitGroupId": "split_express_application",
       "split": "train",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
@@ -143,8 +143,8 @@
       "episodeId": "sb1_exp_14_res_cookie_options",
       "taskId": "exp_14_res_cookie_options",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_response",
+      "split": "test",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -152,8 +152,8 @@
       "episodeId": "sb1_exp_15_res_format_canonical",
       "taskId": "exp_15_res_format_canonical",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_response",
+      "split": "test",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -162,7 +162,7 @@
       "taskId": "exp_16_middleware_init_circular",
       "repositoryId": "express",
       "splitGroupId": "split_express_middleware",
-      "split": "test",
+      "split": "validation",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -170,7 +170,7 @@
       "episodeId": "sb1_exp_17_etag_weak_formatting",
       "taskId": "exp_17_etag_weak_formatting",
       "repositoryId": "express",
-      "splitGroupId": "split_express_core",
+      "splitGroupId": "split_express_utils",
       "split": "train",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
@@ -188,8 +188,8 @@
       "episodeId": "sb1_exp_19_req_protocol_trust_proxy",
       "taskId": "exp_19_req_protocol_trust_proxy",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_request",
+      "split": "train",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -206,8 +206,8 @@
       "episodeId": "sb1_exp_21_res_links_header",
       "taskId": "exp_21_res_links_header",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_response",
+      "split": "test",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -215,8 +215,8 @@
       "episodeId": "sb1_exp_22_res_attachment_filename",
       "taskId": "exp_22_res_attachment_filename",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_response",
+      "split": "test",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -224,7 +224,7 @@
       "episodeId": "sb1_exp_23_app_listen_error_emit",
       "taskId": "exp_23_app_listen_error_emit",
       "repositoryId": "express",
-      "splitGroupId": "split_express_core",
+      "splitGroupId": "split_express_application",
       "split": "train",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
@@ -233,8 +233,8 @@
       "episodeId": "sb1_exp_24_req_ip_ipv6_bracket",
       "taskId": "exp_24_req_ip_ipv6_bracket",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_request",
+      "split": "train",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -251,8 +251,8 @@
       "episodeId": "sb1_exp_26_res_download_cleanup",
       "taskId": "exp_26_res_download_cleanup",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_response",
+      "split": "test",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -261,7 +261,7 @@
       "taskId": "exp_27_view_resolve_symlink",
       "repositoryId": "express",
       "splitGroupId": "split_express_view",
-      "split": "test",
+      "split": "train",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -270,7 +270,7 @@
       "taskId": "exp_28_query_array_limit",
       "repositoryId": "express",
       "splitGroupId": "split_express_middleware",
-      "split": "test",
+      "split": "validation",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -278,8 +278,8 @@
       "episodeId": "sb1_exp_29_res_jsonp_callback_sanitize",
       "taskId": "exp_29_res_jsonp_callback_sanitize",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_response",
+      "split": "test",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -287,7 +287,7 @@
       "episodeId": "sb1_exp_30_app_route_chaining",
       "taskId": "exp_30_app_route_chaining",
       "repositoryId": "express",
-      "splitGroupId": "split_express_core",
+      "splitGroupId": "split_express_application",
       "split": "train",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
@@ -296,8 +296,8 @@
       "episodeId": "sb1_exp_31_req_subdomains_tld",
       "taskId": "exp_31_req_subdomains_tld",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_request",
+      "split": "train",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -305,8 +305,8 @@
       "episodeId": "sb1_exp_32_res_vary_duplicate",
       "taskId": "exp_32_res_vary_duplicate",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_response",
+      "split": "test",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -323,8 +323,8 @@
       "episodeId": "sb1_exp_34_res_type_lookup",
       "taskId": "exp_34_res_type_lookup",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_response",
+      "split": "test",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -332,7 +332,7 @@
       "episodeId": "sb1_exp_35_app_disable_enable",
       "taskId": "exp_35_app_disable_enable",
       "repositoryId": "express",
-      "splitGroupId": "split_express_core",
+      "splitGroupId": "split_express_application",
       "split": "train",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
@@ -350,8 +350,8 @@
       "episodeId": "sb1_exp_37_res_location_encode",
       "taskId": "exp_37_res_location_encode",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_response",
+      "split": "test",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -359,8 +359,8 @@
       "episodeId": "sb1_exp_38_req_stale_etag",
       "taskId": "exp_38_req_stale_etag",
       "repositoryId": "express",
-      "splitGroupId": "split_express_http",
-      "split": "validation",
+      "splitGroupId": "split_express_request",
+      "split": "train",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -378,7 +378,7 @@
       "taskId": "exp_40_express_create_app",
       "repositoryId": "express",
       "splitGroupId": "split_express_core",
-      "split": "train",
+      "split": "validation",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -386,8 +386,8 @@
       "episodeId": "sb1_fa_01_path_param_regex",
       "taskId": "fa_01_path_param_regex",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_routing",
+      "split": "test",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -395,8 +395,8 @@
       "episodeId": "sb1_fa_02_query_ellipsis_default",
       "taskId": "fa_02_query_ellipsis_default",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_params",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -423,7 +423,7 @@
       "taskId": "fa_05_oauth2_bearer_header",
       "repositoryId": "fastapi",
       "splitGroupId": "split_fastapi_security",
-      "split": "test",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -431,8 +431,8 @@
       "episodeId": "sb1_fa_06_response_status_override",
       "taskId": "fa_06_response_status_override",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_routing",
+      "split": "test",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -449,8 +449,8 @@
       "episodeId": "sb1_fa_08_jsonable_encoder_uuid",
       "taskId": "fa_08_jsonable_encoder_uuid",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_encoders",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -458,8 +458,8 @@
       "episodeId": "sb1_fa_09_validation_error_loc",
       "taskId": "fa_09_validation_error_loc",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_exceptions",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -467,8 +467,8 @@
       "episodeId": "sb1_fa_10_cors_preflight_headers",
       "taskId": "fa_10_cors_preflight_headers",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_middleware",
-      "split": "test",
+      "splitGroupId": "split_fastapi_core",
+      "split": "validation",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -477,7 +477,7 @@
       "taskId": "fa_11_security_http_basic",
       "repositoryId": "fastapi",
       "splitGroupId": "split_fastapi_security",
-      "split": "test",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -485,8 +485,8 @@
       "episodeId": "sb1_fa_12_param_functions_header_convert",
       "taskId": "fa_12_param_functions_header_convert",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_params",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -504,7 +504,7 @@
       "taskId": "fa_14_api_key_query_security",
       "repositoryId": "fastapi",
       "splitGroupId": "split_fastapi_security",
-      "split": "test",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -512,8 +512,8 @@
       "episodeId": "sb1_fa_15_response_model_exclude_unset",
       "taskId": "fa_15_response_model_exclude_unset",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_routing",
+      "split": "test",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -530,8 +530,8 @@
       "episodeId": "sb1_fa_17_app_mount_sub_app_routing",
       "taskId": "fa_17_app_mount_sub_app_routing",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_app",
+      "split": "test",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -548,8 +548,8 @@
       "episodeId": "sb1_fa_19_encoders_custom_types",
       "taskId": "fa_19_encoders_custom_types",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_encoders",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -557,8 +557,8 @@
       "episodeId": "sb1_fa_20_exception_handler_status_mapping",
       "taskId": "fa_20_exception_handler_status_mapping",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_exceptions",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -567,7 +567,7 @@
       "taskId": "fa_21_security_openid_discovery",
       "repositoryId": "fastapi",
       "splitGroupId": "split_fastapi_security",
-      "split": "test",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -584,8 +584,8 @@
       "episodeId": "sb1_fa_23_routing_include_router_prefix",
       "taskId": "fa_23_routing_include_router_prefix",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_routing",
+      "split": "test",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -593,8 +593,8 @@
       "episodeId": "sb1_fa_24_datastructures_upload_file_async",
       "taskId": "fa_24_datastructures_upload_file_async",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_datastructures",
+      "split": "test",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -611,8 +611,8 @@
       "episodeId": "sb1_fa_26_middleware_wsgi_lifespan",
       "taskId": "fa_26_middleware_wsgi_lifespan",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_middleware",
-      "split": "test",
+      "splitGroupId": "split_fastapi_core",
+      "split": "validation",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -620,8 +620,8 @@
       "episodeId": "sb1_fa_27_routing_endpoint_docstring_summary",
       "taskId": "fa_27_routing_endpoint_docstring_summary",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_routing",
+      "split": "test",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -629,8 +629,8 @@
       "episodeId": "sb1_fa_28_encoders_pydantic_v2_compat",
       "taskId": "fa_28_encoders_pydantic_v2_compat",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_encoders",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -639,7 +639,7 @@
       "taskId": "fa_29_security_api_key_cookie",
       "repositoryId": "fastapi",
       "splitGroupId": "split_fastapi_security",
-      "split": "test",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -656,8 +656,8 @@
       "episodeId": "sb1_fa_31_params_form_data_validation",
       "taskId": "fa_31_params_form_data_validation",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_params",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -665,8 +665,8 @@
       "episodeId": "sb1_fa_32_routing_websocket_endpoint",
       "taskId": "fa_32_routing_websocket_endpoint",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_routing",
+      "split": "test",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -683,8 +683,8 @@
       "episodeId": "sb1_fa_34_applications_openapi_url_none",
       "taskId": "fa_34_applications_openapi_url_none",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_app",
+      "split": "test",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -692,8 +692,8 @@
       "episodeId": "sb1_fa_35_encoders_sqlalchemy_model",
       "taskId": "fa_35_encoders_sqlalchemy_model",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_encoders",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -701,8 +701,8 @@
       "episodeId": "sb1_fa_36_routing_generate_unique_id",
       "taskId": "fa_36_routing_generate_unique_id",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_routing",
+      "split": "test",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -710,8 +710,8 @@
       "episodeId": "sb1_fa_37_params_path_regex_escaping",
       "taskId": "fa_37_params_path_regex_escaping",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_params",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -737,8 +737,8 @@
       "episodeId": "sb1_fa_40_applications_lifespan_context",
       "taskId": "fa_40_applications_lifespan_context",
       "repositoryId": "fastapi",
-      "splitGroupId": "split_fastapi_core",
-      "split": "validation",
+      "splitGroupId": "split_fastapi_app",
+      "split": "test",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -747,7 +747,7 @@
       "taskId": "siftr_01_golang_struct_tags",
       "repositoryId": "siftrcode",
       "splitGroupId": "split_siftrcode_core",
-      "split": "test",
+      "split": "train",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     },
@@ -756,7 +756,7 @@
       "taskId": "siftr_02_python_decorator_slice",
       "repositoryId": "siftrcode",
       "splitGroupId": "split_siftrcode_core",
-      "split": "test",
+      "split": "train",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     },
@@ -764,8 +764,8 @@
       "episodeId": "sb1_siftr_03_graph_cycle_detection",
       "taskId": "siftr_03_graph_cycle_detection",
       "repositoryId": "siftrcode",
-      "splitGroupId": "split_siftrcode_core",
-      "split": "test",
+      "splitGroupId": "split_siftrcode_graph",
+      "split": "validation",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     },
@@ -773,7 +773,7 @@
       "episodeId": "sb1_siftr_04_budget_knapsack_boundary",
       "taskId": "siftr_04_budget_knapsack_boundary",
       "repositoryId": "siftrcode",
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_context",
       "split": "test",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
@@ -782,7 +782,7 @@
       "episodeId": "sb1_siftr_05_egress_regex_redaction",
       "taskId": "siftr_05_egress_regex_redaction",
       "repositoryId": "siftrcode",
-      "splitGroupId": "split_siftrcode_security",
+      "splitGroupId": "split_siftrcode_core",
       "split": "train",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
@@ -792,7 +792,7 @@
       "taskId": "siftr_06_rust_parser_impl_blocks",
       "repositoryId": "siftrcode",
       "splitGroupId": "split_siftrcode_core",
-      "split": "test",
+      "split": "train",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     },
@@ -801,7 +801,7 @@
       "taskId": "siftr_07_ts_parser_interface_members",
       "repositoryId": "siftrcode",
       "splitGroupId": "split_siftrcode_core",
-      "split": "test",
+      "split": "train",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     },
@@ -809,7 +809,7 @@
       "episodeId": "sb1_siftr_08_tokenizer_registry_safety_margins",
       "taskId": "siftr_08_tokenizer_registry_safety_margins",
       "repositoryId": "siftrcode",
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_token",
       "split": "test",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
@@ -818,8 +818,8 @@
       "episodeId": "sb1_siftr_09_git_graph_co_change_decay",
       "taskId": "siftr_09_git_graph_co_change_decay",
       "repositoryId": "siftrcode",
-      "splitGroupId": "split_siftrcode_core",
-      "split": "test",
+      "splitGroupId": "split_siftrcode_graph",
+      "split": "validation",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     },
@@ -827,7 +827,7 @@
       "episodeId": "sb1_siftr_10_materializer_missing_file_error",
       "taskId": "siftr_10_materializer_missing_file_error",
       "repositoryId": "siftrcode",
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_context",
       "split": "test",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
@@ -836,7 +836,7 @@
       "episodeId": "sb1_siftr_11_candidate_generator_bm25_stop_words",
       "taskId": "siftr_11_candidate_generator_bm25_stop_words",
       "repositoryId": "siftrcode",
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_retrieval",
       "split": "test",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
@@ -845,8 +845,8 @@
       "episodeId": "sb1_siftr_12_feature_builder_exact_symbol_match",
       "taskId": "siftr_12_feature_builder_exact_symbol_match",
       "repositoryId": "siftrcode",
-      "splitGroupId": "split_siftrcode_core",
-      "split": "test",
+      "splitGroupId": "split_siftrcode_ranking",
+      "split": "validation",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     },
@@ -863,8 +863,8 @@
       "episodeId": "sb1_siftr_14_mcp_schemas_expand_resolution",
       "taskId": "siftr_14_mcp_schemas_expand_resolution",
       "repositoryId": "siftrcode",
-      "splitGroupId": "split_siftrcode_core",
-      "split": "test",
+      "splitGroupId": "split_siftrcode_mcp",
+      "split": "train",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     },
@@ -872,8 +872,8 @@
       "episodeId": "sb1_siftr_15_context_ranker_penalties",
       "taskId": "siftr_15_context_ranker_penalties",
       "repositoryId": "siftrcode",
-      "splitGroupId": "split_siftrcode_core",
-      "split": "test",
+      "splitGroupId": "split_siftrcode_ranking",
+      "split": "validation",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     },
@@ -890,8 +890,8 @@
       "episodeId": "sb1_siftr_17_graph_builder_export_default_resolution",
       "taskId": "siftr_17_graph_builder_export_default_resolution",
       "repositoryId": "siftrcode",
-      "splitGroupId": "split_siftrcode_core",
-      "split": "test",
+      "splitGroupId": "split_siftrcode_graph",
+      "split": "validation",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     },
@@ -899,7 +899,7 @@
       "episodeId": "sb1_siftr_18_bundle_composer_markdown_formatting",
       "taskId": "siftr_18_bundle_composer_markdown_formatting",
       "repositoryId": "siftrcode",
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_context",
       "split": "test",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
@@ -908,8 +908,8 @@
       "episodeId": "sb1_siftr_19_mcp_server_session_handshake",
       "taskId": "siftr_19_mcp_server_session_handshake",
       "repositoryId": "siftrcode",
-      "splitGroupId": "split_siftrcode_core",
-      "split": "test",
+      "splitGroupId": "split_siftrcode_mcp",
+      "split": "train",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     },
@@ -917,7 +917,7 @@
       "episodeId": "sb1_siftr_20_egress_policy_path_redaction",
       "taskId": "siftr_20_egress_policy_path_redaction",
       "repositoryId": "siftrcode",
-      "splitGroupId": "split_siftrcode_security",
+      "splitGroupId": "split_siftrcode_core",
       "split": "train",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
@@ -936,7 +936,7 @@
       "taskId": "exp_19_res_attachment_disposition",
       "repositoryId": "express",
       "splitGroupId": "group_exp_response",
-      "split": "test",
+      "split": "validation",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -945,7 +945,7 @@
       "taskId": "exp_21_test_route_error_throw",
       "repositoryId": "express",
       "splitGroupId": "group_exp_router_core",
-      "split": "test",
+      "split": "validation",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -954,7 +954,7 @@
       "taskId": "exp_22_security_etag_headers",
       "repositoryId": "express",
       "splitGroupId": "group_exp_response",
-      "split": "test",
+      "split": "validation",
       "baseCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -963,7 +963,7 @@
       "taskId": "fa_01_response_model_exclude_none",
       "repositoryId": "fastapi",
       "splitGroupId": "group_fa_routing",
-      "split": "train",
+      "split": "validation",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -981,7 +981,7 @@
       "taskId": "fa_03_openapi_custom_operation_id",
       "repositoryId": "fastapi",
       "splitGroupId": "group_fa_app",
-      "split": "train",
+      "split": "validation",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -990,7 +990,7 @@
       "taskId": "fa_04_websocket_exception_handler",
       "repositoryId": "fastapi",
       "splitGroupId": "group_fa_routing",
-      "split": "train",
+      "split": "validation",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -999,7 +999,7 @@
       "taskId": "fa_05_header_underscore_mapping",
       "repositoryId": "fastapi",
       "splitGroupId": "group_fa_openapi",
-      "split": "test",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -1017,7 +1017,7 @@
       "taskId": "fa_07_lifespan_state_typing",
       "repositoryId": "fastapi",
       "splitGroupId": "group_fa_app",
-      "split": "train",
+      "split": "validation",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -1035,7 +1035,7 @@
       "taskId": "fa_09_test_failure_uploadfile_seek",
       "repositoryId": "fastapi",
       "splitGroupId": "group_fa_datastructures",
-      "split": "test",
+      "split": "validation",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -1044,7 +1044,7 @@
       "taskId": "fa_10_openapi_components_schema_coordination",
       "repositoryId": "fastapi",
       "splitGroupId": "group_fa_openapi",
-      "split": "test",
+      "split": "train",
       "baseCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
       "temporalCutoff": "2024-01-01T00:00:00.000Z"
     },
@@ -1062,7 +1062,7 @@
       "taskId": "siftr_02_sqlite_tri_state_null",
       "repositoryId": "siftrcode",
       "splitGroupId": "group_siftr_storage",
-      "split": "train",
+      "split": "test",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     },
@@ -1071,7 +1071,7 @@
       "taskId": "siftr_03_rights_filter_wildcard_scope",
       "repositoryId": "siftrcode",
       "splitGroupId": "group_siftr_rights",
-      "split": "validation",
+      "split": "train",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     },
@@ -1080,7 +1080,7 @@
       "taskId": "siftr_04_git_graph_cochange_cutoff",
       "repositoryId": "siftrcode",
       "splitGroupId": "group_siftr_graph",
-      "split": "validation",
+      "split": "test",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     },
@@ -1098,7 +1098,7 @@
       "taskId": "siftr_06_test_failure_sanctioned_brand",
       "repositoryId": "siftrcode",
       "splitGroupId": "group_siftr_learning",
-      "split": "validation",
+      "split": "train",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     },
@@ -1107,7 +1107,7 @@
       "taskId": "siftr_07_learning_plane_pipeline_coordination",
       "repositoryId": "siftrcode",
       "splitGroupId": "group_siftr_learning",
-      "split": "validation",
+      "split": "train",
       "baseCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
       "temporalCutoff": "2026-09-21T13:41:44.000Z"
     }

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "siftrbench-manifest-v1",
   "benchmarkVersion": "siftrbench-v1",
-  "createdAt": "2026-09-21T20:15:18.172Z",
+  "createdAt": "2026-09-21T20:31:44.841Z",
   "totalEpisodes": 121,
   "repositoryDistribution": {
     "express": 44,
@@ -16,7 +16,7 @@
     "MULTI_FILE_COORDINATION": 3,
     "CONFIG_CHANGE": 1
   },
-  "checksum": "292cf11bfff853b659269db13224946bc9b395baf40eaffcb90c2ce482d6e3fb",
+  "checksum": "2b0c7c4a41f2a36dcf538ceaa560ee16539233833a319ca4265643db3485bfa3",
   "episodes": [
     {
       "schemaVersion": "siftrbench-v1",
@@ -146,7 +146,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_response",
       "metadata": {
         "taskIndex": 3,
         "hasRelatedPaths": true
@@ -179,7 +179,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_core",
+      "splitGroupId": "split_express_application",
       "metadata": {
         "taskIndex": 4,
         "hasRelatedPaths": true
@@ -245,7 +245,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_request",
       "metadata": {
         "taskIndex": 6,
         "hasRelatedPaths": true
@@ -344,7 +344,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_response",
       "metadata": {
         "taskIndex": 9,
         "hasRelatedPaths": true
@@ -412,7 +412,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_request",
       "metadata": {
         "taskIndex": 11,
         "hasRelatedPaths": true
@@ -445,7 +445,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_core",
+      "splitGroupId": "split_express_application",
       "metadata": {
         "taskIndex": 12,
         "hasRelatedPaths": true
@@ -478,7 +478,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_response",
       "metadata": {
         "taskIndex": 13,
         "hasRelatedPaths": true
@@ -511,7 +511,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_response",
       "metadata": {
         "taskIndex": 14,
         "hasRelatedPaths": true
@@ -577,7 +577,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_core",
+      "splitGroupId": "split_express_utils",
       "metadata": {
         "taskIndex": 16,
         "hasRelatedPaths": true
@@ -643,7 +643,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_request",
       "metadata": {
         "taskIndex": 18,
         "hasRelatedPaths": true
@@ -709,7 +709,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_response",
       "metadata": {
         "taskIndex": 20,
         "hasRelatedPaths": true
@@ -742,7 +742,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_response",
       "metadata": {
         "taskIndex": 21,
         "hasRelatedPaths": true
@@ -775,7 +775,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_core",
+      "splitGroupId": "split_express_application",
       "metadata": {
         "taskIndex": 22,
         "hasRelatedPaths": true
@@ -808,7 +808,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_request",
       "metadata": {
         "taskIndex": 23,
         "hasRelatedPaths": true
@@ -874,7 +874,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_response",
       "metadata": {
         "taskIndex": 25,
         "hasRelatedPaths": true
@@ -973,7 +973,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_response",
       "metadata": {
         "taskIndex": 28,
         "hasRelatedPaths": true
@@ -1007,7 +1007,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_core",
+      "splitGroupId": "split_express_application",
       "metadata": {
         "taskIndex": 29,
         "hasRelatedPaths": true
@@ -1040,7 +1040,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_request",
       "metadata": {
         "taskIndex": 30,
         "hasRelatedPaths": true
@@ -1073,7 +1073,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_response",
       "metadata": {
         "taskIndex": 31,
         "hasRelatedPaths": true
@@ -1139,7 +1139,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_response",
       "metadata": {
         "taskIndex": 33,
         "hasRelatedPaths": true
@@ -1172,7 +1172,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_core",
+      "splitGroupId": "split_express_application",
       "metadata": {
         "taskIndex": 34,
         "hasRelatedPaths": true
@@ -1238,7 +1238,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_response",
       "metadata": {
         "taskIndex": 36,
         "hasRelatedPaths": true
@@ -1271,7 +1271,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_express_http",
+      "splitGroupId": "split_express_request",
       "metadata": {
         "taskIndex": 37,
         "hasRelatedPaths": true
@@ -1371,7 +1371,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_routing",
       "metadata": {
         "taskIndex": 40,
         "hasRelatedPaths": true
@@ -1405,7 +1405,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_params",
       "metadata": {
         "taskIndex": 41,
         "hasRelatedPaths": true
@@ -1538,7 +1538,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_routing",
       "metadata": {
         "taskIndex": 45,
         "hasRelatedPaths": true
@@ -1604,7 +1604,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_encoders",
       "metadata": {
         "taskIndex": 47,
         "hasRelatedPaths": true
@@ -1638,7 +1638,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_exceptions",
       "metadata": {
         "taskIndex": 48,
         "hasRelatedPaths": true
@@ -1671,7 +1671,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_middleware",
+      "splitGroupId": "split_fastapi_core",
       "metadata": {
         "taskIndex": 49,
         "hasRelatedPaths": true
@@ -1738,7 +1738,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_params",
       "metadata": {
         "taskIndex": 51,
         "hasRelatedPaths": true
@@ -1837,7 +1837,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_routing",
       "metadata": {
         "taskIndex": 54,
         "hasRelatedPaths": true
@@ -1904,7 +1904,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_app",
       "metadata": {
         "taskIndex": 56,
         "hasRelatedPaths": true
@@ -1970,7 +1970,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_encoders",
       "metadata": {
         "taskIndex": 58,
         "hasRelatedPaths": true
@@ -2004,7 +2004,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_exceptions",
       "metadata": {
         "taskIndex": 59,
         "hasRelatedPaths": true
@@ -2103,7 +2103,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_routing",
       "metadata": {
         "taskIndex": 62,
         "hasRelatedPaths": true
@@ -2136,7 +2136,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_datastructures",
       "metadata": {
         "taskIndex": 63,
         "hasRelatedPaths": true
@@ -2202,7 +2202,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_middleware",
+      "splitGroupId": "split_fastapi_core",
       "metadata": {
         "taskIndex": 65,
         "hasRelatedPaths": true
@@ -2235,7 +2235,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_routing",
       "metadata": {
         "taskIndex": 66,
         "hasRelatedPaths": true
@@ -2268,7 +2268,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_encoders",
       "metadata": {
         "taskIndex": 67,
         "hasRelatedPaths": true
@@ -2368,7 +2368,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_params",
       "metadata": {
         "taskIndex": 70,
         "hasRelatedPaths": true
@@ -2401,7 +2401,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_routing",
       "metadata": {
         "taskIndex": 71,
         "hasRelatedPaths": true
@@ -2467,7 +2467,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_app",
       "metadata": {
         "taskIndex": 73,
         "hasRelatedPaths": true
@@ -2500,7 +2500,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_encoders",
       "metadata": {
         "taskIndex": 74,
         "hasRelatedPaths": true
@@ -2533,7 +2533,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_routing",
       "metadata": {
         "taskIndex": 75,
         "hasRelatedPaths": true
@@ -2566,7 +2566,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_params",
       "metadata": {
         "taskIndex": 76,
         "hasRelatedPaths": true
@@ -2665,7 +2665,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_fastapi_core",
+      "splitGroupId": "split_fastapi_app",
       "metadata": {
         "taskIndex": 79,
         "hasRelatedPaths": true
@@ -2764,7 +2764,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_graph",
       "metadata": {
         "taskIndex": 82,
         "hasRelatedPaths": true
@@ -2797,7 +2797,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_context",
       "metadata": {
         "taskIndex": 83,
         "hasRelatedPaths": true
@@ -2830,7 +2830,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_siftrcode_security",
+      "splitGroupId": "split_siftrcode_core",
       "metadata": {
         "taskIndex": 84,
         "hasRelatedPaths": true
@@ -2929,7 +2929,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_token",
       "metadata": {
         "taskIndex": 87,
         "hasRelatedPaths": true
@@ -2962,7 +2962,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_graph",
       "metadata": {
         "taskIndex": 88,
         "hasRelatedPaths": true
@@ -2995,7 +2995,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_context",
       "metadata": {
         "taskIndex": 89,
         "hasRelatedPaths": true
@@ -3028,7 +3028,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_retrieval",
       "metadata": {
         "taskIndex": 90,
         "hasRelatedPaths": true
@@ -3061,7 +3061,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_ranking",
       "metadata": {
         "taskIndex": 91,
         "hasRelatedPaths": true
@@ -3127,7 +3127,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_mcp",
       "metadata": {
         "taskIndex": 93,
         "hasRelatedPaths": true
@@ -3160,7 +3160,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_ranking",
       "metadata": {
         "taskIndex": 94,
         "hasRelatedPaths": true
@@ -3226,7 +3226,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_graph",
       "metadata": {
         "taskIndex": 96,
         "hasRelatedPaths": true
@@ -3259,7 +3259,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_context",
       "metadata": {
         "taskIndex": 97,
         "hasRelatedPaths": true
@@ -3292,7 +3292,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_siftrcode_core",
+      "splitGroupId": "split_siftrcode_mcp",
       "metadata": {
         "taskIndex": 98,
         "hasRelatedPaths": true
@@ -3325,7 +3325,7 @@
         "sourceVersion": "v1.0.0",
         "importedAt": "2026-09-21T14:00:00.000Z"
       },
-      "splitGroupId": "split_siftrcode_security",
+      "splitGroupId": "split_siftrcode_core",
       "metadata": {
         "taskIndex": 99,
         "hasRelatedPaths": true

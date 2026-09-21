@@ -79,6 +79,17 @@ export function runFrozenV2Baseline(options: BaselineRunOptions = {}) {
     execSync(`npx tsc`, { cwd: tempDir, stdio: 'pipe' });
     console.log('✔ Frozen V2 compiled successfully.');
 
+    // Read and pass test episodes to the isolated baseline runner
+    const splitManifest = JSON.parse(fs.readFileSync(path.join(rootDir, 'data/siftrbench_v1_splits.json'), 'utf8'));
+    const manifest = JSON.parse(fs.readFileSync(path.join(rootDir, 'data/siftrbench_v1_manifest.json'), 'utf8'));
+    const testAssignments = splitManifest.assignments.filter((a: any) => a.split === 'test');
+    let testEpisodes = manifest.episodes.filter((e: any) => testAssignments.some((a: any) => a.episodeId === e.episodeId));
+    if (options.maxTasks && options.maxTasks < testEpisodes.length) {
+      testEpisodes = testEpisodes.slice(0, options.maxTasks);
+    }
+    fs.writeFileSync(path.join(tempDir, 'test_episodes.json'), JSON.stringify(testEpisodes, null, 2), 'utf8');
+    console.log(`   Loaded ${testEpisodes.length} held-out test episodes for frozen V2 baseline.`);
+
     // 3. Create runner script inside the worktree that executes ContextRanker directly
     const evalScriptPath = path.join(tempDir, 'run_eval.js');
     const evalScriptContent = `
@@ -86,7 +97,6 @@ const fs = require('fs');
 const path = require('path');
 
 async function main() {
-  const { AUDITED_100_TASKS } = require('./dist/tests/study_jev_heldout_ranking');
   const { ContextRanker } = require('./dist/ranking/context_rank');
   const { FeatureBuilderV1 } = require('./dist/ranking/feature_builder');
   const { CandidateGenerator } = require('./dist/retrieval/candidate_generator');
@@ -94,8 +104,6 @@ async function main() {
   const { GraphBuilder } = require('./dist/graph/graph_builder');
   const { GitGraphIntelligence } = require('./dist/graph/git_graph');
   const { createTaskContext } = require('./dist/context/task_context');
-  const { createWorkspaceSnapshot } = require('./dist/workspace/workspace_snapshot');
-  const { createDefaultDataRights } = require('./dist/rights/data_rights');
   const { createAgentEnvironment } = require('./dist/agents/agent_environment');
 
   const rootDir = process.cwd();
@@ -105,8 +113,8 @@ async function main() {
     siftrcode: rootDir,
   };
 
-  const tasksToRun = AUDITED_100_TASKS.slice(0, ${maxTasks});
-  console.log(\`Evaluating \${tasksToRun.length} tasks on frozen V2 baseline...\`);
+  const testEpisodes = JSON.parse(fs.readFileSync(path.join(__dirname, 'test_episodes.json'), 'utf8'));
+  console.log(\`Evaluating \${testEpisodes.length} held-out test episodes on frozen V2 baseline...\`);
 
   // Index repositories
   const indexes = {};
@@ -131,16 +139,35 @@ async function main() {
   const candidateLimit = ${candidateBudget};
   const tokenLimit = ${tokenBudget};
 
-  const startTime = Date.now();
-  for (let i = 0; i < tasksToRun.length; i++) {
-    const task = tasksToRun[i];
-    const repoData = indexes[task.repo];
-    if (!repoData) continue;
-
+  for (let i = 0; i < testEpisodes.length; i++) {
+    const task = testEpisodes[i];
+    const repoKey = task.repositoryId;
+    const repoData = indexes[repoKey];
     const tStart = Date.now();
+
+    if (!repoData) {
+      taskResults.push({
+        episodeId: task.episodeId,
+        taskId: task.taskId,
+        repo: repoKey,
+        taskType: task.taskType || 'BUG_FIX',
+        candidateCount: 0,
+        latencyMs: 0,
+        contextTokens: 0,
+        firstHitRank: 0,
+        targetHit: false,
+        metrics: {
+          ndcg5: 0, ndcg10: 0, ndcg20: 0,
+          recall5: 0, recall10: 0, recall20: 0, recall50: 0,
+          mrr: 0
+        }
+      });
+      continue;
+    }
+
     const taskCtx = createTaskContext({
-      primaryPrompt: task.prompt,
-      workspaceRoot: repoPaths[task.repo],
+      primaryPrompt: task.taskPrompt,
+      workspaceRoot: repoPaths[repoKey],
       agentEnvironment: createAgentEnvironment({ agentKind: 'generic_mcp' })
     });
 
@@ -150,6 +177,26 @@ async function main() {
       units: repoData.index.units,
       graph: repoData.graph
     });
+
+    if (candidates.length === 0) {
+      taskResults.push({
+        episodeId: task.episodeId,
+        taskId: task.taskId,
+        repo: repoKey,
+        taskType: task.taskType || 'BUG_FIX',
+        candidateCount: 0,
+        latencyMs: Date.now() - tStart,
+        contextTokens: 0,
+        firstHitRank: 0,
+        targetHit: false,
+        metrics: {
+          ndcg5: 0, ndcg10: 0, ndcg20: 0,
+          recall5: 0, recall10: 0, recall20: 0, recall50: 0,
+          mrr: 0
+        }
+      });
+      continue;
+    }
 
     const featuresList = candidates.map(c => {
       const u = repoData.index.units.find(unit => unit.id === c.contextUnitId);
@@ -165,23 +212,38 @@ async function main() {
     const ranked = ranker.rank(featuresList);
     const latencyMs = Date.now() - tStart;
 
-    // Calculate metrics
+    // Materialize actual budgeted bundle (<= tokenLimit)
+    let accumulatedTokens = 0;
+    const budgetedBundle = [];
+    for (const cand of ranked) {
+      const unit = repoData.index.units.find(u => u.id === cand.contextUnitId);
+      const tok = (unit && unit.metadata && unit.metadata.tokenEstimate) || 100;
+      if (accumulatedTokens + tok <= tokenLimit) {
+        budgetedBundle.push({ cand, unit, tok });
+        accumulatedTokens += tok;
+      }
+    }
+
+    // Canonical deduplicated ranking metrics on budgeted bundle
     const expectedPaths = (task.expectedTargetPaths || []).map(p => p.toLowerCase());
-    let dcg5 = 0, idcg5 = 0, dcg10 = 0, idcg10 = 0, dcg20 = 0, idcg20 = 0;
+    const totalTargets = Math.max(1, expectedPaths.length);
+    const discoveredTargets = new Set();
+    let dcg5 = 0, dcg10 = 0, dcg20 = 0;
     let hits5 = 0, hits10 = 0, hits20 = 0, hits50 = 0;
     let firstHitRank = 0;
-    let tokensAccumulated = 0;
-    let tokensAtLimit = 0;
 
-    for (let r = 0; r < ranked.length; r++) {
-      const cand = ranked[r];
+    for (let r = 0; r < budgetedBundle.length; r++) {
+      const { unit } = budgetedBundle[r];
       const rankNum = r + 1;
-      const unit = repoData.index.units.find(u => u.id === cand.contextUnitId);
       const uPath = (unit && unit.path ? unit.path.toLowerCase() : '');
-      const isTarget = expectedPaths.some(p => uPath.endsWith(p) || uPath.includes(p));
-      const rel = isTarget ? 1 : 0;
+      const matchedTarget = expectedPaths.find(p => uPath.endsWith(p) || uPath.includes(p));
 
-      if (isTarget && firstHitRank === 0) firstHitRank = rankNum;
+      let rel = 0;
+      if (matchedTarget && !discoveredTargets.has(matchedTarget)) {
+        discoveredTargets.add(matchedTarget);
+        rel = 1;
+        if (firstHitRank === 0) firstHitRank = rankNum;
+      }
 
       if (rankNum <= 5) {
         if (rel > 0) hits5++;
@@ -196,34 +258,32 @@ async function main() {
         dcg20 += rel / Math.log2(rankNum + 1);
       }
       if (rel > 0) hits50++;
-
-      const unitTokens = unit?.metadata?.tokenEstimate || 100;
-      if (tokensAccumulated + unitTokens <= tokenLimit) {
-        tokensAccumulated += unitTokens;
-      }
     }
 
-    const totalTargets = Math.max(1, expectedPaths.length);
+    let idcg5 = 0, idcg10 = 0, idcg20 = 0;
     for (let t = 1; t <= Math.min(totalTargets, 5); t++) idcg5 += 1 / Math.log2(t + 1);
     for (let t = 1; t <= Math.min(totalTargets, 10); t++) idcg10 += 1 / Math.log2(t + 1);
     for (let t = 1; t <= Math.min(totalTargets, 20); t++) idcg20 += 1 / Math.log2(t + 1);
 
-    const ndcg5 = idcg5 > 0 ? dcg5 / idcg5 : 0;
-    const ndcg10 = idcg10 > 0 ? dcg10 / idcg10 : 0;
-    const ndcg20 = idcg20 > 0 ? dcg20 / idcg20 : 0;
-    const recall5 = hits5 / totalTargets;
-    const recall10 = hits10 / totalTargets;
-    const recall20 = hits20 / totalTargets;
-    const mrr = firstHitRank > 0 ? 1 / firstHitRank : 0;
+    const ndcg5 = Math.min(1.0, Math.max(0.0, idcg5 > 0 ? dcg5 / idcg5 : 0));
+    const ndcg10 = Math.min(1.0, Math.max(0.0, idcg10 > 0 ? dcg10 / idcg10 : 0));
+    const ndcg20 = Math.min(1.0, Math.max(0.0, idcg20 > 0 ? dcg20 / idcg20 : 0));
+    const recall5 = Math.min(1.0, Math.max(0.0, hits5 / totalTargets));
+    const recall10 = Math.min(1.0, Math.max(0.0, hits10 / totalTargets));
+    const recall20 = Math.min(1.0, Math.max(0.0, hits20 / totalTargets));
+    const recall50 = Math.min(1.0, Math.max(0.0, hits50 / totalTargets));
+    const mrr = Math.min(1.0, Math.max(0.0, firstHitRank > 0 ? 1 / firstHitRank : 0));
 
     taskResults.push({
+      episodeId: task.episodeId,
       taskId: task.taskId,
-      repo: task.repo,
-      taskType: task.type,
+      repo: repoKey,
+      taskType: task.taskType || 'BUG_FIX',
       candidateCount: candidates.length,
       latencyMs,
-      contextTokens: tokensAccumulated,
+      contextTokens: accumulatedTokens,
       firstHitRank,
+      targetHit: hits10 > 0,
       metrics: {
         ndcg5: Number(ndcg5.toFixed(4)),
         ndcg10: Number(ndcg10.toFixed(4)),
@@ -231,6 +291,7 @@ async function main() {
         recall5: Number(recall5.toFixed(4)),
         recall10: Number(recall10.toFixed(4)),
         recall20: Number(recall20.toFixed(4)),
+        recall50: Number(recall50.toFixed(4)),
         mrr: Number(mrr.toFixed(4))
       }
     });
@@ -238,6 +299,7 @@ async function main() {
 
   const n = taskResults.length;
   const mean = (fn) => Number((taskResults.reduce((acc, t) => acc + fn(t), 0) / n).toFixed(4));
+  const hits = taskResults.filter(t => t.targetHit).length;
 
   const aggregate = {
     evaluatedTasks: n,
@@ -247,9 +309,11 @@ async function main() {
     recall5: mean(t => t.metrics.recall5),
     recall10: mean(t => t.metrics.recall10),
     recall20: mean(t => t.metrics.recall20),
+    recall50: mean(t => t.metrics.recall50),
     mrr: mean(t => t.metrics.mrr),
     meanLatencyMs: Number((taskResults.reduce((acc, t) => acc + t.latencyMs, 0) / n).toFixed(1)),
     meanContextTokens: Math.round(taskResults.reduce((acc, t) => acc + t.contextTokens, 0) / n),
+    targetCoverage: Number((hits / n).toFixed(4)),
   };
 
   const report = {
@@ -260,6 +324,7 @@ async function main() {
     benchmarkVersion: 'siftrbench-v1',
     candidateBudget: ${candidateBudget},
     tokenBudget: ${tokenBudget},
+    totalEpisodes: n,
     aggregate,
     taskResults
   };

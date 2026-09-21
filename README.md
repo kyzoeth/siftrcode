@@ -19,47 +19,46 @@
 
 ---
 
-## 🧠 SiftrCode V3: Learned Context Intelligence (Production Release)
+## 🧠 SiftrCode V3: Learned Context Intelligence (V3.1 Experimental Integrity Audit)
 
-SiftrCode V3 introduces **Learned Context Intelligence** built on top of the frozen deterministic V2 baseline (`v2-final` / `1eedac03b0d8`). V3 was designed to answer the central product and economic question:
+SiftrCode V3 introduces **Learned Context Intelligence** evaluated against the authoritative frozen deterministic V2 baseline (`v2-final` / `1eedac03b0d83025ebf08ed2945e0ab015c46f6a`). V3 was designed to answer the central product and economic question:
 
 > **Can learned context intelligence measurably improve verified coding-task success and/or reduce cost at the same success level compared with frozen deterministic V2?**
 
-### 🏆 Empirical Benchmark & Economic Impact: Cost Per Verified Successful Task (CPVST)
+### 🔬 Empirical Benchmark & Held-Out Evaluation (SiftrBench v1)
 
-Evaluated across **121 independent task episodes** across production repositories (**Express**, **FastAPI**, and **SiftrCode**) under equal candidate and token budgets:
+Following the rigorous V3.1 Experimental Integrity Closure, evaluations were executed on the authoritative 33 held-out test episodes across production repositories (**Express**, **FastAPI**, and **SiftrCode**) under equal candidate ($N=50$) and token ($\le 8,000$) budgets:
 
-| Evaluation Metric | Frozen Deterministic V2 | Learned ContextRank V3 | Absolute Delta | Economic & Quality Impact |
+| Evaluation Metric | Frozen Deterministic V2 (`v2-final`) | Learned ContextRank V3 (GBDT) | Absolute Delta | Scientific & Statistical Finding |
 | :--- | :---: | :---: | :---: | :--- |
-| **Cost Per Verified Success (CPVST)** | **$0.0492** | **$0.0453** | **-$0.0039** | **-7.9% Cost Reduction / Success** |
-| **Verified Task Success Rate** | 63.2% (24/38) | **68.4% (26/38)** | **+5.3%** | **+2 Verified Task Wins (0 Regressions)** |
-| **Context Tokens / Task** | 7,701 | **7,702** | **+1 token** | **Equal 8k Budget Enforcement** |
-| **NDCG@10 (Equal Budget)** | 0.5270 | **0.5558** | **+0.0288** | **+5.5% Relative Lift** ($p=0.086$) |
-| **NDCG@5 (Equal Budget)** | 0.5270 | **0.5479** | **+0.0209** | **+4.0% Relative Lift** |
-| **Recall@10 (Target Deduplicated)**| 0.5586 | **0.6396** | **+0.0810** | **+14.5% Relative Recall Lift** |
-| **Recall@5 (Target Deduplicated)** | 0.5586 | **0.6126** | **+0.0541** | **+9.7% Relative Recall Lift** |
-| **MRR (Mean Reciprocal Rank)** | 0.5494 | **0.5599** | **+0.0105** | **Earlier Discovery of Edit Target** |
+| **NDCG@10 (Materialized Bundle)** | **0.7988** | 0.5431 | -0.2557 | Baseline outperforms learned ranking ($p = 0.0000$) |
+| **NDCG@5 (Materialized Bundle)** | **0.7988** | 0.5229 | -0.2759 | Baseline concentrates targets in top-5 positions |
+| **Recall@10 (Target Deduplicated)**| **0.8485** | 0.6667 | -0.1818 | Baseline achieves higher top-10 target inclusion |
+| **Recall@5 (Target Deduplicated)** | **0.8485** | 0.6061 | -0.2424 | Baseline finds target in top 5 for 28/33 tasks |
+| **MRR (Mean Reciprocal Rank)** | **0.7859** | 0.5170 | -0.2689 | Earlier discovery of causal targets under V2 |
 | **Inference Latency** | 1.2ms | **0.1ms** | **-1.1ms** | **12x Faster Scoring Engine** |
-| **Held-Out Task Regressions** | — | — | **0 Losses** | **3 Wins / 34 Ties / 0 Losses** |
-| **V3.1 Promotion Gate Decision** | — | — | — | **`V3.1_PROMOTION_GATE_PASSED`** |
+| **Diagnostic Target Bundle Coverage** | 87.9% (29/33) | **90.9% (30/33)** | **+3.0%** | Offline diagnostic context bundle presence |
+| **Verified Task Success Rate** | *Blocked* | *Blocked* | — | Blocked (`REAL_AGENT_EVALUATION_BLOCKED`) |
+| **V3.1 Promotion Gate Decision** | — | — | — | **`V3.1_INSUFFICIENT_EVIDENCE`** |
 
-### 🔬 Task-Level Bootstrap Confidence Intervals (2,000 Resamples, Seed 42)
-- **NDCG@10 Mean Delta**: $+0.0287$ [95% CI: $+0.0000$ to $+0.0653$], $p = 0.086$
-- **Task Wins / Ties / Losses**: 3 Wins / 34 Ties / 0 Losses
+### 🎲 Task-Level Bootstrap Confidence Intervals (2,000 Resamples, Seed 42)
+- **NDCG@10 Mean Delta**: $-0.2558$ [95% CI: $-0.3903$ to $-0.1324$], $p = 0.0000$
+- **Task Wins / Ties / Losses**: 0 Wins / 22 Ties / 11 Losses
 - **Per-Repository NDCG@10 Breakdown**:
-  - **Express** (9 tasks): Base 0.2744 vs V3 0.3174 ($\Delta +0.0430$) | Recall@10: Base 0.2593 vs V3 0.3704
-  - **FastAPI** (13 tasks): Base 0.6178 vs V3 0.6698 ($\Delta +0.0520$) | Recall@10: Base 0.7179 vs V3 0.8718
-  - **SiftrCode** (15 tasks): Base 0.6000 vs V3 0.6000 ($\Delta +0.0000$) | Recall@10: Base 0.6000 vs V3 0.6000
+  - **Express** (12 tasks): Base 0.9167 vs V3 0.2966 ($\Delta -0.6201$) | Recall@10: Base 0.9167 vs V3 0.5000
+  - **FastAPI** (14 tasks): Base 0.6687 vs V3 0.5972 ($\Delta -0.0715$) | Recall@10: Base 0.7857 vs V3 0.7143
+  - **SiftrCode** (7 tasks): Base 0.8571 vs V3 0.8571 ($\Delta +0.0000$) | Recall@10: Base 0.8571 vs V3 0.8571
 
 ### 🔒 Core Architectural & Scientific Invariants
-1. **`UNKNOWN != NEGATIVE`**: Unexposed candidates or candidates with partial observability are marked `UNKNOWN` and strictly excluded from negative pairs in training sets.
-2. **Point-in-Time Git Safety**: Features for any task episode at commit $C_0$ strictly use commit history $\le C_0$, backed by runtime temporal assertions.
-3. **Leakage-Safe Partitioning**: Benchmark episodes are partitioned by `splitGroupId` with anti-joins across Train, Validation, and Test splits.
-4. **Native TypeScript Scoring Engines**:
-   - `TreeRanker`: Fast Pairwise GBDT (LambdaMART-style) decision tree ensemble.
+1. **No Simulated Outcomes**: Experimental integrity strictly prohibits proxy substitution (e.g. target presence) for verified task success and forbids fabricating token/cost counts. When real coding-agent credentials are absent, the harness honestly emits `V3.1_INSUFFICIENT_EVIDENCE` (`REAL_AGENT_EVALUATION_BLOCKED`).
+2. **`UNKNOWN != NEGATIVE`**: Unexposed candidates or candidates with partial observability are marked `UNKNOWN` and strictly excluded from negative pairs in training sets.
+3. **Point-in-Time Git Safety**: `EpisodeWorkspaceResolver` enforces `git rev-parse HEAD === episode.baseCommit` in isolated worktrees with zero future source-tree leakage.
+4. **Leakage-Safe Partitioning**: Benchmark episodes are partitioned into 66 Train / 22 Val / 33 Test by fine-grained `splitGroupId` with anti-joins across splits.
+5. **Native TypeScript Scoring Engines**:
+   - `TreeRanker`: Fast Pairwise GBDT decision tree ensemble with cryptographically verified model artifact provenance.
    - `LinearPairwiseRanker`: Coordinate ascent margin ranker.
-5. **Runtime Safety & Fallback**: `SafeFallbackRanker` catches any unexpected exception or non-finite output and falls back to deterministic V2 ranking instantly.
-6. **Shadow Mode**: `ShadowRanker` verifies model predictions in production with zero impact on user context bundles.
+6. **Runtime Safety & Fallback**: `SafeFallbackRanker` catches any unexpected exception or non-finite output and falls back to deterministic V2 ranking instantly.
+7. **Shadow Mode**: `ShadowRanker` verifies model predictions in production with zero impact on user context bundles.
 
 ---
 

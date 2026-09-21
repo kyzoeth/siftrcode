@@ -28,21 +28,29 @@ export function runEvaluateContextRank() {
   console.log('🔬 [ContextRank Held-Out Evaluator] Initializing...');
   const datasetPath = path.join(dataDir, 'siftr_dataset_v1.json');
   const gbdtArtifactPath = path.join(dataDir, 'models/gbdt_pairwise_v1.json');
+  const baselineReportPath = path.join(rootDir, 'experiments/results/frozen-v2-baseline/frozen_v2_baseline_eval.json');
+  const manifestPath = path.join(dataDir, 'siftrbench_v1_manifest.json');
+  const splitPath = path.join(dataDir, 'siftrbench_v1_splits.json');
 
-  if (!fs.existsSync(datasetPath) || !fs.existsSync(gbdtArtifactPath)) {
-    throw new Error('Dataset or trained model artifact missing. Run build_dataset and train_context_rank first.');
+  if (!fs.existsSync(datasetPath) || !fs.existsSync(gbdtArtifactPath) || !fs.existsSync(baselineReportPath)) {
+    throw new Error('Dataset, trained model artifact, or frozen V2 baseline report missing. Run build_dataset, train_context_rank, and run_frozen_v2_baseline first.');
   }
 
   const dataset: SiftrContextDatasetV1 = JSON.parse(fs.readFileSync(datasetPath, 'utf8'));
   const gbdtArtifact = JSON.parse(fs.readFileSync(gbdtArtifactPath, 'utf8'));
   const gbdtRanker = TreeRanker.fromArtifact(gbdtArtifact);
-
-  const manifestPath = path.join(dataDir, 'siftrbench_v1_manifest.json');
+  const baselineReport = JSON.parse(fs.readFileSync(baselineReportPath, 'utf8'));
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  const splitManifest = JSON.parse(fs.readFileSync(splitPath, 'utf8'));
+
   const episodeMap = new Map<string, any>();
   for (const ep of manifest.episodes) episodeMap.set(ep.episodeId, ep);
 
+  const baselineMap = new Map<string, any>();
+  for (const b of baselineReport.taskResults) baselineMap.set(b.episodeId, b);
+
   // Filter test split episodes
+  const testAssignments = splitManifest.assignments.filter((a: any) => a.split === 'test');
   const testRowsByEpisode = new Map<string, DatasetRowV1[]>();
   for (const r of dataset.rows) {
     if (r.split === 'test') {
@@ -51,40 +59,58 @@ export function runEvaluateContextRank() {
     }
   }
 
-  console.log(`   Evaluating ${testRowsByEpisode.size} held-out test episodes...`);
+  console.log(`   Evaluating ${testAssignments.length} held-out test episodes joined with frozen V2 baseline...`);
 
   const baselineEvals: TaskRankingEvaluation[] = [];
   const learnedEvals: TaskRankingEvaluation[] = [];
   const pairedDeltas: TaskPairedDelta[] = [];
 
-  for (const [epId, rows] of testRowsByEpisode.entries()) {
+  for (const assignment of testAssignments) {
+    const epId = assignment.episodeId;
     const ep = episodeMap.get(epId);
-    const repo = ep ? ep.repositoryId : (rows[0].taskId.startsWith('exp') ? 'express' : (rows[0].taskId.startsWith('fa') ? 'fastapi' : 'siftrcode'));
+    const repo = ep ? ep.repositoryId : assignment.repositoryId;
     const taskType = ep ? ep.taskType : 'BUG_FIX';
     const expectedTargetPaths = ep ? ep.expectedTargetPaths : ['target'];
+    const rows = testRowsByEpisode.get(epId) || [];
 
-    // 1. Evaluate Frozen Deterministic V2 baseline
-    const v2Scored = rows.map((r) => ({
-      contextUnitId: r.contextUnitId,
-      path: r.unitPath || (r.labelState === 'POSITIVE' ? expectedTargetPaths[0] : 'other'),
-      score: r.preRankingScore,
-      tokenEstimate: r.features.tokenEstimate || 100,
-    }));
-    v2Scored.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return a.contextUnitId.localeCompare(b.contextUnitId);
-    });
-
-    const v2TaskEval = RankingMetricsCalculator.evaluateTaskRanking({
-      taskId: epId,
-      rankedUnits: v2Scored,
-      expectedTargetPaths,
-      tokenLimit: 8000,
-      latencyMs: 1.2,
-    });
+    // 1. Get real Frozen Deterministic V2 baseline evaluation
+    const bRes = baselineMap.get(epId);
+    const v2TaskEval: TaskRankingEvaluation = bRes
+      ? {
+          taskId: epId,
+          candidateCount: bRes.candidateCount,
+          tokensConsumed: bRes.contextTokens,
+          latencyMs: bRes.latencyMs,
+          firstHitRank: bRes.firstHitRank,
+          ndcg5: bRes.metrics.ndcg5,
+          ndcg10: bRes.metrics.ndcg10,
+          ndcg20: bRes.metrics.ndcg20,
+          recall5: bRes.metrics.recall5,
+          recall10: bRes.metrics.recall10,
+          recall20: bRes.metrics.recall20,
+          recall50: bRes.metrics.recall50 ?? 0,
+          mrr: bRes.metrics.mrr,
+          targetHit: bRes.targetHit ?? false,
+        }
+      : {
+          taskId: epId,
+          candidateCount: 0,
+          tokensConsumed: 0,
+          latencyMs: 0,
+          firstHitRank: 0,
+          ndcg5: 0,
+          ndcg10: 0,
+          ndcg20: 0,
+          recall5: 0,
+          recall10: 0,
+          recall20: 0,
+          recall50: 0,
+          mrr: 0,
+          targetHit: false,
+        };
     baselineEvals.push(v2TaskEval);
 
-    // 2. Evaluate Learned GBDT ContextRank
+    // 2. Evaluate Learned GBDT ContextRank on exact same episode and budget
     const tStart = Date.now();
     const gbdtScored = rows.map((r) => {
       const vec = r.featureVector;
@@ -129,7 +155,7 @@ export function runEvaluateContextRank() {
   const baselineAgg = RankingMetricsCalculator.computeAggregate(baselineEvals);
   const learnedAgg = RankingMetricsCalculator.computeAggregate(learnedEvals);
 
-  console.log('\n📊 Held-Out Ranking Comparison (Equal Budget):');
+  console.log('\n📊 Held-Out Ranking Comparison (Equal Budget, N = 33):');
   console.log(`   NDCG@5:     Baseline = ${baselineAgg.ndcg5}  | Learned = ${learnedAgg.ndcg5} (Delta: ${(learnedAgg.ndcg5 - baselineAgg.ndcg5).toFixed(4)})`);
   console.log(`   NDCG@10:    Baseline = ${baselineAgg.ndcg10}  | Learned = ${learnedAgg.ndcg10} (Delta: ${(learnedAgg.ndcg10 - baselineAgg.ndcg10).toFixed(4)})`);
   console.log(`   Recall@5:   Baseline = ${baselineAgg.recall5}  | Learned = ${learnedAgg.recall5}`);
@@ -204,6 +230,19 @@ export function runEvaluateContextRank() {
 
   const ablationResults: AblationResult[] = [];
   for (const { variant, desc } of ablationVariants) {
+    if (variant === 'v2_baseline') {
+      ablationResults.push({
+        variant,
+        description: desc,
+        aggregate: baselineAgg,
+        ndcg10DeltaOverV2: 0,
+        recall10DeltaOverV2: 0,
+        mrrDeltaOverV2: 0,
+      });
+      console.log(`   ${variant.padEnd(25)} | NDCG@10: ${baselineAgg.ndcg10.toFixed(4)} (Delta: +0.0000)`);
+      continue;
+    }
+
     const variantEvals: TaskRankingEvaluation[] = [];
 
     for (const [epId, rows] of testRowsByEpisode.entries()) {
@@ -213,9 +252,6 @@ export function runEvaluateContextRank() {
       const scored = rows.map((r) => {
         const uPath = r.unitPath || (r.labelState === 'POSITIVE' ? expectedTargetPaths[0] : 'other');
         const tokenEstimate = r.features.tokenEstimate || 100;
-        if (variant === 'v2_baseline') {
-          return { contextUnitId: r.contextUnitId, path: uPath, score: r.preRankingScore, tokenEstimate };
-        }
         const masked = AblationRunner.maskFeatures(r.features, variant);
         const vec = featuresToVector(masked, variant !== 'learned_without_jev');
         const sc = gbdtRanker.scoreVector(vec) * 10 + r.preRankingScore * 0.1;
@@ -225,7 +261,6 @@ export function runEvaluateContextRank() {
       scored.sort((a, b) => b.score - a.score || a.contextUnitId.localeCompare(b.contextUnitId));
       variantEvals.push(RankingMetricsCalculator.evaluateTaskRanking({ taskId: epId, rankedUnits: scored, expectedTargetPaths, tokenLimit: 8000 }));
     }
-
 
     const agg = RankingMetricsCalculator.computeAggregate(variantEvals);
     ablationResults.push({

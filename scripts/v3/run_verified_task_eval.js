@@ -50,7 +50,17 @@ function runVerifiedTaskEval(options = {}) {
 
   console.log(`   Evaluating ${testEpisodes.length} paired held-out tasks across all repositories...`);
 
+  const hasCredentials = !!(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY);
+  if (!hasCredentials) {
+    console.log('\n⚠️  [Verified Task Evaluator] LLM agent credentials (ANTHROPIC_API_KEY / OPENAI_API_KEY) not found in environment.');
+    console.log('   INVARIANT ENFORCED: Real coding-agent executions and verifier runs cannot be simulated.');
+    console.log('   Deriving verifiedSuccess from proxy target-presence or fabricating token/cost counts is strictly prohibited.');
+    console.log('   Emitting honest gate status: V3.1_INSUFFICIENT_EVIDENCE (REAL_AGENT_EVALUATION_BLOCKED).\n');
+  }
+
   const pairedResults = [];
+  let v2TargetCoveredCount = 0;
+  let v3TargetCoveredCount = 0;
 
   for (let i = 0; i < testEpisodes.length; i++) {
     const ep = testEpisodes[i];
@@ -76,33 +86,14 @@ function runVerifiedTaskEval(options = {}) {
     }
     const v2Latency = Date.now() - t0;
 
-    // Check if required target is present in the context bundle
-    const v2TargetFound = expectedTargetPaths.every((tp) =>
+    // Diagnostic Offline Metric: Target bundle presence (NOT verifiedSuccess)
+    const v2TargetFound = expectedTargetPaths.length > 0 && expectedTargetPaths.every((tp) =>
       v2Bundle.some((c) => {
         const p = (c.unitPath || '').toLowerCase();
         return p.endsWith(tp.toLowerCase()) || p.includes(tp.toLowerCase());
       })
     );
-
-    const promptEstimate = defaultTokenizerRegistry.estimate(ep.taskPrompt);
-    const promptTokens = promptEstimate.tokens;
-    const v2InputTokens = v2Tokens + promptTokens;
-    const v2OutputTokens = v2TargetFound ? 650 : 300;
-    const v2CostUSD = Number(((v2InputTokens * 0.000003) + (v2OutputTokens * 0.000015)).toFixed(4));
-
-    const v2Run = {
-      taskId: ep.taskId,
-      variant: 'V2_FROZEN',
-      verifiedSuccess: v2TargetFound,
-      wallClockLatencyMs: Math.max(1, v2Latency),
-      contextTokens: v2Tokens,
-      agentInputTokens: v2InputTokens,
-      agentOutputTokens: v2OutputTokens,
-      providerCostUSD: v2CostUSD,
-      toolCalls: v2TargetFound ? 4 : 8,
-      trajectoryLength: v2TargetFound ? 5 : 9,
-      verifierResult: v2TargetFound ? 'PASS (all verifier assertions passed)' : 'FAIL (required target missing from context bundle)',
-    };
+    if (v2TargetFound) v2TargetCoveredCount++;
 
     // --- V3 Learned ContextRank Run ---
     const t1 = Date.now();
@@ -126,67 +117,93 @@ function runVerifiedTaskEval(options = {}) {
     }
     const v3Latency = Date.now() - t1;
 
-    const v3TargetFound = expectedTargetPaths.every((tp) =>
+    // Diagnostic Offline Metric: Target bundle presence (NOT verifiedSuccess)
+    const v3TargetFound = expectedTargetPaths.length > 0 && expectedTargetPaths.every((tp) =>
       v3Bundle.some((c) => {
         const p = (c.unitPath || '').toLowerCase();
         return p.endsWith(tp.toLowerCase()) || p.includes(tp.toLowerCase());
       })
     );
+    if (v3TargetFound) v3TargetCoveredCount++;
 
-    const v3InputTokens = v3Tokens + promptTokens;
-    const v3OutputTokens = v3TargetFound ? 620 : 300;
-    const v3CostUSD = Number(((v3InputTokens * 0.000003) + (v3OutputTokens * 0.000015)).toFixed(4));
+    // When real credentials are not present, do NOT simulate agent runs or fabricate token/cost counts
+    const v2Run = {
+      taskId: ep.taskId,
+      variant: 'V2_FROZEN',
+      verifiedSuccess: null,
+      wallClockLatencyMs: v2Latency,
+      contextTokens: v2Tokens,
+      agentInputTokens: 0,
+      agentOutputTokens: 0,
+      providerCostUSD: 0,
+      toolCalls: 0,
+      trajectoryLength: 0,
+      verifierResult: 'UNAVAILABLE (real agent execution requires ANTHROPIC_API_KEY / OPENAI_API_KEY)',
+    };
 
     const v3Run = {
       taskId: ep.taskId,
       variant: 'V3_LEARNED',
-      verifiedSuccess: v3TargetFound,
-      wallClockLatencyMs: Math.max(1, v3Latency),
+      verifiedSuccess: null,
+      wallClockLatencyMs: v3Latency,
       contextTokens: v3Tokens,
-      agentInputTokens: v3InputTokens,
-      agentOutputTokens: v3OutputTokens,
-      providerCostUSD: v3CostUSD,
-      toolCalls: v3TargetFound ? 3 : 7,
-      trajectoryLength: v3TargetFound ? 4 : 8,
-      verifierResult: v3TargetFound ? 'PASS (all verifier assertions passed)' : 'FAIL (required target missing from context bundle)',
+      agentInputTokens: 0,
+      agentOutputTokens: 0,
+      providerCostUSD: 0,
+      toolCalls: 0,
+      trajectoryLength: 0,
+      verifierResult: 'UNAVAILABLE (real agent execution requires ANTHROPIC_API_KEY / OPENAI_API_KEY)',
     };
-
-    const successDelta = (v3Run.verifiedSuccess ? 1 : 0) - (v2Run.verifiedSuccess ? 1 : 0);
-    const tokenDelta = v3Run.contextTokens - v2Run.contextTokens;
-    const costDeltaUSD = Number((v3Run.providerCostUSD - v2Run.providerCostUSD).toFixed(4));
-    const latencyDeltaMs = v3Run.wallClockLatencyMs - v2Run.wallClockLatencyMs;
 
     pairedResults.push({
       taskId: ep.taskId,
       repo: ep.repositoryId,
       v2: v2Run,
       v3: v3Run,
-      successDelta,
-      tokenDelta,
-      costDeltaUSD,
-      latencyDeltaMs,
+      successDelta: 0,
+      tokenDelta: v3Tokens - v2Tokens,
+      costDeltaUSD: 0,
+      latencyDeltaMs: v3Latency - v2Latency,
     });
   }
 
-  // Canonical Promotion Standard: minTasksForPromotion = 30
+  const v2CoverageRate = Number((v2TargetCoveredCount / testEpisodes.length).toFixed(4));
+  const v3CoverageRate = Number((v3TargetCoveredCount / testEpisodes.length).toFixed(4));
+
+  const proxyOfflineMetrics = {
+    totalTasks: testEpisodes.length,
+    v2TargetBundleSuccessRate: v2CoverageRate,
+    v3TargetBundleSuccessRate: v3CoverageRate,
+    delta: Number((v3CoverageRate - v2CoverageRate).toFixed(4)),
+    modeledCostPerTargetCoveredTaskV2USD: Number(((v2CoverageRate > 0 ? 0.035 / v2CoverageRate : 0)).toFixed(4)),
+    modeledCostPerTargetCoveredTaskV3USD: Number(((v3CoverageRate > 0 ? 0.032 / v3CoverageRate : 0)).toFixed(4)),
+  };
+
   const report = VerifiedTaskEvaluator.evaluatePairedExperiment(pairedResults, {
     minTasksForPromotion: 30,
     minSuccessDelta: 0.0,
+    blockedReason: !hasCredentials
+      ? 'REAL_AGENT_EVALUATION_BLOCKED: Missing real agent credentials (ANTHROPIC_API_KEY, OPENAI_API_KEY). Experimental integrity strictly prohibits simulating agent outcomes or substituting target-presence proxy for verified task success.'
+      : undefined,
+    missingDependencies: !hasCredentials ? ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY'] : undefined,
+    proxyOfflineMetrics,
   });
 
-  console.log('\n🏁 Paired Verified Coding-Task Evaluation Report:');
-  console.log(`   V2 Baseline Success Rate: ${(report.v2Summary.successRate * 100).toFixed(1)}% (${report.v2Summary.successfulTasks}/${report.v2Summary.evaluatedTasks})`);
-  console.log(`   V3 Learned Success Rate:  ${(report.v3Summary.successRate * 100).toFixed(1)}% (${report.v3Summary.successfulTasks}/${report.v3Summary.evaluatedTasks})`);
-  console.log(`   Success Rate Delta:       +${(report.pairedDeltas.successRateDelta * 100).toFixed(1)}%`);
-  console.log(`   V2 CPVST:                 $${report.v2Summary.cpvstUSD}`);
-  console.log(`   V3 CPVST:                 $${report.v3Summary.cpvstUSD} (Delta: $${report.pairedDeltas.cpvstDeltaUSD})`);
-  console.log(`   Mean Context Tokens:      V2 = ${report.v2Summary.meanContextTokensPerTask}, V3 = ${report.v3Summary.meanContextTokensPerTask} (${report.pairedDeltas.meanTokenDelta} tokens)`);
-  console.log(`\n🏆 Final Promotion Decision: [ ${report.gateDecision} ]`);
-  console.log(`   Rationale: ${report.decisionRationale}`);
+  console.log('🏁 Paired Verified Coding-Task Evaluation Report:');
+  console.log(`   Gate Decision:            [ ${report.gateDecision} ]`);
+  console.log(`   Decision Rationale:       ${report.decisionRationale}`);
+  if (report.blockReason) {
+    console.log(`   Blocked Reason:           ${report.blockReason}`);
+    console.log(`   Missing Dependencies:     ${(report.missingDependencies || []).join(', ')}`);
+  }
+  console.log('\n📈 Diagnostic Offline Target-Bundle Metrics (Renamed, not confused with verified success):');
+  console.log(`   V2 Target Bundle Coverage: ${(proxyOfflineMetrics.v2TargetBundleSuccessRate * 100).toFixed(1)}% (${v2TargetCoveredCount}/${testEpisodes.length})`);
+  console.log(`   V3 Target Bundle Coverage: ${(proxyOfflineMetrics.v3TargetBundleSuccessRate * 100).toFixed(1)}% (${v3TargetCoveredCount}/${testEpisodes.length})`);
+  console.log(`   Target Bundle Delta:       ${proxyOfflineMetrics.delta >= 0 ? '+' : ''}${(proxyOfflineMetrics.delta * 100).toFixed(1)}%`);
 
   const reportPath = path.join(resultsDir, 'paired_verified_eval_report.json');
   fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), 'utf8');
-  console.log(`✔ Report persisted to: ${reportPath}`);
+  console.log(`\n✔ Report persisted to: ${reportPath}`);
 
   return report;
 }

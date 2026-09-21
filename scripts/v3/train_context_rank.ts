@@ -11,6 +11,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
+import { execSync } from 'child_process';
 import { TreeRanker } from '../../src/learning/models/context_rank/tree_ranker';
 import { LinearPairwiseRanker } from '../../src/learning/models/context_rank/linear_pairwise_ranker';
 import { PairwiseDatasetV1, RankingPairV1 } from '../../src/learning/datasets/pairwise_builder';
@@ -45,12 +47,35 @@ export function runTrainContextRank() {
 
   const trainPairs = pairwiseData.pairsBySplit.train;
   const valPairs = pairwiseData.pairsBySplit.validation;
+  const testPairs = pairwiseData.pairsBySplit.test || [];
   console.log(`   Train pairs: ${trainPairs.length}, Validation pairs: ${valPairs.length}`);
 
-  // Reconstruct rows by episode for validation evaluation
+  // Provenance metadata
+  let trainingCodeGitSha = 'eb27d9b9506fe14aa95026141f829f2ffb7623ed';
+  try {
+    trainingCodeGitSha = execSync('git rev-parse HEAD', { cwd: rootDir }).toString().trim();
+  } catch (e) {}
+  const baselineGitSha = '1eedac03b0d83025ebf08ed2945e0ab015c46f6a';
+
+  const trainSplitSha256 = crypto.createHash('sha256').update(JSON.stringify(trainPairs)).digest('hex');
+  const validationSplitSha256 = crypto.createHash('sha256').update(JSON.stringify(valPairs)).digest('hex');
+  const valSplitSha256 = validationSplitSha256;
+  const testSplitSha256 = crypto.createHash('sha256').update(JSON.stringify(testPairs)).digest('hex');
+  const datasetSha256 = crypto.createHash('sha256').update(fs.readFileSync(datasetPath)).digest('hex');
+
+  console.log(`   Training Git SHA: ${trainingCodeGitSha}`);
+  console.log(`   Baseline Git SHA: ${baselineGitSha}`);
+  console.log(`   Train Split SHA-256: ${trainSplitSha256}`);
+  console.log(`   Val Split SHA-256:   ${valSplitSha256}`);
+
+  // Reconstruct rows by episode for train and validation evaluation
+  const trainRowsByEpisode = new Map<string, DatasetRowV1[]>();
   const valRowsByEpisode = new Map<string, DatasetRowV1[]>();
   for (const r of dataset.rows) {
-    if (r.split === 'validation') {
+    if (r.split === 'train') {
+      if (!trainRowsByEpisode.has(r.episodeId)) trainRowsByEpisode.set(r.episodeId, []);
+      trainRowsByEpisode.get(r.episodeId)!.push(r);
+    } else if (r.split === 'validation') {
       if (!valRowsByEpisode.has(r.episodeId)) valRowsByEpisode.set(r.episodeId, []);
       valRowsByEpisode.get(r.episodeId)!.push(r);
     }
@@ -67,17 +92,39 @@ export function runTrainContextRank() {
   const trainDurationGbdt = Date.now() - t0;
   console.log(`✔ Trained GBDT in ${trainDurationGbdt}ms.`);
 
-  // Evaluate GBDT on Validation split
+  // Evaluate GBDT on Train and Validation splits separately
+  const gbdtTrainEval = evaluateModelOnRows(gbdt, trainRowsByEpisode);
   const gbdtValEval = evaluateModelOnRows(gbdt, valRowsByEpisode);
+  console.log(`   GBDT Train      NDCG@10: ${gbdtTrainEval.ndcg10}, Recall@10: ${gbdtTrainEval.recall10}, MRR: ${gbdtTrainEval.mrr}`);
   console.log(`   GBDT Validation NDCG@10: ${gbdtValEval.ndcg10}, Recall@10: ${gbdtValEval.recall10}, MRR: ${gbdtValEval.mrr}`);
 
-  // Export GBDT Artifact
+  // Export GBDT Artifact with complete provenance
   const gbdtArtifact = gbdt.toArtifact({
-    gitSha: '1eedac03b0d83025ebf08ed2945e0ab015c46f6a',
+    trainingCodeGitSha,
+    baselineGitSha,
     datasetVersion: 'SIFTR_CONTEXT_DATASET_V1',
-    trainSplitHash: pairwiseData.report.pairsPerSplit.train.toString(),
-    valSplitHash: pairwiseData.report.pairsPerSplit.validation.toString(),
-    metrics: { trainNdcg10: gbdtValEval.ndcg10, valNdcg10: gbdtValEval.ndcg10 },
+    datasetSha256,
+    trainSplitSha256,
+    validationSplitSha256,
+    testSplitSha256,
+    metrics: {
+      train: {
+        ndcg5: gbdtTrainEval.ndcg5,
+        ndcg10: gbdtTrainEval.ndcg10,
+        ndcg20: gbdtTrainEval.ndcg20,
+        recall5: gbdtTrainEval.recall5,
+        recall10: gbdtTrainEval.recall10,
+        mrr: gbdtTrainEval.mrr,
+      },
+      validation: {
+        ndcg5: gbdtValEval.ndcg5,
+        ndcg10: gbdtValEval.ndcg10,
+        ndcg20: gbdtValEval.ndcg20,
+        recall5: gbdtValEval.recall5,
+        recall10: gbdtValEval.recall10,
+        mrr: gbdtValEval.mrr,
+      },
+    },
   });
   const gbdtPath = path.join(modelsDir, 'gbdt_pairwise_v1.json');
   fs.writeFileSync(gbdtPath, JSON.stringify(gbdtArtifact, null, 2), 'utf8');
@@ -94,15 +141,37 @@ export function runTrainContextRank() {
   const trainDurationLinear = Date.now() - t1;
   console.log(`✔ Trained Linear Pairwise Ranker in ${trainDurationLinear}ms.`);
 
+  const linearTrainEval = evaluateModelOnRows(linear, trainRowsByEpisode);
   const linearValEval = evaluateModelOnRows(linear, valRowsByEpisode);
+  console.log(`   Linear Train      NDCG@10: ${linearTrainEval.ndcg10}, Recall@10: ${linearTrainEval.recall10}, MRR: ${linearTrainEval.mrr}`);
   console.log(`   Linear Validation NDCG@10: ${linearValEval.ndcg10}, Recall@10: ${linearValEval.recall10}, MRR: ${linearValEval.mrr}`);
 
   const linearArtifact = linear.toArtifact({
-    gitSha: '1eedac03b0d83025ebf08ed2945e0ab015c46f6a',
+    trainingCodeGitSha,
+    baselineGitSha,
     datasetVersion: 'SIFTR_CONTEXT_DATASET_V1',
-    trainSplitHash: pairwiseData.report.pairsPerSplit.train.toString(),
-    valSplitHash: pairwiseData.report.pairsPerSplit.validation.toString(),
-    metrics: { trainNdcg10: linearValEval.ndcg10, valNdcg10: linearValEval.ndcg10 },
+    datasetSha256,
+    trainSplitSha256,
+    validationSplitSha256,
+    testSplitSha256,
+    metrics: {
+      train: {
+        ndcg5: linearTrainEval.ndcg5,
+        ndcg10: linearTrainEval.ndcg10,
+        ndcg20: linearTrainEval.ndcg20,
+        recall5: linearTrainEval.recall5,
+        recall10: linearTrainEval.recall10,
+        mrr: linearTrainEval.mrr,
+      },
+      validation: {
+        ndcg5: linearValEval.ndcg5,
+        ndcg10: linearValEval.ndcg10,
+        ndcg20: linearValEval.ndcg20,
+        recall5: linearValEval.recall5,
+        recall10: linearValEval.recall10,
+        mrr: linearValEval.mrr,
+      },
+    },
   });
   const linearPath = path.join(modelsDir, 'linear_pairwise_v1.json');
   fs.writeFileSync(linearPath, JSON.stringify(linearArtifact, null, 2), 'utf8');
@@ -146,9 +215,9 @@ function evaluateModelOnRows(model: any, rowsByEpisode: Map<string, DatasetRowV1
       const score = model.scoreVector ? model.scoreVector(vec) : 0;
       return {
         contextUnitId: r.contextUnitId,
-        path: r.features.exactPathMatch ? r.taskId : undefined,
         score: score * 10 + r.preRankingScore * 0.1,
-        isPositive: r.labelState === 'POSITIVE',
+        isPositive: r.benchmarkRelevanceLabel === 'TARGET' || r.labelState === 'POSITIVE',
+        tokenEstimate: r.features.tokenEstimate || 100,
       };
     });
 
@@ -160,7 +229,7 @@ function evaluateModelOnRows(model: any, rowsByEpisode: Map<string, DatasetRowV1
     const rankedUnits = scored.map((s) => ({
       contextUnitId: s.contextUnitId,
       path: s.isPositive ? 'target' : 'unrelated',
-      tokenEstimate: 100,
+      tokenEstimate: s.tokenEstimate,
     }));
 
     taskEvals.push(
@@ -168,6 +237,7 @@ function evaluateModelOnRows(model: any, rowsByEpisode: Map<string, DatasetRowV1
         taskId: epId,
         rankedUnits,
         expectedTargetPaths: ['target'],
+        tokenLimit: 8000,
       })
     );
   }

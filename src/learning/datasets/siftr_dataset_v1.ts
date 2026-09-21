@@ -43,6 +43,9 @@ export interface DatasetRowV1 {
   readEvidence: boolean | null;
   editEvidence: boolean | null;
   verifiedOutcome: boolean | null;
+  benchmarkRelevanceLabel: 'TARGET' | 'NON_TARGET' | 'UNKNOWN';
+  supervisionSource: 'BENCHMARK_TARGET' | 'BEHAVIORAL_TRACE' | 'VERIFIED_OUTCOME';
+  labelSemantics: 'SUPERVISED_RELEVANCE' | 'OBSERVED_BEHAVIOR';
   labelState: CandidateLabelState;
   labelConfidence: number;
   rightsReference: string;
@@ -57,6 +60,10 @@ export interface DatasetSummaryV1 {
   positiveRows: number;
   weakNegativeRows: number;
   unknownRows: number;
+  benchmarkPositives: number;
+  benchmarkNonTargets: number;
+  behavioralObservedNegatives: number;
+  behavioralUnknown: number;
   rightsRejections: number;
   splitCounts: Record<SplitName, { episodes: number; rows: number; positive: number; weakNegative: number; unknown: number }>;
 }
@@ -164,6 +171,15 @@ export class SiftrDatasetV1Builder {
     const featureVector = featuresToVector(features, true);
     const featureVectorNoJev = featuresToVector(features, false);
 
+    const uPath = (unitPath || '').toLowerCase();
+    const isTarget = episode.expectedTargetPaths.some(
+      (tp) => uPath.endsWith(tp.toLowerCase()) || uPath.includes(tp.toLowerCase())
+    );
+    const benchmarkRelevanceLabel: 'TARGET' | 'NON_TARGET' | 'UNKNOWN' = isTarget ? 'TARGET' : 'NON_TARGET';
+    const hasBehavioralTelemetry = read !== undefined || edited !== undefined || taskSucceeded !== undefined;
+    const supervisionSource = hasBehavioralTelemetry ? 'BEHAVIORAL_TRACE' : 'BENCHMARK_TARGET';
+    const labelSemantics = hasBehavioralTelemetry ? 'OBSERVED_BEHAVIOR' : 'SUPERVISED_RELEVANCE';
+
     return {
       episodeId: episode.episodeId,
       taskId: episode.taskId,
@@ -183,6 +199,9 @@ export class SiftrDatasetV1Builder {
       readEvidence: read ?? null,
       editEvidence: edited ?? null,
       verifiedOutcome: taskSucceeded ?? null,
+      benchmarkRelevanceLabel,
+      supervisionSource,
+      labelSemantics,
       labelState,
       labelConfidence: confidence,
       rightsReference: episode.rightsReference,
@@ -215,6 +234,10 @@ export class SiftrDatasetV1Builder {
     let posCount = 0;
     let negCount = 0;
     let unkCount = 0;
+    let benchmarkPositives = 0;
+    let benchmarkNonTargets = 0;
+    let behavioralObservedNegatives = 0;
+    let behavioralUnknown = 0;
 
     for (const r of rows) {
       if (!rowsByEpisode.has(r.episodeId)) {
@@ -224,6 +247,18 @@ export class SiftrDatasetV1Builder {
 
       episodesBySplit[r.split].add(r.episodeId);
       splitCounts[r.split].rows++;
+
+      if (r.benchmarkRelevanceLabel === 'TARGET') {
+        benchmarkPositives++;
+      } else {
+        benchmarkNonTargets++;
+      }
+
+      if (r.supervisionSource === 'BEHAVIORAL_TRACE' && r.labelState === 'WEAK_NEGATIVE') {
+        behavioralObservedNegatives++;
+      } else {
+        behavioralUnknown++;
+      }
 
       if (r.labelState === 'POSITIVE') {
         posCount++;
@@ -248,6 +283,10 @@ export class SiftrDatasetV1Builder {
       positiveRows: posCount,
       weakNegativeRows: negCount,
       unknownRows: unkCount,
+      benchmarkPositives,
+      benchmarkNonTargets,
+      behavioralObservedNegatives,
+      behavioralUnknown,
       rightsRejections,
       splitCounts,
     };

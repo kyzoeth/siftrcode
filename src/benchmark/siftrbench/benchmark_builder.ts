@@ -44,19 +44,42 @@ export class BenchmarkBuilder {
       const baseCommit = REPO_PINNED_COMMITS[repo] || '1eedac03b0d83025ebf08ed2945e0ab015c46f6a';
       const repoOrigin = REPO_ORIGINS[repo] || 'https://github.com/kyzoeth/siftrcode.git';
 
-      // Group splitGroupId by functional domain within repository to prevent leakage
+      // Group splitGroupId by fine-grained functional domain within repository to prevent leakage
       let domain = 'core';
       if (task.expectedTargetPaths.length > 0) {
         const p = task.expectedTargetPaths[0].toLowerCase();
-        if (p.includes('router') || p.includes('route')) domain = 'router';
-        else if (p.includes('middleware')) domain = 'middleware';
-        else if (p.includes('response') || p.includes('request')) domain = 'http';
-        else if (p.includes('view') || p.includes('template')) domain = 'view';
-        else if (p.includes('dependenc')) domain = 'dependencies';
-        else if (p.includes('openapi')) domain = 'openapi';
-        else if (p.includes('security')) domain = 'security';
-        else if (p.includes('storage') || p.includes('sqlite')) domain = 'storage';
-        else if (p.includes('learning') || p.includes('dataset') || p.includes('lineage')) domain = 'learning';
+        if (repo === 'express') {
+          if (p.includes('router') || p.includes('route')) domain = 'router';
+          else if (p.includes('middleware')) domain = 'middleware';
+          else if (p.includes('response')) domain = 'response';
+          else if (p.includes('request')) domain = 'request';
+          else if (p.includes('view') || p.includes('template')) domain = 'view';
+          else if (p.includes('utils')) domain = 'utils';
+          else if (p.includes('application')) domain = 'application';
+        } else if (repo === 'fastapi') {
+          if (p.includes('dependenc')) domain = 'dependencies';
+          else if (p.includes('openapi')) domain = 'openapi';
+          else if (p.includes('security')) domain = 'security';
+          else if (p.includes('routing') || p.includes('router')) domain = 'routing';
+          else if (p.includes('param')) domain = 'params';
+          else if (p.includes('encoder')) domain = 'encoders';
+          else if (p.includes('exception')) domain = 'exceptions';
+          else if (p.includes('datastructure')) domain = 'datastructures';
+          else if (p.includes('application')) domain = 'app';
+          else if (p.includes('utils')) domain = 'utils';
+        } else if (repo === 'siftrcode') {
+          if (p.includes('learning') || p.includes('dataset') || p.includes('lineage')) domain = 'learning';
+          else if (p.includes('storage') || p.includes('sqlite')) domain = 'storage';
+          else if (p.includes('rights')) domain = 'rights';
+          else if (p.includes('graph') || p.includes('git')) domain = 'graph';
+          else if (p.includes('token')) domain = 'token';
+          else if (p.includes('engine')) domain = 'engine';
+          else if (p.includes('ranking') || p.includes('rank')) domain = 'ranking';
+          else if (p.includes('context') || p.includes('budget') || p.includes('bundle') || p.includes('resolution')) domain = 'context';
+          else if (p.includes('retrieval') || p.includes('candidate')) domain = 'retrieval';
+          else if (p.includes('workspace')) domain = 'workspace';
+          else if (p.includes('mcp') || p.includes('cli')) domain = 'mcp';
+        }
       }
       const splitGroupId = `split_${repo}_${domain}`;
 

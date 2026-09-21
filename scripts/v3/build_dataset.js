@@ -12,6 +12,7 @@ const { createDefaultDataRights } = require('../../dist/rights/data_rights');
 const { FeatureBuilderV3_1 } = require('../../dist/learning/features/feature_builder_v3_1');
 const { SiftrDatasetV1Builder } = require('../../dist/learning/datasets/siftr_dataset_v1');
 const { PairwiseBuilder } = require('../../dist/learning/datasets/pairwise_builder');
+const { EpisodeWorkspaceResolver } = require('../../dist/benchmark/siftrbench/episode_workspace_resolver');
 const { RepositoryOrigin, createDefaultRepositoryTrustPolicy } = require('../../dist/security/trust');
 
 async function runBuildDataset(options = {}) {
@@ -35,9 +36,8 @@ async function runBuildDataset(options = {}) {
     splitMap.set(a.episodeId, a.split);
   }
 
-  const repoConfigs = {
+  const repoFilterConfigs = {
     express: {
-      path: path.join(rootDir, 'benchmarks/express-repo'),
       options: {
         trustPolicy: createDefaultRepositoryTrustPolicy({
           repositoryId: 'express',
@@ -46,7 +46,6 @@ async function runBuildDataset(options = {}) {
       },
     },
     fastapi: {
-      path: path.join(rootDir, 'benchmarks/fastapi-repo'),
       options: {
         includePatterns: ['fastapi/**'],
         excludePatterns: ['**/tests/**', '**/docs/**', '**/__pycache__/**'],
@@ -57,7 +56,6 @@ async function runBuildDataset(options = {}) {
       },
     },
     siftrcode: {
-      path: rootDir,
       options: {
         includePatterns: ['src/**'],
         excludePatterns: ['**/node_modules/**', '**/dist/**', '**/temp_*/**', '**/benchmarks/**'],
@@ -69,51 +67,62 @@ async function runBuildDataset(options = {}) {
     },
   };
 
-  console.log('📚 Indexing repositories on disk...');
-  const repoData = {};
-  for (const [rId, config] of Object.entries(repoConfigs)) {
-    if (fs.existsSync(config.path)) {
-      process.stdout.write(`   Indexing ${rId}... `);
-      const indexer = new RepositoryIndexer();
-      const idx = await indexer.indexRepository(config.path, config.options);
-      const gb = new GraphBuilder();
-      const graph = gb.buildGraph(idx.units, { repoDir: config.path });
-      let gitInt;
-      try {
-        gitInt = new GitGraphIntelligence({ repoDir: config.path });
-        const origExtract = gitInt.extractCoChangePairs.bind(gitInt);
-        const coChangeMap = new Map();
-        gitInt.extractCoChangePairs = (cutoff) => {
-          const k = cutoff ? cutoff.timestamp : 'head';
-          if (!coChangeMap.has(k)) {
-            coChangeMap.set(k, origExtract(cutoff));
-          }
-          return coChangeMap.get(k);
-        };
-
-        const origFreq = gitInt.getFileChangeFrequency.bind(gitInt);
-        const freqMap = new Map();
-        gitInt.getFileChangeFrequency = (file, cutoff) => {
-          const k = `${file}|${cutoff ? cutoff.timestamp : 'head'}`;
-          if (!freqMap.has(k)) {
-            freqMap.set(k, origFreq(file, cutoff));
-          }
-          return freqMap.get(k);
-        };
-
-        const origRecent = gitInt.getRecentChangeFrequency.bind(gitInt);
-        const recentMap = new Map();
-        gitInt.getRecentChangeFrequency = (file, days, cutoff) => {
-          const k = `${file}|${days}|${cutoff ? cutoff.timestamp : 'head'}`;
-          if (!recentMap.has(k)) {
-            recentMap.set(k, origRecent(file, days, cutoff));
-          }
-          return recentMap.get(k);
-        };
-      } catch (e) {}
-      repoData[rId] = { units: idx.units, graph, gitInt, path: config.path };
-      console.log(`done (${idx.units.length} units, ${graph.getAllNodes().length} graph nodes)`);
+  const uniqueRepoCommits = new Map();
+  for (const ep of manifest.episodes) {
+    const key = `${ep.repositoryId}:${ep.baseCommit}`;
+    if (!uniqueRepoCommits.has(key)) {
+      uniqueRepoCommits.set(key, { repoId: ep.repositoryId, baseCommit: ep.baseCommit });
     }
+  }
+
+  console.log('📚 Resolving point-in-time workspaces and indexing repositories on disk...');
+  const repoData = {};
+  for (const [key, { repoId, baseCommit }] of uniqueRepoCommits.entries()) {
+    const resolved = EpisodeWorkspaceResolver.resolveWorkspace(repoId, baseCommit);
+    EpisodeWorkspaceResolver.assertCommit(resolved.workspacePath, baseCommit, repoId);
+
+    process.stdout.write(`   Indexing ${repoId} @ ${baseCommit.slice(0, 8)} (${resolved.isWorktree ? 'isolated worktree' : 'source repo'})... `);
+    const indexer = new RepositoryIndexer();
+    const filterOptions = repoFilterConfigs[repoId]?.options;
+    const idx = await indexer.indexRepository(resolved.workspacePath, filterOptions);
+    const gb = new GraphBuilder();
+    const graph = gb.buildGraph(idx.units, { repoDir: resolved.workspacePath });
+    let gitInt;
+    try {
+      gitInt = new GitGraphIntelligence({ repoDir: resolved.workspacePath });
+      const origExtract = gitInt.extractCoChangePairs.bind(gitInt);
+      const coChangeMap = new Map();
+      gitInt.extractCoChangePairs = (cutoff) => {
+        const k = cutoff ? cutoff.timestamp : 'head';
+        if (!coChangeMap.has(k)) {
+          coChangeMap.set(k, origExtract(cutoff));
+        }
+        return coChangeMap.get(k);
+      };
+
+      const origFreq = gitInt.getFileChangeFrequency.bind(gitInt);
+      const freqMap = new Map();
+      gitInt.getFileChangeFrequency = (file, cutoff) => {
+        const k = `${file}|${cutoff ? cutoff.timestamp : 'head'}`;
+        if (!freqMap.has(k)) {
+          freqMap.set(k, origFreq(file, cutoff));
+        }
+        return freqMap.get(k);
+      };
+
+      const origRecent = gitInt.getRecentChangeFrequency.bind(gitInt);
+      const recentMap = new Map();
+      gitInt.getRecentChangeFrequency = (file, days, cutoff) => {
+        const k = `${file}|${days}|${cutoff ? cutoff.timestamp : 'head'}`;
+        if (!recentMap.has(k)) {
+          recentMap.set(k, origRecent(file, days, cutoff));
+        }
+        return recentMap.get(k);
+      };
+    } catch (e) {}
+
+    repoData[key] = { units: idx.units, graph, gitInt, path: resolved.workspacePath, baseCommit };
+    console.log(`done (${idx.units.length} units, ${graph.getAllNodes().length} graph nodes)`);
   }
 
   console.log(`\n🔍 Generating candidate features for ${manifest.episodes.length} episodes...`);
@@ -124,10 +133,11 @@ async function runBuildDataset(options = {}) {
 
   for (let i = 0; i < manifest.episodes.length; i++) {
     const ep = manifest.episodes[i];
-    const rInfo = repoData[ep.repositoryId];
+    const epKey = `${ep.repositoryId}:${ep.baseCommit}`;
+    const rInfo = repoData[epKey];
     if (!rInfo) continue;
 
-    if ((i + 1) % 10 === 0 || i === manifest.episodes.length - 1) {
+    if ((i + 1) % 20 === 0 || i === manifest.episodes.length - 1) {
       process.stdout.write(`   Progress: ${i + 1}/${manifest.episodes.length} episodes (${rows.length} rows extracted)...\n`);
     }
 
@@ -148,7 +158,6 @@ async function runBuildDataset(options = {}) {
     const unitsMap = new Map();
     for (const u of rInfo.units) unitsMap.set(u.id, u);
 
-    // Extract features for all candidates
     const candidateFeatures = [];
     for (const cand of candidates) {
       const u = unitsMap.get(cand.contextUnitId);
@@ -164,7 +173,6 @@ async function runBuildDataset(options = {}) {
       candidateFeatures.push({ cand, u, features });
     }
 
-    // Determine actual exposed bundle under 8,000-token budget
     candidateFeatures.sort((a, b) => b.features.heuristicScore - a.features.heuristicScore || a.cand.contextUnitId.localeCompare(b.cand.contextUnitId));
 
     let accumulatedTokens = 0;
@@ -180,7 +188,6 @@ async function runBuildDataset(options = {}) {
     for (const cf of candidateFeatures) {
       const { cand, u, features } = cf;
       const isExposed = exposedUnitIds.has(cand.contextUnitId);
-      const isTarget = u.path ? ep.expectedTargetPaths.some(tp => u.path.toLowerCase().endsWith(tp.toLowerCase()) || u.path.toLowerCase().includes(tp.toLowerCase())) : false;
 
       const row = datasetBuilder.createRow({
         episode: ep,
@@ -190,10 +197,7 @@ async function runBuildDataset(options = {}) {
         features,
         candidateSources: cand.retrievalSources,
         isExposed,
-        observability: isExposed ? 'FULL_TOOL_TRACE' : 'UNOBSERVED',
-        read: isExposed && isTarget,
-        edited: isExposed && isTarget,
-        taskSucceeded: true,
+        observability: isExposed ? 'LIMITED_TELEMETRY' : 'UNOBSERVED',
         dataRights: defaultRights,
       });
 
@@ -201,7 +205,6 @@ async function runBuildDataset(options = {}) {
         rows.push(row);
       }
     }
-
   }
 
   console.log(`✔ Extracted ${rows.length} candidate rows.`);
@@ -209,9 +212,10 @@ async function runBuildDataset(options = {}) {
   const datasetPath = path.join(dataDir, 'siftr_dataset_v1.json');
   fs.writeFileSync(datasetPath, JSON.stringify({ ...dataset, rowsByEpisode: undefined }, null, 2), 'utf8');
   console.log(`✔ Persisted Sanctioned Dataset: ${datasetPath}`);
-  console.log(`   Positive rows:      ${dataset.summary.positiveRows}`);
-  console.log(`   Weak-Negative rows: ${dataset.summary.weakNegativeRows}`);
-  console.log(`   Unknown rows:       ${dataset.summary.unknownRows} (strictly excluded from negatives)`);
+  console.log(`   Benchmark Target Positives:    ${dataset.summary.benchmarkPositives}`);
+  console.log(`   Benchmark Non-Targets:         ${dataset.summary.benchmarkNonTargets}`);
+  console.log(`   Behavioral Observed Negatives: ${dataset.summary.behavioralObservedNegatives} (real telemetry)`);
+  console.log(`   Behavioral Unknown:            ${dataset.summary.behavioralUnknown} (strictly preserved)`);
 
   console.log('\n⚖️  Building within-task pairwise ranking pairs...');
   const pairwiseDataset = PairwiseBuilder.buildPairs(dataset, { includeJev: true });
@@ -222,6 +226,9 @@ async function runBuildDataset(options = {}) {
   console.log(`   Train Pairs: ${pairwiseDataset.report.pairsPerSplit.train}`);
   console.log(`   Val Pairs:   ${pairwiseDataset.report.pairsPerSplit.validation}`);
   console.log(`   Test Pairs:  ${pairwiseDataset.report.pairsPerSplit.test}`);
+  console.log(`   Benchmark Positives Used:   ${pairwiseDataset.report.benchmarkPositivesUsed}`);
+  console.log(`   Benchmark Non-Targets Used: ${pairwiseDataset.report.benchmarkNonTargetsUsed}`);
+  console.log(`   Unknown Rows Excluded:      ${pairwiseDataset.report.unknownRowsExcluded}`);
 
   return { dataset, pairwiseDataset };
 }

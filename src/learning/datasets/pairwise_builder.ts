@@ -19,6 +19,7 @@ export interface RankingPairV1 {
   split: SplitName;
   positiveUnitId: string;
   negativeUnitId: string;
+  pairType?: 'TARGET_VS_WEAK_NEGATIVE' | 'TARGET_VS_NON_TARGET';
   positiveFeatures: number[];
   negativeFeatures: number[];
   featureDelta: number[]; // x_pos - x_neg
@@ -32,6 +33,9 @@ export interface PairwiseGenerationReport {
   pairsPerSplit: Record<SplitName, number>;
   positiveRowsUsed: number;
   weakNegativeRowsUsed: number;
+  benchmarkPositivesUsed: number;
+  benchmarkNonTargetsUsed: number;
+  behavioralWeakNegativesUsed: number;
   unknownRowsExcluded: number;
   meanPairsPerTask: number;
 }
@@ -64,6 +68,9 @@ export class PairwiseBuilder {
 
     let positiveRowsUsed = 0;
     let weakNegativeRowsUsed = 0;
+    let benchmarkPositivesUsed = 0;
+    let benchmarkNonTargetsUsed = 0;
+    let behavioralWeakNegativesUsed = 0;
     let unknownRowsExcluded = 0;
     let tasksWithPairsCount = 0;
 
@@ -72,10 +79,17 @@ export class PairwiseBuilder {
       const negatives: DatasetRowV1[] = [];
 
       for (const r of rows) {
-        if (r.labelState === 'POSITIVE') {
+        const isPos = r.labelState === 'POSITIVE' || r.benchmarkRelevanceLabel === 'TARGET';
+        const isWeakNeg = r.labelState === 'WEAK_NEGATIVE';
+        const isExposedNonTarget = r.benchmarkRelevanceLabel === 'NON_TARGET' && r.exposureState === 'EXPOSED';
+
+        if (isPos) {
           positives.push(r);
-        } else if (r.labelState === 'WEAK_NEGATIVE') {
+          benchmarkPositivesUsed++;
+        } else if (isWeakNeg || isExposedNonTarget) {
           negatives.push(r);
+          if (isWeakNeg) behavioralWeakNegativesUsed++;
+          if (isExposedNonTarget) benchmarkNonTargetsUsed++;
         } else {
           unknownRowsExcluded++;
         }
@@ -102,12 +116,17 @@ export class PairwiseBuilder {
             delta[i] = pVec[i] - nVec[i];
           }
 
+          const pairType = neg.labelState === 'WEAK_NEGATIVE'
+            ? 'TARGET_VS_WEAK_NEGATIVE'
+            : 'TARGET_VS_NON_TARGET';
+
           const pair: RankingPairV1 = {
             episodeId,
             taskId: pos.taskId,
             split: pos.split,
             positiveUnitId: pos.contextUnitId,
             negativeUnitId: neg.contextUnitId,
+            pairType,
             positiveFeatures: pVec,
             negativeFeatures: nVec,
             featureDelta: delta,
@@ -133,8 +152,11 @@ export class PairwiseBuilder {
       },
       positiveRowsUsed,
       weakNegativeRowsUsed,
+      benchmarkPositivesUsed,
+      benchmarkNonTargetsUsed,
+      behavioralWeakNegativesUsed,
       unknownRowsExcluded,
-      meanPairsPerTask: tasksWithPairsCount > 0 ? Number((pairs.length / tasksWithPairsCount).toFixed(2)) : 0,
+      meanPairsPerTask: tasksWithPairsCount > 0 ? Math.round(pairs.length / tasksWithPairsCount) : 0,
     };
 
     return {

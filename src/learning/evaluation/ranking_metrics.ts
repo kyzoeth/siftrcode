@@ -1,11 +1,15 @@
 /**
  * SiftrCode V3 - Ranking Metrics Calculator (Phase V3.1E & F)
  *
- * Implements canonical ranking evaluation metrics:
+ * Implements canonical, deduplicated, bounded ranking evaluation metrics:
  * NDCG@k, Recall@k, MRR, Target Coverage, and Context Token Accounting.
  *
- * Invariant:
- * Evaluated on identical candidate pools, candidate budgets, and token budgets.
+ * Invariants (P0-5, P0-6):
+ * 1. Materialized Token Budgeting: Canonical promotion metrics evaluate the actual
+ *    budget-constrained context bundle (<= 8,000 tokens) exposed to the agent.
+ * 2. Deduplicated Targets: Multiple units matching the same target path do not inflate DCG or Recall.
+ * 3. Strict [0, 1] Clamping: Asserts 0.0 <= metric <= 1.0 for all values.
+ * 4. Zero-Candidate Episodes: Retained in the evaluation denominator with 0 metrics.
  */
 
 export interface TaskRankingEvaluation {
@@ -14,6 +18,7 @@ export interface TaskRankingEvaluation {
   tokensConsumed: number;
   latencyMs: number;
   firstHitRank: number;
+  // Post-budget canonical metrics (evaluated on the actual budget-constrained bundle exposed to agent)
   ndcg5: number;
   ndcg10: number;
   ndcg20: number;
@@ -23,6 +28,12 @@ export interface TaskRankingEvaluation {
   recall50: number;
   mrr: number;
   targetHit: boolean;
+  // Pre-budget diagnostic metrics (evaluated on full unconstrained candidate list)
+  preBudgetNdcg5?: number;
+  preBudgetNdcg10?: number;
+  preBudgetNdcg20?: number;
+  preBudgetRecall10?: number;
+  preBudgetMrr?: number;
 }
 
 export interface AggregateRankingMetrics {
@@ -38,9 +49,30 @@ export interface AggregateRankingMetrics {
   meanLatencyMs: number;
   meanTokens: number;
   targetCoverage: number;
+  preBudgetNdcg10?: number;
+  preBudgetRecall10?: number;
 }
 
 export class RankingMetricsCalculator {
+  /**
+   * Materializes the actual budget-constrained context bundle up to tokenLimit.
+   */
+  public static materializeBudgetedBundle(
+    rankedUnits: Array<{ contextUnitId: string; path?: string; tokenEstimate?: number }>,
+    tokenLimit: number = 8000
+  ): Array<{ contextUnitId: string; path?: string; tokenEstimate?: number }> {
+    const bundle: Array<{ contextUnitId: string; path?: string; tokenEstimate?: number }> = [];
+    let accumulatedTokens = 0;
+    for (const unit of rankedUnits) {
+      const tok = unit.tokenEstimate || 100;
+      if (accumulatedTokens + tok <= tokenLimit) {
+        bundle.push(unit);
+        accumulatedTokens += tok;
+      }
+    }
+    return bundle;
+  }
+
   /**
    * Computes comprehensive ranking metrics for a single task episode.
    */
@@ -53,24 +85,94 @@ export class RankingMetricsCalculator {
   }): TaskRankingEvaluation {
     const { taskId, rankedUnits, expectedTargetPaths, tokenLimit = 8000, latencyMs = 0 } = params;
     const targets = expectedTargetPaths.map((p) => p.toLowerCase());
-
     const totalTargets = Math.max(1, targets.length);
 
-    // Track targets that have been discovered to enforce deduplication
+    // Handle zero-candidate episode cleanly (must remain in denominator)
+    if (rankedUnits.length === 0) {
+      return {
+        taskId,
+        candidateCount: 0,
+        tokensConsumed: 0,
+        latencyMs,
+        firstHitRank: 0,
+        ndcg5: 0,
+        ndcg10: 0,
+        ndcg20: 0,
+        recall5: 0,
+        recall10: 0,
+        recall20: 0,
+        recall50: 0,
+        mrr: 0,
+        targetHit: false,
+        preBudgetNdcg5: 0,
+        preBudgetNdcg10: 0,
+        preBudgetNdcg20: 0,
+        preBudgetRecall10: 0,
+        preBudgetMrr: 0,
+      };
+    }
+
+    // 1. Diagnostic: Pre-budget metrics on unconstrained ranked list
+    const preBudget = this.computeMetricsForList(rankedUnits, targets, totalTargets);
+
+    // 2. Canonical: Post-budget metrics on materialized bundle exposed to agent
+    const budgetedBundle = this.materializeBudgetedBundle(rankedUnits, tokenLimit);
+    const postBudget = this.computeMetricsForList(budgetedBundle, targets, totalTargets);
+
+    let tokensConsumed = 0;
+    for (const u of budgetedBundle) {
+      tokensConsumed += u.tokenEstimate || 100;
+    }
+
+    // Invariant assertion: all metrics must be strictly in [0, 1]
+    this.assertBounds(postBudget.ndcg5, 'ndcg5');
+    this.assertBounds(postBudget.ndcg10, 'ndcg10');
+    this.assertBounds(postBudget.ndcg20, 'ndcg20');
+    this.assertBounds(postBudget.recall5, 'recall5');
+    this.assertBounds(postBudget.recall10, 'recall10');
+    this.assertBounds(postBudget.recall20, 'recall20');
+    this.assertBounds(postBudget.recall50, 'recall50');
+    this.assertBounds(postBudget.mrr, 'mrr');
+
+    return {
+      taskId,
+      candidateCount: rankedUnits.length,
+      tokensConsumed,
+      latencyMs,
+      firstHitRank: postBudget.firstHitRank,
+      ndcg5: postBudget.ndcg5,
+      ndcg10: postBudget.ndcg10,
+      ndcg20: postBudget.ndcg20,
+      recall5: postBudget.recall5,
+      recall10: postBudget.recall10,
+      recall20: postBudget.recall20,
+      recall50: postBudget.recall50,
+      mrr: postBudget.mrr,
+      targetHit: postBudget.firstHitRank > 0,
+      preBudgetNdcg5: preBudget.ndcg5,
+      preBudgetNdcg10: preBudget.ndcg10,
+      preBudgetNdcg20: preBudget.ndcg20,
+      preBudgetRecall10: preBudget.recall10,
+      preBudgetMrr: preBudget.mrr,
+    };
+  }
+
+  private static computeMetricsForList(
+    units: Array<{ contextUnitId: string; path?: string; tokenEstimate?: number }>,
+    targets: string[],
+    totalTargets: number
+  ) {
     const discoveredTargets = new Set<string>();
     let firstHitRank = 0;
-    let tokensAccumulated = 0;
-
     let dcg5 = 0;
     let dcg10 = 0;
     let dcg20 = 0;
 
-    for (let r = 0; r < rankedUnits.length; r++) {
+    for (let r = 0; r < units.length; r++) {
       const rankNum = r + 1;
-      const unit = rankedUnits[r];
+      const unit = units[r];
       const uPath = (unit.path || '').toLowerCase();
 
-      // Check if unit matches any target not yet discovered
       let isNewTargetHit = false;
       for (const tp of targets) {
         if (uPath.endsWith(tp) || uPath.includes(tp)) {
@@ -85,28 +187,15 @@ export class RankingMetricsCalculator {
       }
 
       const rel = isNewTargetHit ? 1 : 0;
-
-      if (rankNum <= 5 && rel > 0) {
-        dcg5 += rel / Math.log2(rankNum + 1);
-      }
-      if (rankNum <= 10 && rel > 0) {
-        dcg10 += rel / Math.log2(rankNum + 1);
-      }
-      if (rankNum <= 20 && rel > 0) {
-        dcg20 += rel / Math.log2(rankNum + 1);
-      }
-
-      const tok = unit.tokenEstimate || 100;
-      if (tokensAccumulated + tok <= tokenLimit) {
-        tokensAccumulated += tok;
-      }
+      if (rankNum <= 5 && rel > 0) dcg5 += rel / Math.log2(rankNum + 1);
+      if (rankNum <= 10 && rel > 0) dcg10 += rel / Math.log2(rankNum + 1);
+      if (rankNum <= 20 && rel > 0) dcg20 += rel / Math.log2(rankNum + 1);
     }
 
-    // Compute unique targets hit at each cutoff k
     const countUniqueHitsAtK = (k: number) => {
       const seen = new Set<string>();
-      for (let r = 0; r < Math.min(k, rankedUnits.length); r++) {
-        const uPath = (rankedUnits[r].path || '').toLowerCase();
+      for (let r = 0; r < Math.min(k, units.length); r++) {
+        const uPath = (units[r].path || '').toLowerCase();
         for (const tp of targets) {
           if (uPath.endsWith(tp) || uPath.includes(tp)) {
             seen.add(tp);
@@ -139,10 +228,6 @@ export class RankingMetricsCalculator {
     const mrr = firstHitRank > 0 ? Math.min(1.0, Math.max(0.0, 1 / firstHitRank)) : 0;
 
     return {
-      taskId,
-      candidateCount: rankedUnits.length,
-      tokensConsumed: tokensAccumulated,
-      latencyMs,
       firstHitRank,
       ndcg5: Number(ndcg5.toFixed(4)),
       ndcg10: Number(ndcg10.toFixed(4)),
@@ -152,10 +237,14 @@ export class RankingMetricsCalculator {
       recall20: Number(recall20.toFixed(4)),
       recall50: Number(recall50.toFixed(4)),
       mrr: Number(mrr.toFixed(4)),
-      targetHit: firstHitRank > 0,
     };
   }
 
+  private static assertBounds(val: number, name: string): void {
+    if (isNaN(val) || val < 0.0 || val > 1.0) {
+      throw new Error(`[RankingMetricsCalculator] Metric bound violation for ${name}: ${val}. Must be in [0, 1].`);
+    }
+  }
 
   /**
    * Computes aggregate metrics across multiple task evaluations.
@@ -180,6 +269,8 @@ export class RankingMetricsCalculator {
       meanLatencyMs: Number((tasks.reduce((acc, t) => acc + t.latencyMs, 0) / n).toFixed(1)),
       meanTokens: Math.round(tasks.reduce((acc, t) => acc + t.tokensConsumed, 0) / n),
       targetCoverage: Number((hits / n).toFixed(4)),
+      preBudgetNdcg10: mean((t) => t.preBudgetNdcg10 || 0),
+      preBudgetRecall10: mean((t) => t.preBudgetRecall10 || 0),
     };
   }
 }

@@ -33,10 +33,11 @@ const ranker = new TreeRanker('gbdt_test', {
 });
 
 const artifact = ranker.toArtifact({
-  gitSha: '1eedac03b0d83025ebf08ed2945e0ab015c46f6a',
+  trainingCodeGitSha: 'eb27d9b9506fe14aa95026141f829f2ffb7623ed',
+  baselineGitSha: '1eedac03b0d83025ebf08ed2945e0ab015c46f6a',
   datasetVersion: 'SIFTR_CONTEXT_DATASET_V1',
-  trainSplitHash: 'hash_train',
-  valSplitHash: 'hash_val',
+  trainSplitSha256: 'a'.repeat(64),
+  validationSplitSha256: 'b'.repeat(64),
   metrics: { trainNdcg10: 0.85, valNdcg10: 0.82 },
 });
 
