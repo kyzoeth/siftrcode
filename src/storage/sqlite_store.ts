@@ -4,6 +4,10 @@ import { DatabaseSync } from 'node:sqlite';
 import { WorkspaceSnapshot } from '../workspace/workspace_snapshot';
 import { ContextUnit, ContextUnitKind } from '../context/context_unit';
 import { TaskContext } from '../context/task_context';
+import { ContextPlan } from '../engine/context_plan';
+import { CandidateObservationV2 } from '../telemetry/candidate_observation';
+import { ExposureDecisionV2, isExposedV2 } from '../telemetry/exposure_decision';
+import { TrajectoryEvent } from '../telemetry/trajectory_event';
 
 export interface StoredGraphEdge {
   fromUnitId: string;
@@ -118,6 +122,103 @@ const MIGRATIONS: Migration[] = [
         raw_json TEXT NOT NULL,
         created_at TEXT NOT NULL
       );
+    `,
+  },
+  {
+    version: 2,
+    name: '002_durable_observation_store',
+    sql: `
+      CREATE TABLE IF NOT EXISTS candidate_observations (
+        observation_id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        snapshot_id TEXT NOT NULL,
+        context_unit_id TEXT NOT NULL,
+        agent_environment_id TEXT NOT NULL,
+        observability_level TEXT NOT NULL,
+        feature_schema_version TEXT NOT NULL,
+        policy_id TEXT NOT NULL,
+        policy_version TEXT NOT NULL,
+        was_exposed INTEGER NOT NULL,
+        exposure_resolution INTEGER NOT NULL,
+        outcome_label TEXT NOT NULL,
+        rights_reference TEXT NOT NULL,
+        evidence_json TEXT,
+        raw_json TEXT NOT NULL,
+        recorded_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_obs_task ON candidate_observations(task_id);
+      CREATE INDEX IF NOT EXISTS idx_obs_unit ON candidate_observations(context_unit_id);
+      CREATE INDEX IF NOT EXISTS idx_obs_policy ON candidate_observations(policy_id, policy_version);
+      CREATE INDEX IF NOT EXISTS idx_obs_label ON candidate_observations(outcome_label);
+
+      CREATE TABLE IF NOT EXISTS exposure_decisions (
+        decision_id TEXT PRIMARY KEY,
+        context_plan_id TEXT NOT NULL,
+        task_id TEXT NOT NULL,
+        context_unit_id TEXT NOT NULL,
+        policy_id TEXT NOT NULL,
+        policy_version TEXT NOT NULL,
+        eligible_for_selection INTEGER NOT NULL,
+        selected INTEGER NOT NULL,
+        candidate_rank INTEGER,
+        final_bundle_rank INTEGER,
+        resolution INTEGER NOT NULL,
+        actual_token_cost INTEGER,
+        selection_probability REAL,
+        exploration_policy TEXT,
+        timestamp TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_exp_plan ON exposure_decisions(context_plan_id);
+      CREATE INDEX IF NOT EXISTS idx_exp_unit ON exposure_decisions(context_unit_id);
+      CREATE INDEX IF NOT EXISTS idx_exp_task ON exposure_decisions(task_id);
+
+      CREATE TABLE IF NOT EXISTS trajectory_events (
+        event_id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        session_id TEXT,
+        snapshot_id TEXT,
+        kind TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        timestamp INTEGER NOT NULL,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_traj_task ON trajectory_events(task_id);
+      CREATE INDEX IF NOT EXISTS idx_traj_kind ON trajectory_events(kind);
+
+      CREATE TABLE IF NOT EXISTS outcome_evidence (
+        evidence_id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        session_id TEXT,
+        snapshot_id TEXT,
+        label_type TEXT NOT NULL,
+        value REAL NOT NULL,
+        confidence REAL NOT NULL,
+        strength TEXT NOT NULL,
+        source TEXT NOT NULL,
+        context_unit_id TEXT,
+        details_json TEXT,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_outcome_task ON outcome_evidence(task_id);
+      CREATE INDEX IF NOT EXISTS idx_outcome_unit ON outcome_evidence(context_unit_id);
+
+      CREATE TABLE IF NOT EXISTS provider_calls (
+        call_id TEXT PRIMARY KEY,
+        task_id TEXT,
+        provider_name TEXT NOT NULL,
+        allowed INTEGER NOT NULL,
+        reason TEXT,
+        blocked_units_json TEXT,
+        redacted_secrets_count INTEGER NOT NULL DEFAULT 0,
+        timestamp TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_provider_task ON provider_calls(task_id);
     `,
   },
 ];
@@ -421,6 +522,402 @@ export class SqliteStore {
     if (!row) return undefined;
     return JSON.parse(row.raw_json);
   }
+
+  // ==========================================
+  // ContextPlan Operations
+  // ==========================================
+
+  public saveContextPlan(plan: ContextPlan, snapshotId: string = 'default'): void {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO context_plans (plan_id, task_id, snapshot_id, raw_json, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      plan.planId,
+      plan.taskId,
+      snapshotId,
+      JSON.stringify(plan),
+      plan.createdAt
+    );
+  }
+
+  public getContextPlan(planId: string): ContextPlan | undefined {
+    const row = this.db.prepare('SELECT raw_json FROM context_plans WHERE plan_id = ?').get(planId) as {
+      raw_json: string;
+    } | undefined;
+
+    if (!row) return undefined;
+    return JSON.parse(row.raw_json);
+  }
+
+  public listContextPlans(taskId?: string): ContextPlan[] {
+    const query = taskId
+      ? 'SELECT raw_json FROM context_plans WHERE task_id = ? ORDER BY created_at ASC'
+      : 'SELECT raw_json FROM context_plans ORDER BY created_at ASC';
+
+    const rows = (taskId ? this.db.prepare(query).all(taskId) : this.db.prepare(query).all()) as Array<{
+      raw_json: string;
+    }>;
+
+    return rows.map((r) => JSON.parse(r.raw_json));
+  }
+
+  // ==========================================
+  // CandidateObservation Operations (Append-Only)
+  // ==========================================
+
+  public saveCandidateObservations(observations: CandidateObservationV2[]): void {
+    if (observations.length === 0) return;
+
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO candidate_observations (
+        observation_id, task_id, session_id, snapshot_id, context_unit_id,
+        agent_environment_id, observability_level, feature_schema_version,
+        policy_id, policy_version, was_exposed, exposure_resolution,
+        outcome_label, rights_reference, evidence_json, raw_json, recorded_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const obs of observations) {
+      stmt.run(
+        obs.observationId,
+        obs.taskId,
+        obs.siftrSessionId,
+        obs.workspaceSnapshotId,
+        obs.contextUnitId,
+        obs.agentEnvironmentId,
+        obs.observabilityLevel,
+        obs.featureSchemaVersion,
+        obs.exposure.policyId,
+        obs.exposure.policyVersion,
+        isExposedV2(obs.exposure) ? 1 : 0,
+        obs.exposure.resolution,
+        obs.outcomeLabel,
+        obs.rightsReference,
+        obs.evidence ? JSON.stringify(obs.evidence) : null,
+        JSON.stringify(obs),
+        obs.recordedAt
+      );
+    }
+  }
+
+  public getCandidateObservation(observationId: string): CandidateObservationV2 | undefined {
+    const row = this.db.prepare('SELECT raw_json FROM candidate_observations WHERE observation_id = ?').get(observationId) as {
+      raw_json: string;
+    } | undefined;
+
+    if (!row) return undefined;
+    return JSON.parse(row.raw_json);
+  }
+
+  public listCandidateObservations(options: { taskId?: string; contextUnitId?: string; outcomeLabel?: string } = {}): CandidateObservationV2[] {
+    let sql = 'SELECT raw_json FROM candidate_observations WHERE 1=1';
+    const params: string[] = [];
+
+    if (options.taskId) {
+      sql += ' AND task_id = ?';
+      params.push(options.taskId);
+    }
+    if (options.contextUnitId) {
+      sql += ' AND context_unit_id = ?';
+      params.push(options.contextUnitId);
+    }
+    if (options.outcomeLabel) {
+      sql += ' AND outcome_label = ?';
+      params.push(options.outcomeLabel);
+    }
+
+    sql += ' ORDER BY recorded_at ASC';
+    const rows = this.db.prepare(sql).all(...params) as Array<{ raw_json: string }>;
+    return rows.map((r) => JSON.parse(r.raw_json));
+  }
+
+  // ==========================================
+  // ExposureDecision Operations (Section 25)
+  // ==========================================
+
+  public saveExposureDecisions(decisions: ExposureDecisionV2[], taskId: string = 'default'): void {
+    if (decisions.length === 0) return;
+
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO exposure_decisions (
+        decision_id, context_plan_id, task_id, context_unit_id,
+        policy_id, policy_version, eligible_for_selection, selected,
+        candidate_rank, final_bundle_rank, resolution, actual_token_cost,
+        selection_probability, exploration_policy, timestamp
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const d of decisions) {
+      const decisionId = `ed_${d.contextPlanId}_${d.contextUnitId}`;
+      stmt.run(
+        decisionId,
+        d.contextPlanId,
+        taskId,
+        d.contextUnitId,
+        d.policyId,
+        d.policyVersion,
+        d.eligibleForSelection ? 1 : 0,
+        d.selected ? 1 : 0,
+        d.candidateRank ?? null,
+        d.finalBundleRank ?? null,
+        d.resolution,
+        d.actualTokenCost ?? null,
+        d.selectionProbability ?? null,
+        d.explorationPolicy ?? null,
+        d.timestamp
+      );
+    }
+  }
+
+  public listExposureDecisions(contextPlanId: string): ExposureDecisionV2[] {
+    const rows = this.db.prepare(`
+      SELECT * FROM exposure_decisions WHERE context_plan_id = ? ORDER BY candidate_rank ASC
+    `).all(contextPlanId) as Array<{
+      context_plan_id: string;
+      context_unit_id: string;
+      policy_id: string;
+      policy_version: string;
+      eligible_for_selection: number;
+      selected: number;
+      candidate_rank: number | null;
+      final_bundle_rank: number | null;
+      resolution: number;
+      actual_token_cost: number | null;
+      selection_probability: number | null;
+      exploration_policy: string | null;
+      timestamp: string;
+    }>;
+
+    return rows.map((r) => ({
+      contextPlanId: r.context_plan_id,
+      contextUnitId: r.context_unit_id,
+      policyId: r.policy_id,
+      policyVersion: r.policy_version,
+      eligibleForSelection: Boolean(r.eligible_for_selection),
+      selected: Boolean(r.selected),
+      candidateRank: r.candidate_rank ?? undefined,
+      finalBundleRank: r.final_bundle_rank ?? undefined,
+      resolution: r.resolution,
+      actualTokenCost: r.actual_token_cost ?? undefined,
+      selectionProbability: r.selection_probability ?? undefined,
+      explorationPolicy: r.exploration_policy ?? undefined,
+      timestamp: r.timestamp,
+    }));
+  }
+
+  // ==========================================
+  // TrajectoryEvent Operations (Section 25)
+  // ==========================================
+
+  public saveTrajectoryEvents(events: TrajectoryEvent[], sessionId?: string, snapshotId?: string): void {
+    if (events.length === 0) return;
+
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO trajectory_events (
+        event_id, task_id, session_id, snapshot_id, kind, payload_json, timestamp, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const now = new Date().toISOString();
+    for (const ev of events) {
+      stmt.run(
+        ev.eventId,
+        ev.taskId,
+        sessionId ?? null,
+        snapshotId ?? null,
+        ev.kind,
+        JSON.stringify(ev.payload),
+        ev.timestamp,
+        now
+      );
+    }
+  }
+
+  public listTrajectoryEvents(taskId: string): TrajectoryEvent[] {
+    const rows = this.db.prepare(`
+      SELECT * FROM trajectory_events WHERE task_id = ? ORDER BY timestamp ASC
+    `).all(taskId) as Array<{
+      event_id: string;
+      task_id: string;
+      kind: string;
+      payload_json: string;
+      timestamp: number;
+    }>;
+
+    return rows.map((r) => ({
+      eventId: r.event_id,
+      taskId: r.task_id,
+      kind: r.kind as any,
+      payload: JSON.parse(r.payload_json),
+      timestamp: r.timestamp,
+      dataRights: undefined as any,
+    }));
+  }
+
+  // ==========================================
+  // OutcomeEvidence Operations (Section 25)
+  // ==========================================
+
+  public saveOutcomeEvidence(evidenceList: Array<{
+    evidenceId?: string;
+    taskId: string;
+    sessionId?: string;
+    snapshotId?: string;
+    contextUnitId?: string;
+    labelType: string;
+    value: number;
+    confidence: number;
+    strength: string;
+    source: string;
+    details?: Record<string, unknown>;
+  }>): void {
+    if (evidenceList.length === 0) return;
+
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO outcome_evidence (
+        evidence_id, task_id, session_id, snapshot_id, label_type,
+        value, confidence, strength, source, context_unit_id, details_json, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const now = new Date().toISOString();
+    for (const ev of evidenceList) {
+      const id = ev.evidenceId || `ev_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
+      stmt.run(
+        id,
+        ev.taskId,
+        ev.sessionId ?? null,
+        ev.snapshotId ?? null,
+        ev.labelType,
+        ev.value,
+        ev.confidence,
+        ev.strength,
+        ev.source,
+        ev.contextUnitId ?? null,
+        ev.details ? JSON.stringify(ev.details) : null,
+        now
+      );
+    }
+  }
+
+  public listOutcomeEvidence(taskId: string): Array<{
+    evidenceId: string;
+    taskId: string;
+    sessionId?: string;
+    snapshotId?: string;
+    contextUnitId?: string;
+    labelType: string;
+    value: number;
+    confidence: number;
+    strength: string;
+    source: string;
+    details?: Record<string, unknown>;
+    createdAt: string;
+  }> {
+    const rows = this.db.prepare(`
+      SELECT * FROM outcome_evidence WHERE task_id = ? ORDER BY created_at ASC
+    `).all(taskId) as Array<{
+      evidence_id: string;
+      task_id: string;
+      session_id: string | null;
+      snapshot_id: string | null;
+      label_type: string;
+      value: number;
+      confidence: number;
+      strength: string;
+      source: string;
+      context_unit_id: string | null;
+      details_json: string | null;
+      created_at: string;
+    }>;
+
+    return rows.map((r) => ({
+      evidenceId: r.evidence_id,
+      taskId: r.task_id,
+      sessionId: r.session_id ?? undefined,
+      snapshotId: r.snapshot_id ?? undefined,
+      contextUnitId: r.context_unit_id ?? undefined,
+      labelType: r.label_type,
+      value: r.value,
+      confidence: r.confidence,
+      strength: r.strength,
+      source: r.source,
+      details: r.details_json ? JSON.parse(r.details_json) : undefined,
+      createdAt: r.created_at,
+    }));
+  }
+
+  // ==========================================
+  // ProviderCall Operations (Section 25)
+  // ==========================================
+
+  public saveProviderCall(record: {
+    callId?: string;
+    taskId?: string;
+    providerName: string;
+    allowed: boolean;
+    reason?: string;
+    blockedUnits?: string[];
+    redactedSecretsCount?: number;
+    timestamp?: string;
+  }): void {
+    const callId = record.callId || `call_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO provider_calls (
+        call_id, task_id, provider_name, allowed, reason, blocked_units_json, redacted_secrets_count, timestamp
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      callId,
+      record.taskId ?? null,
+      record.providerName,
+      record.allowed ? 1 : 0,
+      record.reason ?? null,
+      record.blockedUnits ? JSON.stringify(record.blockedUnits) : null,
+      record.redactedSecretsCount ?? 0,
+      record.timestamp ?? new Date().toISOString()
+    );
+  }
+
+  public listProviderCalls(taskId?: string): Array<{
+    callId: string;
+    taskId?: string;
+    providerName: string;
+    allowed: boolean;
+    reason?: string;
+    blockedUnits?: string[];
+    redactedSecretsCount: number;
+    timestamp: string;
+  }> {
+    const query = taskId
+      ? 'SELECT * FROM provider_calls WHERE task_id = ? ORDER BY timestamp ASC'
+      : 'SELECT * FROM provider_calls ORDER BY timestamp ASC';
+
+    const rows = (taskId ? this.db.prepare(query).all(taskId) : this.db.prepare(query).all()) as Array<{
+      call_id: string;
+      task_id: string | null;
+      provider_name: string;
+      allowed: number;
+      reason: string | null;
+      blocked_units_json: string | null;
+      redacted_secrets_count: number;
+      timestamp: string;
+    }>;
+
+    return rows.map((r) => ({
+      callId: r.call_id,
+      taskId: r.task_id ?? undefined,
+      providerName: r.provider_name,
+      allowed: Boolean(r.allowed),
+      reason: r.reason ?? undefined,
+      blockedUnits: r.blocked_units_json ? JSON.parse(r.blocked_units_json) : undefined,
+      redactedSecretsCount: r.redacted_secrets_count,
+      timestamp: r.timestamp,
+    }));
+  }
 }
 
 /**
@@ -429,3 +926,4 @@ export class SqliteStore {
 export function getDefaultDatabasePath(rootDir: string = process.cwd()): string {
   return path.resolve(rootDir, '.siftr', 'siftr.db');
 }
+

@@ -35,6 +35,7 @@ import { ContextUnitMaterializer, DefaultContextUnitMaterializer } from '../mate
 import { WorkspaceSnapshot, createWorkspaceSnapshot } from '../workspace/workspace_snapshot';
 import { DefaultWorkspaceSourceReader } from '../workspace/workspace_source_reader';
 import { TokenCostEstimator, DefaultTokenCostEstimator, ResolutionOption } from '../token/token_cost_estimator';
+import { SqliteStore } from '../storage/sqlite_store';
 
 export interface ContextEngineOptions {
   repoRootDir?: string;
@@ -46,6 +47,7 @@ export interface ContextEngineOptions {
   seedUnitIds?: string[];
   materializer?: ContextUnitMaterializer;
   tokenCostEstimator?: TokenCostEstimator;
+  sqliteStore?: SqliteStore;
 }
 
 export interface OptimizeWorkspaceOptions {
@@ -98,6 +100,7 @@ export class ContextEngine {
   private budgetLimits: BudgetLimits;
   private materializer: ContextUnitMaterializer;
   private tokenCostEstimator: TokenCostEstimator;
+  private sqliteStore?: SqliteStore;
 
   constructor(options: ContextEngineOptions = {}) {
     this.repoRootDir = options.repoRootDir;
@@ -111,6 +114,7 @@ export class ContextEngine {
       new DefaultWorkspaceSourceReader(this.repoRootDir || process.cwd())
     );
     this.tokenCostEstimator = options.tokenCostEstimator || new DefaultTokenCostEstimator(this.materializer);
+    this.sqliteStore = options.sqliteStore;
   }
 
   /**
@@ -497,7 +501,7 @@ export class ContextEngine {
       policyVersion,
     });
 
-    return {
+    const contextPlan: ContextPlan = {
       taskId: task.taskId,
       planId,
       budgetPlan,
@@ -512,6 +516,21 @@ export class ContextEngine {
       overflowReason,
       createdAt,
     };
+
+    // If a persistent store is configured, persist the plan, exposures, and trajectory durably (Section 25)
+    if (this.sqliteStore) {
+      this.sqliteStore.saveContextPlan(contextPlan, snapshot.workspaceSnapshotId);
+      if (exposureDecisionsV2.length > 0) {
+        this.sqliteStore.saveExposureDecisions(exposureDecisionsV2, task.taskId);
+      }
+      this.sqliteStore.saveTrajectoryEvents(
+        trajectoryLogger.getEvents(),
+        undefined,
+        snapshot.workspaceSnapshotId
+      );
+    }
+
+    return contextPlan;
   }
 
   /**

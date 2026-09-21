@@ -30,6 +30,7 @@ const tests = [
   { name: 'V2 Bundle/Resolution Coordination & Capabilities Tests', file: 'test_bundle_resolution_coordination.js' },
   { name: 'V2 Security Hardening & Isolation Tests', file: 'test_security_hardening.js' },
   { name: 'V2 Telemetry Schema V2 & Learning-Plane Tests', file: 'test_telemetry_v2.js' },
+  { name: 'V2 Durable Observation Store Tests', file: 'test_durable_store.js' },
   { name: 'V2 ContextEngine (End-to-End Orchestration) Tests', file: 'test_context_engine.js' },
   { name: 'V2 CLI & MCP Server Integration Tests', file: 'test_v2_integration.js' }
 ];
