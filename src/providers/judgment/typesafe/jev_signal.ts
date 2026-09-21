@@ -42,6 +42,7 @@ export interface JevSignalV1 {
   inputTokens?: number;
   providerReportedConfidence?: Record<string, number>;
   redactionApplied: boolean;
+  redactionCount?: number;
   fallbackReason?: JevFallbackReason;
   createdAt: string;
 }

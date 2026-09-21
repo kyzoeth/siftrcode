@@ -416,6 +416,7 @@ export class JevShadowRunner {
                 latencyMs,
                 inputTokens: result?.usage?.input_tokens,
                 redactionApplied: payload.redactionCount > 0,
+                redactionCount: payload.redactionCount,
                 fallbackReason: JevFallbackReason.MALFORMED_RESPONSE,
               })
             );
@@ -441,6 +442,7 @@ export class JevShadowRunner {
               latencyMs,
               inputTokens: result.usage?.input_tokens,
               redactionApplied: payload.redactionCount > 0,
+              redactionCount: payload.redactionCount,
             })
           );
         } catch (err: any) {
