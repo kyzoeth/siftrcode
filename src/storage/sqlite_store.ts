@@ -1,6 +1,16 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { DatabaseSync } from 'node:sqlite';
+import type { DatabaseSync } from 'node:sqlite';
+
+// Safe runtime resolution of node:sqlite (Node.js 22.5.0+ Active LTS)
+// Prevents top-level module load failures in environments running Node < 22
+let NodeDatabaseSync: any = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  NodeDatabaseSync = require('node:sqlite').DatabaseSync;
+} catch {
+  NodeDatabaseSync = null;
+}
 import { WorkspaceSnapshot } from '../workspace/workspace_snapshot';
 import { ContextUnit, ContextUnitKind } from '../context/context_unit';
 import { TaskContext } from '../context/task_context';
@@ -337,7 +347,14 @@ export class SqliteStore {
       }
     }
 
-    this.db = new DatabaseSync(dbPath);
+    if (!NodeDatabaseSync) {
+      throw new Error(
+        'node:sqlite (DatabaseSync) is not available in the current runtime. ' +
+        'Please run SiftrCode on Node.js 22.5.0 or later (Active LTS).'
+      );
+    }
+
+    this.db = new NodeDatabaseSync(dbPath);
     this.runMigrations();
   }
 

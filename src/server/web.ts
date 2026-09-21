@@ -12,14 +12,25 @@ import { SourceProvenance, createSourceProvenance } from '../rights/source_prove
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
+const HOST = process.env.HOST || '0.0.0.0';
 const WEB_DIR = path.join(__dirname, '..', '..', 'web');
 
 let sharedStore: SqliteStore | null = null;
-function getSharedStore(): SqliteStore {
+function getSharedStore(): SqliteStore | null {
   if (!sharedStore) {
-    const dbPath = getDefaultDatabasePath();
-    sharedStore = new SqliteStore(dbPath);
+    try {
+      const dbPath = getDefaultDatabasePath();
+      sharedStore = new SqliteStore(dbPath);
+    } catch (diskErr) {
+      console.warn('⚠️ [Web Admin] Failed to open persistent SQLite store, falling back to memory store:', diskErr);
+      try {
+        sharedStore = new SqliteStore(':memory:');
+      } catch (memErr) {
+        console.error('❌ [Web Admin] SQLite store unavailable:', memErr);
+        return null;
+      }
+    }
 
     // Seed sample records for admin demonstration if database is fresh
     try {
@@ -1235,10 +1246,10 @@ const server = http.createServer(async (req, res) => {
     };
 
     const store = getSharedStore();
-    const sourceProvenances = store.listSourceProvenances();
-    const taskOutcomes = store.listTaskOutcomes(20);
-    const deletionAudits = store.listDeletionAuditRecords();
-    const trainingRows = store.listTrainingRows();
+    const sourceProvenances = store ? store.listSourceProvenances() : [];
+    const taskOutcomes = store ? store.listTaskOutcomes(20) : [];
+    const deletionAudits = store ? store.listDeletionAuditRecords() : [];
+    const trainingRows = store ? store.listTrainingRows() : [];
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
@@ -1292,6 +1303,11 @@ const server = http.createServer(async (req, res) => {
       try {
         const payload = JSON.parse(body || '{}');
         const store = getSharedStore();
+        if (!store) {
+          res.writeHead(503, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Database storage is temporarily unavailable' }));
+          return;
+        }
         const deletionManager = new DeletionManager(store);
         const criteria = {
           repository: payload.repository ? String(payload.repository).trim() : undefined,
@@ -1329,6 +1345,11 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const store = getSharedStore();
+        if (!store) {
+          res.writeHead(503, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Database storage is temporarily unavailable' }));
+          return;
+        }
         const prov = createSourceProvenance({
           origin: payload.origin || 'OpenSource',
           repository: repo,
@@ -1379,7 +1400,7 @@ const server = http.createServer(async (req, res) => {
       return;
     } else if (exportType === 'deletions') {
       const store = getSharedStore();
-      const audits = store.listDeletionAuditRecords();
+      const audits = store ? store.listDeletionAuditRecords() : [];
       const csvHeader = 'DeletionID,RequestedAt,ExecutedAt,Repository,TenantID,TaskID,PurgedObservations,PurgedTrainingRows,AffectedDatasets,Status,Reason\n';
       const csvRows = audits.map(a =>
         `"${a.deletionId}","${a.requestedAt}","${a.executedAt}","${a.criteria.repository || ''}","${a.criteria.tenantId || ''}","${a.criteria.taskId || ''}",${a.purgedObservationsCount},${a.purgedTrainingRowsCount},"${(a.affectedDatasets || []).join(';')}","${a.status}","${(a.criteria.reason || '').replace(/"/g, '""')}"`
@@ -1392,7 +1413,7 @@ const server = http.createServer(async (req, res) => {
       return;
     } else if (exportType === 'provenance') {
       const store = getSharedStore();
-      const provs = store.listSourceProvenances();
+      const provs = store ? store.listSourceProvenances() : [];
       const csvHeader = 'ProvenanceID,Origin,Repository,License,TrainingPermission,RedistributionPermission,CutoffDate,Verified,CreatedAt\n';
       const csvRows = provs.map(p =>
         `"${p.provenanceId}","${p.origin}","${p.repository}","${p.license}","${p.trainingPermission}","${p.redistributionPermission}","${p.cutoffDate}",${p.verified ? 'true' : 'false'},"${p.createdAt}"`
@@ -1405,7 +1426,7 @@ const server = http.createServer(async (req, res) => {
       return;
     } else if (exportType === 'outcomes') {
       const store = getSharedStore();
-      const outcomes = store.listTaskOutcomes(100);
+      const outcomes = store ? store.listTaskOutcomes(100) : [];
       const csvHeader = 'OutcomeID,TaskID,SessionID,AgentEnvironment,BuildPassed,HiddenTestsPassed,RegressionTestsPassed,HumanReview,VerifiedSuccess,Confidence,RecordedAt\n';
       const csvRows = outcomes.map(o =>
         `"${o.outcomeId}","${o.taskId}","${o.sessionId}","${o.agentEnvironmentId}",${o.buildPassed ?? ''},${o.hiddenTestsPassed ?? ''},${o.regressionTestsPassed ?? ''},"${o.humanReview || ''}",${o.verifiedSuccess === null ? 'null' : (o.verifiedSuccess ? 'true' : 'false')},${o.confidence},"${o.recordedAt}"`
@@ -1471,6 +1492,18 @@ const server = http.createServer(async (req, res) => {
   res.end('Not Found');
 });
 
-server.listen(PORT, () => {
-  console.log(`🌐 [SiftrCode Web Server] Running on http://localhost:${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`🌐 [SiftrCode Web Server] Running on http://${HOST}:${PORT}`);
+});
+
+server.on('error', (err: any) => {
+  console.error('🌐 [SiftrCode Web Server Error]:', err);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('🌐 [SiftrCode Uncaught Exception]:', err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('🌐 [SiftrCode Unhandled Rejection]:', reason);
 });

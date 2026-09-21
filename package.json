@@ -21,6 +21,9 @@
     "test": "node dist/tests/run_tests.js",
     "prepublishOnly": "npm run build && npm test"
   },
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "homepage": "https://siftrcode.com",
   "repository": {
     "type": "git",
