@@ -11,7 +11,7 @@ import { ContextGraph } from '../../../graph/context_graph';
 import { ContextFeaturesV1 } from '../../../ranking/feature_schema';
 import { RankedCandidate } from '../../../ranking/context_rank';
 import { WorkspaceSnapshot } from '../../../workspace/workspace_snapshot';
-import { DataClass, DataRights, isDataClassPermitted } from '../../../rights/data_rights';
+import { DataClass, DataRights, isDataClassPermitted, isRemoteProcessingPermitted } from '../../../rights/data_rights';
 import { TrustLevel } from '../../../security/trust';
 import { StructuredEgressGateway, EgressField, SanitizedEgressPayload } from '../../../security/structured_egress';
 import { SystemOneClient, TypeSafeSystemOneClient, FakeSystemOneClient } from './typesafe_client';
@@ -23,6 +23,7 @@ import { SqliteStore } from '../../../storage/sqlite_store';
 
 export interface JevShadowRunnerOptions {
   client?: SystemOneClient;
+  apiKey?: string | null;
   mode?: JevMode;
   budget?: Partial<JevDecisionBudget>;
   egressGateway?: StructuredEgressGateway;
@@ -37,10 +38,12 @@ export class JevShadowRunner {
   private egressGateway: StructuredEgressGateway;
   private sqliteStore?: SqliteStore;
   private model: string | null;
+  private lastTracker?: JevCallTracker;
 
   constructor(options: JevShadowRunnerOptions = {}) {
     const envKey = process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY;
-    this.mode = options.mode || (process.env.SIFTR_JEV_MODE as JevMode) || (envKey ? JevMode.SHADOW : JevMode.OFF);
+    // Invariant: Make credentials inert: require explicit JEV enablement; don't enable shadow solely because a key exists.
+    this.mode = options.mode || (process.env.SIFTR_JEV_MODE as JevMode) || JevMode.OFF;
     this.budget = { ...DEFAULT_JEV_DECISION_BUDGET, ...options.budget };
     this.egressGateway = options.egressGateway || new StructuredEgressGateway();
     this.sqliteStore = options.sqliteStore;
@@ -48,15 +51,18 @@ export class JevShadowRunner {
 
     if (options.client) {
       this.client = options.client;
-    } else if (envKey) {
-      try {
-        this.client = new TypeSafeSystemOneClient({
-          apiKey: envKey,
-          defaultModel: this.model || undefined,
-          timeoutMs: this.budget.maxLatencyMs,
-        });
-      } catch {
-        this.client = undefined;
+    } else if (options.apiKey !== null && (options.apiKey || (this.mode === JevMode.SHADOW && process.env.SIFTR_JEV_ENABLED === 'true' && envKey))) {
+      const activeKey = options.apiKey || envKey;
+      if (activeKey) {
+        try {
+          this.client = new TypeSafeSystemOneClient({
+            apiKey: activeKey,
+            defaultModel: this.model || undefined,
+            timeoutMs: this.budget.maxLatencyMs,
+          });
+        } catch {
+          this.client = undefined;
+        }
       }
     }
   }
@@ -67,6 +73,10 @@ export class JevShadowRunner {
 
   public getBudget(): JevDecisionBudget {
     return { ...this.budget };
+  }
+
+  public getLastTracker(): JevCallTracker | undefined {
+    return this.lastTracker;
   }
 
   /**
@@ -150,6 +160,7 @@ export class JevShadowRunner {
     featuresMap: Map<string, ContextFeaturesV1>;
     dataRights: DataRights;
     contextPlanId?: string;
+    tracker?: JevCallTracker;
   }): Promise<JevSignalV1[]> {
     if (this.mode === JevMode.OFF) {
       return [];
@@ -177,7 +188,8 @@ export class JevShadowRunner {
       this.budget
     );
 
-    const tracker = new JevCallTracker(this.budget);
+    const tracker = params.tracker || new JevCallTracker(this.budget);
+    this.lastTracker = tracker;
     const semaphore = new Semaphore(this.budget.maxConcurrency);
     const signals: JevSignalV1[] = [];
 
@@ -259,8 +271,9 @@ export class JevShadowRunner {
             dataRights,
             async (sanitized: SanitizedEgressPayload) => {
               // Construct JevCandidateStateV1 strictly from sanitized and rights-gated fields
-              const allowGraph = isDataClassPermitted(dataRights, DataClass.GRAPH_TOPOLOGY);
-              const allowNumeric = isDataClassPermitted(dataRights, DataClass.NUMERIC_FEATURE);
+              // Invariant: Gate graph/numeric outbound features through processing.remote, not legacy retention permissions.
+              const allowGraph = isRemoteProcessingPermitted(dataRights, DataClass.GRAPH_TOPOLOGY);
+              const allowNumeric = isRemoteProcessingPermitted(dataRights, DataClass.NUMERIC_FEATURE);
               const maxInputChars = this.budget.maxInputCharacters ?? 8000;
 
               let promptStr = sanitized.fields.prompt || '';

@@ -29,9 +29,19 @@ import { SourceProvenance } from '../rights/source_provenance';
 import { TrainingRow, TrainingEvidenceRecord } from '../learning/lineage';
 import { DeletionAuditRecord } from '../rights/deletion_manager';
 import { DataRights, createDefaultDataRights } from '../rights/data_rights';
-import { sanitizeContextPlanForPersistence, sanitizeContextUnitForPersistence, ContextPlanMetadataRecord } from './rights_aware_dto';
+import {
+  sanitizeContextPlanForPersistence,
+  sanitizeContextUnitForPersistence,
+  sanitizeTaskContextForPersistence,
+  ContextPlanMetadataRecord,
+} from './rights_aware_dto';
 
-export { sanitizeContextPlanForPersistence, sanitizeContextUnitForPersistence, ContextPlanMetadataRecord } from './rights_aware_dto';
+export {
+  sanitizeContextPlanForPersistence,
+  sanitizeContextUnitForPersistence,
+  sanitizeTaskContextForPersistence,
+  ContextPlanMetadataRecord,
+} from './rights_aware_dto';
 export { TrainingEvidenceRecord } from '../learning/lineage';
 export { SiftrSession, SiftrSessionStatus } from '../telemetry/siftr_session';
 export { ContextExpansionEvent } from '../telemetry/expansion_event';
@@ -612,7 +622,11 @@ export class SqliteStore {
   public saveContextUnits(units: ContextUnit[], rights?: DataRights): void {
     if (units.length === 0) return;
 
-    const effectiveRights = rights || createDefaultDataRights();
+    const effectiveRights = rights || createDefaultDataRights({
+      symbolMetadataAllowed: true,
+      pathRetentionAllowed: true,
+      symbolNameRetentionAllowed: true,
+    });
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO context_units (unit_id, snapshot_id, repository_id, kind, path, title, trust_level, raw_json, created_at)
@@ -754,18 +768,25 @@ export class SqliteStore {
   // TaskContext Operations
   // ==========================================
 
-  public saveTaskContext(task: TaskContext): void {
+  public saveTaskContext(task: TaskContext, rights?: DataRights): void {
+    const effectiveRights = rights || createDefaultDataRights({
+      symbolMetadataAllowed: true,
+      pathRetentionAllowed: true,
+      symbolNameRetentionAllowed: true,
+    });
+    const sanitized = sanitizeTaskContextForPersistence(task, effectiveRights);
+
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO task_contexts (task_id, snapshot_id, primary_prompt, raw_json, created_at)
       VALUES (?, ?, ?, ?, ?)
     `);
 
     stmt.run(
-      task.taskId,
-      task.workspaceSnapshotId,
-      task.primaryPrompt,
-      JSON.stringify(task),
-      task.createdAt
+      sanitized.taskId,
+      sanitized.workspaceSnapshotId,
+      sanitized.primaryPrompt,
+      JSON.stringify(sanitized),
+      sanitized.createdAt
     );
   }
 

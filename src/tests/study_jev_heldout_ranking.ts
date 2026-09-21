@@ -45,6 +45,7 @@ import { ContextFeaturesV1 } from '../ranking/feature_schema';
 import { FeatureBuilderV1 } from '../ranking/feature_builder';
 import { CandidateGenerator } from '../retrieval/candidate_generator';
 import { JudgmentResult } from '../jev/judgment_provider';
+import { RepositoryOrigin, createDefaultRepositoryTrustPolicy } from '../security/trust';
 
 export type RepoKind = 'express' | 'fastapi' | 'siftrcode';
 export type TaskCategory = 'BUG_FIX' | 'TEST_FAILURE' | 'FEATURE_ADDITION' | 'REFACTOR';
@@ -1013,13 +1014,12 @@ export function computePairedTTest(sampleA: number[], sampleB: number[]): number
 function createStudyClient(unitsMap: Map<string, ContextUnit>, apiKey?: string, useLive?: boolean): SystemOneClient {
   let liveClient: TypeSafeSystemOneClient | null = null;
   const isLiveEnabled = useLive ?? (process.env.JEV_LIVE === 'true' || process.argv.includes('--live'));
-  if (isLiveEnabled && apiKey && !apiKey.includes('fake') && !apiKey.includes('test')) {
-    try {
-      liveClient = new TypeSafeSystemOneClient({ apiKey, timeoutMs: 12000 });
-      console.log('  [Client] Connected to live TypeSafe SystemOne endpoint with verified API key.');
-    } catch (e: any) {
-      console.warn('  [Client] Could not initialize live client, using calibrated engine:', e.message);
+  if (isLiveEnabled) {
+    if (!apiKey) {
+      throw new Error('Live JEV study execution requested (--live), but no API key configured (set TYPESAFE_API_KEY or JEV_API_KEY).');
     }
+    liveClient = new TypeSafeSystemOneClient({ apiKey, timeoutMs: 15000 });
+    console.log('  [Client] Connected to live TypeSafe SystemOne endpoint with verified API key.');
   } else {
     console.log('  [Client] Using calibrated TypeSafe SystemOne engine (pass --live to query remote endpoint).');
   }
@@ -1029,16 +1029,29 @@ function createStudyClient(unitsMap: Map<string, ContextUnit>, apiKey?: string, 
 
   return {
     async evaluate(req: any) {
-      if (liveClient) {
-        try {
-          const livePromise = liveClient.evaluate(req);
-          const timeoutPromise = new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('Live JEV API call timed out after 3000ms')), 3000)
-          );
-          return await Promise.race([livePromise, timeoutPromise]);
-        } catch (err: any) {
-          // Fall through to calibrated response without blocking
+      if (isLiveEnabled) {
+        if (!liveClient) {
+          throw new Error('Live JEV evaluation failed: client not initialized.');
         }
+        // Invariant: In the live 100-task study, never fall back from real JEV to fake JEV.
+        let attempts = 0;
+        const maxAttempts = 3;
+        while (attempts < maxAttempts) {
+          try {
+            return await liveClient.evaluate(req);
+          } catch (err: any) {
+            attempts++;
+            const isRateLimit = err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('rate');
+            if (isRateLimit && attempts < maxAttempts) {
+              const backoffMs = attempts * 1500;
+              console.warn(`    [JEV Rate Limit] Retrying candidate in ${backoffMs}ms (attempt ${attempts}/${maxAttempts})...`);
+              await new Promise((r) => setTimeout(r, backoffMs));
+              continue;
+            }
+            throw err;
+          }
+        }
+        throw new Error(`Live JEV candidate evaluation failed after ${maxAttempts} attempts`);
       }
 
       currentConcurrency++;
@@ -1122,31 +1135,44 @@ export async function runHeldOutRankingStudy(options: {
   // 1. Index repositories
   console.log('Indexing real repositories on disk...');
   const expressIndexer = new RepositoryIndexer();
-  const expressIndexResult = await expressIndexer.indexRepository(expressDir);
+  const expressIndexResult = await expressIndexer.indexRepository(expressDir, {
+    trustPolicy: createDefaultRepositoryTrustPolicy({
+      repositoryId: 'express',
+      origin: RepositoryOrigin.CLONED_EXTERNAL,
+    }),
+  });
   const expressUnits = expressIndexResult.units;
   const expressGraph = new GraphBuilder().buildGraph(expressUnits, { repoDir: expressDir });
   const expressGit = new GitGraphIntelligence({ repoDir: expressDir });
-  console.log(`  ✔ Express: ${expressUnits.length} units, ${expressGraph.getAllNodes().length} graph nodes`);
+  console.log(`  ✔ Express (CLONED_EXTERNAL): ${expressUnits.length} units, ${expressGraph.getAllNodes().length} graph nodes`);
 
   const fastapiIndexer = new RepositoryIndexer();
   const fastapiIndexResult = await fastapiIndexer.indexRepository(fastapiDir, {
     includePatterns: ['fastapi/**'],
     excludePatterns: ['**/tests/**', '**/docs/**', '**/__pycache__/**'],
+    trustPolicy: createDefaultRepositoryTrustPolicy({
+      repositoryId: 'fastapi',
+      origin: RepositoryOrigin.CLONED_EXTERNAL,
+    }),
   });
   const fastapiUnits = fastapiIndexResult.units;
   const fastapiGraph = new GraphBuilder().buildGraph(fastapiUnits, { repoDir: fastapiDir });
   const fastapiGit = new GitGraphIntelligence({ repoDir: fastapiDir });
-  console.log(`  ✔ FastAPI: ${fastapiUnits.length} units, ${fastapiGraph.getAllNodes().length} graph nodes`);
+  console.log(`  ✔ FastAPI (CLONED_EXTERNAL): ${fastapiUnits.length} units, ${fastapiGraph.getAllNodes().length} graph nodes`);
 
   const siftrIndexer = new RepositoryIndexer();
   const siftrIndexResult = await siftrIndexer.indexRepository(rootDir, {
     includePatterns: ['src/**'],
     excludePatterns: ['**/node_modules/**', '**/dist/**', '**/temp_*/**', '**/benchmarks/**'],
+    trustPolicy: createDefaultRepositoryTrustPolicy({
+      repositoryId: 'siftrcode',
+      origin: RepositoryOrigin.LOCAL_FIRST_PARTY,
+    }),
   });
   const siftrUnits = siftrIndexResult.units;
   const siftrGraph = new GraphBuilder().buildGraph(siftrUnits, { repoDir: rootDir });
   const siftrGit = new GitGraphIntelligence({ repoDir: rootDir });
-  console.log(`  ✔ SiftrCode: ${siftrUnits.length} units, ${siftrGraph.getAllNodes().length} graph nodes`);
+  console.log(`  ✔ SiftrCode (LOCAL_FIRST_PARTY): ${siftrUnits.length} units, ${siftrGraph.getAllNodes().length} graph nodes`);
 
   // Master map for prompt-aware evaluation
   const masterUnitsMap = new Map<string, ContextUnit>();

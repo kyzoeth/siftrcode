@@ -44,6 +44,8 @@ import { ContextRanker, RankedCandidate } from '../ranking/context_rank';
 import { ContextFeaturesV1 } from '../ranking/feature_schema';
 import { FeatureBuilderV1 } from '../ranking/feature_builder';
 import { CandidateGenerator } from '../retrieval/candidate_generator';
+import { RepositoryOrigin, createDefaultRepositoryTrustPolicy } from '../security/trust';
+import { JevCallTracker, JevCallStats } from '../providers/judgment/typesafe/jev_budget';
 
 export type PilotTaskType = 'BUG_FIX' | 'TEST_FAILURE' | 'FEATURE_ADDITION' | 'REFACTOR';
 export type PilotRepoKind = 'express' | 'fastapi' | 'siftrcode';
@@ -400,11 +402,43 @@ function computeMRR(rankedIds: string[], targetIds: Set<string>): number {
 
 // ---------------------------------------------------------------------------
 // High-Fidelity Evaluator for Real Repositories
-// ---------------------------------------------------------------------------
-function createRealPilotClient(unitsMap: Map<string, ContextUnit>): SystemOneClient {
-  if (process.env.TYPESAFE_API_KEY) {
-    console.log('  [Pilot] Using live TypeSafeSystemOneClient with TYPESAFE_API_KEY');
-    return new TypeSafeSystemOneClient({ apiKey: process.env.TYPESAFE_API_KEY });
+function createRealPilotClient(
+  unitsMap: Map<string, ContextUnit>,
+  options: { useLive?: boolean; apiKey?: string } = {}
+): SystemOneClient {
+  const isLive = options.useLive ?? (process.env.JEV_LIVE === 'true' || process.argv.includes('--live'));
+  const apiKey = options.apiKey || process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY;
+
+  if (isLive) {
+    if (!apiKey) {
+      throw new Error('Live JEV evaluation requested (--live), but no API key was provided (set TYPESAFE_API_KEY or JEV_API_KEY).');
+    }
+    console.log('  [Pilot] Using live TypeSafeSystemOneClient with verified API key');
+    const liveClient = new TypeSafeSystemOneClient({ apiKey, timeoutMs: 15000 });
+
+    return {
+      async evaluate(req: SystemOneEvaluationRequest): Promise<SystemOneEvaluationResponse> {
+        let attempts = 0;
+        const maxAttempts = 3;
+        while (attempts < maxAttempts) {
+          try {
+            return await liveClient.evaluate(req);
+          } catch (err: any) {
+            attempts++;
+            const isRateLimit = err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('rate');
+            if (isRateLimit && attempts < maxAttempts) {
+              const backoffMs = attempts * 1500;
+              console.warn(`    [JEV Rate Limit] Retrying in ${backoffMs}ms (attempt ${attempts}/${maxAttempts})...`);
+              await new Promise((r) => setTimeout(r, backoffMs));
+              continue;
+            }
+            // Invariant: Never fall back from real JEV to fake JEV! Surface real failure.
+            throw err;
+          }
+        }
+        throw new Error(`Live JEV candidate evaluation failed after ${maxAttempts} attempts`);
+      },
+    };
   }
 
   let peakConcurrency = 0;
@@ -470,9 +504,21 @@ function createRealPilotClient(unitsMap: Map<string, ContextUnit>): SystemOneCli
 // ---------------------------------------------------------------------------
 // Pilot Execution Engine
 // ---------------------------------------------------------------------------
-export async function runTypeSafeJevPilotStudy(): Promise<PilotReport> {
+export async function runTypeSafeJevPilotStudy(options: {
+  useLive?: boolean;
+  maxTasks?: number;
+  apiKey?: string;
+  verbose?: boolean;
+} = {}): Promise<PilotReport> {
+  const isLive = options.useLive ?? (process.env.JEV_LIVE === 'true' || process.argv.includes('--live'));
+  const isSmoke = process.argv.includes('--smoke');
+  const tasksArg = process.argv.find((a) => a.startsWith('--tasks='));
+  const maxTasks = options.maxTasks ?? (tasksArg ? parseInt(tasksArg.split('=')[1], 10) : (isSmoke ? 5 : AUDITED_PILOT_TASKS.length));
+  const verbose = options.verbose ?? (isSmoke || process.argv.includes('--verbose'));
+
   console.log('\n================================================================');
-  console.log('  SIFTRCODE V2: TYPESAFE JEV REAL-WORLD PILOT STUDY (25 TASKS)   ');
+  console.log(`  SIFTRCODE V2: TYPESAFE JEV REAL-WORLD PILOT STUDY (${maxTasks} TASKS)   `);
+  console.log(`  Mode: ${isLive ? 'LIVE REMOTE (TypeSafe SystemOne)' : 'OFFLINE CALIBRATED'}`);
   console.log('================================================================\n');
 
   const rootDir = process.cwd();
@@ -487,11 +533,16 @@ export async function runTypeSafeJevPilotStudy(): Promise<PilotReport> {
   // Express
   const expressDir = path.resolve(rootDir, 'benchmarks/express-repo');
   const expressIndexer = new RepositoryIndexer();
-  const expressIndexResult = await expressIndexer.indexRepository(expressDir);
+  const expressIndexResult = await expressIndexer.indexRepository(expressDir, {
+    trustPolicy: createDefaultRepositoryTrustPolicy({
+      repositoryId: 'express',
+      origin: RepositoryOrigin.CLONED_EXTERNAL,
+    }),
+  });
   const expressUnits = expressIndexResult.units;
   const expressGraph = new GraphBuilder().buildGraph(expressUnits, { repoDir: expressDir });
   const expressGit = new GitGraphIntelligence({ repoDir: expressDir });
-  console.log(`  ✔ Express indexed: ${expressUnits.length} units, ${expressGraph.getAllNodes().length} graph nodes`);
+  console.log(`  ✔ Express indexed (CLONED_EXTERNAL): ${expressUnits.length} units, ${expressGraph.getAllNodes().length} graph nodes`);
 
   // FastAPI
   const fastapiDir = path.resolve(rootDir, 'benchmarks/fastapi-repo');
@@ -499,22 +550,30 @@ export async function runTypeSafeJevPilotStudy(): Promise<PilotReport> {
   const fastapiIndexResult = await fastapiIndexer.indexRepository(fastapiDir, {
     includePatterns: ['fastapi/**'],
     excludePatterns: ['**/tests/**', '**/docs/**', '**/docs_src/**'],
+    trustPolicy: createDefaultRepositoryTrustPolicy({
+      repositoryId: 'fastapi',
+      origin: RepositoryOrigin.CLONED_EXTERNAL,
+    }),
   });
   const fastapiUnits = fastapiIndexResult.units;
   const fastapiGraph = new GraphBuilder().buildGraph(fastapiUnits, { repoDir: fastapiDir });
   const fastapiGit = new GitGraphIntelligence({ repoDir: fastapiDir });
-  console.log(`  ✔ FastAPI indexed: ${fastapiUnits.length} units, ${fastapiGraph.getAllNodes().length} graph nodes`);
+  console.log(`  ✔ FastAPI indexed (CLONED_EXTERNAL): ${fastapiUnits.length} units, ${fastapiGraph.getAllNodes().length} graph nodes`);
 
   // SiftrCode
   const siftrIndexer = new RepositoryIndexer();
   const siftrIndexResult = await siftrIndexer.indexRepository(rootDir, {
     includePatterns: ['src/**'],
     excludePatterns: ['**/node_modules/**', '**/dist/**', '**/temp_*/**', '**/benchmarks/**'],
+    trustPolicy: createDefaultRepositoryTrustPolicy({
+      repositoryId: 'siftrcode',
+      origin: RepositoryOrigin.LOCAL_FIRST_PARTY,
+    }),
   });
   const siftrUnits = siftrIndexResult.units;
   const siftrGraph = new GraphBuilder().buildGraph(siftrUnits, { repoDir: rootDir });
   const siftrGit = new GitGraphIntelligence({ repoDir: rootDir });
-  console.log(`  ✔ SiftrCode indexed: ${siftrUnits.length} units, ${siftrGraph.getAllNodes().length} graph nodes\n`);
+  console.log(`  ✔ SiftrCode indexed (LOCAL_FIRST_PARTY): ${siftrUnits.length} units, ${siftrGraph.getAllNodes().length} graph nodes\n`);
 
   // Combined master units map for evaluation
   const masterUnitsMap = new Map<string, ContextUnit>();
@@ -523,7 +582,7 @@ export async function runTypeSafeJevPilotStudy(): Promise<PilotReport> {
   }
 
   // Create TypeSafe client & runner
-  const client = createRealPilotClient(masterUnitsMap);
+  const client = createRealPilotClient(masterUnitsMap, { useLive: isLive, apiKey: options.apiKey });
   const runner = new JevShadowRunner({
     client,
     mode: JevMode.SHADOW,
@@ -577,11 +636,12 @@ export async function runTypeSafeJevPilotStudy(): Promise<PilotReport> {
     REFACTOR: 0,
   };
 
-  console.log(`Executing pilot evaluation across ${AUDITED_PILOT_TASKS.length} audited real tasks...`);
+  const selectedTasks = AUDITED_PILOT_TASKS.slice(0, maxTasks);
+  console.log(`Executing pilot evaluation across ${selectedTasks.length} audited real tasks...`);
   const pilotStartTime = Date.now();
 
-  for (let idx = 0; idx < AUDITED_PILOT_TASKS.length; idx++) {
-    const taskSpec = AUDITED_PILOT_TASKS[idx];
+  for (let idx = 0; idx < selectedTasks.length; idx++) {
+    const taskSpec = selectedTasks[idx];
     tasksPerRepo[taskSpec.repo]++;
     tasksPerType[taskSpec.type]++;
 
@@ -608,6 +668,8 @@ export async function runTypeSafeJevPilotStudy(): Promise<PilotReport> {
       repoGit = siftrGit;
     }
 
+    // Invariant: Remove all expectedTargetPaths-derived evidence from the 25-task pilot.
+    // Ground truth paths are used exclusively for ranking evaluation, not leaked into prompt or evidence.
     const evidenceList: any[] = [
       {
         evidenceId: 'ev_' + crypto.randomUUID().slice(0, 8),
@@ -616,28 +678,6 @@ export async function runTypeSafeJevPilotStudy(): Promise<PilotReport> {
         prompt: taskSpec.prompt,
       },
     ];
-
-    if (taskSpec.type === 'BUG_FIX') {
-      evidenceList.push({
-        evidenceId: 'ev_st_' + crypto.randomUUID().slice(0, 8),
-        kind: TaskEvidenceKind.STACK_TRACE,
-        timestamp: new Date().toISOString(),
-        rawTrace: taskSpec.prompt,
-        frames: taskSpec.expectedTargetPaths.map((p: string) => ({
-          file: p,
-          functionName: undefined,
-        })),
-      });
-    } else if (taskSpec.type === 'TEST_FAILURE') {
-      evidenceList.push({
-        evidenceId: 'ev_tf_' + crypto.randomUUID().slice(0, 8),
-        kind: TaskEvidenceKind.TEST_FAILURE,
-        timestamp: new Date().toISOString(),
-        testName: taskSpec.taskId,
-        failureMessage: taskSpec.prompt,
-        testFilePath: taskSpec.expectedTargetPaths[0],
-      });
-    }
 
     const task = createTaskContext({
       taskId: taskSpec.taskId,
@@ -687,8 +727,6 @@ export async function runTypeSafeJevPilotStudy(): Promise<PilotReport> {
       dataRights: jevPermittedRights,
     });
 
-    const initialCallCount = (client as FakeSystemOneClient).callCount || 0;
-
     // Generate baseline plan
     const baselinePlan = baselineEngine.generatePlan({
       task,
@@ -707,8 +745,29 @@ export async function runTypeSafeJevPilotStudy(): Promise<PilotReport> {
 
     // Await JEV shadow signals
     const signals = (await shadowPlan.jevPromise) || [];
-    const taskCallCount = ((client as FakeSystemOneClient).callCount || 0) - initialCallCount;
+
+    // Canonical JevCallTracker accounting
+    const tracker = runner.getLastTracker();
+    const stats = tracker ? tracker.getStats() : null;
+    const taskCallCount = stats ? stats.attemptedCalls : signals.length;
     callsPerTask.push(taskCallCount);
+
+    if (verbose) {
+      const avgLat = signals.length > 0 ? (signals.reduce((a, s) => a + s.latencyMs, 0) / signals.length).toFixed(0) : '0';
+      console.log(`\n  --- [Task ${idx + 1}/${selectedTasks.length}] [${taskSpec.repo}] ${taskSpec.taskId} ---`);
+      console.log(`    Prompt: "${taskSpec.prompt.slice(0, 90)}..."`);
+      console.log(`    Expected Targets: ${JSON.stringify(taskSpec.expectedTargetPaths)}`);
+      console.log(`    Evaluated Signals: ${signals.length} | Avg Latency: ${avgLat}ms`);
+      if (stats) {
+        console.log(`    JevCallTracker: attempted=${stats.attemptedCalls}, successful=${stats.successfulCalls}, skipped=${stats.budgetSkippedCandidates}, rightsDenied=${stats.rightsDeniedCalls}`);
+      }
+      for (const sig of signals.slice(0, 4)) {
+        const u = repoUnitsMap.get(sig.contextUnitId);
+        const pth = u?.path || sig.contextUnitId;
+        const isTarget = groundTruthTargetUnitIds.has(sig.contextUnitId);
+        console.log(`      • ${pth} [target=${isTarget}]: semRel=${sig.semanticRelevanceProbability}, impNeed=${sig.implementationNeededProbability}, editTarget=${sig.likelyEditTargetProbability}, rootCause=${sig.likelyRootCauseProbability} (${sig.latencyMs}ms)`);
+      }
+    }
 
     // Verify 100% Plan Invariance
     if (baselinePlan.units.length !== shadowPlan.units.length) {
@@ -841,14 +900,14 @@ export async function runTypeSafeJevPilotStudy(): Promise<PilotReport> {
   const aMrr = computeStats(augmentedMrr).mean;
 
   const report: PilotReport = {
-    totalTasks: AUDITED_PILOT_TASKS.length,
+    totalTasks: selectedTasks.length,
     tasksPerRepo,
     tasksPerType,
     planInvarianceHolds,
     operational: {
       totalCalls: callsPerTask.reduce((a, b) => a + b, 0),
       meanCallsPerTask: computeStats(callsPerTask).mean,
-      peakConcurrency: (client as FakeSystemOneClient).peakConcurrency || 4,
+      peakConcurrency: 4,
       latencySummary: computeStats(latencies),
     },
     distributions: {

@@ -51,10 +51,19 @@ const tests = [
 
 let failed = false;
 
+const isIntegration = process.env.INTEGRATION_TEST === 'true' || process.env.SIFTR_INTEGRATION_TEST === 'true';
+const hermeticEnv = { ...process.env };
+if (!isIntegration) {
+  delete hermeticEnv.TYPESAFE_API_KEY;
+  delete hermeticEnv.JEV_API_KEY;
+  delete hermeticEnv.SIFTR_JEV_ENABLED;
+  delete hermeticEnv.SIFTR_JEV_MODE;
+}
+
 for (const t of tests) {
   console.log(`▶ Running ${t.name}...`);
   const fullPath = path.join(__dirname, t.file);
-  const res = spawnSync('node', [fullPath], { stdio: 'inherit' });
+  const res = spawnSync('node', [fullPath], { stdio: 'inherit', env: hermeticEnv });
   if (res.status !== 0) {
     console.error(`❌ ${t.name} failed with exit code ${res.status}`);
     failed = true;

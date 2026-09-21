@@ -144,7 +144,7 @@ export class ContextEngine {
 
     if (options.jevShadowRunner) {
       this.jevShadowRunner = options.jevShadowRunner;
-    } else if (options.enableJevShadow || process.env.SIFTR_JEV_ENABLED === 'true' || process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY) {
+    } else if (options.enableJevShadow || process.env.SIFTR_JEV_ENABLED === 'true') {
       this.jevShadowRunner = new JevShadowRunner({
         sqliteStore: this.sqliteStore,
       });
@@ -675,7 +675,7 @@ export class ContextEngine {
         this.sqliteStore.saveContextUnits(rightsSafeUnits, this.dataRights);
 
         this.sqliteStore.saveSnapshot(snapshot);
-        this.sqliteStore.saveTaskContext(task);
+        this.sqliteStore.saveTaskContext(task, this.dataRights);
         this.sqliteStore.saveContextPlan(contextPlan, snapshot.workspaceSnapshotId);
         if (exposureDecisionsV2.length > 0) {
           this.sqliteStore.saveExposureDecisions(exposureDecisionsV2, task.taskId);

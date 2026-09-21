@@ -47,6 +47,8 @@ export interface DataRights {
   rawSourceRetentionAllowed: boolean;
   sourceSnippetRetentionAllowed: boolean;
   symbolMetadataAllowed: boolean;
+  symbolNameRetentionAllowed?: boolean;
+  pathRetentionAllowed?: boolean;
   embeddingsRetentionAllowed: boolean;
   graphRetentionAllowed: boolean;
   derivedNumericFeaturesAllowed: boolean;
@@ -75,17 +77,17 @@ export function createDefaultOperationRightsPolicy(
     },
     [DataClass.SYMBOL_NAME]: {
       processing: { local: true, remote: false },
-      retention: { local: false, remote: false },
+      retention: { local: true, remote: false },
       training: false,
     },
     [DataClass.SYMBOL_METADATA]: {
       processing: { local: true, remote: false },
-      retention: { local: false, remote: false },
+      retention: { local: true, remote: false },
       training: false,
     },
     [DataClass.PATH]: {
       processing: { local: true, remote: false },
-      retention: { local: false, remote: false },
+      retention: { local: true, remote: false },
       training: false,
     },
     [DataClass.TASK_PROMPT]: {
@@ -180,7 +182,9 @@ export function createDefaultDataRights(overrides: Partial<DataRights> = {}): Da
     trainingAllowed: false,
     rawSourceRetentionAllowed: false,
     sourceSnippetRetentionAllowed: false,
-    symbolMetadataAllowed: false,
+    symbolMetadataAllowed: true,
+    symbolNameRetentionAllowed: true,
+    pathRetentionAllowed: true,
     embeddingsRetentionAllowed: false,
     graphRetentionAllowed: false,
     derivedNumericFeaturesAllowed: true,
@@ -198,10 +202,15 @@ export function isDataClassPermitted(rights: DataRights, dataClass: DataClass): 
     case DataClass.SOURCE_SNIPPET:
       return rights.sourceSnippetRetentionAllowed;
     case DataClass.SYMBOL_NAME:
+      return rights.symbolNameRetentionAllowed !== undefined
+        ? rights.symbolNameRetentionAllowed
+        : rights.symbolMetadataAllowed;
     case DataClass.SYMBOL_METADATA:
       return rights.symbolMetadataAllowed;
     case DataClass.PATH:
-      return rights.symbolMetadataAllowed;
+      return rights.pathRetentionAllowed !== undefined
+        ? rights.pathRetentionAllowed
+        : rights.symbolMetadataAllowed;
     case DataClass.TASK_PROMPT:
       return rights.telemetryAllowed;
     case DataClass.EMBEDDING:
@@ -221,6 +230,20 @@ export function isDataClassPermitted(rights: DataRights, dataClass: DataClass): 
     default:
       return false;
   }
+}
+
+/**
+ * Checks whether remote processing is permitted for an outbound DataClass.
+ * Gated strictly through processing.remote (Part VI Section 14), distinct from retention rights.
+ */
+export function isRemoteProcessingPermitted(rights: DataRights, dataClass: DataClass): boolean {
+  if (!rights.remoteProcessingAllowed) {
+    return false;
+  }
+  if (rights.operationRights) {
+    return isOperationPermitted(rights.operationRights, dataClass, 'processing_remote');
+  }
+  return true;
 }
 
 /**

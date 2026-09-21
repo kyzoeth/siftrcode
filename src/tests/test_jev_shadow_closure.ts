@@ -613,8 +613,8 @@ export async function runJevShadowClosureTests() {
 
       const ranked = createMockRankedCandidate(unit.id, 1, 0.5);
 
-      // 7a. NO_API_KEY
-      const runnerNoKey = new JevShadowRunner({ client: undefined, mode: JevMode.SHADOW, sqliteStore: store });
+      // 7a. NO_API_KEY (Hermetic)
+      const runnerNoKey = new JevShadowRunner({ apiKey: null, client: undefined, mode: JevMode.SHADOW, sqliteStore: store });
       const sigNoKey = await runnerNoKey.evaluate({
         task,
         workspaceSnapshot: snapshot,

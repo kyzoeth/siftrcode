@@ -8,8 +8,20 @@
  */
 
 import { ContextPlan, PlannedUnit } from '../engine/context_plan';
-import { ContextUnit } from '../context/context_unit';
+import { ContextUnit, CodeSymbolUnit, ContextUnitKind } from '../context/context_unit';
 import { DataRights, DataClass, isDataClassPermitted } from '../rights/data_rights';
+import { TaskContext } from '../context/task_context';
+import {
+  TaskEvidence,
+  TaskEvidenceKind,
+  UserPromptEvidence,
+  IssueEvidence,
+  StackTraceEvidence,
+  TestFailureEvidence,
+  CompilerErrorEvidence,
+  DiffEvidence,
+  TicketEvidence,
+} from '../context/task_evidence';
 import { ContextResolution } from '../context/context_resolution';
 import { BudgetAllocationPlan } from '../context/budget_solver';
 import { ExposureDecision, ExposureDecisionV2 } from '../telemetry/exposure_decision';
@@ -139,17 +151,24 @@ export function sanitizeContextPlanForPersistence(
  * Sanitizes a ContextUnit before SQLite insertion, guaranteeing zero raw source or snippet retention
  * unless customer explicitly grants permissions.
  */
+/**
+ * Sanitizes a ContextUnit before SQLite insertion, enforcing zero raw source, snippet,
+ * path, symbol name, or symbol metadata retention unless permitted by DataRights.
+ */
 export function sanitizeContextUnitForPersistence(
   unit: ContextUnit,
   rights: DataRights
 ): ContextUnit {
   const allowRawSource = isDataClassPermitted(rights, DataClass.RAW_SOURCE);
   const allowSnippet = isDataClassPermitted(rights, DataClass.SOURCE_SNIPPET);
-  const allowSymbolMetadata = isDataClassPermitted(rights, DataClass.SYMBOL_NAME);
+  const allowSymbolMetadata = isDataClassPermitted(rights, DataClass.SYMBOL_METADATA);
+  const allowSymbolName = isDataClassPermitted(rights, DataClass.SYMBOL_NAME);
   const allowPath = isDataClassPermitted(rights, DataClass.PATH);
+  const allowNumeric = isDataClassPermitted(rights, DataClass.NUMERIC_FEATURE);
 
   const cleanMetadata: Record<string, unknown> = { ...(unit.metadata || {}) };
 
+  // 1. Raw source & snippets
   if (!allowRawSource && !allowSnippet) {
     delete cleanMetadata.rawContent;
     delete cleanMetadata.content;
@@ -160,30 +179,175 @@ export function sanitizeContextUnitForPersistence(
     delete cleanMetadata.text;
   }
 
+  // 2. Path enforcement
+  let sanitizedPath = unit.path;
+  const cleanProvenance = { ...unit.provenance };
+  if (!allowPath) {
+    sanitizedPath = undefined;
+    delete cleanMetadata.path;
+    delete cleanMetadata.filePath;
+    delete cleanMetadata.relativePath;
+    delete cleanMetadata.targetPath;
+    delete cleanMetadata.fullPath;
+    delete cleanMetadata.absPath;
+    if (cleanProvenance.sourceUri) {
+      delete cleanProvenance.sourceUri;
+    }
+  }
+
+  // 3. Symbol Name enforcement
+  let sanitizedTitle = unit.title;
+  if (!allowSymbolName) {
+    if (unit.kind === ContextUnitKind.CODE_SYMBOL) {
+      sanitizedTitle = '[REDACTED_SYMBOL]';
+    }
+    delete cleanMetadata.symbolName;
+    delete cleanMetadata.qualifiedName;
+    delete cleanMetadata.functionName;
+    delete cleanMetadata.className;
+    delete cleanMetadata.identifier;
+  }
+
+  // 4. Symbol Metadata enforcement
+  if (!allowSymbolMetadata) {
+    delete cleanMetadata.ast;
+    delete cleanMetadata.astNode;
+    delete cleanMetadata.docstring;
+    delete cleanMetadata.parameters;
+    delete cleanMetadata.returnType;
+    delete cleanMetadata.visibility;
+    delete cleanMetadata.modifiers;
+  }
+
+  // 5. Numeric features
+  if (!allowNumeric) {
+    delete cleanMetadata.jevScore;
+    delete cleanMetadata.semanticRelevanceProbability;
+    delete cleanMetadata.implementationNeededProbability;
+    delete cleanMetadata.likelyEditTargetProbability;
+    delete cleanMetadata.likelyRootCauseProbability;
+  }
+
   const sanitized: ContextUnit = {
     ...unit,
-    title: unit.title,
-    path: unit.path,
+    title: sanitizedTitle,
+    path: sanitizedPath,
+    provenance: cleanProvenance,
     metadata: cleanMetadata,
   };
 
   if (!allowRawSource && !allowSnippet) {
-    if ('content' in sanitized) {
-      delete (sanitized as any).content;
+    delete (sanitized as any).content;
+    delete (sanitized as any).rawContent;
+    delete (sanitized as any).body;
+    delete (sanitized as any).snippet;
+    delete (sanitized as any).sourceCode;
+  }
+
+  // If this is a CodeSymbolUnit, enforce on top-level symbol fields
+  if (unit.kind === ContextUnitKind.CODE_SYMBOL) {
+    const sym = sanitized as CodeSymbolUnit;
+    if (!allowSymbolName) {
+      sym.symbolName = '[REDACTED_SYMBOL]';
+      sym.qualifiedName = '[REDACTED_SYMBOL]';
     }
-    if ('rawContent' in sanitized) {
-      delete (sanitized as any).rawContent;
-    }
-    if ('body' in sanitized) {
-      delete (sanitized as any).body;
-    }
-    if ('snippet' in sanitized) {
-      delete (sanitized as any).snippet;
-    }
-    if ('sourceCode' in sanitized) {
-      delete (sanitized as any).sourceCode;
+    if (!allowSymbolMetadata) {
+      delete sym.signature;
+      delete sym.sourceRange;
+      sym.startLine = 0;
+      sym.endLine = 0;
     }
   }
 
   return sanitized;
+}
+
+/**
+ * Sanitizes a TaskContext before SQLite insertion, guaranteeing that prompts,
+ * paths, symbol names, and raw error snippets comply with customer DataRights.
+ */
+export function sanitizeTaskContextForPersistence(
+  task: TaskContext,
+  rights: DataRights
+): TaskContext {
+  const allowPrompt = isDataClassPermitted(rights, DataClass.TASK_PROMPT);
+  const allowPath = isDataClassPermitted(rights, DataClass.PATH);
+  const allowSymbolName = isDataClassPermitted(rights, DataClass.SYMBOL_NAME);
+  const allowRawSource = isDataClassPermitted(rights, DataClass.RAW_SOURCE);
+  const allowSnippet = isDataClassPermitted(rights, DataClass.SOURCE_SNIPPET);
+
+  const primaryPrompt = allowPrompt ? task.primaryPrompt : '[REDACTED_PROMPT]';
+
+  const cleanEvidence: TaskEvidence[] = (task.evidence || []).map((ev) => {
+    switch (ev.kind) {
+      case TaskEvidenceKind.USER_PROMPT: {
+        return {
+          ...ev,
+          prompt: allowPrompt ? (ev as UserPromptEvidence).prompt : '[REDACTED_PROMPT]',
+        };
+      }
+      case TaskEvidenceKind.ISSUE: {
+        const issueEv = ev as IssueEvidence;
+        return {
+          ...issueEv,
+          title: allowPrompt ? issueEv.title : '[REDACTED_ISSUE]',
+          body: (allowRawSource || allowSnippet) ? issueEv.body : '[REDACTED_BODY]',
+          issueUrl: allowPath ? issueEv.issueUrl : undefined,
+        };
+      }
+      case TaskEvidenceKind.STACK_TRACE: {
+        const stackEv = ev as StackTraceEvidence;
+        return {
+          ...stackEv,
+          rawTrace: (allowRawSource || allowSnippet) ? stackEv.rawTrace : '[REDACTED_STACK_TRACE]',
+          frames: (stackEv.frames || []).map((f) => ({
+            ...f,
+            file: allowPath ? f.file : '[REDACTED_PATH]',
+            functionName: allowSymbolName ? f.functionName : (f.functionName ? '[REDACTED_SYMBOL]' : undefined),
+          })),
+        };
+      }
+      case TaskEvidenceKind.TEST_FAILURE: {
+        const tfEv = ev as TestFailureEvidence;
+        return {
+          ...tfEv,
+          testFilePath: allowPath ? tfEv.testFilePath : (tfEv.testFilePath ? '[REDACTED_PATH]' : undefined),
+          stackTrace: (allowRawSource || allowSnippet) ? tfEv.stackTrace : (tfEv.stackTrace ? '[REDACTED_STACK_TRACE]' : undefined),
+          failureMessage: allowPrompt ? tfEv.failureMessage : '[REDACTED_FAILURE_MESSAGE]',
+        };
+      }
+      case TaskEvidenceKind.COMPILER_ERROR: {
+        const ceEv = ev as CompilerErrorEvidence;
+        return {
+          ...ceEv,
+          filePath: allowPath ? ceEv.filePath : (ceEv.filePath ? '[REDACTED_PATH]' : undefined),
+          message: allowPrompt ? ceEv.message : '[REDACTED_COMPILER_MESSAGE]',
+        };
+      }
+      case TaskEvidenceKind.DIFF: {
+        const diffEv = ev as DiffEvidence;
+        return {
+          ...diffEv,
+          patchText: (allowRawSource || allowSnippet) ? diffEv.patchText : '[REDACTED_PATCH]',
+          changedFiles: allowPath ? diffEv.changedFiles : diffEv.changedFiles.map(() => '[REDACTED_PATH]'),
+        };
+      }
+      case TaskEvidenceKind.TICKET: {
+        const ticketEv = ev as TicketEvidence;
+        return {
+          ...ticketEv,
+          title: allowPrompt ? ticketEv.title : '[REDACTED_TICKET]',
+          description: allowPrompt ? ticketEv.description : '[REDACTED_DESCRIPTION]',
+        };
+      }
+      default:
+        return { ...ev };
+    }
+  });
+
+  return {
+    ...task,
+    primaryPrompt,
+    evidence: cleanEvidence,
+  };
 }

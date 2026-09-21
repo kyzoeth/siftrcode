@@ -16,8 +16,9 @@
   ],
   "scripts": {
     "build": "tsc && node -e \"require('fs').copyFileSync('src/skeleton/python_ast.py', 'dist/skeleton/python_ast.py')\"",
-    "start": "node dist/bin/siftrcode.js",
+    "start": "node dist/server/web.js",
     "serve": "node dist/server/web.js",
+    "cli": "node dist/bin/siftrcode.js",
     "test": "node dist/tests/run_tests.js",
     "benchmark:jev": "node dist/tests/benchmark_jev_shadow_study.js",
     "pilot:jev": "node dist/tests/pilot_jev_real_study.js",
