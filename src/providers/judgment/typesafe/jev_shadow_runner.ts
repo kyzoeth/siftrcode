@@ -11,7 +11,7 @@ import { ContextGraph } from '../../../graph/context_graph';
 import { ContextFeaturesV1 } from '../../../ranking/feature_schema';
 import { RankedCandidate } from '../../../ranking/context_rank';
 import { WorkspaceSnapshot } from '../../../workspace/workspace_snapshot';
-import { DataClass, DataRights } from '../../../rights/data_rights';
+import { DataClass, DataRights, isDataClassPermitted } from '../../../rights/data_rights';
 import { TrustLevel } from '../../../security/trust';
 import { StructuredEgressGateway, EgressField, SanitizedEgressPayload } from '../../../security/structured_egress';
 import { SystemOneClient, TypeSafeSystemOneClient, FakeSystemOneClient } from './typesafe_client';
@@ -39,7 +39,8 @@ export class JevShadowRunner {
   private model: string | null;
 
   constructor(options: JevShadowRunnerOptions = {}) {
-    this.mode = options.mode || (process.env.SIFTR_JEV_MODE as JevMode) || (process.env.TYPESAFE_API_KEY ? JevMode.SHADOW : JevMode.OFF);
+    const envKey = process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY;
+    this.mode = options.mode || (process.env.SIFTR_JEV_MODE as JevMode) || (envKey ? JevMode.SHADOW : JevMode.OFF);
     this.budget = { ...DEFAULT_JEV_DECISION_BUDGET, ...options.budget };
     this.egressGateway = options.egressGateway || new StructuredEgressGateway();
     this.sqliteStore = options.sqliteStore;
@@ -47,10 +48,10 @@ export class JevShadowRunner {
 
     if (options.client) {
       this.client = options.client;
-    } else if (process.env.TYPESAFE_API_KEY) {
+    } else if (envKey) {
       try {
         this.client = new TypeSafeSystemOneClient({
-          apiKey: process.env.TYPESAFE_API_KEY,
+          apiKey: envKey,
           defaultModel: this.model || undefined,
           timeoutMs: this.budget.maxLatencyMs,
         });
@@ -257,11 +258,20 @@ export class JevShadowRunner {
             unit.trustLevel,
             dataRights,
             async (sanitized: SanitizedEgressPayload) => {
-              // Construct JevCandidateStateV1 strictly from sanitized fields
+              // Construct JevCandidateStateV1 strictly from sanitized and rights-gated fields
+              const allowGraph = isDataClassPermitted(dataRights, DataClass.GRAPH_TOPOLOGY);
+              const allowNumeric = isDataClassPermitted(dataRights, DataClass.NUMERIC_FEATURE);
+              const maxInputChars = this.budget.maxInputCharacters ?? 8000;
+
+              let promptStr = sanitized.fields.prompt || '';
+              if (promptStr.length > maxInputChars) {
+                promptStr = promptStr.slice(0, maxInputChars);
+              }
+
               const candidateState: JevCandidateStateV1 = {
                 schemaVersion: 'jev-state-v1',
                 task: {
-                  prompt: sanitized.fields.prompt || '',
+                  prompt: promptStr,
                   evidenceSummary: task.evidence?.length ? `[${task.evidence.map((e) => e.kind).join(', ')}]` : undefined,
                   taskType: task.evidence && task.evidence.length > 0 ? task.evidence[0].kind : undefined,
                 },
@@ -273,13 +283,26 @@ export class JevShadowRunner {
                   signature: sanitized.fields.signature,
                 },
                 relationships: {
-                  references: graph ? graph.getOutgoing(unit.id).slice(0, 8).map((e) => e.to) : undefined,
+                  references: (allowGraph && graph)
+                    ? graph.getOutgoing(unit.id).slice(0, 8).map((e) => e.to)
+                    : undefined,
                 },
                 history: {
-                  coChange: features?.maxCoChangeWithSeeds,
-                  recentChange: features?.recentChangeFrequency,
+                  coChange: (allowNumeric && features) ? features.maxCoChangeWithSeeds : undefined,
+                  recentChange: (allowNumeric && features) ? features.recentChangeFrequency : undefined,
                 },
               };
+
+              // Enforce maxInputCharacters bounds on candidate state
+              const stateJson = JSON.stringify(candidateState);
+              if (stateJson.length > maxInputChars) {
+                const excess = stateJson.length - maxInputChars;
+                if (candidateState.candidate.signature && candidateState.candidate.signature.length > excess + 50) {
+                  candidateState.candidate.signature = candidateState.candidate.signature.slice(0, candidateState.candidate.signature.length - excess - 50) + '...';
+                } else if (candidateState.task.prompt.length > excess + 50) {
+                  candidateState.task.prompt = candidateState.task.prompt.slice(0, candidateState.task.prompt.length - excess - 50) + '...';
+                }
+              }
 
               // Invoke SystemOneClient
               return await this.client!.evaluate({
@@ -388,7 +411,7 @@ export class JevShadowRunner {
     // 6. Durable persistence (Part XIII Section 35)
     if (this.sqliteStore && signals.length > 0) {
       try {
-        this.sqliteStore.saveJevShadowJudgments(signals);
+        this.sqliteStore.saveJevShadowJudgments(signals, dataRights);
       } catch (persistErr) {
         console.warn('[JevShadowRunner] Failed to persist JEV shadow judgments:', persistErr);
       }

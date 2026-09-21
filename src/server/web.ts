@@ -20,17 +20,14 @@ import { DefaultContextUnitMaterializer } from '../materialization/context_unit_
 import { createContextExpansionEvent, ExpansionReason } from '../telemetry/expansion_event';
 import { createSiftrSession, SiftrSession, SiftrSessionStatus } from '../telemetry/siftr_session';
 import { createProviderUsageEvent } from '../token/provider_usage';
-import { createFinalContextAllocation } from '../token/final_allocation';
 import { createAgentEnvironment } from '../agents/agent_environment';
 import * as crypto from 'crypto';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import {
-  SiftrContextSchema,
-  SiftrExpandSchema,
-  SiftrOutcomeSchema,
-  SiftrSessionSchema,
-  SiftrRankSchema,
+  MCP_TOOL_SCHEMAS,
+  McpToolName,
+  validateToolCall,
   zodToJsonSchema,
 } from '../mcp/schemas';
 
@@ -202,331 +199,65 @@ const SERVER_CARD = {
   },
   tools: [
     {
-      name: 'siftr_context',
-      description: 'Generates an outcome-aware optimized context bundle for an AI coding task. Discovers multi-channel candidates, ranks by evidence and graph proximity, protects edit targets at full resolution, degrades distant dependencies to AST skeletons, and strictly optimizes token and economic cost limits.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          prompt: {
-            type: 'string',
-            description: 'Developer task description, issue summary, or prompt'
-          },
-          directory: {
-            type: 'string',
-            description: 'Target workspace directory path (defaults to current working directory)'
-          },
-          agentModel: {
-            type: 'string',
-            description: 'Target LLM agent model name (e.g. claude-3-5-sonnet, gpt-4o, cursor)'
-          },
-          agentKind: {
-            type: 'string',
-            enum: ['claude_code', 'cursor', 'generic_mcp'],
-            description: 'Target agent environment adapter (defaults to claude_code)'
-          },
-          budgetProfile: {
-            type: 'string',
-            enum: ['LEAN', 'BALANCED', 'THOROUGH'],
-            description: 'Budget optimization profile (defaults to BALANCED)'
-          },
-          tokenBudget: {
-            type: 'number',
-            description: 'Explicit maximum token budget'
-          },
-          maxCostUSD: {
-            type: 'number',
-            description: 'Explicit maximum economic cost ceiling in USD'
-          },
-          includeContext: {
-            type: 'boolean',
-            description: 'Whether to return the compiled context text directly in the response (defaults to true)'
-          },
-          includePlan: {
-            type: 'boolean',
-            description: 'Whether to include the complete ContextPlan metadata object (defaults to true)'
-          }
-        },
-        required: ['prompt']
-      }
-    },
-    {
-      name: 'siftr_optimize',
-      description: 'Alias for siftr_context. Generates an outcome-aware optimized context bundle for an AI coding task.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          prompt: {
-            type: 'string',
-            description: 'Developer task description, issue summary, or prompt'
-          },
-          directory: {
-            type: 'string',
-            description: 'Target workspace directory path (defaults to current working directory)'
-          },
-          agentModel: {
-            type: 'string',
-            description: 'Target LLM agent model name'
-          },
-          agentKind: {
-            type: 'string',
-            enum: ['claude_code', 'cursor', 'generic_mcp'],
-            description: 'Target agent environment adapter'
-          },
-          budgetProfile: {
-            type: 'string',
-            enum: ['LEAN', 'BALANCED', 'THOROUGH'],
-            description: 'Budget optimization profile'
-          },
-          tokenBudget: {
-            type: 'number',
-            description: 'Explicit maximum token budget'
-          },
-          maxCostUSD: {
-            type: 'number',
-            description: 'Explicit maximum economic cost ceiling in USD'
-          },
-          includeContext: {
-            type: 'boolean',
-            description: 'Whether to return the compiled context text directly'
-          }
-        },
-        required: ['prompt']
-      }
-    },
-    {
-      name: 'siftr_rank',
-      description: 'Evaluates and ranks candidate files/symbols for a task prompt with transparent heuristic scores, evidence coverage, graph proximity, and penalty breakdowns.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          prompt: {
-            type: 'string',
-            description: 'Developer task description or issue prompt'
-          },
-          directory: {
-            type: 'string',
-            description: 'Target workspace directory path'
-          },
-          limit: {
-            type: 'number',
-            description: 'Maximum number of ranked candidates to return (defaults to 20)'
-          }
-        },
-        required: ['prompt']
-      }
-    },
-    {
       name: 'siftr_skeleton',
-      description: 'Returns the pruned AST interface skeleton of source code. Strips function bodies and internal implementation loops while preserving 100% of exported types, signatures, classes, and docstrings. Cuts token usage by 80-95%.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          code: {
-            type: 'string',
-            description: 'Source code content to skeletonize'
-          },
-          language: {
-            type: 'string',
-            description: 'Source language: typescript, python, go, or rust',
-            enum: ['typescript', 'python', 'go', 'rust', 'javascript']
-          },
-          filename: {
-            type: 'string',
-            description: 'Optional filename (e.g. index.ts, app.py, main.go, lib.rs)'
-          }
-        }
-      }
+      description:
+        'Returns the pruned AST interface skeleton of a source code file. Strips function bodies and internal implementation loops while preserving 100% of exported types, signatures, classes, and docstrings. Cuts token usage by 80-95%. Supports TypeScript, JavaScript, Python, Go, and Rust.',
+      inputSchema: zodToJsonSchema(MCP_TOOL_SCHEMAS.siftr_skeleton),
     },
     {
       name: 'siftr_batch_skeleton',
-      description: 'Batch extracts interface skeletons for multiple source files in a single turn. Ideal for Claude Code and Cursor when inspecting multiple related files simultaneously.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          filePaths: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'Array of relative or absolute file paths to skeletonize'
-          }
-        },
-        required: ['filePaths']
-      }
+      description:
+        'Batch extracts interface skeletons for multiple source files in a single turn. Ideal for Claude Code and Cursor when inspecting multiple related files simultaneously.',
+      inputSchema: zodToJsonSchema(MCP_TOOL_SCHEMAS.siftr_batch_skeleton),
     },
     {
       name: 'siftr_pack',
-      description: 'Prepares an AST-compressed context pack for AI coding agents.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          focus: {
-            type: 'string',
-            description: 'Task description or focus area'
-          },
-          directory: {
-            type: 'string',
-            description: 'Directory path to scan'
-          }
-        }
-      }
+      description:
+        'Scans the codebase, analyzes AST dependencies, applies Jev relevance scoring, and compiles a clean, token-pruned context pack (context.md) for the active task.',
+      inputSchema: zodToJsonSchema(MCP_TOOL_SCHEMAS.siftr_pack),
     },
     {
       name: 'siftr_audit',
-      description: 'Audits source code or repository for token bloat, dead weight, and context waste. Returns potential token and cost savings.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          directory: {
-            type: 'string',
-            description: 'Directory path to audit'
-          },
-          code: {
-            type: 'string',
-            description: 'Code snippet to audit'
-          },
-          language: {
-            type: 'string',
-            description: 'Language of snippet'
-          }
-        }
-      }
+      description:
+        'Audits the current codebase for token bloat and context waste. Returns potential token and cost savings.',
+      inputSchema: zodToJsonSchema(MCP_TOOL_SCHEMAS.siftr_audit),
+    },
+    {
+      name: 'siftr_context',
+      description:
+        'Generates an outcome-aware optimized context bundle for an AI coding task. Discovers multi-channel candidates, ranks by evidence and graph proximity, protects edit targets at full resolution, degrades distant dependencies to AST skeletons, and strictly optimizes token and economic cost limits.',
+      inputSchema: zodToJsonSchema(MCP_TOOL_SCHEMAS.siftr_context),
+    },
+    {
+      name: 'siftr_optimize',
+      description:
+        'Alias for siftr_context. Generates an outcome-aware optimized context bundle for an AI coding task.',
+      inputSchema: zodToJsonSchema(MCP_TOOL_SCHEMAS.siftr_optimize),
+    },
+    {
+      name: 'siftr_rank',
+      description:
+        'Evaluates and ranks candidate files/symbols for a task prompt with transparent heuristic scores, evidence coverage, graph proximity, and penalty breakdowns.',
+      inputSchema: zodToJsonSchema(MCP_TOOL_SCHEMAS.siftr_rank),
     },
     {
       name: 'siftr_outcome',
       description:
         'Reports task execution results, oracle test verdicts (unit, regression, security), actual provider token usage, and costs to close the learning loop.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          taskId: {
-            type: 'string',
-            description: 'Task identifier returned by siftr_context'
-          },
-          planId: {
-            type: 'string',
-            description: 'ContextPlan identifier returned by siftr_context'
-          },
-          sessionId: {
-            type: 'string',
-            description: 'Session identifier linking task and context plan'
-          },
-          testsPassed: {
-            type: 'boolean',
-            description: 'Whether task-specific test suite passed'
-          },
-          regressionTestsPassed: {
-            type: 'boolean',
-            description: 'Whether existing test suite / regression checks passed'
-          },
-          staticChecksPassed: {
-            type: 'boolean',
-            description: 'Whether static analysis / linting passed'
-          },
-          securityChecksPassed: {
-            type: 'boolean',
-            description: 'Whether security scans passed'
-          },
-          agentClaimedSuccess: {
-            type: 'boolean',
-            description: 'Whether the agent declared task complete'
-          },
-          actualProviderInputTokens: {
-            type: 'number',
-            description: 'Actual tokens billed by the LLM provider for input'
-          },
-          actualProviderOutputTokens: {
-            type: 'number',
-            description: 'Actual tokens billed by the LLM provider for output'
-          },
-          costUSD: {
-            type: 'number',
-            description: 'Actual monetary cost charged by provider in USD'
-          },
-          wallTimeMs: {
-            type: 'number',
-            description: 'Wall-clock task duration in milliseconds'
-          },
-          notes: {
-            type: 'string',
-            description: 'Optional execution notes or failure summary'
-          }
-        }
-      }
+      inputSchema: zodToJsonSchema(MCP_TOOL_SCHEMAS.siftr_outcome),
     },
     {
       name: 'siftr_expand',
       description:
-        'Expands a skeletonized or signature-level context unit into full implementation body on-demand during agent execution.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          filePath: {
-            type: 'string',
-            description: 'Workspace-relative file path to expand'
-          },
-          contextUnitId: {
-            type: 'string',
-            description: 'Unique ContextUnit ID returned in siftr_context units array'
-          },
-          targetResolution: {
-            type: 'string',
-            enum: ['body', 'full'],
-            description: 'Target resolution level: "body" (implementation) or "full" (entire file). Defaults to "body".'
-          },
-          taskId: {
-            type: 'string',
-            description: 'Optional task ID to look up snapshot context'
-          },
-          sessionId: {
-            type: 'string',
-            description: 'Optional session ID to look up snapshot context'
-          },
-          planId: {
-            type: 'string',
-            description: 'Optional ContextPlan ID to look up snapshot context'
-          },
-          directory: {
-            type: 'string',
-            description: 'Workspace directory root path (defaults to current working directory)'
-          }
-        }
-      }
+        'Dynamically expands a skeletonized or signature-level context unit into full implementation body on-demand during an active session.',
+      inputSchema: zodToJsonSchema(MCP_TOOL_SCHEMAS.siftr_expand),
     },
     {
       name: 'siftr_session',
       description:
         'Manages or inspects active Siftr coding agent sessions, linking tasks, plans, and token economics.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          action: {
-            type: 'string',
-            enum: ['start', 'status', 'end'],
-            description: 'Action to perform: "start" a new session, inspect "status", or "end" session'
-          },
-          taskId: {
-            type: 'string',
-            description: 'Task ID associated with this session'
-          },
-          sessionId: {
-            type: 'string',
-            description: 'Explicit session ID (optional for start, recommended for status/end)'
-          },
-          agentModel: {
-            type: 'string',
-            description: 'LLM model ID driving the agent session (e.g. claude-3-7-sonnet)'
-          },
-          status: {
-            type: 'string',
-            enum: ['COMPLETED', 'ABORTED'],
-            description: 'Target status when ending a session (defaults to COMPLETED)'
-          },
-          directory: {
-            type: 'string',
-            description: 'Workspace directory root path'
-          }
-        }
-      }
-    }
+      inputSchema: zodToJsonSchema(MCP_TOOL_SCHEMAS.siftr_session),
+    },
   ],
   resources: [],
   prompts: []
@@ -553,6 +284,14 @@ function createMcpServerInstance() {
 
   mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
+
+    const validation = validateToolCall(name as McpToolName, args);
+    if (!validation.success) {
+      return {
+        content: [{ type: 'text', text: `Error: ${validation.error}` }],
+        isError: true,
+      };
+    }
     try {
       if (name === 'siftr_context' || name === 'siftr_optimize') {
         const prompt = String(args?.prompt || '');
@@ -626,29 +365,6 @@ function createMcpServerInstance() {
 
         const plan = result.plan;
         const allocatedUnits = plan.units.filter((u) => u.resolution > 0);
-
-        // Persist canonical FinalContextAllocation (Final Closure Directive Section 48)
-        if (result.sqliteStore) {
-          result.sqliteStore.saveFinalContextAllocation(createFinalContextAllocation({
-            planId: plan.planId,
-            workspaceSnapshotId: plan.workspaceSnapshotId || 'snapshot_init',
-            totalEstimatedTokens: plan.actualRenderedTokens || plan.estimatedRenderedTokens || 0,
-            renderedEstimatedTokens: plan.actualRenderedTokens || plan.estimatedRenderedTokens || 0,
-            allocatedEstimatedTokens: plan.budgetPlan.totalTokens,
-            budgetLimitTokens: plan.budgetPlan.totalTokens,
-            budgetTokens: plan.budgetPlan.totalTokens,
-            overflow: Boolean(plan.overflowReason),
-            tokenizerMethod: plan.tokenEstimationMethod || 'HEURISTIC_CHARS',
-            items: plan.units.map((u) => ({
-              contextUnitId: u.contextUnitId,
-              plannedResolution: u.resolution,
-              actualResolution: u.resolution,
-              estimatedTokens: u.tokenEstimate,
-              materializerVersion: DefaultContextUnitMaterializer.VERSION,
-            })),
-            recordedAt: new Date().toISOString(),
-          }));
-        }
 
         const responsePayload: any = {
           planId: plan.planId,
@@ -944,7 +660,7 @@ function createMcpServerInstance() {
           }
           resolvedTaskId = plan.taskId;
           resolvedSessionId = inputSessionId || plan.sessionId;
-          resolvedSnapshotId = plan.workspaceSnapshotId || 'snapshot_init';
+          resolvedSnapshotId = plan.workspaceSnapshotId || (plan as any).snapshotId || 'snapshot_init';
           resolvedAgentEnvId = plan.agentEnvironmentId || 'unknown';
 
           if (resolvedSessionId) {
@@ -1001,7 +717,7 @@ function createMcpServerInstance() {
           if (plans.length === 1) {
             resolvedPlanId = plans[0].planId;
             resolvedSessionId = plans[0].sessionId;
-            resolvedSnapshotId = plans[0].workspaceSnapshotId || 'snapshot_init';
+            resolvedSnapshotId = plans[0].workspaceSnapshotId || (plans[0] as any).snapshotId || 'snapshot_init';
             resolvedAgentEnvId = plans[0].agentEnvironmentId || 'unknown';
           } else if (plans.length > 1) {
             return {
@@ -1190,6 +906,14 @@ function createMcpServerInstance() {
             };
           }
 
+          const effectiveSessionId = plan.sessionId || inputSessionId;
+          if (!effectiveSessionId) {
+            return {
+              content: [{ type: 'text', text: 'Error: Cannot expand contextUnitId without an active session. Expansion rejected.' }],
+              isError: true,
+            };
+          }
+
           // Section 40: ContextUnit cannot belong to wrong plan/workspace
           const plannedUnit = plan.units.find((u) => u.contextUnitId === contextUnitId);
           if (!plannedUnit) {
@@ -1199,11 +923,19 @@ function createMcpServerInstance() {
             };
           }
 
-          const snapshotId = plan.workspaceSnapshotId || 'snapshot_init';
-          let snapshot = store.getSnapshot(snapshotId);
+          const snapshotId = plan.workspaceSnapshotId || (plan as any).snapshotId;
+          if (!snapshotId) {
+            return {
+              content: [{ type: 'text', text: `Error: Snapshot ID not found on plan "${plan.planId}". Expansion rejected.` }],
+              isError: true,
+            };
+          }
+          const snapshot = store.getSnapshot(snapshotId);
           if (!snapshot) {
-            const workspaceManager = new WorkspaceManager({ rootDir: workspaceDir });
-            snapshot = await workspaceManager.captureSnapshot();
+            return {
+              content: [{ type: 'text', text: `Error: Snapshot "${snapshotId}" associated with plan "${plan.planId}" was not found in the observation store. Expansion rejected.` }],
+              isError: true,
+            };
           }
 
           const snapshotUnits = store.getContextUnitsBySnapshot(snapshot.workspaceSnapshotId);
@@ -1229,7 +961,7 @@ function createMcpServerInstance() {
           // Section 13: Append immutable ContextExpansionEvent
           const expansionEvent = createContextExpansionEvent({
             taskId: plan.taskId,
-            sessionId: plan.sessionId || inputSessionId || `session_${plan.taskId}`,
+            sessionId: effectiveSessionId,
             contextPlanId: plan.planId,
             workspaceSnapshotId: snapshot.workspaceSnapshotId,
             agentEnvironmentId: plan.agentEnvironmentId || 'unknown',
@@ -1265,6 +997,13 @@ function createMcpServerInstance() {
         }
 
         // File path handling (separate namespace)
+        if (targetResolutionStr === 'body') {
+          return {
+            content: [{ type: 'text', text: 'Error: targetResolution "body" requires a contextUnitId to resolve discrete symbol AST boundaries. File paths only support targetResolution "full".' }],
+            isError: true,
+          };
+        }
+
         const safePath = resolveSafeWorkspacePath(workspaceDir, filePath!);
         if (!safePath || !fs.existsSync(safePath)) {
           return {

@@ -18,8 +18,10 @@ export class StackTraceRetriever {
     for (const ev of task.evidence) {
       if (ev.kind === TaskEvidenceKind.STACK_TRACE) {
         const stack = ev as StackTraceEvidence;
-        for (const frame of stack.frames) {
-          this.matchFrame(frame.file, frame.functionName, units, matches);
+        if (Array.isArray(stack.frames)) {
+          for (const frame of stack.frames) {
+            this.matchFrame(frame.file, frame.functionName, units, matches);
+          }
         }
       } else if (ev.kind === TaskEvidenceKind.TEST_FAILURE) {
         const test = ev as TestFailureEvidence;

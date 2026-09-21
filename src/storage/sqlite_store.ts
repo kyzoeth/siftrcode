@@ -29,9 +29,9 @@ import { SourceProvenance } from '../rights/source_provenance';
 import { TrainingRow, TrainingEvidenceRecord } from '../learning/lineage';
 import { DeletionAuditRecord } from '../rights/deletion_manager';
 import { DataRights, createDefaultDataRights } from '../rights/data_rights';
-import { sanitizeContextPlanForPersistence, ContextPlanMetadataRecord } from './rights_aware_dto';
+import { sanitizeContextPlanForPersistence, sanitizeContextUnitForPersistence, ContextPlanMetadataRecord } from './rights_aware_dto';
 
-export { sanitizeContextPlanForPersistence, ContextPlanMetadataRecord } from './rights_aware_dto';
+export { sanitizeContextPlanForPersistence, sanitizeContextUnitForPersistence, ContextPlanMetadataRecord } from './rights_aware_dto';
 export { TrainingEvidenceRecord } from '../learning/lineage';
 export { SiftrSession, SiftrSessionStatus } from '../telemetry/siftr_session';
 export { ContextExpansionEvent } from '../telemetry/expansion_event';
@@ -609,8 +609,10 @@ export class SqliteStore {
   // ContextUnit Operations
   // ==========================================
 
-  public saveContextUnits(units: ContextUnit[]): void {
+  public saveContextUnits(units: ContextUnit[], rights?: DataRights): void {
     if (units.length === 0) return;
+
+    const effectiveRights = rights || createDefaultDataRights();
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO context_units (unit_id, snapshot_id, repository_id, kind, path, title, trust_level, raw_json, created_at)
@@ -619,15 +621,16 @@ export class SqliteStore {
 
     const now = new Date().toISOString();
     for (const unit of units) {
+      const sanitized = sanitizeContextUnitForPersistence(unit, effectiveRights);
       stmt.run(
-        unit.id,
-        unit.workspaceSnapshotId,
-        unit.repositoryId || null,
-        unit.kind,
-        unit.path || null,
-        unit.title,
-        unit.trustLevel,
-        JSON.stringify(unit),
+        sanitized.id,
+        sanitized.workspaceSnapshotId,
+        sanitized.repositoryId || null,
+        sanitized.kind,
+        sanitized.path || null,
+        sanitized.title,
+        sanitized.trustLevel,
+        JSON.stringify(sanitized),
         now
       );
     }
@@ -1633,8 +1636,10 @@ export class SqliteStore {
   // JEV Shadow Judgment Operations (Milestone PR J5)
   // ==========================================
 
-  public saveJevShadowJudgments(signals: JevSignalV1[]): void {
+  public saveJevShadowJudgments(signals: JevSignalV1[], rights?: DataRights): void {
     if (signals.length === 0) return;
+
+    const allowNumeric = rights ? (rights.derivedNumericFeaturesAllowed !== false) : true;
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO jev_shadow_judgments (
@@ -1659,10 +1664,10 @@ export class SqliteStore {
         sig.provider,
         sig.model || null,
         sig.questionSetVersion,
-        sig.semanticRelevanceProbability !== null ? sig.semanticRelevanceProbability : null,
-        sig.implementationNeededProbability !== null ? sig.implementationNeededProbability : null,
-        sig.likelyEditTargetProbability !== null ? sig.likelyEditTargetProbability : null,
-        sig.likelyRootCauseProbability !== null ? sig.likelyRootCauseProbability : null,
+        (allowNumeric && sig.semanticRelevanceProbability !== null) ? sig.semanticRelevanceProbability : null,
+        (allowNumeric && sig.implementationNeededProbability !== null) ? sig.implementationNeededProbability : null,
+        (allowNumeric && sig.likelyEditTargetProbability !== null) ? sig.likelyEditTargetProbability : null,
+        (allowNumeric && sig.likelyRootCauseProbability !== null) ? sig.likelyRootCauseProbability : null,
         sig.latencyMs,
         sig.inputTokens ?? null,
         sig.requestId || null,

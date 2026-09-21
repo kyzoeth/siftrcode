@@ -13,7 +13,7 @@ import { ContextUnit, ContextUnitKind } from '../context/context_unit';
 import { ContextGraph } from '../graph/context_graph';
 import { GitGraphIntelligence } from '../graph/git_graph';
 import { FeatureCutoff } from '../learning/point_in_time_features';
-import { DataRights, createDefaultDataRights, createJevPermittedDataRights } from '../rights/data_rights';
+import { DataRights, createDefaultDataRights } from '../rights/data_rights';
 import { AgentAdapter, ClaudeCodeAdapter, CursorAdapter, GenericMcpAdapter, ContextUnitResolved, FormattedContext } from '../agents/agent_adapter';
 import { CandidateGenerator } from '../retrieval/candidate_generator';
 import { FeatureBuilderV1 } from '../ranking/feature_builder';
@@ -130,10 +130,7 @@ export class ContextEngine {
   constructor(options: ContextEngineOptions = {}) {
     this.repoRootDir = options.repoRootDir;
     this.adapter = options.adapter || new ClaudeCodeAdapter();
-    const defaultRights = (options.enableJevShadow || options.jevShadowRunner)
-      ? createJevPermittedDataRights()
-      : createDefaultDataRights();
-    this.dataRights = options.dataRights || defaultRights;
+    this.dataRights = options.dataRights || createDefaultDataRights();
     this.budgetProfile = options.budgetProfile || 'BALANCED';
     this.budgetLimits = options.budgetLimits || (
       this.budgetProfile !== 'CUSTOM' ? BUDGET_PROFILES[this.budgetProfile] : { maxTokens: 16000 }
@@ -147,7 +144,7 @@ export class ContextEngine {
 
     if (options.jevShadowRunner) {
       this.jevShadowRunner = options.jevShadowRunner;
-    } else if (options.enableJevShadow || process.env.SIFTR_JEV_ENABLED === 'true' || process.env.TYPESAFE_API_KEY) {
+    } else if (options.enableJevShadow || process.env.SIFTR_JEV_ENABLED === 'true' || process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY) {
       this.jevShadowRunner = new JevShadowRunner({
         sqliteStore: this.sqliteStore,
       });
@@ -675,7 +672,7 @@ export class ContextEngine {
           ...u,
           metadata: { ...u.metadata },
         }));
-        this.sqliteStore.saveContextUnits(rightsSafeUnits);
+        this.sqliteStore.saveContextUnits(rightsSafeUnits, this.dataRights);
 
         this.sqliteStore.saveSnapshot(snapshot);
         this.sqliteStore.saveTaskContext(task);

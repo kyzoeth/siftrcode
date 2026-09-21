@@ -19,6 +19,10 @@ export interface JudgmentResult {
   confidence: number; // 0.0 to 1.0
   provider: string; // 'typesafe-jev' | 'local-heuristic' | 'mock'
   latencyMs: number;
+  semanticRelevanceProbability?: number;
+  implementationNeededProbability?: number;
+  likelyEditTargetProbability?: number;
+  likelyRootCauseProbability?: number;
   fallbackReason?: string; // set when fallback to local intelligence occurred
   rationale?: string;
   rawSignals?: Record<string, unknown>;

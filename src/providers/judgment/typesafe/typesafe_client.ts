@@ -48,9 +48,9 @@ export class TypeSafeSystemOneClient implements SystemOneClient {
   private client: TypeSafeClient;
 
   constructor(options: TypeSafeSystemOneClientOptions = {}) {
-    const apiKey = options.apiKey || process.env.TYPESAFE_API_KEY;
+    const apiKey = options.apiKey || process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY;
     if (!apiKey) {
-      throw new Error('TYPESAFE_API_KEY is required to initialize TypeSafeSystemOneClient');
+      throw new Error('TYPESAFE_API_KEY or JEV_API_KEY is required to initialize TypeSafeSystemOneClient');
     }
 
     this.client = new TypeSafeClient({

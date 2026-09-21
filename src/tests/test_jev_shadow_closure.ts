@@ -711,10 +711,12 @@ export async function runJevShadowClosureTests() {
     // ------------------------------------------------------------------------
     console.log('--- Test 8: Shadow Invariance Test (Bit-for-Bit Identity) ---');
     {
+      const permittedRights = createJevPermittedDataRights();
       const optResultNoJev = await ContextEngine.optimizeWorkspace({
         workspaceDir: tempWorkspaceDir,
         prompt: 'Implement calculateProduct integration',
         enableJevShadow: false,
+        dataRights: permittedRights,
       });
 
       const fakeClient = new FakeSystemOneClient(async () => ({
@@ -738,6 +740,7 @@ export async function runJevShadowClosureTests() {
         prompt: 'Implement calculateProduct integration',
         enableJevShadow: true,
         jevShadowRunner: customRunner,
+        dataRights: permittedRights,
       });
 
       const planA = optResultNoJev.plan;

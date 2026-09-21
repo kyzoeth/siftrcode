@@ -20,6 +20,8 @@
     "serve": "node dist/server/web.js",
     "test": "node dist/tests/run_tests.js",
     "benchmark:jev": "node dist/tests/benchmark_jev_shadow_study.js",
+    "pilot:jev": "node dist/tests/pilot_jev_real_study.js",
+    "study:jev": "node dist/tests/study_jev_heldout_ranking.js",
     "prepublishOnly": "npm run build && npm test"
   },
   "engines": {
@@ -50,7 +52,7 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1",
-    "@typesafe-ai/sdk": "^0.6.0",
+    "@typesafe-ai/sdk": "0.6.0",
     "chalk": "^4.1.2",
     "commander": "^12.1.0",
     "glob": "^10.4.5",

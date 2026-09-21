@@ -1,17 +1,17 @@
 /**
- * SiftrCode V2 - JEV Shadow Benchmark Study (PR J7, Directive Parts XXI-XXVII)
+ * SiftrCode V2 - JEV Shadow Synthetic Plumbing Benchmark (PR J7 Verification)
  *
- * Runs a rigorous 140-task benchmark study across:
+ * Runs a synthetic plumbing benchmark across 140 synthetic tasks:
  * - 35 Bug Fix tasks
  * - 35 Test Failure tasks
  * - 35 Feature Addition tasks
  * - 35 Refactor tasks
  *
- * Evaluates:
- * 1. JEV signal distributions (continuous probabilities without thresholding)
- * 2. Correlation with Oracle ground truth (edit targets, root causes, relevance)
- * 3. Ranking ablation (Deterministic ContextRank vs JEV-augmented ranker: NDCG@K, Recall@K, MRR)
- * 4. Operational & cost metrics (calls/task, p50/p95 latency, peak concurrency, fallback rates, redaction rate)
+ * Verifies end-to-end plumbing:
+ * 1. JEV signal distributions & synthetic probability emission
+ * 2. Correlation with Oracle ground truth
+ * 3. Ranking ablation comparison
+ * 4. Operational metrics (calls/task, p50/p95 latency, peak concurrency)
  * 5. Production invariant verification (100% bit-for-bit plan identity in shadow mode)
  */
 
@@ -233,7 +233,7 @@ function computeMRR(rankedIds: string[], targetIds: Set<string>): number {
 
 export async function runJevShadowBenchmarkStudy(): Promise<JevBenchmarkReport> {
   console.log('\n=============================================================');
-  console.log('  SIFTRCODE V2: JEV SHADOW BENCHMARK STUDY (140 TASKS)');
+  console.log('  SIFTRCODE V2: JEV SHADOW SYNTHETIC PLUMBING BENCHMARK (140 TASKS)');
   console.log('=============================================================\n');
 
   // Setup isolated SQLite store for benchmark telemetry
