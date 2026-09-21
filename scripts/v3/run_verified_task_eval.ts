@@ -19,6 +19,7 @@ import { SplitManifest } from '../../src/benchmark/siftrbench/split_manager';
 import { TreeRanker } from '../../src/learning/models/context_rank/tree_ranker';
 import { SiftrContextDatasetV1, DatasetRowV1 } from '../../src/learning/datasets/siftr_dataset_v1';
 import { defaultTokenizerRegistry } from '../../src/token/tokenizer_registry';
+import { resolveGeminiApiKey } from '../../src/learning/evaluation/gemini/gemini_config';
 
 export function runVerifiedTaskEval(options: { minTasks?: number } = {}) {
   const rootDir = path.resolve(__dirname, '../..');
@@ -53,12 +54,21 @@ export function runVerifiedTaskEval(options: { minTasks?: number } = {}) {
 
   console.log(`   Evaluating ${testEpisodes.length} paired held-out tasks across all repositories...`);
 
-  const hasCredentials = !!(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY);
+  const geminiApiKey = resolveGeminiApiKey();
+  const hasAnthropicOrOpenAI = !!(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY);
+  const hasCredentials = hasAnthropicOrOpenAI || !!geminiApiKey;
+  const isFreeTierQuotaLimited = !hasAnthropicOrOpenAI && !!geminiApiKey;
+
   if (!hasCredentials) {
-    console.log('\n⚠️  [Verified Task Evaluator] LLM agent credentials (ANTHROPIC_API_KEY / OPENAI_API_KEY) not found in environment.');
+    console.log('\n⚠️  [Verified Task Evaluator] LLM agent credentials (GEMINI_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY) not found.');
     console.log('   INVARIANT ENFORCED: Real coding-agent executions and verifier runs cannot be simulated.');
     console.log('   Deriving verifiedSuccess from proxy target-presence or fabricating token/cost counts is strictly prohibited.');
     console.log('   Emitting honest gate status: V3.1_INSUFFICIENT_EVIDENCE (REAL_AGENT_EVALUATION_BLOCKED).\n');
+  } else if (isFreeTierQuotaLimited) {
+    console.log('\n⚠️  [Verified Task Evaluator] GEMINI_API_KEY detected on Free Tier (hard limit: 20 requests/day).');
+    console.log('   INVARIANT ENFORCED: 66 paired multi-turn agent runs (~300-600 API requests) require higher quota.');
+    console.log('   Deriving verifiedSuccess from proxy target-presence or fabricating token/cost counts is strictly prohibited.');
+    console.log('   Emitting honest gate status: V3.1_INSUFFICIENT_EVIDENCE (FREE_TIER_QUOTA_LIMITED).\n');
   }
 
   const pairedResults: PairedTaskEvaluation[] = [];
@@ -186,9 +196,13 @@ export function runVerifiedTaskEval(options: { minTasks?: number } = {}) {
     minTasksForPromotion: options.minTasks ?? 30,
     minSuccessDelta: 0.0,
     blockedReason: !hasCredentials
-      ? 'REAL_AGENT_EVALUATION_BLOCKED: Missing real agent credentials (ANTHROPIC_API_KEY, OPENAI_API_KEY). Experimental integrity strictly prohibits simulating agent outcomes or substituting target-presence proxy for verified task success.'
-      : undefined,
-    missingDependencies: !hasCredentials ? ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY'] : undefined,
+      ? 'REAL_AGENT_EVALUATION_BLOCKED: Missing real agent credentials (GEMINI_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY). Experimental integrity strictly prohibits simulating agent outcomes or substituting target-presence proxy for verified task success.'
+      : (isFreeTierQuotaLimited
+        ? 'REAL_AGENT_EVALUATION_BLOCKED: GEMINI_API_KEY is on Free Tier (20 requests/day limit). 66 paired multi-turn agent runs (~300-600 API requests) require higher quota or paid billing.'
+        : undefined),
+    missingDependencies: !hasCredentials
+      ? ['GEMINI_API_KEY', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY']
+      : (isFreeTierQuotaLimited ? ['GEMINI_API_KEY (sufficient quota >20 req/day)'] : undefined),
     proxyOfflineMetrics,
   });
 

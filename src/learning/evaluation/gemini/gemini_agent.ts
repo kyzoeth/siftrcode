@@ -211,7 +211,13 @@ export class GeminiCodingAgent {
       } catch (err: any) {
         lastError = err;
         const msg = String(err.message || '');
-        const isRateLimit = msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('Quota exceeded');
+        const isHardDailyQuota =
+          msg.includes('free_tier_requests') ||
+          msg.includes('PerDay') ||
+          msg.includes('per day');
+        const isRateLimit =
+          !isHardDailyQuota &&
+          (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('Quota exceeded'));
         const isUnavailable = msg.includes('503') || msg.includes('UNAVAILABLE') || msg.includes('high demand');
 
         if ((isRateLimit || isUnavailable) && attempt < this.config.maxRetries) {

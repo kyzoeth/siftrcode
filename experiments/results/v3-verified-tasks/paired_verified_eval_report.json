@@ -1,11 +1,10 @@
 {
   "schemaVersion": "siftrcode-verified-task-eval-v1",
-  "evaluatedAt": "2026-09-21T20:45:02.532Z",
+  "evaluatedAt": "2026-09-21T21:35:21.804Z",
   "totalPairedTasks": 33,
-  "blockReason": "REAL_AGENT_EVALUATION_BLOCKED: Missing real agent credentials (ANTHROPIC_API_KEY, OPENAI_API_KEY). Experimental integrity strictly prohibits simulating agent outcomes or substituting target-presence proxy for verified task success.",
+  "blockReason": "REAL_AGENT_EVALUATION_BLOCKED: GEMINI_API_KEY is on Free Tier (20 requests/day limit). 66 paired multi-turn agent runs (~300-600 API requests) require higher quota or paid billing.",
   "missingDependencies": [
-    "ANTHROPIC_API_KEY",
-    "OPENAI_API_KEY"
+    "GEMINI_API_KEY (sufficient quota >20 req/day)"
   ],
   "v2Summary": {
     "variant": "V2_FROZEN",
@@ -16,7 +15,7 @@
     "meanContextTokensPerTask": 7983,
     "totalCostUSD": 0,
     "meanCostPerTaskUSD": 0,
-    "meanLatencyMs": 0.3,
+    "meanLatencyMs": 0.2,
     "cpvstUSD": null
   },
   "v3Summary": {
@@ -24,8 +23,8 @@
     "evaluatedTasks": 33,
     "successfulTasks": 0,
     "successRate": 0,
-    "totalContextTokens": 263658,
-    "meanContextTokensPerTask": 7990,
+    "totalContextTokens": 263702,
+    "meanContextTokensPerTask": 7991,
     "totalCostUSD": 0,
     "meanCostPerTaskUSD": 0,
     "meanLatencyMs": 0.1,
@@ -33,9 +32,9 @@
   },
   "pairedDeltas": {
     "successRateDelta": 0,
-    "meanTokenDelta": 7,
+    "meanTokenDelta": 8,
     "meanCostDeltaUSD": 0,
-    "meanLatencyDeltaMs": -0.2,
+    "meanLatencyDeltaMs": -0.1,
     "cpvstDeltaUSD": null,
     "v3Wins": 0,
     "v2Wins": 0,
@@ -57,7 +56,7 @@
     "modeledCostPerTargetCoveredTaskV3USD": 0.0352
   },
   "gateDecision": "V3.1_INSUFFICIENT_EVIDENCE",
-  "decisionRationale": "REAL_AGENT_EVALUATION_BLOCKED: Missing real agent credentials (ANTHROPIC_API_KEY, OPENAI_API_KEY). Experimental integrity strictly prohibits simulating agent outcomes or substituting target-presence proxy for verified task success.",
+  "decisionRationale": "REAL_AGENT_EVALUATION_BLOCKED: GEMINI_API_KEY is on Free Tier (20 requests/day limit). 66 paired multi-turn agent runs (~300-600 API requests) require higher quota or paid billing.",
   "pairedTasks": [
     {
       "taskId": "exp_04_response_charset",
@@ -100,7 +99,7 @@
         "taskId": "exp_10_range_header_boundary",
         "variant": "V2_FROZEN",
         "verifiedSuccess": null,
-        "wallClockLatencyMs": 1,
+        "wallClockLatencyMs": 0,
         "contextTokens": 7968,
         "agentInputTokens": 0,
         "agentOutputTokens": 0,
@@ -113,7 +112,7 @@
         "taskId": "exp_10_range_header_boundary",
         "variant": "V3_LEARNED",
         "verifiedSuccess": null,
-        "wallClockLatencyMs": 0,
+        "wallClockLatencyMs": 1,
         "contextTokens": 8000,
         "agentInputTokens": 0,
         "agentOutputTokens": 0,
@@ -125,7 +124,7 @@
       "successDelta": 0,
       "tokenDelta": 32,
       "costDeltaUSD": 0,
-      "latencyDeltaMs": -1
+      "latencyDeltaMs": 1
     },
     {
       "taskId": "exp_14_res_cookie_options",
@@ -148,7 +147,7 @@
         "variant": "V3_LEARNED",
         "verifiedSuccess": null,
         "wallClockLatencyMs": 0,
-        "contextTokens": 7998,
+        "contextTokens": 7996,
         "agentInputTokens": 0,
         "agentOutputTokens": 0,
         "providerCostUSD": 0,
@@ -157,7 +156,7 @@
         "verifierResult": "UNAVAILABLE (real agent execution requires ANTHROPIC_API_KEY / OPENAI_API_KEY)"
       },
       "successDelta": 0,
-      "tokenDelta": 42,
+      "tokenDelta": 40,
       "costDeltaUSD": 0,
       "latencyDeltaMs": 0
     },
@@ -216,7 +215,7 @@
         "variant": "V3_LEARNED",
         "verifiedSuccess": null,
         "wallClockLatencyMs": 0,
-        "contextTokens": 7992,
+        "contextTokens": 7998,
         "agentInputTokens": 0,
         "agentOutputTokens": 0,
         "providerCostUSD": 0,
@@ -225,7 +224,7 @@
         "verifierResult": "UNAVAILABLE (real agent execution requires ANTHROPIC_API_KEY / OPENAI_API_KEY)"
       },
       "successDelta": 0,
-      "tokenDelta": 10,
+      "tokenDelta": 16,
       "costDeltaUSD": 0,
       "latencyDeltaMs": 0
     },
@@ -249,7 +248,7 @@
         "taskId": "exp_22_res_attachment_filename",
         "variant": "V3_LEARNED",
         "verifiedSuccess": null,
-        "wallClockLatencyMs": 1,
+        "wallClockLatencyMs": 0,
         "contextTokens": 7994,
         "agentInputTokens": 0,
         "agentOutputTokens": 0,
@@ -261,7 +260,7 @@
       "successDelta": 0,
       "tokenDelta": 28,
       "costDeltaUSD": 0,
-      "latencyDeltaMs": 1
+      "latencyDeltaMs": 0
     },
     {
       "taskId": "exp_26_res_download_cleanup",
@@ -406,7 +405,7 @@
         "taskId": "exp_37_res_location_encode",
         "variant": "V2_FROZEN",
         "verifiedSuccess": null,
-        "wallClockLatencyMs": 0,
+        "wallClockLatencyMs": 1,
         "contextTokens": 7954,
         "agentInputTokens": 0,
         "agentOutputTokens": 0,
@@ -431,7 +430,7 @@
       "successDelta": 0,
       "tokenDelta": 44,
       "costDeltaUSD": 0,
-      "latencyDeltaMs": 0
+      "latencyDeltaMs": -1
     },
     {
       "taskId": "fa_01_path_param_regex",
@@ -576,7 +575,7 @@
         "taskId": "fa_23_routing_include_router_prefix",
         "variant": "V2_FROZEN",
         "verifiedSuccess": null,
-        "wallClockLatencyMs": 1,
+        "wallClockLatencyMs": 0,
         "contextTokens": 8000,
         "agentInputTokens": 0,
         "agentOutputTokens": 0,
@@ -601,7 +600,7 @@
       "successDelta": 0,
       "tokenDelta": 0,
       "costDeltaUSD": 0,
-      "latencyDeltaMs": -1
+      "latencyDeltaMs": 0
     },
     {
       "taskId": "fa_24_datastructures_upload_file_async",
@@ -828,7 +827,7 @@
         "variant": "V3_LEARNED",
         "verifiedSuccess": null,
         "wallClockLatencyMs": 0,
-        "contextTokens": 7994,
+        "contextTokens": 7996,
         "agentInputTokens": 0,
         "agentOutputTokens": 0,
         "providerCostUSD": 0,
@@ -837,7 +836,7 @@
         "verifierResult": "UNAVAILABLE (real agent execution requires ANTHROPIC_API_KEY / OPENAI_API_KEY)"
       },
       "successDelta": 0,
-      "tokenDelta": 2,
+      "tokenDelta": 4,
       "costDeltaUSD": 0,
       "latencyDeltaMs": 0
     },
@@ -963,8 +962,8 @@
         "taskId": "siftr_18_bundle_composer_markdown_formatting",
         "variant": "V3_LEARNED",
         "verifiedSuccess": null,
-        "wallClockLatencyMs": 1,
-        "contextTokens": 7982,
+        "wallClockLatencyMs": 0,
+        "contextTokens": 7996,
         "agentInputTokens": 0,
         "agentOutputTokens": 0,
         "providerCostUSD": 0,
@@ -973,9 +972,9 @@
         "verifierResult": "UNAVAILABLE (real agent execution requires ANTHROPIC_API_KEY / OPENAI_API_KEY)"
       },
       "successDelta": 0,
-      "tokenDelta": -10,
+      "tokenDelta": 4,
       "costDeltaUSD": 0,
-      "latencyDeltaMs": 1
+      "latencyDeltaMs": 0
     },
     {
       "taskId": "exp_18_req_subdomains_tld",
@@ -1065,8 +1064,8 @@
         "taskId": "fa_06_security_scopes_sub_dependency",
         "variant": "V3_LEARNED",
         "verifiedSuccess": null,
-        "wallClockLatencyMs": 0,
-        "contextTokens": 7988,
+        "wallClockLatencyMs": 1,
+        "contextTokens": 7996,
         "agentInputTokens": 0,
         "agentOutputTokens": 0,
         "providerCostUSD": 0,
@@ -1075,9 +1074,9 @@
         "verifierResult": "UNAVAILABLE (real agent execution requires ANTHROPIC_API_KEY / OPENAI_API_KEY)"
       },
       "successDelta": 0,
-      "tokenDelta": -8,
+      "tokenDelta": 0,
       "costDeltaUSD": 0,
-      "latencyDeltaMs": 0
+      "latencyDeltaMs": 1
     },
     {
       "taskId": "fa_08_pydantic_v2_field_validation",
@@ -1168,7 +1167,7 @@
         "variant": "V3_LEARNED",
         "verifiedSuccess": null,
         "wallClockLatencyMs": 0,
-        "contextTokens": 7984,
+        "contextTokens": 8000,
         "agentInputTokens": 0,
         "agentOutputTokens": 0,
         "providerCostUSD": 0,
@@ -1177,7 +1176,7 @@
         "verifierResult": "UNAVAILABLE (real agent execution requires ANTHROPIC_API_KEY / OPENAI_API_KEY)"
       },
       "successDelta": 0,
-      "tokenDelta": -16,
+      "tokenDelta": 0,
       "costDeltaUSD": 0,
       "latencyDeltaMs": 0
     }
