@@ -187,7 +187,7 @@ async function runSingleVariant(
     };
   }
 
-  const verifierFilename = ep.verifier?.metadata?.verifierFilename;
+  const verifierFilename = String((ep.verifier?.metadata as any)?.verifierFilename || '');
   if (!verifierFilename) {
     throw new Error(`Verifier filename missing in episode metadata: ${ep.taskId}`);
   }
@@ -348,13 +348,11 @@ export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
     });
 
     const candidates = candGen.generateCandidates(
-      ep.taskPrompt,
+      taskCtx,
       repoData.units,
-      {
-        maxCandidates: 50,
-        graph: repoData.graph,
-        gitIntelligence: repoData.gitInt,
-      }
+      repoData.graph,
+      repoData.gitInt,
+      { maxCandidates: 50 }
     );
 
     const unitMap = new Map<string, ContextUnit>();
@@ -379,15 +377,28 @@ export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
       schemaVersion: 'v1',
       contextUnitId: f.contextUnitId,
       unitKind: f.unitKind,
-      fileExtension: f.fileExtension,
       tokenEstimate: f.tokenEstimate,
-      pathDepth: f.pathDepth,
-      inTestDirectory: f.inTestDirectory,
-      inDocsDirectory: f.inDocsDirectory,
-      lexicalMatchScore: f.lexicalMatchScore,
-      exactNameMatch: f.exactNameMatch,
-      graphDistance: f.graphDistance,
-      coChangeFrequency: f.coChangeFrequency,
+      isTest: f.isTest,
+      isConfig: f.isConfig,
+      isDocumentation: f.isDocumentation,
+      isSchema: f.isSchema,
+      isExported: f.isExported,
+      exactSymbolMatch: f.exactSymbolMatch,
+      exactPathMatch: f.exactPathMatch,
+      bm25Score: f.bm25Score,
+      tokenOverlapRatio: f.tokenOverlapRatio,
+      graphDegree: f.graphDegree,
+      minDistanceToSeed: f.minDistanceToSeed,
+      minDistanceToErrorFrame: f.minDistanceToErrorFrame,
+      isDirectDependency: f.isDirectDependency,
+      isDirectDependent: f.isDirectDependent,
+      changeFrequency: f.changeFrequency,
+      recentChangeFrequency: f.recentChangeFrequency,
+      maxCoChangeWithSeeds: f.maxCoChangeWithSeeds,
+      inStackTrace: f.inStackTrace,
+      isFailingTestTarget: f.isFailingTestTarget,
+      inCompilerError: f.inCompilerError,
+      inDirtyDiff: f.inDirtyDiff,
       heuristicScore: f.heuristicScore,
     }));
 
