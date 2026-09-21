@@ -166,7 +166,7 @@
         <div class="h-4 w-[1px] bg-zinc-300 dark:bg-zinc-700 hidden sm:block"></div>
         <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/70 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-semibold tracking-wider flex items-center gap-1.5">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 pulse-live-dot"></span>
-          v0.2.0 • V2 Control Plane
+          v0.2.1 • V2 Control Plane
         </span>
         <span id="lastUpdatedTag" class="text-[11px] text-ink-secondary font-mono hidden md:inline-block">Updating...</span>
       </div>
@@ -180,18 +180,18 @@
         </label>
 
         <!-- Refresh Button -->
-        <button onclick="fetchAdminMetrics(true)" id="refreshBtn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-700 hover:text-ink dark:text-zinc-200 text-xs hover:border-[#D97757] transition bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 hover:dark:bg-zinc-700 cursor-pointer shadow-xs">
+        <button onclick="fetchAdminMetrics(true)" id="refreshBtn" class="flex items-center gap-1.5 px-3 py-2 sm:px-2.5 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-700 hover:text-ink dark:text-zinc-200 text-xs hover:border-[#D97757] transition bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 hover:dark:bg-zinc-700 cursor-pointer shadow-xs">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
           <span class="hidden sm:inline">Refresh</span>
         </button>
 
         <!-- Theme Toggle -->
-        <button id="themeToggleBtn" onclick="toggleTheme()" class="w-8 h-8 rounded border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-700 hover:text-ink dark:text-zinc-200 hover:text-[#D97757] transition bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 cursor-pointer" aria-label="Toggle theme">
+        <button id="themeToggleBtn" onclick="toggleTheme()" class="w-11 h-11 sm:w-8 sm:h-8 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 rounded border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-700 hover:text-ink dark:text-zinc-200 hover:text-[#D97757] transition bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 cursor-pointer" aria-label="Toggle theme">
           <span id="themeIcon">🌙</span>
         </button>
 
         <!-- Back to Site -->
-        <a href="/" class="px-3 py-1.5 rounded bg-zinc-900 dark:bg-zinc-800 text-white hover:bg-zinc-800 dark:hover:bg-zinc-700 text-xs font-medium transition cursor-pointer flex items-center gap-1">
+        <a href="/" class="px-3.5 py-2.5 sm:px-3 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded bg-zinc-900 dark:bg-zinc-800 text-white hover:bg-zinc-800 dark:hover:bg-zinc-700 text-xs font-medium transition cursor-pointer flex items-center gap-1">
           <span>Exit</span>
           <span class="text-zinc-400">→</span>
         </a>
@@ -712,18 +712,18 @@
         </div>
       </div>
 
-      <!-- Right: Graph Provenance & JEV V2 Signals (PR 9 & 10) -->
+      <!-- Right: Graph Provenance & JEV V2 Signals (PR 9, 10 & 14) -->
       <div id="graph" class="p-5 rounded-md border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-4">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <div class="flex items-center gap-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
-              <h3 class="text-base font-bold text-ink tracking-tight font-serif">Graph Provenance & JEV V2 Signals</h3>
-              <span class="px-1.5 py-0.2 rounded text-[9px] font-mono bg-zinc-100 dark:bg-zinc-800 text-ink-secondary">PR 9 & 10</span>
+              <h3 class="text-base font-bold text-ink tracking-tight font-serif">Graph Provenance &amp; Shadow JEV Validation</h3>
+              <span class="px-1.5 py-0.2 rounded text-[9px] font-mono bg-zinc-100 dark:bg-zinc-800 text-ink-secondary">v0.2.1 • SiftrBench</span>
             </div>
-            <p class="text-[11px] text-ink-secondary">AST edge sources (zero false claims) & independent JEV relevance signals.</p>
+            <p class="text-[11px] text-ink-secondary">AST edge sources &amp; shadow Judged Evidence Validation (100% plan invariance).</p>
           </div>
-          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-semibold">Resilient</span>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-semibold self-start sm:self-auto">Shadow Mode Active</span>
         </div>
 
         <!-- Graph Edge Sources Breakdown -->
@@ -734,17 +734,50 @@
           </div>
         </div>
 
-        <!-- High-Value AST Relationships & JEV Signals Cards -->
-        <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800 grid grid-cols-2 gap-2 text-[10px] font-mono">
+        <!-- SiftrBench 140-Task Benchmark Telemetry Grid -->
+        <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2.5 font-mono text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] uppercase tracking-wider text-ink-secondary">SiftrBench Shadow Study (140 Tasks)</span>
+            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">100% Plan Invariance</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+            <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center space-y-0.5">
+              <div class="text-zinc-400 text-[9px] uppercase">Shadow Calls</div>
+              <div class="text-ink font-bold text-sm sm:text-base">2,800</div>
+              <div class="text-emerald-600 dark:text-emerald-400 text-[9px]">0 Fallbacks (0.0%)</div>
+            </div>
+            <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center space-y-0.5">
+              <div class="text-zinc-400 text-[9px] uppercase">p95 Latency</div>
+              <div class="text-ink font-bold text-sm sm:text-base text-emerald-600 dark:text-emerald-400">38.0ms</div>
+              <div class="text-zinc-500 text-[9px]">Mean: 26.9ms</div>
+            </div>
+            <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center space-y-0.5">
+              <div class="text-zinc-400 text-[9px] uppercase">Edit Correlation</div>
+              <div class="text-ink font-bold text-sm sm:text-base text-[#D97757]">r = 0.7474</div>
+              <div class="text-zinc-500 text-[9px]">Pearson p &lt; 0.001</div>
+            </div>
+            <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-center space-y-0.5">
+              <div class="text-zinc-400 text-[9px] uppercase">Root Cause Corr</div>
+              <div class="text-ink font-bold text-sm sm:text-base text-purple-600 dark:text-purple-400">r = 0.7720</div>
+              <div class="text-zinc-500 text-[9px]">Relevance: 0.7802</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3-Stage Resolution Lineage & High-Value AST Relationships Cards -->
+        <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] font-mono">
+          <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 space-y-1">
+            <div class="text-zinc-500 uppercase text-[9px]">3-Stage Resolution Lineage</div>
+            <div class="text-ink font-semibold flex items-center gap-1 text-[10px]">
+              <span>ranker</span> &rarr; <span>budgeted</span> &rarr; <span>final</span>
+            </div>
+            <p class="text-zinc-500 text-[9px]">Audit trail: 0 silent downgrades, discrete method body AST slicing.</p>
+          </div>
           <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 space-y-1">
             <div class="text-zinc-500 uppercase text-[9px]">High-Value AST Edges</div>
             <div class="text-ink font-semibold" id="highValueEdgesSummary">CALLS, TYPE_USES, IMPLEMENTS</div>
             <p class="text-zinc-500 text-[9px]">Enclosing symbol scoping with call-graph extraction.</p>
-          </div>
-          <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 space-y-1">
-            <div class="text-zinc-500 uppercase text-[9px]">JEV V2 Signals (PR 10)</div>
-            <div class="text-purple-600 dark:text-purple-400 font-semibold">semantic + edit + rootCause</div>
-            <p class="text-zinc-500 text-[9px]">Circuit-breaker fallback to deterministic heuristic.</p>
           </div>
         </div>
       </div>
@@ -923,7 +956,7 @@
 
   <!-- Footer Notice -->
   <footer class="max-w-7xl mx-auto px-4 sm:px-6 py-6 text-center text-xs text-ink-secondary font-mono border-t border-zinc-200/60 dark:border-zinc-800 mt-12">
-    SiftrCode Admin Portal • Confidential Telemetry Engine • v0.2.0
+    SiftrCode Admin Portal • Confidential Telemetry Engine • v0.2.1
   </footer>
 
   <script>

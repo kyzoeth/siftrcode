@@ -160,29 +160,33 @@
             </g>
           </svg>
           <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
-          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-medium">v0.2.0</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-medium">v0.2.1</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="/how-it-works" class="text-[#B34E2E] dark:text-[#F39C82] font-semibold transition">How It Works</a>
           <a href="/claude" class="hover:text-ink transition">Claude Code</a>
           <a href="#pipeline-stages" class="hover:text-ink transition">6-Stage Pipeline</a>
+          <a href="/#benchmark" class="hover:text-ink transition flex items-center gap-1 text-[#D97757] dark:text-[#F39C82]">
+            <span>SiftrBench</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          </a>
           <a href="#triage-explorer" class="hover:text-ink transition">Triage Explorer</a>
           <a href="/#economics" class="hover:text-ink transition">Economics</a>
         </nav>
       </div>
 
       <div class="flex items-center gap-1.5 sm:gap-2.5">
-        <a href="mailto:info@siftrcode.com" title="Contact Us" aria-label="Contact Us" class="hidden sm:flex w-8 h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press items-center justify-center shadow-2xs cursor-pointer">
+        <a href="mailto:info@siftrcode.com" title="Contact Us" aria-label="Contact Us" class="hidden sm:flex w-9 h-9 sm:w-8 sm:h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press items-center justify-center shadow-2xs cursor-pointer min-w-[36px] min-h-[36px]">
           <svg class="w-4 h-4 text-zinc-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
           </svg>
         </a>
-        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" title="GitHub" aria-label="GitHub" class="hidden sm:flex w-8 h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press items-center justify-center shadow-2xs cursor-pointer">
+        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" title="GitHub" aria-label="GitHub" class="hidden sm:flex w-9 h-9 sm:w-8 sm:h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press items-center justify-center shadow-2xs cursor-pointer min-w-[36px] min-h-[36px]">
           <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
         </a>
 
         <!-- Light / Dark Theme Switch Button -->
-        <button id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light / Dark Theme" aria-label="Toggle theme" class="w-8 h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
+        <button id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light / Dark Theme" aria-label="Toggle theme" class="w-11 h-11 sm:w-8 sm:h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0">
           <svg id="themeSunIcon" class="w-4 h-4 text-[#F39C82] hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
@@ -191,18 +195,18 @@
           </svg>
         </button>
 
-        <a href="/#quickstart" title="Start Team Trial" aria-label="Start Team Trial" class="w-8 h-8 rounded bg-[#D97757] hover:bg-[#C86241] text-white transition cursor-pointer btn-press flex items-center justify-center shadow-sm">
+        <a href="/#quickstart" title="Start Team Trial" aria-label="Start Team Trial" class="w-11 h-11 sm:w-8 sm:h-8 rounded bg-[#D97757] hover:bg-[#C86241] text-white transition cursor-pointer btn-press flex items-center justify-center shadow-sm min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0">
           <svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
         </a>
 
         <!-- Mobile Menu Toggle Button -->
-        <button id="mobileMenuBtn" onclick="toggleMobileMenu()" title="Toggle Navigation Menu" aria-label="Toggle navigation menu" class="md:hidden w-8 h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
-          <svg id="mobileMenuIconOpen" class="w-4 h-4 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button id="mobileMenuBtn" onclick="toggleMobileMenu()" title="Toggle Navigation Menu" aria-label="Toggle navigation menu" class="md:hidden w-11 h-11 sm:w-8 sm:h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer min-w-[44px] min-h-[44px]">
+          <svg id="mobileMenuIconOpen" class="w-5 h-5 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
-          <svg id="mobileMenuIconClose" class="w-4 h-4 text-zinc-700 dark:text-zinc-300 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg id="mobileMenuIconClose" class="w-5 h-5 text-zinc-700 dark:text-zinc-300 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
@@ -211,30 +215,41 @@
 
     <!-- Mobile Navigation Drawer -->
     <div id="mobileNavMenu" class="hidden md:hidden border-t border-zinc-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md px-4 py-3 space-y-1 transition-all duration-200">
-      <a href="/how-it-works" class="flex items-center justify-between py-2.5 text-xs font-medium text-[#B34E2E] dark:text-[#F39C82] font-semibold transition">
+      <a href="/how-it-works" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-[#B34E2E] dark:text-[#F39C82] font-semibold transition">
         <span>How It Works</span>
         <span class="text-[#D97757] font-mono text-[10px]">✓</span>
       </a>
-      <a href="/claude" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+      <a href="/claude" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>Claude Code Integration</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
-      <a href="/#pipeline" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+      <a href="#pipeline-stages" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>6-Stage Pipeline</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
-      <a href="/#economics" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+      <a href="/#benchmark" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-[#D97757] dark:text-[#F39C82] font-semibold transition">
+        <span class="flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>SiftrBench Validation</span>
+        </span>
+        <span class="text-[#D97757] font-mono text-[10px]">NEW</span>
+      </a>
+      <a href="/#economics" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>Token Economics</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
-      <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+      <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span class="flex items-center gap-2">
           <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
           <span>GitHub Repository</span>
         </span>
         <span class="text-zinc-400 font-mono text-[10px]">↗</span>
       </a>
-      <a href="/about" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+      <a href="mailto:info@siftrcode.com" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+        <span>Contact Us</span>
+        <span class="text-zinc-400 font-mono text-[10px]">→</span>
+      </a>
+      <a href="/about" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>About SiftrCode</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
@@ -453,12 +468,12 @@
             03
           </div>
           <div>
-            <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Transparent Explainable Ranker</h2>
-            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">Subsystem: ContextRank • Explainable Reasons &amp; Explicit Penalty Bounds</div>
+            <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Deterministic ContextRank &amp; Shadow JEV Architecture</h2>
+            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">Subsystem: ContextRank &bull; TypeSafe Shadow JudgmentProvider &bull; 100% Plan Invariance</div>
           </div>
         </div>
         <p>
-          Black-box neural rankers introduce non-deterministic ordering and unpredictability. SiftrCode V2 uses a transparent linear combination ranker that calculates an explicit <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">finalScore</code> alongside human-auditable reasons and score breakdowns:
+          Black-box neural rankers introduce non-deterministic ordering and unpredictability into production workflows. SiftrCode V2 maintains <strong>deterministic ContextRank</strong> as the sole production decision-maker, calculating an explicit <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">finalScore</code> alongside auditable reasons and component breakdowns:
         </p>
         <div class="p-3.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 font-mono text-xs space-y-2">
           <div class="text-zinc-500 text-[11px]">ContextRank Scoring Formulation:</div>
@@ -468,6 +483,15 @@
             <div><strong>Exact Identifier:</strong> +0.30 boost</div>
             <div><strong>Vendor / Build Dir:</strong> -0.50 penalty</div>
           </div>
+        </div>
+        <div class="p-3.5 rounded bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/60 text-xs space-y-1.5">
+          <div class="flex items-center gap-2 font-mono font-semibold text-amber-900 dark:text-amber-200 text-xs">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span>Shadow JEV API Integration (Non-Interfering Calibration)</span>
+          </div>
+          <p class="text-zinc-600 dark:text-zinc-400 font-sans leading-relaxed text-[11px]">
+            To validate semantic LLM judgments safely, Siftr forks candidate signals to a shadow <code>JudgmentProvider</code> in the background. Shadow JEV evaluates continuous relevance, edit target probability, and root cause localization (p95 latency 38.0ms) without altering any production ContextPlans (<code class="font-mono text-[10px]">Plan_without_JEV == Plan_with_JEV</code>). Only after verified benchmark evidence from SiftrBench can JEV influence ranking.
+          </p>
         </div>
       </section>
 
@@ -497,29 +521,46 @@
             05
           </div>
           <div>
-            <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Safe Variable-Resolution Degradation</h2>
-            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">Subsystem: ResolutionRank • Multi-Language AST Safety Guards</div>
+            <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">3-Stage Resolution Lineage &amp; Discrete Method Slicing</h2>
+            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">Subsystem: ResolutionRank &bull; Discrete Method BODY Isolation &bull; Lineage Invariants</div>
           </div>
         </div>
         <p>
-          The fatal flaw in pure skeletonization is stripping the code the agent actually needs to rewrite. SiftrCode V2 eliminates this with <strong>outcome-aware variable resolution</strong>:
+          The fatal flaw in pure skeletonization is stripping the code the agent actually needs to rewrite. SiftrCode V2 eliminates this with <strong>3-stage resolution lineage</strong> and <strong>discrete method body slicing</strong>:
         </p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 pt-1 font-mono text-xs">
-          <div class="p-3 bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/60 rounded space-y-1">
-            <span class="text-blue-700 dark:text-blue-300 font-bold">Full Body (100%)</span>
-            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Assigned to causal root and direct edit targets. 0 lines stripped.</p>
+        <div class="p-3.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 font-mono text-xs space-y-2">
+          <div class="text-zinc-500 text-[11px]">3-Stage Resolution Lineage:</div>
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <span class="px-2 py-1 rounded bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 font-semibold">1. rankerResolution</span>
+            <span class="text-emerald-500 font-bold">&rarr;</span>
+            <span class="px-2 py-1 rounded bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 font-semibold">2. budgetedResolution</span>
+            <span class="text-emerald-500 font-bold">&rarr;</span>
+            <span class="px-2 py-1 rounded bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 font-semibold">3. finalResolution</span>
           </div>
-          <div class="p-3 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/60 rounded space-y-1">
-            <span class="text-emerald-700 dark:text-emerald-300 font-bold">AST Skeleton (-88%)</span>
-            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Preserves all exports, classes, interfaces, types, and parameter shapes.</p>
+          <p class="text-zinc-600 dark:text-zinc-400 font-sans text-[11px] leading-relaxed pt-1">
+            Every ContextUnit tracks this immutable progression through solver budget allocation and post-render degradation. When an agent invokes <code class="font-mono text-[10px]">siftr_expand</code> to <code class="font-mono text-[10px]">BODY</code>, the Discrete AST Slicer isolates precisely the target function/method body while strictly excluding sibling methods, preventing context pollution.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2 pt-1 font-mono text-xs">
+          <div class="p-2.5 bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/60 rounded space-y-0.5">
+            <span class="text-blue-700 dark:text-blue-300 font-bold text-[11px]">Full (100%)</span>
+            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-[10px]">Direct edit targets. 0 lines stripped.</p>
           </div>
-          <div class="p-3 bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-900/60 rounded space-y-1">
-            <span class="text-purple-700 dark:text-purple-300 font-bold">Signatures (-95%)</span>
-            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Compact declaration lists for distant transitively-linked libraries.</p>
+          <div class="p-2.5 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/60 rounded space-y-0.5">
+            <span class="text-emerald-700 dark:text-emerald-300 font-bold text-[11px]">Method Body</span>
+            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-[10px]">Exact target method. Sibling methods pruned.</p>
           </div>
-          <div class="p-3 bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/60 rounded space-y-1">
-            <span class="text-rose-700 dark:text-rose-300 font-bold">Drop (-100%)</span>
-            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Completely filtered distractor files, saving 100% of non-causal tokens.</p>
+          <div class="p-2.5 bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-700/60 rounded space-y-0.5">
+            <span class="text-zinc-800 dark:text-zinc-200 font-bold text-[11px]">AST Skeleton (-88%)</span>
+            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-[10px]">Exported types, classes, interfaces.</p>
+          </div>
+          <div class="p-2.5 bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-900/60 rounded space-y-0.5">
+            <span class="text-purple-700 dark:text-purple-300 font-bold text-[11px]">Signatures (-95%)</span>
+            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-[10px]">Transitive dependencies &amp; contracts.</p>
+          </div>
+          <div class="p-2.5 bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/60 rounded space-y-0.5">
+            <span class="text-rose-700 dark:text-rose-300 font-bold text-[11px]">Drop (-100%)</span>
+            <p class="text-zinc-500 dark:text-zinc-400 font-sans text-[10px]">Non-causal distractors eliminated.</p>
           </div>
         </div>
       </section>
@@ -595,6 +636,38 @@
         </div>
       </section>
 
+      <!-- SiftrBench Empirical Validation Section -->
+      <section id="benchmark-study" class="p-6 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md shadow-2xs space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#D97757] ci-live-dot"></span>
+            <h2 class="text-lg sm:text-xl font-normal text-ink font-serif tracking-tight">SiftrBench: 140-Task Shadow JEV Empirical Study</h2>
+          </div>
+          <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-semibold">Empirical Gate</span>
+        </div>
+        <p class="text-xs text-zinc-600 dark:text-zinc-400 font-sans leading-relaxed">
+          Before any model-based ranking signal can influence production ContextPlans, it must survive rigorous shadow evaluation. SiftrBench evaluated 2,800 shadow calls across 140 stratified software engineering tasks to evaluate alignment against deterministic ground-truth oracles:
+        </p>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Edit Target Alignment</div>
+            <div class="text-xl font-bold text-ink">r = 0.7474</div>
+            <p class="text-[11px] text-zinc-500 font-sans">Strong correlation identifying code locations requiring active developer modification.</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Root Cause Localization</div>
+            <div class="text-xl font-bold text-ink">r = 0.7720</div>
+            <p class="text-[11px] text-zinc-500 font-sans">High fidelity isolating originating defect sites across stack traces and call graphs.</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Operational Invariance</div>
+            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">100% Invariant</div>
+            <p class="text-[11px] text-zinc-500 font-sans">Bit-for-bit plan identity (0% fallback rate, 38.0ms p95 latency, 4 peak concurrency).</p>
+          </div>
+        </div>
+      </section>
+
       <!-- Zero-Egress Technical Guarantees -->
       <section class="p-6 bg-zinc-950 text-zinc-100 border border-zinc-800 rounded-md shadow-xs space-y-4">
         <div class="flex items-center justify-between">
@@ -605,7 +678,7 @@
           <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-900 text-emerald-400 border border-emerald-500/30 font-semibold">Stage 0 Enforced</span>
         </div>
         <p class="text-xs text-zinc-300 font-sans leading-relaxed">
-          SiftrCode V2 is governed by immutable data rights and local-only processing guarantees:
+          SiftrCode V2 is governed by immutable data rights, local-only processing, and structured egress security:
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs pt-1">
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
@@ -633,8 +706,8 @@
             <p class="text-[11px] text-zinc-400 font-sans">Snapshot immutability guards trigger structured replanning if files mutate mid-task.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">7. EnforcedEgressGateway</span>
-            <p class="text-[11px] text-zinc-400 font-sans">Structurally enforces sanitized, redacted payloads before any external provider callback.</p>
+            <span class="text-emerald-400 font-semibold">7. Egress Gateway &amp; Redaction</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Automatic regex redaction for AWS keys, Stripe secrets, and Bearer tokens prior to external dispatch.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
             <span class="text-emerald-400 font-semibold">8. Truthful AST Provenance</span>
@@ -931,6 +1004,17 @@
         iconClose?.classList.add('hidden');
       }
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('#mobileNavMenu a').forEach(link => {
+        link.addEventListener('click', () => {
+          const menu = document.getElementById('mobileNavMenu');
+          if (menu && !menu.classList.contains('hidden')) {
+            toggleMobileMenu();
+          }
+        });
+      });
+    });
 
     // Feedback Modal Handlers
     function openFeedbackModal() {

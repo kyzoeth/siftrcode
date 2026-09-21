@@ -11,7 +11,7 @@
 > **Outcome-Aware Context Optimization for Coding Agents.**  
 > Cut agent context bloat by 60%–88% while preserving 100% full implementation fidelity on causal edit targets. Local-first, zero egress, sub-100ms AST compilation, and truthful token accounting.
 
-[![Version](https://img.shields.io/badge/version-0.2.0-amber.svg)](https://siftrcode.com)
+[![Version](https://img.shields.io/badge/version-0.2.1-amber.svg)](https://siftrcode.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://modelcontextprotocol.io)
 [![Open Source](https://img.shields.io/badge/Open%20Source-100%25-brightgreen.svg)](https://github.com/kyzoeth/siftrcode)

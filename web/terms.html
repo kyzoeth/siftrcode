@@ -125,12 +125,16 @@
             </g>
           </svg>
           <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
-          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-medium">v0.2.0</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-medium">v0.2.1</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="/how-it-works" class="hover:text-ink transition">How It Works</a>
           <a href="/claude" class="hover:text-ink transition">Claude Code</a>
           <a href="/#pipeline" class="hover:text-ink transition">6-Stage Pipeline</a>
+          <a href="/#benchmark" class="text-[#D97757] dark:text-[#F39C82] font-semibold flex items-center gap-1.5 hover:underline transition">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>SiftrBench</span>
+          </a>
           <a href="/#economics" class="hover:text-ink transition">Economics</a>
         </nav>
       </div>
@@ -146,7 +150,7 @@
         </a>
 
         <!-- Light / Dark Theme Switch Button -->
-        <button id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light / Dark Theme" aria-label="Toggle theme" class="w-8 h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
+        <button id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light / Dark Theme" aria-label="Toggle theme" class="w-11 h-11 sm:w-8 sm:h-8 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
           <svg id="themeSunIcon" class="w-4 h-4 text-[#D97757] hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
@@ -155,18 +159,18 @@
           </svg>
         </button>
 
-        <a href="/#quickstart" title="Start Team Trial" aria-label="Start Team Trial" class="w-8 h-8 rounded bg-[#D97757] hover:bg-[#C86241] text-white transition cursor-pointer btn-press flex items-center justify-center shadow-sm">
+        <a href="/#quickstart" title="Start Team Trial" aria-label="Start Team Trial" class="w-11 h-11 sm:w-8 sm:h-8 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 rounded bg-[#D97757] hover:bg-[#C86241] text-white transition cursor-pointer btn-press flex items-center justify-center shadow-sm">
           <svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
         </a>
 
         <!-- Mobile Menu Toggle Button (visible only on mobile) -->
-        <button id="mobileMenuBtn" onclick="toggleMobileMenu()" title="Toggle Navigation Menu" aria-label="Toggle navigation menu" class="md:hidden w-8 h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
-          <svg id="mobileMenuIconOpen" class="w-4 h-4 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button id="mobileMenuBtn" onclick="toggleMobileMenu()" title="Toggle Navigation Menu" aria-label="Toggle navigation menu" class="md:hidden w-11 h-11 min-w-[44px] min-h-[44px] rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer">
+          <svg id="mobileMenuIconOpen" class="w-5 h-5 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
-          <svg id="mobileMenuIconClose" class="w-4 h-4 text-zinc-700 dark:text-zinc-300 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg id="mobileMenuIconClose" class="w-5 h-5 text-zinc-700 dark:text-zinc-300 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
@@ -175,30 +179,41 @@
 
     <!-- Mobile Navigation Drawer / Dropdown -->
     <div id="mobileNavMenu" class="hidden md:hidden border-t border-zinc-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md px-4 py-3 space-y-1 transition-all duration-200">
-      <a href="/how-it-works" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+      <a href="/how-it-works" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>How It Works</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
-      <a href="/claude" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+      <a href="/claude" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>Claude Code Integration</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
-      <a href="/#economics" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+      <a href="/#pipeline" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+        <span>6-Stage Pipeline</span>
+        <span class="text-zinc-400 font-mono text-[10px]">→</span>
+      </a>
+      <a href="/#benchmark" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-[#D97757] dark:text-[#F39C82] font-semibold transition">
+        <span class="flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>SiftrBench Validation</span>
+        </span>
+        <span class="text-[#D97757] font-mono text-[10px]">NEW</span>
+      </a>
+      <a href="/#economics" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>Token Economics</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
-      <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+      <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span class="flex items-center gap-2">
           <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
           <span>GitHub Repository</span>
         </span>
         <span class="text-zinc-400 font-mono text-[10px]">↗</span>
       </a>
-      <a href="mailto:info@siftrcode.com" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+      <a href="mailto:info@siftrcode.com" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>Contact Us</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
-      <a href="/about" class="flex items-center justify-between py-2.5 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+      <a href="/about" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
         <span>About SiftrCode</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
@@ -262,21 +277,44 @@
       </section>
 
       <section class="space-y-3">
-        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">5. Disclaimer of Warranties</h2>
+        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">5. Zero-Egress Technical Guarantees &amp; Codebase Ownership</h2>
+        <p>
+          You retain 100% exclusive ownership of all codebases, files, repositories, syntax trees, and derivative outputs processed by SiftrCode. SiftrCode claims zero intellectual property rights, licenses, or title to your code:
+        </p>
+        <ul class="list-disc pl-5 space-y-1.5 text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
+          <li><strong>Local-First Guarantee:</strong> Candidate recall, ranking, knapsack budgeting, and discrete AST slicing execute entirely in local process memory on your machine.</li>
+          <li><strong>Strict Egress Gateway:</strong> Any external API invocations are strictly governed by our <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">EnforcedEgressGateway</code>, which checks customer DataRights and automatically sanitizes credentials (AWS keys, Stripe keys, Bearer tokens).</li>
+          <li><strong>No Model Training:</strong> Under no circumstances does SiftrCode utilize your code, prompts, or AST representations to train or tune machine learning models (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">trainingAllowed: false</code>).</li>
+        </ul>
+      </section>
+
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">6. Benchmark Integrity &amp; Shadow Judged Evidence Validation (JEV)</h2>
+        <p>
+          For empirical validation (such as SiftrBench studies across 140 benchmark tasks), Judged Evidence Validation (JEV) operates strictly under shadow invariants:
+        </p>
+        <ul class="list-disc pl-5 space-y-1.5 text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
+          <li><strong>100% Plan Invariance:</strong> Shadow JEV calls never alter production context bundles, rank orders, or budget boundaries. ContextRank remains the sole deterministic production decision-maker.</li>
+          <li><strong>Air-Gapped Telemetry:</strong> Benchmark telemetry records only structural metrics (AST unit counts, token latencies, Pearson correlations) and never exposes underlying source code strings.</li>
+        </ul>
+      </section>
+
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">7. Disclaimer of Warranties</h2>
         <p>
           TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, SIFTRCODE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT.
         </p>
       </section>
 
       <section class="space-y-3">
-        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">6. Limitation of Liability</h2>
+        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">8. Limitation of Liability</h2>
         <p>
           In no event shall SiftrCode, its contributors, authors, or corporate sponsors be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, data corruption, codebase disruption, or API token overages arising out of the use or inability to use the software.
         </p>
       </section>
 
       <section class="space-y-3">
-        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">7. Contact &amp; Questions</h2>
+        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">9. Contact &amp; Questions</h2>
         <p>
           If you have any questions regarding these Terms or need enterprise MSA licensing, reach out to:
         </p>
@@ -460,6 +498,21 @@
         iconClose?.classList.add('hidden');
       }
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('#mobileNavMenu a').forEach(link => {
+        link.addEventListener('click', () => {
+          const menu = document.getElementById('mobileNavMenu');
+          const iconOpen = document.getElementById('mobileMenuIconOpen');
+          const iconClose = document.getElementById('mobileMenuIconClose');
+          if (menu && !menu.classList.contains('hidden')) {
+            menu.classList.add('hidden');
+            iconOpen?.classList.remove('hidden');
+            iconClose?.classList.add('hidden');
+          }
+        });
+      });
+    });
 
     // Feedback Modal Handlers
     function openFeedbackModal() {

@@ -194,7 +194,7 @@ function getSharedStore(): SqliteStore | null {
 const SERVER_CARD = {
   serverInfo: {
     name: 'siftrcode',
-    version: '0.2.0',
+    version: '0.2.1',
     description: 'Outcome-aware context optimization engine for AI coding agents. Discovers, ranks, bundles, and safely degrades repository context to maximize task success under strict token and economic budgets.'
   },
   authentication: {
@@ -536,7 +536,7 @@ function createMcpServerInstance() {
   const mcpServer = new Server(
     {
       name: 'siftrcode',
-      version: '0.2.0'
+      version: '0.2.1'
     },
     {
       capabilities: {
@@ -737,16 +737,25 @@ function createMcpServerInstance() {
       }
 
       if (name === 'siftr_skeleton') {
-        const code = String(args?.code || '');
-        const lang = String(args?.language || 'typescript').toLowerCase();
-        let ext = '.ts';
-        if (lang === 'python' || lang === 'py') ext = '.py';
-        else if (lang === 'go' || lang === 'golang') ext = '.go';
-        else if (lang === 'rust' || lang === 'rs') ext = '.rs';
-        else if (lang === 'javascript' || lang === 'js') ext = '.js';
+        const directContent = (args?.content ?? args?.code) as string | undefined;
+        const filePath = (args?.filePath || args?.filename) ? String(args.filePath || args.filename) : 'source.ts';
 
-        const filename = String(args?.filename || `snippet${ext}`);
-        const result = skeletonizeFile(code, filename);
+        let rawContent = '';
+        if (directContent !== undefined) {
+          rawContent = directContent;
+        } else {
+          const workspaceRoot = (args?.directory as string) || process.cwd();
+          const safePath = resolveSafeWorkspacePath(workspaceRoot, filePath);
+          if (!safePath || !fs.existsSync(safePath)) {
+            return {
+              content: [{ type: 'text', text: `Error: File not found or path outside workspace: ${filePath}` }],
+              isError: true
+            };
+          }
+          rawContent = fs.readFileSync(safePath, 'utf-8');
+        }
+
+        const result = skeletonizeFile(rawContent, filePath);
 
         return {
           content: [
@@ -754,12 +763,87 @@ function createMcpServerInstance() {
               type: 'text',
               text: JSON.stringify(
                 {
-                  filename,
-                  language: lang,
+                  filePath,
                   originalTokens: result.originalTokensEstimate,
                   skeletonTokens: result.skeletonTokensEstimate,
                   reduction: `${(result.reductionRatio * 100).toFixed(1)}%`,
                   skeletonContent: result.skeletonContent
+                },
+                null,
+                2
+              )
+            }
+          ]
+        };
+      }
+
+      if (name === 'siftr_batch_skeleton') {
+        const filePaths = (args?.filePaths as string[]) || [];
+        const results: Array<{
+          filePath: string;
+          originalTokens: number;
+          skeletonTokens: number;
+          reduction: string;
+          skeletonContent: string;
+          error?: string;
+        }> = [];
+
+        let totalOriginal = 0;
+        let totalSkeleton = 0;
+
+        const workspaceRoot = (args?.directory as string) || process.cwd();
+        for (const fp of filePaths) {
+          try {
+            const safePath = resolveSafeWorkspacePath(workspaceRoot, fp);
+            if (!safePath || !fs.existsSync(safePath)) {
+              results.push({
+                filePath: fp,
+                originalTokens: 0,
+                skeletonTokens: 0,
+                reduction: '0%',
+                skeletonContent: '',
+                error: `File not found or path outside workspace: ${fp}`
+              });
+              continue;
+            }
+            const rawContent = fs.readFileSync(safePath, 'utf-8');
+            const skel = skeletonizeFile(rawContent, fp);
+            totalOriginal += skel.originalTokensEstimate;
+            totalSkeleton += skel.skeletonTokensEstimate;
+
+            results.push({
+              filePath: fp,
+              originalTokens: skel.originalTokensEstimate,
+              skeletonTokens: skel.skeletonTokensEstimate,
+              reduction: `${(skel.reductionRatio * 100).toFixed(1)}%`,
+              skeletonContent: skel.skeletonContent
+            });
+          } catch (err: any) {
+            results.push({
+              filePath: fp,
+              originalTokens: 0,
+              skeletonTokens: 0,
+              reduction: '0%',
+              skeletonContent: '',
+              error: err.message
+            });
+          }
+        }
+
+        const overallReduction =
+          totalOriginal > 0 ? `${(((totalOriginal - totalSkeleton) / totalOriginal) * 100).toFixed(1)}%` : '0%';
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  filesProcessed: results.length,
+                  totalOriginalTokens: totalOriginal,
+                  totalSkeletonTokens: totalSkeleton,
+                  overallReduction,
+                  results
                 },
                 null,
                 2
