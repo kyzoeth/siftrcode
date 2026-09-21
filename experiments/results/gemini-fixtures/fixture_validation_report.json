@@ -1,0 +1,33 @@
+{
+  "timestamp": "2026-09-21T21:56:22.184Z",
+  "model": "gemini-3.6-flash",
+  "fixtures": [
+    {
+      "name": "Fixture 1: Arithmetic Bug Fix in math.js",
+      "turns": 5,
+      "toolCallsCount": 5,
+      "totalPromptTokens": 4493,
+      "totalCandidateTokens": 136,
+      "totalThoughtsTokens": 195,
+      "totalTokens": 4824,
+      "providerCostUSD": 0.000582,
+      "wallClockLatencyMs": 7252,
+      "verifiedSuccess": true,
+      "error": null
+    },
+    {
+      "name": "Fixture 2: Export Missing Function in status.js",
+      "turns": 5,
+      "toolCallsCount": 5,
+      "totalPromptTokens": 4325,
+      "totalCandidateTokens": 134,
+      "totalThoughtsTokens": 904,
+      "totalTokens": 5363,
+      "providerCostUSD": 0.000848,
+      "wallClockLatencyMs": 9593,
+      "verifiedSuccess": true,
+      "error": null
+    }
+  ],
+  "allPassed": true
+}

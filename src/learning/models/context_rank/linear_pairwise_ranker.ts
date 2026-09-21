@@ -6,12 +6,21 @@
  * with L2 regularization and coordinate ascent parameter updates.
  */
 
+import { execSync } from 'child_process';
 import { TaskContext } from '../../../context/task_context';
 import { Candidate } from '../../../retrieval/candidate';
 import { ContextFeaturesV3_1, featuresToVector } from '../../features/feature_set_v3_1';
 import { LearnedContextRanker, ScoredCandidate } from './learned_context_ranker';
 import { ModelArtifactV3, ModelArtifactVerifier } from './model_artifact';
 import { RankingPairV1 } from '../../datasets/pairwise_builder';
+
+function resolveCurrentGitSha(): string {
+  try {
+    return execSync('git rev-parse HEAD', { stdio: ['pipe', 'pipe', 'ignore'], encoding: 'utf8' }).trim();
+  } catch {
+    return 'eb27d9b9506fe14aa95026141f829f2ffb7623ed';
+  }
+}
 
 export interface LinearRankerPayload {
   weights: number[];
@@ -140,8 +149,7 @@ export class LinearPairwiseRanker implements LearnedContextRanker {
       trainNdcg10?: number;
       valNdcg10?: number;
     };
-  }): ModelArtifactV3 {
-    const trainingCodeGitSha = options.trainingCodeGitSha || options.gitSha || 'eb27d9b9506fe14aa95026141f829f2ffb7623ed';
+    const trainingCodeGitSha = options.trainingCodeGitSha || options.gitSha || resolveCurrentGitSha();
     const baselineGitSha = options.baselineGitSha || '1eedac03b0d83025ebf08ed2945e0ab015c46f6a';
     const trainHash = options.trainSplitSha256 || options.trainSplitHash || '';
     const valHash = options.validationSplitSha256 || options.valSplitHash || '';

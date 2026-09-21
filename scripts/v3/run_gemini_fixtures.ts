@@ -87,8 +87,53 @@ async function runFixtures() {
     if (res2.error) console.log(`  Agent error: ${res2.error}`);
     console.log('');
 
+    const reportDir = path.resolve(__dirname, '../../experiments/results/gemini-fixtures');
+    fs.mkdirSync(reportDir, { recursive: true });
+
+    const report = {
+      timestamp: new Date().toISOString(),
+      model: process.env.GEMINI_MODEL || 'gemini-3.6-flash',
+      fixtures: [
+        {
+          name: 'Fixture 1: Arithmetic Bug Fix in math.js',
+          turns: res1.turns,
+          toolCallsCount: res1.toolCallsCount,
+          totalPromptTokens: res1.totalPromptTokens,
+          totalCandidateTokens: res1.totalCandidateTokens,
+          totalThoughtsTokens: res1.totalThoughtsTokens,
+          totalTokens: res1.totalTokens,
+          providerCostUSD: res1.providerCostUSD,
+          wallClockLatencyMs: res1.wallClockLatencyMs,
+          verifiedSuccess: res1.verifiedSuccess,
+          error: res1.error || null,
+        },
+        {
+          name: 'Fixture 2: Export Missing Function in status.js',
+          turns: res2.turns,
+          toolCallsCount: res2.toolCallsCount,
+          totalPromptTokens: res2.totalPromptTokens,
+          totalCandidateTokens: res2.totalCandidateTokens,
+          totalThoughtsTokens: res2.totalThoughtsTokens,
+          totalTokens: res2.totalTokens,
+          providerCostUSD: res2.providerCostUSD,
+          wallClockLatencyMs: res2.wallClockLatencyMs,
+          verifiedSuccess: res2.verifiedSuccess,
+          error: res2.error || null,
+        },
+      ],
+      allPassed: res1.verifiedSuccess === true && res2.verifiedSuccess === true,
+    };
+
+    const reportPath = path.join(reportDir, 'fixture_validation_report.json');
+    fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), 'utf8');
+    console.log(`✔ Fixture report archived to: ${reportPath}\n`);
+
+    if (!report.allPassed) {
+      throw new Error('One or more Gemini fixtures failed verification.');
+    }
+
     console.log('================================================================');
-    console.log('🎉 GEMINI FIXTURE VALIDATION RUN COMPLETE');
+    console.log('🎉 GEMINI FIXTURE VALIDATION RUN COMPLETE - ALL FIXTURES PASSED');
     console.log('================================================================\n');
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });

@@ -56,7 +56,15 @@ export class GeminiWorkspaceSandbox {
       const real = fs.realpathSync(resolved);
       const realRel = path.relative(this.workspaceRoot, real);
       if (realRel.startsWith('..') || path.isAbsolute(realRel)) {
-        throw new Error(`Symlink traversal denied: '${userPath}' points outside workspace boundary.`);
+        // Allow legitimate build/dependency symlinks placed in the root (e.g. node_modules, venv)
+        const isSanctionedSymlink =
+          resolved.includes('/node_modules') ||
+          resolved.includes('/venv') ||
+          resolved.endsWith('/node_modules') ||
+          resolved.endsWith('/venv');
+        if (!isSanctionedSymlink) {
+          throw new Error(`Symlink traversal denied: '${userPath}' points outside workspace boundary.`);
+        }
       }
     }
 
@@ -117,6 +125,33 @@ export class GeminiWorkspaceSandbox {
 
   public writeFile(filePath: string, content: string): { success: boolean; bytesWritten: number } {
     const fullPath = this.resolveSafePath(filePath);
+
+    // Prevent overwriting files inside shared dependency directories
+    if (
+      fullPath.includes('/node_modules/') ||
+      fullPath.endsWith('/node_modules') ||
+      fullPath.includes('/venv/') ||
+      fullPath.endsWith('/venv')
+    ) {
+      throw new Error(`Cannot write to shared dependency directory: '${filePath}'`);
+    }
+
+    // Prevent writing through a symlink pointing outside (check target and all existing ancestors)
+    let checkDir: string = fullPath;
+    while (checkDir && checkDir !== this.workspaceRoot && checkDir !== path.dirname(checkDir)) {
+      if (fs.existsSync(checkDir)) {
+        const lstat = fs.lstatSync(checkDir);
+        if (lstat.isSymbolicLink()) {
+          const real = fs.realpathSync(checkDir);
+          const realRel = path.relative(this.workspaceRoot, real);
+          if (realRel.startsWith('..') || path.isAbsolute(realRel)) {
+            throw new Error(`Cannot write through symlink pointing outside workspace: '${filePath}'`);
+          }
+        }
+      }
+      checkDir = path.dirname(checkDir);
+    }
+
     const parentDir = path.dirname(fullPath);
     if (!fs.existsSync(parentDir)) {
       fs.mkdirSync(parentDir, { recursive: true });
@@ -191,27 +226,37 @@ export class GeminiWorkspaceSandbox {
     }
   }
 
+  public static readonly ENV_ALLOWLIST = new Set([
+    'PATH',
+    'HOME',
+    'TMPDIR',
+    'USER',
+    'LOGNAME',
+    'SHELL',
+    'LANG',
+    'LC_ALL',
+    'LC_CTYPE',
+    'TERM',
+    'NODE_PATH',
+    'PYTHONPATH',
+    'VIRTUAL_ENV',
+    'CI',
+    'NODE_ENV',
+  ]);
+
   public runCommand(command: string): { stdout: string; stderr: string; exitCode: number } {
-    // Scrub sensitive environment variables
-    const hermeticEnv = { ...process.env };
-    const sensitiveKeys = [
-      'GEMINI_API_KEY',
-      'GOOGLE_API_KEY',
-      'ANTHROPIC_API_KEY',
-      'OPENAI_API_KEY',
-      'TYPESAFE_API_KEY',
-      'AWS_SECRET_ACCESS_KEY',
-      'AWS_SESSION_TOKEN',
-      'GITHUB_TOKEN',
-    ];
-    for (const key of sensitiveKeys) {
-      delete hermeticEnv[key];
+    // Environment allowlist: ONLY copy explicitly permitted system variables
+    const allowlistedEnv: Record<string, string> = {};
+    for (const key of Object.keys(process.env)) {
+      if (GeminiWorkspaceSandbox.ENV_ALLOWLIST.has(key) && process.env[key] !== undefined) {
+        allowlistedEnv[key] = process.env[key]!;
+      }
     }
 
     try {
       const result = spawnSync('sh', ['-c', command], {
         cwd: this.workspaceRoot,
-        env: hermeticEnv,
+        env: allowlistedEnv,
         timeout: this.timeoutMs,
         encoding: 'utf8',
         maxBuffer: 5 * 1024 * 1024,
