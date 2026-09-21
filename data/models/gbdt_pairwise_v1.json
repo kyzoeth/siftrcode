@@ -8,6 +8,7 @@
   "datasetVersion": "SIFTR_CONTEXT_DATASET_V1",
   "datasetSha256": "ad5a6adae341db775034808808c16372aaf27f71fed82fb9748d98d392a55cb8",
   "featureSetVersion": "CONTEXT_RANK_FEATURES_V3_1",
+  "featureSchemaSha256": "f04f5b0dadbae6964031ef96f7b2b719d6adfacb45b7e3702659a09bd389c69c",
   "trainSplitHash": "1ca4ccd5c234568a303c768c2ed1d2455f98c350811f0bb9bdc673bf823fbc0c",
   "validationSplitHash": "515d7ee58bc58bda0de38db21ee492fe0056e486d10c37d81f3786daa2c6361c",
   "trainSplitSha256": "1ca4ccd5c234568a303c768c2ed1d2455f98c350811f0bb9bdc673bf823fbc0c",

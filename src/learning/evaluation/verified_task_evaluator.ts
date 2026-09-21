@@ -66,6 +66,10 @@ export interface VerifiedTaskEvaluationReport {
   schemaVersion: 'siftrcode-verified-task-eval-v1';
   evaluatedAt: string;
   totalPairedTasks: number;
+  attemptedPairs: number;
+  validPairs: number;
+  invalidPairs: number;
+  invalidByReason: Record<string, number>;
   blockReason?: string;
   missingDependencies?: string[];
   v2Summary: VerifiedEvaluationSummary;
@@ -213,8 +217,29 @@ export class VerifiedTaskEvaluator {
   ): VerifiedTaskEvaluationReport {
     const minTasks = options.minTasksForPromotion ?? 30;
     const minSuccessDelta = options.minSuccessDelta ?? 0.0;
-    const v2Runs = pairedTasks.map((p) => p.v2);
-    const v3Runs = pairedTasks.map((p) => p.v3);
+
+    const attemptedPairs = pairedTasks.length;
+    const validPairs = pairedTasks.filter(
+      (p) => p.v2.runValidity === 'VALID' && p.v3.runValidity === 'VALID'
+    );
+    const invalidPairs = pairedTasks.filter(
+      (p) => p.v2.runValidity !== 'VALID' || p.v3.runValidity !== 'VALID'
+    );
+
+    const invalidByReason: Record<string, number> = {};
+    for (const p of invalidPairs) {
+      if (p.v2.runValidity !== 'VALID') {
+        const key = `V2:${p.v2.runValidity}`;
+        invalidByReason[key] = (invalidByReason[key] || 0) + 1;
+      }
+      if (p.v3.runValidity !== 'VALID') {
+        const key = `V3:${p.v3.runValidity}`;
+        invalidByReason[key] = (invalidByReason[key] || 0) + 1;
+      }
+    }
+
+    const v2Runs = validPairs.map((p) => p.v2);
+    const v3Runs = validPairs.map((p) => p.v3);
 
     const v2Summary = VerifiedTaskEvaluator.computeSummary('V2_FROZEN', v2Runs);
     const v3Summary = VerifiedTaskEvaluator.computeSummary('V3_LEARNED', v3Runs);
@@ -223,7 +248,7 @@ export class VerifiedTaskEvaluator {
     let v2Wins = 0;
     let ties = 0;
 
-    for (const p of pairedTasks) {
+    for (const p of validPairs) {
       if (p.v3.verifiedSuccess === true && p.v2.verifiedSuccess !== true) {
         v3Wins++;
       } else if (p.v2.verifiedSuccess === true && p.v3.verifiedSuccess !== true) {
@@ -252,16 +277,16 @@ export class VerifiedTaskEvaluator {
     if (options.blockedReason) {
       gateDecision = 'V3.1_INSUFFICIENT_EVIDENCE';
       decisionRationale = options.blockedReason;
-    } else if (pairedTasks.length < minTasks) {
+    } else if (validPairs.length < minTasks) {
       gateDecision = 'V3.1_INSUFFICIENT_EVIDENCE';
-      decisionRationale = `Evaluated ${pairedTasks.length} tasks, which is below the threshold of ${minTasks} independent verified episodes required for production promotion.`;
+      decisionRationale = `Evaluated ${validPairs.length} VALID task pairs (${invalidPairs.length} invalid runs excluded), which is below the threshold of ${minTasks} independent valid verified episodes required for production promotion.`;
     } else if (v3Summary.successRate < v2Summary.successRate) {
       gateDecision = 'V3.1_FAILED_TO_BEAT_BASELINE';
       decisionRationale = `Learned ContextRank V3 verified success rate (${(v3Summary.successRate * 100).toFixed(1)}%) is lower than frozen V2 baseline (${(v2Summary.successRate * 100).toFixed(1)}%). Baseline remains standard.`;
     } else if (successRateDelta > minSuccessDelta) {
       if (mcNemar.isSignificantAt05 || v3Wins >= 3) {
         gateDecision = 'V3.1_PROMOTION_GATE_PASSED';
-        decisionRationale = `Learned ContextRank V3 demonstrated lift in verified task success (${(v3Summary.successRate * 100).toFixed(1)}% vs ${(v2Summary.successRate * 100).toFixed(1)}%, delta +${(successRateDelta * 100).toFixed(1)}%) with CPVST of $${v3Summary.cpvstUSD}. McNemar test: ${mcNemar.summary}.`;
+        decisionRationale = `Learned ContextRank V3 demonstrated lift in verified task success (${(v3Summary.successRate * 100).toFixed(1)}% vs ${(v2Summary.successRate * 100).toFixed(1)}%, delta +${(successRateDelta * 100).toFixed(1)}%) with CPVST of ${v3Summary.cpvstUSD !== null ? '$' + v3Summary.cpvstUSD : 'N/A'}. McNemar test: ${mcNemar.summary}.`;
       } else {
         gateDecision = 'V3.1_INSUFFICIENT_EVIDENCE';
         decisionRationale = `Learned ContextRank V3 showed directional lift (+${(successRateDelta * 100).toFixed(1)}%) but insufficient statistical confidence (${mcNemar.summary}). Additional evaluation episodes required.`;
@@ -277,7 +302,11 @@ export class VerifiedTaskEvaluator {
     return {
       schemaVersion: 'siftrcode-verified-task-eval-v1',
       evaluatedAt: new Date().toISOString(),
-      totalPairedTasks: pairedTasks.length,
+      totalPairedTasks: attemptedPairs,
+      attemptedPairs,
+      validPairs: validPairs.length,
+      invalidPairs: invalidPairs.length,
+      invalidByReason,
       blockReason: options.blockedReason,
       missingDependencies: options.missingDependencies,
       v2Summary,

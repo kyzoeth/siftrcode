@@ -39,6 +39,18 @@ export const OFFICIAL_PROVIDER_PRICING: Record<string, ProviderPricing> = {
     sourceReference: 'https://ai.google.dev/pricing (Gemini 2.5/3.x Flash Tier, prompts <= 128k)',
     pricingVersion: 'google-genai-2026-03',
   },
+  'gemini-3.6-flash:free': {
+    provider: 'google',
+    model: 'gemini-3.6-flash',
+    billingTier: 'free',
+    effectiveFrom: '2026-03-01',
+    inputUSDPerMTok: 0.0,
+    outputUSDPerMTok: 0.0,
+    cachedInputUSDPerMTok: 0.0,
+    thinkingTokenTreatment: 'zero_cost_free_tier',
+    sourceReference: 'https://ai.google.dev/pricing (Gemini Free Tier, rate-limited)',
+    pricingVersion: 'google-genai-2026-03',
+  },
   'gemini-3.7-flash:standard': {
     provider: 'google',
     model: 'gemini-3.7-flash',
@@ -129,7 +141,7 @@ export function calculateModelCostUSD(
   inputTokens: number,
   outputTokens: number,
   thoughtsTokens: number = 0,
-  billingTier: BillingTier = 'standard'
+  billingTier: BillingTier = (process.env.GEMINI_BILLING_TIER as BillingTier) || 'unknown'
 ): CostCalculationResult {
   const key = `${model}:${billingTier}`;
   const pricing = OFFICIAL_PROVIDER_PRICING[key];
