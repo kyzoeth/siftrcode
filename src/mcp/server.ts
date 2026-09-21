@@ -13,7 +13,7 @@ export async function runMcpServer() {
   const server = new Server(
     {
       name: 'siftrcode',
-      version: '0.1.1'
+      version: '0.2.0'
     },
     {
       capabilities: {

@@ -11,7 +11,7 @@
 > **Cut agent token waste by 90%.**  
 > 100% open-source (MIT), local-first AST compiler that strips function bodies before inference while preserving 100% of types and signatures.
 
-[![Version](https://img.shields.io/badge/version-0.1.1-amber.svg)](https://siftrcode.com)
+[![Version](https://img.shields.io/badge/version-0.2.0-amber.svg)](https://siftrcode.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://modelcontextprotocol.io)
 [![Open Source](https://img.shields.io/badge/Open%20Source-100%25-brightgreen.svg)](https://github.com/kyzoeth/siftrcode)
