@@ -20,6 +20,10 @@ import { CandidateDecisionObservation } from '../telemetry/decision_observation'
 import { ExposureDecisionV2, isExposedV2 } from '../telemetry/exposure_decision';
 import { TrajectoryEvent } from '../telemetry/trajectory_event';
 import { OutcomeEvidence } from '../telemetry/outcome_evidence';
+import { SiftrSession, SiftrSessionStatus, createSiftrSession } from '../telemetry/siftr_session';
+import { ContextExpansionEvent } from '../telemetry/expansion_event';
+import { FinalContextAllocation } from '../token/final_allocation';
+import { ProviderUsageEvent } from '../token/provider_usage';
 import { SourceProvenance } from '../rights/source_provenance';
 import { TrainingRow, TrainingEvidenceRecord } from '../learning/lineage';
 import { DeletionAuditRecord } from '../rights/deletion_manager';
@@ -28,6 +32,10 @@ import { sanitizeContextPlanForPersistence, ContextPlanMetadataRecord } from './
 
 export { sanitizeContextPlanForPersistence, ContextPlanMetadataRecord } from './rights_aware_dto';
 export { TrainingEvidenceRecord } from '../learning/lineage';
+export { SiftrSession, SiftrSessionStatus } from '../telemetry/siftr_session';
+export { ContextExpansionEvent } from '../telemetry/expansion_event';
+export { FinalContextAllocation } from '../token/final_allocation';
+export { ProviderUsageEvent } from '../token/provider_usage';
 
 export interface StoredGraphEdge {
   fromUnitId: string;
@@ -44,7 +52,12 @@ export interface StoredSession {
   sessionId: string;
   taskId: string;
   snapshotId: string;
+  agentEnvironmentId?: string;
+  initialSnapshotId?: string;
+  latestSnapshotId?: string;
   state?: string;
+  status?: SiftrSessionStatus;
+  endedAt?: string;
   metadata?: Record<string, unknown>;
   createdAt?: string;
   updatedAt?: string;
@@ -384,6 +397,71 @@ const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_evrec_repo ON training_evidence_records(repository);
     `,
   },
+  {
+    version: 8,
+    name: '008_final_closure_integrity',
+    sql: `
+      ALTER TABLE task_outcome_records ADD COLUMN context_plan_id TEXT;
+      ALTER TABLE outcome_evidence ADD COLUMN context_plan_id TEXT;
+      ALTER TABLE outcome_evidence ADD COLUMN verified_success INTEGER;
+      ALTER TABLE sessions ADD COLUMN agent_environment_id TEXT;
+      ALTER TABLE sessions ADD COLUMN initial_snapshot_id TEXT;
+      ALTER TABLE sessions ADD COLUMN latest_snapshot_id TEXT;
+      ALTER TABLE sessions ADD COLUMN ended_at TEXT;
+      ALTER TABLE context_plans ADD COLUMN session_id TEXT;
+
+      CREATE INDEX IF NOT EXISTS idx_cplans_session ON context_plans(session_id);
+      CREATE INDEX IF NOT EXISTS idx_task_outcome_plan ON task_outcome_records(context_plan_id);
+
+      CREATE TABLE IF NOT EXISTS expansion_events (
+        event_id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        context_plan_id TEXT NOT NULL,
+        workspace_snapshot_id TEXT NOT NULL,
+        agent_environment_id TEXT NOT NULL,
+        context_unit_id TEXT NOT NULL,
+        previous_resolution TEXT,
+        requested_resolution TEXT NOT NULL,
+        actual_resolution TEXT NOT NULL,
+        token_estimate INTEGER NOT NULL,
+        fallback_reason TEXT,
+        reason TEXT NOT NULL,
+        raw_json TEXT NOT NULL,
+        timestamp TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_exp_event_session ON expansion_events(session_id);
+      CREATE INDEX IF NOT EXISTS idx_exp_event_plan ON expansion_events(context_plan_id);
+      CREATE INDEX IF NOT EXISTS idx_exp_event_unit ON expansion_events(context_unit_id);
+
+      CREATE TABLE IF NOT EXISTS final_context_allocations (
+        plan_id TEXT PRIMARY KEY,
+        workspace_snapshot_id TEXT NOT NULL,
+        total_estimated_tokens INTEGER NOT NULL,
+        budget_tokens INTEGER NOT NULL,
+        overflow INTEGER NOT NULL,
+        tokenizer_method TEXT NOT NULL,
+        items_json TEXT NOT NULL,
+        raw_json TEXT NOT NULL,
+        recorded_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS provider_usage_events (
+        event_id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        model TEXT,
+        input_tokens INTEGER,
+        output_tokens INTEGER,
+        cached_input_tokens INTEGER,
+        cost_usd REAL,
+        timestamp TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_provider_usage_session ON provider_usage_events(session_id);
+    `,
+  },
 ];
 
 export class SqliteStore {
@@ -553,6 +631,10 @@ export class SqliteStore {
     return rows.map((r) => JSON.parse(r.raw_json));
   }
 
+  public getContextUnitsBySnapshot(snapshotId: string): ContextUnit[] {
+    return this.listContextUnits(snapshotId);
+  }
+
   // ==========================================
   // Graph Edge Operations
   // ==========================================
@@ -660,28 +742,48 @@ export class SqliteStore {
   }
 
   // ==========================================
-  // Session Operations
+  // Session Operations (Final Closure Directive Section 14-17)
   // ==========================================
 
-  public saveSession(session: StoredSession): void {
+  public saveSession(session: StoredSession | SiftrSession): void {
     const now = new Date().toISOString();
     const createdAt = session.createdAt || now;
     const updatedAt = session.updatedAt || now;
+    const snapshotId = ('snapshotId' in session && session.snapshotId)
+      ? session.snapshotId
+      : (session as SiftrSession).initialWorkspaceSnapshotId || 'snapshot_init';
 
     const stmt = this.db.prepare(`
-      INSERT OR REPLACE INTO sessions (session_id, task_id, snapshot_id, state, raw_json, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT OR REPLACE INTO sessions (
+        session_id, task_id, snapshot_id, state, agent_environment_id,
+        initial_snapshot_id, latest_snapshot_id, ended_at, raw_json, created_at, updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
+
+    const statusOrState = 'state' in session ? (session.state || null) : ((session as SiftrSession).status || null);
+    const agentEnvId = 'agentEnvironmentId' in session ? ((session as any).agentEnvironmentId || null) : null;
+    const initSnapshotId = 'initialWorkspaceSnapshotId' in session ? ((session as any).initialWorkspaceSnapshotId || snapshotId) : snapshotId;
+    const latestSnapshotId = 'latestWorkspaceSnapshotId' in session ? ((session as any).latestWorkspaceSnapshotId || snapshotId) : snapshotId;
+    const endedAt = 'endedAt' in session ? ((session as any).endedAt || null) : null;
 
     stmt.run(
       session.sessionId,
       session.taskId,
-      session.snapshotId,
-      session.state || null,
+      snapshotId,
+      statusOrState,
+      agentEnvId,
+      initSnapshotId,
+      latestSnapshotId,
+      endedAt,
       JSON.stringify(session),
       createdAt,
       updatedAt
     );
+  }
+
+  public saveSiftrSession(session: SiftrSession): void {
+    this.saveSession(session);
   }
 
   public getSession(sessionId: string): StoredSession | undefined {
@@ -693,6 +795,47 @@ export class SqliteStore {
     return JSON.parse(row.raw_json);
   }
 
+  public getSiftrSession(sessionId: string): SiftrSession | undefined {
+    const row = this.db.prepare('SELECT raw_json FROM sessions WHERE session_id = ?').get(sessionId) as {
+      raw_json: string;
+    } | undefined;
+
+    if (!row) return undefined;
+    const parsed = JSON.parse(row.raw_json);
+    return {
+      sessionId: parsed.sessionId,
+      taskId: parsed.taskId,
+      agentEnvironmentId: parsed.agentEnvironmentId || 'unknown',
+      initialWorkspaceSnapshotId: parsed.initialWorkspaceSnapshotId || parsed.snapshotId,
+      latestWorkspaceSnapshotId: parsed.latestWorkspaceSnapshotId || parsed.initialWorkspaceSnapshotId || parsed.snapshotId,
+      status: (parsed.status || parsed.state || 'ACTIVE') as SiftrSessionStatus,
+      createdAt: parsed.createdAt,
+      updatedAt: parsed.updatedAt,
+      endedAt: parsed.endedAt,
+      metadata: parsed.metadata,
+    };
+  }
+
+  public updateSessionStatus(sessionId: string, status: SiftrSessionStatus, endedAt?: string): void {
+    const session = this.getSiftrSession(sessionId);
+    if (!session) return;
+    const now = new Date().toISOString();
+    session.status = status;
+    session.updatedAt = now;
+    if (endedAt || status === 'COMPLETED' || status === 'ABORTED') {
+      session.endedAt = endedAt || now;
+    }
+    this.saveSiftrSession(session);
+  }
+
+  public updateSessionSnapshot(sessionId: string, snapshotId: string): void {
+    const session = this.getSiftrSession(sessionId);
+    if (!session) return;
+    session.latestWorkspaceSnapshotId = snapshotId;
+    session.updatedAt = new Date().toISOString();
+    this.saveSiftrSession(session);
+  }
+
   // ==========================================
   // ContextPlan Operations
   // ==========================================
@@ -702,8 +845,8 @@ export class SqliteStore {
     const sanitizedRecord = sanitizeContextPlanForPersistence(plan, rights, snapshotId);
 
     const stmt = this.db.prepare(`
-      INSERT OR REPLACE INTO context_plans (plan_id, task_id, snapshot_id, raw_json, created_at)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT OR REPLACE INTO context_plans (plan_id, task_id, snapshot_id, raw_json, created_at, session_id)
+      VALUES (?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -711,7 +854,8 @@ export class SqliteStore {
       plan.taskId,
       snapshotId,
       JSON.stringify(sanitizedRecord),
-      plan.createdAt
+      plan.createdAt,
+      plan.sessionId || null
     );
   }
 
@@ -724,12 +868,24 @@ export class SqliteStore {
     return JSON.parse(row.raw_json);
   }
 
-  public listContextPlans(taskId?: string): ContextPlan[] {
-    const query = taskId
-      ? 'SELECT raw_json FROM context_plans WHERE task_id = ? ORDER BY created_at ASC'
-      : 'SELECT raw_json FROM context_plans ORDER BY created_at ASC';
+  public listContextPlans(taskId?: string, sessionId?: string): ContextPlan[] {
+    let query: string;
+    let params: string[];
+    if (taskId && sessionId) {
+      query = 'SELECT raw_json FROM context_plans WHERE task_id = ? AND session_id = ? ORDER BY created_at ASC';
+      params = [taskId, sessionId];
+    } else if (sessionId) {
+      query = 'SELECT raw_json FROM context_plans WHERE session_id = ? ORDER BY created_at ASC';
+      params = [sessionId];
+    } else if (taskId) {
+      query = 'SELECT raw_json FROM context_plans WHERE task_id = ? ORDER BY created_at ASC';
+      params = [taskId];
+    } else {
+      query = 'SELECT raw_json FROM context_plans ORDER BY created_at ASC';
+      params = [];
+    }
 
-    const rows = (taskId ? this.db.prepare(query).all(taskId) : this.db.prepare(query).all()) as Array<{
+    const rows = this.db.prepare(query).all(...params) as Array<{
       raw_json: string;
     }>;
 
@@ -1010,8 +1166,10 @@ export class SqliteStore {
     sessionId?: string;
     snapshotId?: string;
     contextUnitId?: string;
+    contextPlanId?: string;
     labelType: string;
-    value: number;
+    value?: number | null;
+    verifiedSuccess?: boolean | null;
     confidence: number;
     strength: string;
     source: string;
@@ -1022,47 +1180,74 @@ export class SqliteStore {
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO outcome_evidence (
         evidence_id, task_id, session_id, snapshot_id, label_type,
-        value, confidence, strength, source, context_unit_id, details_json, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        value, confidence, strength, source, context_unit_id, details_json,
+        context_plan_id, verified_success, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const now = new Date().toISOString();
     for (const ev of evidenceList) {
       const id = ev.evidenceId || `ev_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
+      // Closure PR F1 / Section 5: UNKNOWN must remain UNKNOWN (null !== 0). Never convert null to 0!
+      const persistedVerifiedSuccess =
+        ev.verifiedSuccess === null || ev.verifiedSuccess === undefined
+          ? null
+          : (ev.verifiedSuccess ? 1 : 0);
+
+      const scalarValue = (ev.value !== undefined && ev.value !== null)
+        ? ev.value
+        : (persistedVerifiedSuccess !== null ? persistedVerifiedSuccess : 0.5);
+
       stmt.run(
         id,
         ev.taskId,
         ev.sessionId ?? null,
         ev.snapshotId ?? null,
         ev.labelType,
-        ev.value,
+        scalarValue,
         ev.confidence,
         ev.strength,
         ev.source,
         ev.contextUnitId ?? null,
         ev.details ? JSON.stringify(ev.details) : null,
+        ev.contextPlanId ?? null,
+        persistedVerifiedSuccess,
         now
       );
     }
   }
 
-  public listOutcomeEvidence(taskId: string): Array<{
+  public listOutcomeEvidence(taskId?: string, sessionId?: string): Array<{
     evidenceId: string;
     taskId: string;
     sessionId?: string;
     snapshotId?: string;
     contextUnitId?: string;
+    contextPlanId?: string;
     labelType: string;
     value: number;
+    verifiedSuccess?: boolean | null;
     confidence: number;
     strength: string;
     source: string;
     details?: Record<string, unknown>;
     createdAt: string;
   }> {
-    const rows = this.db.prepare(`
-      SELECT * FROM outcome_evidence WHERE task_id = ? ORDER BY created_at ASC
-    `).all(taskId) as Array<{
+    let query = 'SELECT * FROM outcome_evidence';
+    const params: string[] = [];
+    if (taskId && sessionId) {
+      query += ' WHERE task_id = ? AND session_id = ?';
+      params.push(taskId, sessionId);
+    } else if (taskId) {
+      query += ' WHERE task_id = ?';
+      params.push(taskId);
+    } else if (sessionId) {
+      query += ' WHERE session_id = ?';
+      params.push(sessionId);
+    }
+    query += ' ORDER BY created_at ASC';
+
+    const rows = this.db.prepare(query).all(...params) as Array<{
       evidence_id: string;
       task_id: string;
       session_id: string | null;
@@ -1074,6 +1259,8 @@ export class SqliteStore {
       source: string;
       context_unit_id: string | null;
       details_json: string | null;
+      context_plan_id: string | null;
+      verified_success: number | null;
       created_at: string;
     }>;
 
@@ -1083,8 +1270,10 @@ export class SqliteStore {
       sessionId: r.session_id ?? undefined,
       snapshotId: r.snapshot_id ?? undefined,
       contextUnitId: r.context_unit_id ?? undefined,
+      contextPlanId: r.context_plan_id ?? undefined,
       labelType: r.label_type,
       value: r.value,
+      verifiedSuccess: r.verified_success === null ? null : (r.verified_success === 1),
       confidence: r.confidence,
       strength: r.strength,
       source: r.source,
@@ -1177,8 +1366,8 @@ export class SqliteStore {
         behavioral_oracle_passed, user_accepted, agent_reported_success,
         human_review, verified_success, confidence,
         policy_id, policy_version, evaluation_rationale,
-        raw_json, recorded_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        context_plan_id, raw_json, recorded_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -1203,6 +1392,7 @@ export class SqliteStore {
       outcome.policyId ?? null,
       outcome.policyVersion ?? null,
       outcome.evaluationRationale ?? null,
+      outcome.contextPlanId ?? null,
       JSON.stringify(outcome),
       outcome.recordedAt
     );
@@ -1227,6 +1417,182 @@ export class SqliteStore {
       .all(limit) as Array<{ raw_json: string }>;
 
     return rows.map((r) => JSON.parse(r.raw_json) as OutcomeEvidence);
+  }
+
+  /**
+   * Validates referential integrity before storing an outcome (Final Closure Directive Section 36-37).
+   */
+  public validateOutcomeIntegrity(params: {
+    sessionId: string;
+    taskId: string;
+    planId?: string;
+    snapshotId?: string;
+    agentEnvironmentId?: string;
+  }): { valid: boolean; reason?: string } {
+    const session = this.getSession(params.sessionId);
+    if (!session) {
+      return {
+        valid: false,
+        reason: `Referential integrity failure: Session "${params.sessionId}" does not exist in store.`,
+      };
+    }
+    if (session.taskId !== params.taskId) {
+      return {
+        valid: false,
+        reason: `Referential integrity failure: TaskId "${params.taskId}" does not match session taskId "${session.taskId}".`,
+      };
+    }
+    if (params.planId) {
+      const plan = this.getContextPlan(params.planId);
+      if (!plan) {
+        return {
+          valid: false,
+          reason: `Referential integrity failure: ContextPlan "${params.planId}" does not exist in store.`,
+        };
+      }
+      if (plan.taskId !== params.taskId) {
+        return {
+          valid: false,
+          reason: `Referential integrity failure: ContextPlan "${params.planId}" belongs to taskId "${plan.taskId}", not "${params.taskId}".`,
+        };
+      }
+      if (plan.sessionId && plan.sessionId !== params.sessionId) {
+        return {
+          valid: false,
+          reason: `Referential integrity failure: ContextPlan "${params.planId}" belongs to session "${plan.sessionId}", not "${params.sessionId}".`,
+        };
+      }
+    }
+    return { valid: true };
+  }
+
+  // ==========================================
+  // ContextExpansionEvent Operations (Closure Section 13, 45)
+  // ==========================================
+
+  public saveExpansionEvent(event: ContextExpansionEvent): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO expansion_events (
+        event_id, task_id, session_id, context_plan_id, workspace_snapshot_id,
+        agent_environment_id, context_unit_id, previous_resolution,
+        requested_resolution, actual_resolution, token_estimate, fallback_reason,
+        reason, raw_json, timestamp
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      event.eventId,
+      event.taskId,
+      event.sessionId,
+      event.contextPlanId,
+      event.workspaceSnapshotId,
+      event.agentEnvironmentId,
+      event.contextUnitId,
+      event.previousResolution ?? null,
+      event.requestedResolution,
+      event.actualResolution,
+      event.tokenEstimate,
+      event.fallbackReason ?? null,
+      event.reason,
+      JSON.stringify(event),
+      event.timestamp
+    );
+  }
+
+  public listExpansionEvents(sessionIdOrTaskId: string): ContextExpansionEvent[] {
+    const rows = this.db.prepare(`
+      SELECT raw_json FROM expansion_events
+      WHERE session_id = ? OR task_id = ?
+      ORDER BY timestamp ASC
+    `).all(sessionIdOrTaskId, sessionIdOrTaskId) as Array<{ raw_json: string }>;
+
+    return rows.map((r) => JSON.parse(r.raw_json) as ContextExpansionEvent);
+  }
+
+  // ==========================================
+  // FinalContextAllocation Operations (Closure Section 48)
+  // ==========================================
+
+  public saveFinalContextAllocation(allocation: FinalContextAllocation): void {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO final_context_allocations (
+        plan_id, workspace_snapshot_id, total_estimated_tokens, budget_tokens,
+        overflow, tokenizer_method, items_json, raw_json, recorded_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      allocation.planId,
+      allocation.workspaceSnapshotId,
+      allocation.totalEstimatedTokens,
+      allocation.budgetTokens,
+      allocation.overflow ? 1 : 0,
+      allocation.tokenizerMethod,
+      JSON.stringify(allocation.items),
+      JSON.stringify(allocation),
+      allocation.recordedAt
+    );
+  }
+
+  public getFinalContextAllocation(planId: string): FinalContextAllocation | null {
+    const row = this.db.prepare('SELECT raw_json FROM final_context_allocations WHERE plan_id = ?').get(planId) as {
+      raw_json: string;
+    } | undefined;
+    if (!row) return null;
+    return JSON.parse(row.raw_json) as FinalContextAllocation;
+  }
+
+  // ==========================================
+  // ProviderUsageEvent Operations (Closure Section 50)
+  // ==========================================
+
+  public saveProviderUsageEvent(event: ProviderUsageEvent): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO provider_usage_events (
+        event_id, session_id, provider, model, input_tokens,
+        output_tokens, cached_input_tokens, cost_usd, timestamp
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      event.eventId,
+      event.sessionId,
+      event.provider,
+      event.model,
+      event.inputTokens,
+      event.outputTokens,
+      event.cachedInputTokens ?? null,
+      event.costUsd ?? null,
+      event.timestamp
+    );
+  }
+
+  public listProviderUsageEvents(sessionId: string): ProviderUsageEvent[] {
+    const rows = this.db.prepare(`
+      SELECT * FROM provider_usage_events WHERE session_id = ? ORDER BY timestamp ASC
+    `).all(sessionId) as Array<{
+      event_id: string;
+      session_id: string;
+      provider: string;
+      model: string | null;
+      input_tokens: number | null;
+      output_tokens: number | null;
+      cached_input_tokens: number | null;
+      cost_usd: number | null;
+      timestamp: string;
+    }>;
+
+    return rows.map((r) => ({
+      eventId: r.event_id,
+      sessionId: r.session_id,
+      provider: r.provider,
+      model: r.model,
+      inputTokens: r.input_tokens,
+      outputTokens: r.output_tokens,
+      cachedInputTokens: r.cached_input_tokens ?? undefined,
+      costUsd: r.cost_usd ?? undefined,
+      timestamp: r.timestamp,
+    }));
   }
 
   // ==========================================

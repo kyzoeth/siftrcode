@@ -28,7 +28,9 @@ export interface PlannedUnitMetadata {
 export interface ContextPlanMetadataRecord {
   planId: string;
   taskId: string;
+  sessionId?: string;
   snapshotId: string;
+  agentEnvironmentId?: string;
   budgetPlan: BudgetAllocationPlan;
   units: PlannedUnitMetadata[];
   formattedContext: {
@@ -107,7 +109,9 @@ export function sanitizeContextPlanForPersistence(
   return {
     planId: plan.planId,
     taskId: plan.taskId,
-    snapshotId,
+    sessionId: plan.sessionId,
+    snapshotId: plan.workspaceSnapshotId || snapshotId,
+    agentEnvironmentId: plan.agentEnvironmentId,
     budgetPlan: plan.budgetPlan,
     units: sanitizedUnits,
     formattedContext: sanitizedFormattedContext,

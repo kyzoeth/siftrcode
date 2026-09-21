@@ -3,6 +3,7 @@ import * as path from 'path';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import * as crypto from 'crypto';
 import { skeletonizeFile } from '../skeleton/dispatcher';
 import { packRepository } from '../core/packer';
 import { auditRepository } from '../core/auditor';
@@ -12,8 +13,17 @@ import { resolveSafeWorkspacePath } from '../workspace/workspace_source_reader';
 import { createOutcomeEvidence } from '../telemetry/outcome_evidence';
 import { createDefaultDataRights } from '../rights/data_rights';
 import { SqliteStore } from '../storage/sqlite_store';
+import { WorkspaceManager } from '../workspace/workspace_manager';
+import { DefaultContextUnitMaterializer } from '../materialization/context_unit_materializer';
+import { ContextUnit, ContextUnitKind } from '../context/context_unit';
+import { TrustLevel } from '../security/trust';
+import { createSiftrSession, SiftrSession, SiftrSessionStatus } from '../telemetry/siftr_session';
+import { createContextExpansionEvent, ExpansionReason } from '../telemetry/expansion_event';
+import { createProviderUsageEvent } from '../token/provider_usage';
+import { createAgentEnvironment } from '../agents/agent_environment';
+import { ContextPlan } from '../engine/context_plan';
 
-export async function runMcpServer() {
+export function createMcpServer(): Server {
   const server = new Server(
     {
       name: 'siftrcode',
@@ -521,6 +531,19 @@ export async function runMcpServer() {
         }
 
         const workspaceDir = (args?.directory as string) || process.cwd();
+        const inputTaskId = args?.taskId ? String(args.taskId) : undefined;
+        const inputSessionId = args?.sessionId ? String(args.sessionId) : undefined;
+        let resolvedTaskId = inputTaskId;
+        if (!resolvedTaskId && inputSessionId) {
+          const sqlitePath = path.join(workspaceDir, '.siftr', 'observations.sqlite');
+          if (fs.existsSync(sqlitePath)) {
+            const lookupStore = new SqliteStore(sqlitePath);
+            const sess = lookupStore.getSiftrSession(inputSessionId);
+            if (sess) {
+              resolvedTaskId = sess.taskId;
+            }
+          }
+        }
         const agentModel = (args?.agentModel as string) || undefined;
         const agentKind = (args?.agentKind as any) || undefined;
         const budgetProfile = (args?.budgetProfile as any) || undefined;
@@ -532,6 +555,8 @@ export async function runMcpServer() {
         const result = await ContextEngine.optimizeWorkspace({
           workspaceDir,
           prompt,
+          taskId: resolvedTaskId,
+          sessionId: inputSessionId,
           agentModel,
           agentKind,
           budgetProfile,
@@ -542,9 +567,31 @@ export async function runMcpServer() {
         const plan = result.plan;
         const allocatedUnits = plan.units.filter((u) => u.resolution > 0);
 
+        // Persist canonical FinalContextAllocation (Final Closure Directive Section 48)
+        if (result.sqliteStore) {
+          result.sqliteStore.saveFinalContextAllocation({
+            planId: plan.planId,
+            workspaceSnapshotId: plan.workspaceSnapshotId || 'snapshot_init',
+            totalEstimatedTokens: plan.actualRenderedTokens || plan.estimatedRenderedTokens || 0,
+            budgetTokens: plan.budgetPlan.totalTokens,
+            overflow: Boolean(plan.overflowReason),
+            tokenizerMethod: plan.tokenEstimationMethod || 'HEURISTIC_CHARS',
+            items: plan.units.map((u) => ({
+              contextUnitId: u.contextUnitId,
+              plannedResolution: u.resolution,
+              actualResolution: u.resolution,
+              estimatedTokens: u.tokenEstimate,
+              materializerVersion: DefaultContextUnitMaterializer.VERSION,
+            })),
+            recordedAt: new Date().toISOString(),
+          });
+        }
+
         const responsePayload: any = {
           planId: plan.planId,
           taskId: plan.taskId,
+          sessionId: plan.sessionId,
+          workspaceSnapshotId: plan.workspaceSnapshotId,
           totalRawTokens: plan.budgetPlan.rawTotalTokens,
           allocatedTokens: plan.budgetPlan.totalTokens,
           reductionRatio: `${plan.budgetPlan.savingsPercentage.toFixed(1)}%`,
@@ -552,6 +599,7 @@ export async function runMcpServer() {
           costSavedUSD: `$${plan.budgetPlan.costSavedUSD.toFixed(4)}`,
           allocatedUnitsCount: allocatedUnits.length,
           units: allocatedUnits.map((u) => ({
+            contextUnitId: u.contextUnitId,
             path: u.path,
             title: u.title,
             resolution: u.resolution,
@@ -623,77 +671,228 @@ export async function runMcpServer() {
       }
 
       if (name === 'siftr_outcome') {
-        const taskId = String(args?.taskId || '');
-        if (!taskId) {
+        const workspaceDir = (args?.directory as string) || process.cwd();
+        const siftrDir = path.join(workspaceDir, '.siftr');
+        const sqlitePath = path.join(siftrDir, 'observations.sqlite');
+        const store = (fs.existsSync(sqlitePath) || fs.existsSync(siftrDir)) ? new SqliteStore(sqlitePath) : null;
+
+        if (!store) {
           return {
-            content: [{ type: 'text', text: 'Error: "taskId" parameter is required' }],
+            content: [{ type: 'text', text: 'Error: Observation store (.siftr/observations.sqlite) does not exist in workspace.' }],
             isError: true,
           };
         }
 
-        const workspaceDir = (args?.directory as string) || process.cwd();
-        const planId = args?.planId ? String(args.planId) : undefined;
-        const testsPassed = typeof args?.testsPassed === 'boolean' ? args.testsPassed : undefined;
-        const regressionTestsPassed = typeof args?.regressionTestsPassed === 'boolean' ? args.regressionTestsPassed : undefined;
-        const staticChecksPassed = typeof args?.staticChecksPassed === 'boolean' ? args.staticChecksPassed : undefined;
-        const securityChecksPassed = typeof args?.securityChecksPassed === 'boolean' ? args.securityChecksPassed : undefined;
-        const agentClaimedSuccess = typeof args?.agentClaimedSuccess === 'boolean' ? args.agentClaimedSuccess : undefined;
-        const actualProviderInputTokens = typeof args?.actualProviderInputTokens === 'number' ? args.actualProviderInputTokens : undefined;
-        const actualProviderOutputTokens = typeof args?.actualProviderOutputTokens === 'number' ? args.actualProviderOutputTokens : undefined;
-        const costUSD = typeof args?.costUSD === 'number' ? args.costUSD : undefined;
-        const wallTimeMs = typeof args?.wallTimeMs === 'number' ? args.wallTimeMs : undefined;
-        const notes = args?.notes ? String(args.notes) : undefined;
+        const rawArgs = (args || {}) as Record<string, any>;
+        const inputPlanId = rawArgs.planId ? String(rawArgs.planId) : undefined;
+        const inputSessionId = rawArgs.sessionId ? String(rawArgs.sessionId) : undefined;
+        const inputTaskId = rawArgs.taskId ? String(rawArgs.taskId) : undefined;
+
+        let resolvedPlanId: string | undefined = inputPlanId;
+        let resolvedSessionId: string | undefined = inputSessionId;
+        let resolvedTaskId: string | undefined = inputTaskId;
+        let resolvedSnapshotId: string = 'snapshot_init';
+        let resolvedAgentEnvId: string = 'unknown';
+
+        // 1. Resolve via planId
+        if (resolvedPlanId) {
+          const plan = store.getContextPlan(resolvedPlanId);
+          if (!plan) {
+            return {
+              content: [{ type: 'text', text: `Error: ContextPlan "${resolvedPlanId}" not found in observation store.` }],
+              isError: true,
+            };
+          }
+          if (resolvedTaskId && plan.taskId !== resolvedTaskId) {
+            return {
+              content: [{ type: 'text', text: `Error: ContextPlan "${resolvedPlanId}" belongs to taskId "${plan.taskId}", not "${resolvedTaskId}".` }],
+              isError: true,
+            };
+          }
+          if (inputSessionId && plan.sessionId && plan.sessionId !== inputSessionId) {
+            return {
+              content: [{ type: 'text', text: `Error: ContextPlan "${resolvedPlanId}" belongs to session "${plan.sessionId}", not "${inputSessionId}".` }],
+              isError: true,
+            };
+          }
+          resolvedTaskId = plan.taskId;
+          resolvedSessionId = inputSessionId || plan.sessionId;
+          resolvedSnapshotId = plan.workspaceSnapshotId || 'snapshot_init';
+          resolvedAgentEnvId = plan.agentEnvironmentId || 'unknown';
+
+          if (resolvedSessionId) {
+            const session = store.getSession(resolvedSessionId);
+            if (session && session.taskId !== resolvedTaskId) {
+              return {
+                content: [{ type: 'text', text: `Error: Session "${resolvedSessionId}" belongs to task "${session.taskId}", not "${resolvedTaskId}".` }],
+                isError: true,
+              };
+            }
+          }
+        }
+        // 2. Resolve via sessionId if planId not provided
+        else if (resolvedSessionId) {
+          const session = store.getSiftrSession(resolvedSessionId) || store.getSession(resolvedSessionId);
+          if (!session) {
+            return {
+              content: [{ type: 'text', text: `Error: Session "${resolvedSessionId}" not found in observation store.` }],
+              isError: true,
+            };
+          }
+          if (resolvedTaskId && session.taskId !== resolvedTaskId) {
+            return {
+              content: [{ type: 'text', text: `Error: Session "${resolvedSessionId}" belongs to taskId "${session.taskId}", not "${resolvedTaskId}".` }],
+              isError: true,
+            };
+          }
+          resolvedTaskId = session.taskId;
+          resolvedSnapshotId = ('latestWorkspaceSnapshotId' in session && session.latestWorkspaceSnapshotId)
+            ? session.latestWorkspaceSnapshotId
+            : (('snapshotId' in session && (session as any).snapshotId) ? (session as any).snapshotId : 'snapshot_init');
+          resolvedAgentEnvId = ('agentEnvironmentId' in session && session.agentEnvironmentId)
+            ? session.agentEnvironmentId
+            : 'unknown';
+
+          const sessionPlans = store.listContextPlans(resolvedTaskId, resolvedSessionId);
+          if (sessionPlans.length === 1) {
+            resolvedPlanId = sessionPlans[0].planId;
+          } else if (sessionPlans.length > 1) {
+            return {
+              content: [{ type: 'text', text: `Error: Multiple plans (${sessionPlans.length}) exist for session "${resolvedSessionId}". Explicit planId is required to disambiguate.` }],
+              isError: true,
+            };
+          } else {
+            const taskPlans = store.listContextPlans(resolvedTaskId);
+            if (taskPlans.length === 1) {
+              resolvedPlanId = taskPlans[0].planId;
+            }
+          }
+        }
+        // 3. Fallback via taskId
+        else if (resolvedTaskId) {
+          const plans = store.listContextPlans(resolvedTaskId);
+          if (plans.length === 1) {
+            resolvedPlanId = plans[0].planId;
+            resolvedSessionId = plans[0].sessionId;
+            resolvedSnapshotId = plans[0].workspaceSnapshotId || 'snapshot_init';
+            resolvedAgentEnvId = plans[0].agentEnvironmentId || 'unknown';
+          } else if (plans.length > 1) {
+            return {
+              content: [{ type: 'text', text: `Error: Multiple plans exist for task "${resolvedTaskId}". Explicit planId or sessionId is required to disambiguate.` }],
+              isError: true,
+            };
+          } else {
+            return {
+              content: [{ type: 'text', text: `Error: Cannot resolve outcome lineage for task "${resolvedTaskId}". No matching plan or session found in store.` }],
+              isError: true,
+            };
+          }
+        } else {
+          return {
+            content: [{ type: 'text', text: 'Error: At least one of "planId", "sessionId", or "taskId" is required to resolve outcome lineage.' }],
+            isError: true,
+          };
+        }
+
+        // Section 2: Never fabricate placeholder identifiers!
+        if (!resolvedSessionId) {
+          return {
+            content: [{ type: 'text', text: 'Error: Cannot resolve durable session lineage for outcome. Please provide sessionId or planId.' }],
+            isError: true,
+          };
+        }
+
+        // Section 36-37: Validate referential integrity at write time
+        const integrityCheck = store.validateOutcomeIntegrity({
+          sessionId: resolvedSessionId,
+          taskId: resolvedTaskId,
+          planId: resolvedPlanId,
+          snapshotId: resolvedSnapshotId,
+          agentEnvironmentId: resolvedAgentEnvId,
+        });
+        if (!integrityCheck.valid) {
+          return {
+            content: [{ type: 'text', text: `Error: ${integrityCheck.reason}` }],
+            isError: true,
+          };
+        }
+
+        // Parse evidence vector
+        const ev = (typeof rawArgs.evidence === 'object' && rawArgs.evidence !== null) ? (rawArgs.evidence as Record<string, any>) : {};
+        const buildPassed = typeof ev.buildPassed === 'boolean' ? ev.buildPassed : (typeof rawArgs.buildPassed === 'boolean' ? rawArgs.buildPassed : undefined);
+        const publicTestsPassed = typeof ev.publicTestsPassed === 'boolean' ? ev.publicTestsPassed : (typeof ev.testsPassed === 'boolean' ? ev.testsPassed : (typeof rawArgs.testsPassed === 'boolean' ? rawArgs.testsPassed : undefined));
+        const hiddenTestsPassed = typeof ev.hiddenTestsPassed === 'boolean' ? ev.hiddenTestsPassed : (typeof rawArgs.hiddenTestsPassed === 'boolean' ? rawArgs.hiddenTestsPassed : undefined);
+        const regressionTestsPassed = typeof ev.regressionTestsPassed === 'boolean' ? ev.regressionTestsPassed : (typeof rawArgs.regressionTestsPassed === 'boolean' ? rawArgs.regressionTestsPassed : undefined);
+        const staticChecksPassed = typeof ev.staticChecksPassed === 'boolean' ? ev.staticChecksPassed : (typeof rawArgs.staticChecksPassed === 'boolean' ? rawArgs.staticChecksPassed : undefined);
+        const securityChecksPassed = typeof ev.securityChecksPassed === 'boolean' ? ev.securityChecksPassed : (typeof rawArgs.securityChecksPassed === 'boolean' ? rawArgs.securityChecksPassed : undefined);
+        const behavioralOraclePassed = typeof ev.behavioralOraclePassed === 'boolean' ? ev.behavioralOraclePassed : (typeof rawArgs.behavioralOraclePassed === 'boolean' ? rawArgs.behavioralOraclePassed : undefined);
+        const userAccepted = typeof ev.userAccepted === 'boolean' ? ev.userAccepted : (typeof rawArgs.userAccepted === 'boolean' ? rawArgs.userAccepted : undefined);
+        const agentReportedSuccess = typeof ev.agentReportedSuccess === 'boolean' ? ev.agentReportedSuccess : (typeof rawArgs.agentClaimedSuccess === 'boolean' ? rawArgs.agentClaimedSuccess : undefined);
+        const humanReview = ev.humanReview || rawArgs.humanReview;
+        const actualProviderInputTokens = typeof ev.actualProviderInputTokens === 'number' ? ev.actualProviderInputTokens : (typeof rawArgs.actualProviderInputTokens === 'number' ? rawArgs.actualProviderInputTokens : undefined);
+        const actualProviderOutputTokens = typeof ev.actualProviderOutputTokens === 'number' ? ev.actualProviderOutputTokens : (typeof rawArgs.actualProviderOutputTokens === 'number' ? rawArgs.actualProviderOutputTokens : undefined);
+        const costUSD = typeof ev.costUSD === 'number' ? ev.costUSD : (typeof rawArgs.costUSD === 'number' ? rawArgs.costUSD : undefined);
+        const wallTimeMs = typeof ev.wallTimeMs === 'number' ? ev.wallTimeMs : (typeof rawArgs.wallTimeMs === 'number' ? rawArgs.wallTimeMs : undefined);
+        const notes = rawArgs.notes ? String(rawArgs.notes) : undefined;
 
         const outcomeEvidence = createOutcomeEvidence({
-          taskId,
-          sessionId: `sess_${taskId}`,
-          agentEnvironmentId: 'default',
-          workspaceSnapshotBefore: 'snapshot_initial',
-          publicTestsPassed: testsPassed,
+          taskId: resolvedTaskId,
+          sessionId: resolvedSessionId,
+          contextPlanId: resolvedPlanId,
+          agentEnvironmentId: resolvedAgentEnvId,
+          workspaceSnapshotBefore: resolvedSnapshotId,
+          buildPassed,
+          publicTestsPassed,
+          hiddenTestsPassed,
           regressionTestsPassed,
           staticChecksPassed,
           securityChecksPassed,
-          agentReportedSuccess: agentClaimedSuccess,
+          behavioralOraclePassed,
+          userAccepted,
+          agentReportedSuccess,
+          humanReview,
           actualProviderInputTokens,
           actualProviderOutputTokens,
           costUSD,
           wallTimeMs,
         });
 
-        const siftrDir = path.join(workspaceDir, '.siftr');
-        const sqlitePath = path.join(siftrDir, 'observations.sqlite');
-        let persisted = false;
+        // Persist exact lineage and preserve tri-state UNKNOWN (null !== 0)
+        store.saveTaskOutcome(outcomeEvidence);
+        store.saveOutcomeEvidence([
+          {
+            evidenceId: outcomeEvidence.outcomeId,
+            taskId: outcomeEvidence.taskId,
+            sessionId: outcomeEvidence.sessionId,
+            contextPlanId: resolvedPlanId,
+            snapshotId: resolvedSnapshotId,
+            labelType: 'VERIFIED_SUCCESS',
+            verifiedSuccess: outcomeEvidence.verifiedSuccess,
+            confidence: outcomeEvidence.confidence,
+            strength: outcomeEvidence.confidence >= 0.9 ? 'STRONG' : 'MEDIUM',
+            source: 'outcome_policy',
+            details: {
+              rationale: outcomeEvidence.evaluationRationale,
+              planId: resolvedPlanId,
+              policyId: outcomeEvidence.policyId,
+              policyVersion: outcomeEvidence.policyVersion,
+              notes,
+            },
+          },
+        ]);
 
-        try {
-          if (fs.existsSync(sqlitePath) || fs.existsSync(siftrDir)) {
-            if (!fs.existsSync(siftrDir)) {
-              fs.mkdirSync(siftrDir, { recursive: true });
-            }
-            const store = new SqliteStore(sqlitePath);
-            store.saveOutcomeEvidence([
-              {
-                evidenceId: outcomeEvidence.outcomeId,
-                taskId: outcomeEvidence.taskId,
-                sessionId: outcomeEvidence.sessionId,
-                labelType: 'VERIFIED_SUCCESS',
-                value: outcomeEvidence.verifiedSuccess ? 1 : 0,
-                confidence: outcomeEvidence.confidence,
-                strength: outcomeEvidence.confidence >= 0.9 ? 'STRONG' : 'MEDIUM',
-                source: 'outcome_policy',
-                details: {
-                  rationale: outcomeEvidence.evaluationRationale,
-                  planId,
-                  notes,
-                },
-              },
-            ]);
-            if (planId && actualProviderInputTokens !== undefined) {
-              store.updatePlanActualProviderTokens(planId, actualProviderInputTokens);
-            }
-            persisted = true;
-          }
-        } catch {
-          // Resilience: store warning shouldn't fail outcome reporting
+        if (resolvedPlanId && actualProviderInputTokens !== undefined) {
+          store.updatePlanActualProviderTokens(resolvedPlanId, actualProviderInputTokens);
+        }
+
+        if (actualProviderInputTokens !== undefined || actualProviderOutputTokens !== undefined) {
+          store.saveProviderUsageEvent(createProviderUsageEvent({
+            sessionId: resolvedSessionId,
+            provider: 'mcp_outcome_report',
+            inputTokens: actualProviderInputTokens ?? null,
+            outputTokens: actualProviderOutputTokens ?? null,
+            costUsd: costUSD ?? null,
+          }));
         }
 
         return {
@@ -702,12 +901,16 @@ export async function runMcpServer() {
               type: 'text',
               text: JSON.stringify({
                 success: true,
-                taskId,
+                taskId: outcomeEvidence.taskId,
+                sessionId: outcomeEvidence.sessionId,
+                planId: resolvedPlanId,
                 outcomeId: outcomeEvidence.outcomeId,
                 verifiedSuccess: outcomeEvidence.verifiedSuccess,
                 confidence: outcomeEvidence.confidence,
+                policyId: outcomeEvidence.policyId,
+                policyVersion: outcomeEvidence.policyVersion,
                 rationale: outcomeEvidence.evaluationRationale,
-                persisted,
+                persisted: true,
               }, null, 2),
             },
           ],
@@ -719,7 +922,9 @@ export async function runMcpServer() {
         const filePath = args?.filePath ? String(args.filePath) : undefined;
         const contextUnitId = args?.contextUnitId ? String(args.contextUnitId) : undefined;
         const targetResolutionStr = String(args?.targetResolution || 'body').toLowerCase();
-        const taskId = args?.taskId ? String(args.taskId) : undefined;
+        const inputTaskId = args?.taskId ? String(args.taskId) : undefined;
+        const inputSessionId = args?.sessionId ? String(args.sessionId) : undefined;
+        const inputPlanId = args?.planId ? String(args.planId) : undefined;
 
         if (!filePath && !contextUnitId) {
           return {
@@ -728,11 +933,127 @@ export async function runMcpServer() {
           };
         }
 
-        const resolvedPath = filePath || contextUnitId!;
-        const safePath = resolveSafeWorkspacePath(workspaceDir, resolvedPath);
+        const sqlitePath = path.join(workspaceDir, '.siftr', 'observations.sqlite');
+        const store = fs.existsSync(sqlitePath) ? new SqliteStore(sqlitePath) : null;
+
+        // Section 8: ContextUnit IDs must NEVER be interpreted as filesystem paths!
+        if (contextUnitId) {
+          if (!store) {
+            return {
+              content: [{ type: 'text', text: 'Error: Observation store required to resolve contextUnitId.' }],
+              isError: true,
+            };
+          }
+
+          let plan: ContextPlan | undefined;
+          if (inputPlanId) {
+            plan = store.getContextPlan(inputPlanId);
+          } else if (inputSessionId) {
+            const plans = store.listContextPlans(undefined, inputSessionId);
+            plan = plans[plans.length - 1];
+          } else if (inputTaskId) {
+            const plans = store.listContextPlans(inputTaskId);
+            plan = plans[plans.length - 1];
+          }
+
+          if (!plan) {
+            return {
+              content: [{ type: 'text', text: 'Error: Cannot expand contextUnitId without an active plan or session.' }],
+              isError: true,
+            };
+          }
+
+          // Section 40: ContextUnit cannot belong to wrong plan/workspace
+          const plannedUnit = plan.units.find((u) => u.contextUnitId === contextUnitId);
+          if (!plannedUnit) {
+            return {
+              content: [{ type: 'text', text: `Error: ContextUnit "${contextUnitId}" does not belong to plan "${plan.planId}" or task "${plan.taskId}". Expansion rejected.` }],
+              isError: true,
+            };
+          }
+
+          const snapshotId = plan.workspaceSnapshotId || 'snapshot_init';
+          let snapshot = store.getSnapshot(snapshotId);
+          if (!snapshot) {
+            const workspaceManager = new WorkspaceManager({ rootDir: workspaceDir });
+            snapshot = await workspaceManager.captureSnapshot();
+          }
+
+          const snapshotUnits = store.getContextUnitsBySnapshot(snapshot.workspaceSnapshotId);
+          let unit = snapshotUnits.find((u) => u.id === contextUnitId);
+          if (!unit) {
+            unit = {
+              id: contextUnitId,
+              kind: ContextUnitKind.CODE_SYMBOL,
+              workspaceSnapshotId: snapshot.workspaceSnapshotId,
+              repositoryId: 'root',
+              path: plannedUnit.path || '',
+              title: plannedUnit.title,
+              provenance: {
+                sourceType: 'file',
+                sourceUri: plannedUnit.path || '',
+                extractedBy: 'siftr-engine',
+                timestamp: new Date().toISOString(),
+              },
+              trustLevel: TrustLevel.FIRST_PARTY_CODE,
+              metadata: {},
+            };
+          }
+
+          const targetResolution = targetResolutionStr === 'full' ? ContextResolution.FULL : ContextResolution.BODY;
+
+          // Section 10: Use the exact same materializer as ContextEngine
+          const materializer = new DefaultContextUnitMaterializer();
+          const materialized = materializer.materializeSync(unit, targetResolution, snapshot);
+
+          let fallbackReason: string | undefined = undefined;
+          if (targetResolution === ContextResolution.BODY && materialized.resolution === ContextResolution.FULL) {
+            fallbackReason = 'Symbol line range unavailable for target unit; fell back to full file content';
+          }
+
+          // Section 13: Append immutable ContextExpansionEvent
+          const expansionEvent = createContextExpansionEvent({
+            taskId: plan.taskId,
+            sessionId: plan.sessionId || inputSessionId || `session_${plan.taskId}`,
+            contextPlanId: plan.planId,
+            workspaceSnapshotId: snapshot.workspaceSnapshotId,
+            agentEnvironmentId: plan.agentEnvironmentId || 'unknown',
+            contextUnitId,
+            previousResolution: plannedUnit.resolution,
+            requestedResolution: targetResolution,
+            actualResolution: materialized.resolution,
+            tokenEstimate: materialized.actualTokenCount,
+            fallbackReason,
+            reason: ExpansionReason.AGENT_EXPLICIT_REQUEST,
+          });
+
+          store.saveExpansionEvent(expansionEvent);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  contextUnitId,
+                  path: unit.path,
+                  requestedResolution: getResolutionName(targetResolution),
+                  actualResolution: getResolutionName(materialized.resolution),
+                  fallbackReason,
+                  tokens: materialized.actualTokenCount,
+                  content: materialized.content,
+                  eventId: expansionEvent.eventId,
+                }, null, 2),
+              },
+            ],
+          };
+        }
+
+        // File path handling (separate namespace)
+        const safePath = resolveSafeWorkspacePath(workspaceDir, filePath!);
         if (!safePath || !fs.existsSync(safePath)) {
           return {
-            content: [{ type: 'text', text: `Error: File not found or path outside workspace: ${resolvedPath}` }],
+            content: [{ type: 'text', text: `Error: File not found or path outside workspace: ${filePath}` }],
             isError: true,
           };
         }
@@ -740,36 +1061,13 @@ export async function runMcpServer() {
         const rawContent = fs.readFileSync(safePath, 'utf-8');
         const tokenEstimate = Math.ceil(rawContent.length / 3.7);
 
-        try {
-          const sqlitePath = path.join(workspaceDir, '.siftr', 'observations.sqlite');
-          if (taskId && fs.existsSync(sqlitePath)) {
-            const store = new SqliteStore(sqlitePath);
-            store.saveTrajectoryEvents([
-              {
-                eventId: `ev_exp_${Date.now().toString(36)}`,
-                taskId,
-                kind: 'EXPAND_UNIT' as any,
-                payload: {
-                  path: resolvedPath,
-                  targetResolution: targetResolutionStr,
-                  tokenEstimate,
-                },
-                timestamp: Date.now(),
-                dataRights: createDefaultDataRights(),
-              },
-            ]);
-          }
-        } catch {
-          // ignore
-        }
-
         return {
           content: [
             {
               type: 'text',
               text: JSON.stringify({
                 success: true,
-                path: resolvedPath,
+                path: filePath,
                 resolution: targetResolutionStr,
                 tokens: tokenEstimate,
                 content: rawContent,
@@ -781,36 +1079,134 @@ export async function runMcpServer() {
 
       if (name === 'siftr_session') {
         const action = String(args?.action || 'status').toLowerCase();
-        const taskId = String(args?.taskId || '');
-        if (!taskId) {
+        const inputTaskId = args?.taskId ? String(args.taskId) : undefined;
+        const inputSessionId = args?.sessionId ? String(args.sessionId) : undefined;
+        const workspaceDir = (args?.directory as string) || process.cwd();
+        const agentModel = args?.agentModel ? String(args.agentModel) : undefined;
+
+        const siftrDir = path.join(workspaceDir, '.siftr');
+        if (!fs.existsSync(siftrDir)) {
+          fs.mkdirSync(siftrDir, { recursive: true });
+        }
+        const sqlitePath = path.join(siftrDir, 'observations.sqlite');
+        const store = new SqliteStore(sqlitePath);
+
+        if (action === 'start') {
+          const taskId = inputTaskId || `task_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+          const workspaceManager = new WorkspaceManager({ rootDir: workspaceDir });
+          const snapshot = await workspaceManager.captureSnapshot();
+          store.saveSnapshot(snapshot);
+
+          const env = createAgentEnvironment({
+            model: agentModel || 'unknown',
+            agentProvider: 'unknown',
+          });
+
+          const session = createSiftrSession({
+            sessionId: inputSessionId,
+            taskId,
+            agentEnvironmentId: env.systemConfigurationHash,
+            initialWorkspaceSnapshotId: snapshot.workspaceSnapshotId,
+            latestWorkspaceSnapshotId: snapshot.workspaceSnapshotId,
+            status: 'ACTIVE',
+          });
+
+          store.saveSiftrSession(session);
+
           return {
-            content: [{ type: 'text', text: 'Error: "taskId" parameter is required' }],
-            isError: true,
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  action: 'start',
+                  sessionId: session.sessionId,
+                  taskId: session.taskId,
+                  agentEnvironmentId: session.agentEnvironmentId,
+                  initialWorkspaceSnapshotId: session.initialWorkspaceSnapshotId,
+                  latestWorkspaceSnapshotId: session.latestWorkspaceSnapshotId,
+                  status: session.status,
+                  createdAt: session.createdAt,
+                }, null, 2),
+              },
+            ],
           };
         }
 
-        const workspaceDir = (args?.directory as string) || process.cwd();
-        const sessionId = args?.sessionId ? String(args.sessionId) : `sess_${taskId}`;
-        const agentModel = args?.agentModel ? String(args.agentModel) : undefined;
+        if (action === 'end') {
+          let session: SiftrSession | undefined;
+          if (inputSessionId) {
+            session = store.getSiftrSession(inputSessionId);
+          } else if (inputTaskId) {
+            const plans = store.listContextPlans(inputTaskId);
+            if (plans.length > 0 && plans[0].sessionId) {
+              session = store.getSiftrSession(plans[0].sessionId);
+            }
+          }
 
+          if (!session && inputSessionId) {
+            session = {
+              sessionId: inputSessionId,
+              taskId: inputTaskId || 'unknown',
+              agentEnvironmentId: 'unknown',
+              initialWorkspaceSnapshotId: 'snapshot_init',
+              latestWorkspaceSnapshotId: 'snapshot_init',
+              status: 'COMPLETED',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              endedAt: new Date().toISOString(),
+            };
+          }
+
+          if (!session) {
+            return {
+              content: [{ type: 'text', text: 'Error: Session not found to end.' }],
+              isError: true,
+            };
+          }
+
+          const targetStatus: SiftrSessionStatus = args?.status === 'ABORTED' ? 'ABORTED' : 'COMPLETED';
+          const endedAt = new Date().toISOString();
+          store.updateSessionStatus(session.sessionId, targetStatus, endedAt);
+          session.status = targetStatus;
+          session.endedAt = endedAt;
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  action: 'end',
+                  sessionId: session.sessionId,
+                  taskId: session.taskId,
+                  status: session.status,
+                  endedAt: session.endedAt,
+                }, null, 2),
+              },
+            ],
+          };
+        }
+
+        // action === 'status'
+        let session: SiftrSession | undefined;
+        if (inputSessionId) {
+          session = store.getSiftrSession(inputSessionId);
+        }
+
+        const taskId = session?.taskId || inputTaskId;
         let plansCount = 0;
         let outcomesCount = 0;
         let totalTokens = 0;
 
-        try {
-          const sqlitePath = path.join(workspaceDir, '.siftr', 'observations.sqlite');
-          if (fs.existsSync(sqlitePath)) {
-            const store = new SqliteStore(sqlitePath);
-            const plans = store.listContextPlans(taskId);
-            plansCount = plans.length;
-            for (const p of plans) {
-              totalTokens += p.actualProviderInputTokens || p.actualRenderedTokens || 0;
-            }
-            const outcomes = store.listOutcomeEvidence(taskId);
-            outcomesCount = outcomes.length;
+        if (taskId) {
+          const plans = store.listContextPlans(taskId);
+          plansCount = plans.length;
+          for (const p of plans) {
+            totalTokens += p.actualProviderInputTokens || p.actualRenderedTokens || 0;
           }
-        } catch {
-          // ignore
+          const outcomes = store.listOutcomeEvidence(taskId);
+          outcomesCount = outcomes.length;
         }
 
         return {
@@ -818,15 +1214,17 @@ export async function runMcpServer() {
             {
               type: 'text',
               text: JSON.stringify({
-                action,
-                sessionId,
-                taskId,
+                action: 'status',
+                sessionId: session?.sessionId || inputSessionId,
+                taskId: taskId || session?.taskId,
+                status: session?.status || 'UNKNOWN',
                 agentModel,
                 plansCount,
                 outcomesCount,
                 totalTokens,
-                status: action === 'end' ? 'COMPLETED' : 'ACTIVE',
-                timestamp: new Date().toISOString(),
+                createdAt: session?.createdAt,
+                updatedAt: session?.updatedAt,
+                endedAt: session?.endedAt,
               }, null, 2),
             },
           ],
@@ -846,6 +1244,11 @@ export async function runMcpServer() {
     }
   });
 
+  return server;
+}
+
+export async function runMcpServer() {
+  const server = createMcpServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }

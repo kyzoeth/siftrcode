@@ -24,6 +24,9 @@ export interface PlannedUnit {
 export interface ContextPlan {
   taskId: string;
   planId: string;
+  sessionId?: string;
+  workspaceSnapshotId?: string;
+  agentEnvironmentId?: string;
   budgetPlan: BudgetAllocationPlan;
   units: PlannedUnit[];
   formattedContext: FormattedContext;

@@ -12,6 +12,16 @@ import { SourceProvenance, createSourceProvenance } from '../rights/source_prove
 import { createOutcomeEvidence } from '../telemetry/outcome_evidence';
 import { resolveSafeWorkspacePath } from '../workspace/workspace_source_reader';
 import { ContextResolution } from '../context/context_resolution';
+import { WorkspaceManager } from '../workspace/workspace_manager';
+import { ContextPlan } from '../engine/context_plan';
+import { ContextUnitKind } from '../context/context_unit';
+import { TrustLevel } from '../security/trust';
+import { DefaultContextUnitMaterializer } from '../materialization/context_unit_materializer';
+import { createContextExpansionEvent, ExpansionReason } from '../telemetry/expansion_event';
+import { createSiftrSession, SiftrSession, SiftrSessionStatus } from '../telemetry/siftr_session';
+import { createProviderUsageEvent } from '../token/provider_usage';
+import { createAgentEnvironment } from '../agents/agent_environment';
+import * as crypto from 'crypto';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
@@ -373,51 +383,139 @@ const SERVER_CARD = {
     },
     {
       name: 'siftr_outcome',
-      description: 'Reports task execution results, test oracle results, provider token usage, and costs to close the learning loop.',
+      description:
+        'Reports task execution results, oracle test verdicts (unit, regression, security), actual provider token usage, and costs to close the learning loop.',
       inputSchema: {
         type: 'object',
         properties: {
-          taskId: { type: 'string', description: 'Task ID' },
-          planId: { type: 'string', description: 'ContextPlan ID' },
-          testsPassed: { type: 'boolean', description: 'Task-specific tests passed' },
-          regressionTestsPassed: { type: 'boolean', description: 'Regression tests passed' },
-          staticChecksPassed: { type: 'boolean', description: 'Static analysis passed' },
-          securityChecksPassed: { type: 'boolean', description: 'Security scan passed' },
-          agentClaimedSuccess: { type: 'boolean', description: 'Agent claimed completion' },
-          actualProviderInputTokens: { type: 'number', description: 'Reported input tokens' },
-          actualProviderOutputTokens: { type: 'number', description: 'Reported output tokens' },
-          costUSD: { type: 'number', description: 'Actual cost in USD' },
-          wallTimeMs: { type: 'number', description: 'Execution wall time in ms' },
-          notes: { type: 'string', description: 'Execution notes' }
-        },
-        required: ['taskId']
+          taskId: {
+            type: 'string',
+            description: 'Task identifier returned by siftr_context'
+          },
+          planId: {
+            type: 'string',
+            description: 'ContextPlan identifier returned by siftr_context'
+          },
+          sessionId: {
+            type: 'string',
+            description: 'Session identifier linking task and context plan'
+          },
+          testsPassed: {
+            type: 'boolean',
+            description: 'Whether task-specific test suite passed'
+          },
+          regressionTestsPassed: {
+            type: 'boolean',
+            description: 'Whether existing test suite / regression checks passed'
+          },
+          staticChecksPassed: {
+            type: 'boolean',
+            description: 'Whether static analysis / linting passed'
+          },
+          securityChecksPassed: {
+            type: 'boolean',
+            description: 'Whether security scans passed'
+          },
+          agentClaimedSuccess: {
+            type: 'boolean',
+            description: 'Whether the agent declared task complete'
+          },
+          actualProviderInputTokens: {
+            type: 'number',
+            description: 'Actual tokens billed by the LLM provider for input'
+          },
+          actualProviderOutputTokens: {
+            type: 'number',
+            description: 'Actual tokens billed by the LLM provider for output'
+          },
+          costUSD: {
+            type: 'number',
+            description: 'Actual monetary cost charged by provider in USD'
+          },
+          wallTimeMs: {
+            type: 'number',
+            description: 'Wall-clock task duration in milliseconds'
+          },
+          notes: {
+            type: 'string',
+            description: 'Optional execution notes or failure summary'
+          }
+        }
       }
     },
     {
       name: 'siftr_expand',
-      description: 'Dynamically expands a skeletonized or signature-level context unit into full implementation body on-demand.',
+      description:
+        'Expands a skeletonized or signature-level context unit into full implementation body on-demand during agent execution.',
       inputSchema: {
         type: 'object',
         properties: {
-          filePath: { type: 'string', description: 'File path to expand' },
-          contextUnitId: { type: 'string', description: 'Context unit ID' },
-          targetResolution: { type: 'string', enum: ['body', 'full'], description: 'Target resolution' },
-          taskId: { type: 'string', description: 'Task ID' }
+          filePath: {
+            type: 'string',
+            description: 'Workspace-relative file path to expand'
+          },
+          contextUnitId: {
+            type: 'string',
+            description: 'Unique ContextUnit ID returned in siftr_context units array'
+          },
+          targetResolution: {
+            type: 'string',
+            enum: ['body', 'full'],
+            description: 'Target resolution level: "body" (implementation) or "full" (entire file). Defaults to "body".'
+          },
+          taskId: {
+            type: 'string',
+            description: 'Optional task ID to look up snapshot context'
+          },
+          sessionId: {
+            type: 'string',
+            description: 'Optional session ID to look up snapshot context'
+          },
+          planId: {
+            type: 'string',
+            description: 'Optional ContextPlan ID to look up snapshot context'
+          },
+          directory: {
+            type: 'string',
+            description: 'Workspace directory root path (defaults to current working directory)'
+          }
         }
       }
     },
     {
       name: 'siftr_session',
-      description: 'Manages or inspects active Siftr coding agent sessions, linking tasks, plans, and token economics.',
+      description:
+        'Manages or inspects active Siftr coding agent sessions, linking tasks, plans, and token economics.',
       inputSchema: {
         type: 'object',
         properties: {
-          action: { type: 'string', enum: ['start', 'status', 'end'], description: 'Action' },
-          taskId: { type: 'string', description: 'Task ID' },
-          sessionId: { type: 'string', description: 'Session ID' },
-          agentModel: { type: 'string', description: 'Model' }
-        },
-        required: ['taskId']
+          action: {
+            type: 'string',
+            enum: ['start', 'status', 'end'],
+            description: 'Action to perform: "start" a new session, inspect "status", or "end" session'
+          },
+          taskId: {
+            type: 'string',
+            description: 'Task ID associated with this session'
+          },
+          sessionId: {
+            type: 'string',
+            description: 'Explicit session ID (optional for start, recommended for status/end)'
+          },
+          agentModel: {
+            type: 'string',
+            description: 'LLM model ID driving the agent session (e.g. claude-3-7-sonnet)'
+          },
+          status: {
+            type: 'string',
+            enum: ['COMPLETED', 'ABORTED'],
+            description: 'Target status when ending a session (defaults to COMPLETED)'
+          },
+          directory: {
+            type: 'string',
+            description: 'Workspace directory root path'
+          }
+        }
       }
     }
   ],
@@ -457,6 +555,19 @@ function createMcpServerInstance() {
         }
 
         const workspaceDir = (args?.directory as string) || process.cwd();
+        const inputTaskId = args?.taskId ? String(args.taskId) : undefined;
+        const inputSessionId = args?.sessionId ? String(args.sessionId) : undefined;
+        let resolvedTaskId = inputTaskId;
+        if (!resolvedTaskId && inputSessionId) {
+          const sqlitePath = path.join(workspaceDir, '.siftr', 'observations.sqlite');
+          if (fs.existsSync(sqlitePath)) {
+            const lookupStore = new SqliteStore(sqlitePath);
+            const sess = lookupStore.getSiftrSession(inputSessionId);
+            if (sess) {
+              resolvedTaskId = sess.taskId;
+            }
+          }
+        }
         const agentModel = (args?.agentModel as string) || undefined;
         const agentKind = (args?.agentKind as any) || undefined;
         const budgetProfile = (args?.budgetProfile as any) || undefined;
@@ -468,6 +579,8 @@ function createMcpServerInstance() {
         const result = await ContextEngine.optimizeWorkspace({
           workspaceDir,
           prompt,
+          taskId: resolvedTaskId,
+          sessionId: inputSessionId,
           agentModel,
           agentKind,
           budgetProfile,
@@ -478,9 +591,31 @@ function createMcpServerInstance() {
         const plan = result.plan;
         const allocatedUnits = plan.units.filter((u) => u.resolution > 0);
 
+        // Persist canonical FinalContextAllocation (Final Closure Directive Section 48)
+        if (result.sqliteStore) {
+          result.sqliteStore.saveFinalContextAllocation({
+            planId: plan.planId,
+            workspaceSnapshotId: plan.workspaceSnapshotId || 'snapshot_init',
+            totalEstimatedTokens: plan.actualRenderedTokens || plan.estimatedRenderedTokens || 0,
+            budgetTokens: plan.budgetPlan.totalTokens,
+            overflow: Boolean(plan.overflowReason),
+            tokenizerMethod: plan.tokenEstimationMethod || 'HEURISTIC_CHARS',
+            items: plan.units.map((u) => ({
+              contextUnitId: u.contextUnitId,
+              plannedResolution: u.resolution,
+              actualResolution: u.resolution,
+              estimatedTokens: u.tokenEstimate,
+              materializerVersion: DefaultContextUnitMaterializer.VERSION,
+            })),
+            recordedAt: new Date().toISOString(),
+          });
+        }
+
         const responsePayload: any = {
           planId: plan.planId,
           taskId: plan.taskId,
+          sessionId: plan.sessionId,
+          workspaceSnapshotId: plan.workspaceSnapshotId,
           totalRawTokens: plan.budgetPlan.rawTotalTokens,
           allocatedTokens: plan.budgetPlan.totalTokens,
           reductionRatio: `${plan.budgetPlan.savingsPercentage.toFixed(1)}%`,
@@ -488,6 +623,7 @@ function createMcpServerInstance() {
           costSavedUSD: `$${plan.budgetPlan.costSavedUSD.toFixed(4)}`,
           allocatedUnitsCount: allocatedUnits.length,
           units: allocatedUnits.map((u) => ({
+            contextUnitId: u.contextUnitId,
             path: u.path,
             title: u.title,
             resolution: u.resolution,
@@ -639,59 +775,228 @@ function createMcpServerInstance() {
       }
 
       if (name === 'siftr_outcome') {
-        const taskId = String(args?.taskId || '');
-        if (!taskId) {
+        const workspaceDir = (args?.directory as string) || process.cwd();
+        const siftrDir = path.join(workspaceDir, '.siftr');
+        const sqlitePath = path.join(siftrDir, 'observations.sqlite');
+        const store = (fs.existsSync(sqlitePath) || fs.existsSync(siftrDir)) ? new SqliteStore(sqlitePath) : getSharedStore();
+
+        if (!store) {
           return {
-            content: [{ type: 'text', text: 'Error: "taskId" parameter is required' }],
+            content: [{ type: 'text', text: 'Error: Observation store does not exist in workspace.' }],
             isError: true,
           };
         }
 
-        const planId = args?.planId ? String(args.planId) : undefined;
-        const actualProviderInputTokens = typeof args?.actualProviderInputTokens === 'number' ? args.actualProviderInputTokens : undefined;
+        const rawArgs = (args || {}) as Record<string, any>;
+        const inputPlanId = rawArgs.planId ? String(rawArgs.planId) : undefined;
+        const inputSessionId = rawArgs.sessionId ? String(rawArgs.sessionId) : undefined;
+        const inputTaskId = rawArgs.taskId ? String(rawArgs.taskId) : undefined;
+
+        let resolvedPlanId: string | undefined = inputPlanId;
+        let resolvedSessionId: string | undefined = inputSessionId;
+        let resolvedTaskId: string | undefined = inputTaskId;
+        let resolvedSnapshotId: string = 'snapshot_init';
+        let resolvedAgentEnvId: string = 'unknown';
+
+        // 1. Resolve via planId
+        if (resolvedPlanId) {
+          const plan = store.getContextPlan(resolvedPlanId);
+          if (!plan) {
+            return {
+              content: [{ type: 'text', text: `Error: ContextPlan "${resolvedPlanId}" not found in observation store.` }],
+              isError: true,
+            };
+          }
+          if (resolvedTaskId && plan.taskId !== resolvedTaskId) {
+            return {
+              content: [{ type: 'text', text: `Error: ContextPlan "${resolvedPlanId}" belongs to taskId "${plan.taskId}", not "${resolvedTaskId}".` }],
+              isError: true,
+            };
+          }
+          if (inputSessionId && plan.sessionId && plan.sessionId !== inputSessionId) {
+            return {
+              content: [{ type: 'text', text: `Error: ContextPlan "${resolvedPlanId}" belongs to session "${plan.sessionId}", not "${inputSessionId}".` }],
+              isError: true,
+            };
+          }
+          resolvedTaskId = plan.taskId;
+          resolvedSessionId = inputSessionId || plan.sessionId;
+          resolvedSnapshotId = plan.workspaceSnapshotId || 'snapshot_init';
+          resolvedAgentEnvId = plan.agentEnvironmentId || 'unknown';
+
+          if (resolvedSessionId) {
+            const session = store.getSession(resolvedSessionId);
+            if (session && session.taskId !== resolvedTaskId) {
+              return {
+                content: [{ type: 'text', text: `Error: Session "${resolvedSessionId}" belongs to task "${session.taskId}", not "${resolvedTaskId}".` }],
+                isError: true,
+              };
+            }
+          }
+        }
+        // 2. Resolve via sessionId if planId not provided
+        else if (resolvedSessionId) {
+          const session = store.getSiftrSession(resolvedSessionId) || store.getSession(resolvedSessionId);
+          if (!session) {
+            return {
+              content: [{ type: 'text', text: `Error: Session "${resolvedSessionId}" not found in observation store.` }],
+              isError: true,
+            };
+          }
+          if (resolvedTaskId && session.taskId !== resolvedTaskId) {
+            return {
+              content: [{ type: 'text', text: `Error: Session "${resolvedSessionId}" belongs to taskId "${session.taskId}", not "${resolvedTaskId}".` }],
+              isError: true,
+            };
+          }
+          resolvedTaskId = session.taskId;
+          resolvedSnapshotId = ('latestWorkspaceSnapshotId' in session && session.latestWorkspaceSnapshotId)
+            ? session.latestWorkspaceSnapshotId
+            : (('snapshotId' in session && (session as any).snapshotId) ? (session as any).snapshotId : 'snapshot_init');
+          resolvedAgentEnvId = ('agentEnvironmentId' in session && session.agentEnvironmentId)
+            ? session.agentEnvironmentId
+            : 'unknown';
+
+          const sessionPlans = store.listContextPlans(resolvedTaskId, resolvedSessionId);
+          if (sessionPlans.length === 1) {
+            resolvedPlanId = sessionPlans[0].planId;
+          } else if (sessionPlans.length > 1) {
+            return {
+              content: [{ type: 'text', text: `Error: Multiple plans (${sessionPlans.length}) exist for session "${resolvedSessionId}". Explicit planId is required to disambiguate.` }],
+              isError: true,
+            };
+          } else {
+            const taskPlans = store.listContextPlans(resolvedTaskId);
+            if (taskPlans.length === 1) {
+              resolvedPlanId = taskPlans[0].planId;
+            }
+          }
+        }
+        // 3. Fallback via taskId
+        else if (resolvedTaskId) {
+          const plans = store.listContextPlans(resolvedTaskId);
+          if (plans.length === 1) {
+            resolvedPlanId = plans[0].planId;
+            resolvedSessionId = plans[0].sessionId;
+            resolvedSnapshotId = plans[0].workspaceSnapshotId || 'snapshot_init';
+            resolvedAgentEnvId = plans[0].agentEnvironmentId || 'unknown';
+          } else if (plans.length > 1) {
+            return {
+              content: [{ type: 'text', text: `Error: Multiple plans exist for task "${resolvedTaskId}". Explicit planId or sessionId is required to disambiguate.` }],
+              isError: true,
+            };
+          } else {
+            return {
+              content: [{ type: 'text', text: `Error: Cannot resolve outcome lineage for task "${resolvedTaskId}". No matching plan or session found in store.` }],
+              isError: true,
+            };
+          }
+        } else {
+          return {
+            content: [{ type: 'text', text: 'Error: At least one of "planId", "sessionId", or "taskId" is required to resolve outcome lineage.' }],
+            isError: true,
+          };
+        }
+
+        // Section 2: Never fabricate placeholder identifiers!
+        if (!resolvedSessionId) {
+          return {
+            content: [{ type: 'text', text: 'Error: Cannot resolve durable session lineage for outcome. Please provide sessionId or planId.' }],
+            isError: true,
+          };
+        }
+
+        // Section 36-37: Validate referential integrity at write time
+        const integrityCheck = store.validateOutcomeIntegrity({
+          sessionId: resolvedSessionId,
+          taskId: resolvedTaskId,
+          planId: resolvedPlanId,
+          snapshotId: resolvedSnapshotId,
+          agentEnvironmentId: resolvedAgentEnvId,
+        });
+        if (!integrityCheck.valid) {
+          return {
+            content: [{ type: 'text', text: `Error: ${integrityCheck.reason}` }],
+            isError: true,
+          };
+        }
+
+        // Parse evidence vector
+        const ev = (typeof rawArgs.evidence === 'object' && rawArgs.evidence !== null) ? (rawArgs.evidence as Record<string, any>) : {};
+        const buildPassed = typeof ev.buildPassed === 'boolean' ? ev.buildPassed : (typeof rawArgs.buildPassed === 'boolean' ? rawArgs.buildPassed : undefined);
+        const publicTestsPassed = typeof ev.publicTestsPassed === 'boolean' ? ev.publicTestsPassed : (typeof ev.testsPassed === 'boolean' ? ev.testsPassed : (typeof rawArgs.testsPassed === 'boolean' ? rawArgs.testsPassed : undefined));
+        const hiddenTestsPassed = typeof ev.hiddenTestsPassed === 'boolean' ? ev.hiddenTestsPassed : (typeof rawArgs.hiddenTestsPassed === 'boolean' ? rawArgs.hiddenTestsPassed : undefined);
+        const regressionTestsPassed = typeof ev.regressionTestsPassed === 'boolean' ? ev.regressionTestsPassed : (typeof rawArgs.regressionTestsPassed === 'boolean' ? rawArgs.regressionTestsPassed : undefined);
+        const staticChecksPassed = typeof ev.staticChecksPassed === 'boolean' ? ev.staticChecksPassed : (typeof rawArgs.staticChecksPassed === 'boolean' ? rawArgs.staticChecksPassed : undefined);
+        const securityChecksPassed = typeof ev.securityChecksPassed === 'boolean' ? ev.securityChecksPassed : (typeof rawArgs.securityChecksPassed === 'boolean' ? rawArgs.securityChecksPassed : undefined);
+        const behavioralOraclePassed = typeof ev.behavioralOraclePassed === 'boolean' ? ev.behavioralOraclePassed : (typeof rawArgs.behavioralOraclePassed === 'boolean' ? rawArgs.behavioralOraclePassed : undefined);
+        const userAccepted = typeof ev.userAccepted === 'boolean' ? ev.userAccepted : (typeof rawArgs.userAccepted === 'boolean' ? rawArgs.userAccepted : undefined);
+        const agentReportedSuccess = typeof ev.agentReportedSuccess === 'boolean' ? ev.agentReportedSuccess : (typeof rawArgs.agentClaimedSuccess === 'boolean' ? rawArgs.agentClaimedSuccess : undefined);
+        const humanReview = ev.humanReview || rawArgs.humanReview;
+        const actualProviderInputTokens = typeof ev.actualProviderInputTokens === 'number' ? ev.actualProviderInputTokens : (typeof rawArgs.actualProviderInputTokens === 'number' ? rawArgs.actualProviderInputTokens : undefined);
+        const actualProviderOutputTokens = typeof ev.actualProviderOutputTokens === 'number' ? ev.actualProviderOutputTokens : (typeof rawArgs.actualProviderOutputTokens === 'number' ? rawArgs.actualProviderOutputTokens : undefined);
+        const costUSD = typeof ev.costUSD === 'number' ? ev.costUSD : (typeof rawArgs.costUSD === 'number' ? rawArgs.costUSD : undefined);
+        const wallTimeMs = typeof ev.wallTimeMs === 'number' ? ev.wallTimeMs : (typeof rawArgs.wallTimeMs === 'number' ? rawArgs.wallTimeMs : undefined);
+        const notes = rawArgs.notes ? String(rawArgs.notes) : undefined;
 
         const outcomeEvidence = createOutcomeEvidence({
-          taskId,
-          sessionId: `sess_${taskId}`,
-          agentEnvironmentId: 'default',
-          workspaceSnapshotBefore: 'snapshot_initial',
-          publicTestsPassed: typeof args?.testsPassed === 'boolean' ? args.testsPassed : undefined,
-          regressionTestsPassed: typeof args?.regressionTestsPassed === 'boolean' ? args.regressionTestsPassed : undefined,
-          staticChecksPassed: typeof args?.staticChecksPassed === 'boolean' ? args.staticChecksPassed : undefined,
-          securityChecksPassed: typeof args?.securityChecksPassed === 'boolean' ? args.securityChecksPassed : undefined,
-          agentReportedSuccess: typeof args?.agentClaimedSuccess === 'boolean' ? args.agentClaimedSuccess : undefined,
+          taskId: resolvedTaskId,
+          sessionId: resolvedSessionId,
+          contextPlanId: resolvedPlanId,
+          agentEnvironmentId: resolvedAgentEnvId,
+          workspaceSnapshotBefore: resolvedSnapshotId,
+          buildPassed,
+          publicTestsPassed,
+          hiddenTestsPassed,
+          regressionTestsPassed,
+          staticChecksPassed,
+          securityChecksPassed,
+          behavioralOraclePassed,
+          userAccepted,
+          agentReportedSuccess,
+          humanReview,
           actualProviderInputTokens,
-          actualProviderOutputTokens: typeof args?.actualProviderOutputTokens === 'number' ? args.actualProviderOutputTokens : undefined,
-          costUSD: typeof args?.costUSD === 'number' ? args.costUSD : undefined,
-          wallTimeMs: typeof args?.wallTimeMs === 'number' ? args.wallTimeMs : undefined,
+          actualProviderOutputTokens,
+          costUSD,
+          wallTimeMs,
         });
 
-        const store = getSharedStore();
-        let persisted = false;
-        if (store) {
-          try {
-            store.saveOutcomeEvidence([
-              {
-                evidenceId: outcomeEvidence.outcomeId,
-                taskId: outcomeEvidence.taskId,
-                sessionId: outcomeEvidence.sessionId,
-                labelType: 'VERIFIED_SUCCESS',
-                value: outcomeEvidence.verifiedSuccess ? 1 : 0,
-                confidence: outcomeEvidence.confidence,
-                strength: outcomeEvidence.confidence >= 0.9 ? 'STRONG' : 'MEDIUM',
-                source: 'outcome_policy',
-                details: {
-                  rationale: outcomeEvidence.evaluationRationale,
-                  planId,
-                  notes: args?.notes ? String(args.notes) : undefined,
-                },
-              },
-            ]);
-            if (planId && actualProviderInputTokens !== undefined) {
-              store.updatePlanActualProviderTokens(planId, actualProviderInputTokens);
-            }
-            persisted = true;
-          } catch {}
+        // Persist exact lineage and preserve tri-state UNKNOWN (null !== 0)
+        store.saveTaskOutcome(outcomeEvidence);
+        store.saveOutcomeEvidence([
+          {
+            evidenceId: outcomeEvidence.outcomeId,
+            taskId: outcomeEvidence.taskId,
+            sessionId: outcomeEvidence.sessionId,
+            contextPlanId: resolvedPlanId,
+            snapshotId: resolvedSnapshotId,
+            labelType: 'VERIFIED_SUCCESS',
+            verifiedSuccess: outcomeEvidence.verifiedSuccess,
+            confidence: outcomeEvidence.confidence,
+            strength: outcomeEvidence.confidence >= 0.9 ? 'STRONG' : 'MEDIUM',
+            source: 'outcome_policy',
+            details: {
+              rationale: outcomeEvidence.evaluationRationale,
+              planId: resolvedPlanId,
+              policyId: outcomeEvidence.policyId,
+              policyVersion: outcomeEvidence.policyVersion,
+              notes,
+            },
+          },
+        ]);
+
+        if (resolvedPlanId && actualProviderInputTokens !== undefined) {
+          store.updatePlanActualProviderTokens(resolvedPlanId, actualProviderInputTokens);
+        }
+
+        if (actualProviderInputTokens !== undefined || actualProviderOutputTokens !== undefined) {
+          store.saveProviderUsageEvent(createProviderUsageEvent({
+            sessionId: resolvedSessionId,
+            provider: 'mcp_outcome_report',
+            inputTokens: actualProviderInputTokens ?? null,
+            outputTokens: actualProviderOutputTokens ?? null,
+            costUsd: costUSD ?? null,
+          }));
         }
 
         return {
@@ -700,12 +1005,16 @@ function createMcpServerInstance() {
               type: 'text',
               text: JSON.stringify({
                 success: true,
-                taskId,
+                taskId: outcomeEvidence.taskId,
+                sessionId: outcomeEvidence.sessionId,
+                planId: resolvedPlanId,
                 outcomeId: outcomeEvidence.outcomeId,
                 verifiedSuccess: outcomeEvidence.verifiedSuccess,
                 confidence: outcomeEvidence.confidence,
+                policyId: outcomeEvidence.policyId,
+                policyVersion: outcomeEvidence.policyVersion,
                 rationale: outcomeEvidence.evaluationRationale,
-                persisted,
+                persisted: true,
               }, null, 2),
             },
           ],
@@ -717,6 +1026,9 @@ function createMcpServerInstance() {
         const filePath = args?.filePath ? String(args.filePath) : undefined;
         const contextUnitId = args?.contextUnitId ? String(args.contextUnitId) : undefined;
         const targetResolutionStr = String(args?.targetResolution || 'body').toLowerCase();
+        const inputTaskId = args?.taskId ? String(args.taskId) : undefined;
+        const inputSessionId = args?.sessionId ? String(args.sessionId) : undefined;
+        const inputPlanId = args?.planId ? String(args.planId) : undefined;
 
         if (!filePath && !contextUnitId) {
           return {
@@ -725,25 +1037,143 @@ function createMcpServerInstance() {
           };
         }
 
-        const resolvedPath = filePath || contextUnitId!;
-        const safePath = resolveSafeWorkspacePath(workspaceDir, resolvedPath);
+        const sqlitePath = path.join(workspaceDir, '.siftr', 'observations.sqlite');
+        const store = fs.existsSync(sqlitePath) ? new SqliteStore(sqlitePath) : getSharedStore();
+
+        // Section 8: ContextUnit IDs must NEVER be interpreted as filesystem paths!
+        if (contextUnitId) {
+          if (!store) {
+            return {
+              content: [{ type: 'text', text: 'Error: Observation store required to resolve contextUnitId.' }],
+              isError: true,
+            };
+          }
+
+          let plan: ContextPlan | undefined;
+          if (inputPlanId) {
+            plan = store.getContextPlan(inputPlanId);
+          } else if (inputSessionId) {
+            const plans = store.listContextPlans(undefined, inputSessionId);
+            plan = plans[plans.length - 1];
+          } else if (inputTaskId) {
+            const plans = store.listContextPlans(inputTaskId);
+            plan = plans[plans.length - 1];
+          }
+
+          if (!plan) {
+            return {
+              content: [{ type: 'text', text: 'Error: Cannot expand contextUnitId without an active plan or session.' }],
+              isError: true,
+            };
+          }
+
+          // Section 40: ContextUnit cannot belong to wrong plan/workspace
+          const plannedUnit = plan.units.find((u) => u.contextUnitId === contextUnitId);
+          if (!plannedUnit) {
+            return {
+              content: [{ type: 'text', text: `Error: ContextUnit "${contextUnitId}" does not belong to plan "${plan.planId}" or task "${plan.taskId}". Expansion rejected.` }],
+              isError: true,
+            };
+          }
+
+          const snapshotId = plan.workspaceSnapshotId || 'snapshot_init';
+          let snapshot = store.getSnapshot(snapshotId);
+          if (!snapshot) {
+            const workspaceManager = new WorkspaceManager({ rootDir: workspaceDir });
+            snapshot = await workspaceManager.captureSnapshot();
+          }
+
+          const snapshotUnits = store.getContextUnitsBySnapshot(snapshot.workspaceSnapshotId);
+          let unit = snapshotUnits.find((u) => u.id === contextUnitId);
+          if (!unit) {
+            unit = {
+              id: contextUnitId,
+              kind: ContextUnitKind.CODE_SYMBOL,
+              workspaceSnapshotId: snapshot.workspaceSnapshotId,
+              repositoryId: 'root',
+              path: plannedUnit.path || '',
+              title: plannedUnit.title,
+              provenance: {
+                sourceType: 'file',
+                sourceUri: plannedUnit.path || '',
+                extractedBy: 'siftr-engine',
+                timestamp: new Date().toISOString(),
+              },
+              trustLevel: TrustLevel.FIRST_PARTY_CODE,
+              metadata: {},
+            };
+          }
+
+          const targetResolution = targetResolutionStr === 'full' ? ContextResolution.FULL : ContextResolution.BODY;
+
+          // Section 10: Use the exact same materializer as ContextEngine
+          const materializer = new DefaultContextUnitMaterializer();
+          const materialized = materializer.materializeSync(unit, targetResolution, snapshot);
+
+          let fallbackReason: string | undefined = undefined;
+          if (targetResolution === ContextResolution.BODY && materialized.resolution === ContextResolution.FULL) {
+            fallbackReason = 'Symbol line range unavailable for target unit; fell back to full file content';
+          }
+
+          // Section 13: Append immutable ContextExpansionEvent
+          const expansionEvent = createContextExpansionEvent({
+            taskId: plan.taskId,
+            sessionId: plan.sessionId || inputSessionId || `session_${plan.taskId}`,
+            contextPlanId: plan.planId,
+            workspaceSnapshotId: snapshot.workspaceSnapshotId,
+            agentEnvironmentId: plan.agentEnvironmentId || 'unknown',
+            contextUnitId,
+            previousResolution: plannedUnit.resolution,
+            requestedResolution: targetResolution,
+            actualResolution: materialized.resolution,
+            tokenEstimate: materialized.actualTokenCount,
+            fallbackReason,
+            reason: ExpansionReason.AGENT_EXPLICIT_REQUEST,
+          });
+
+          store.saveExpansionEvent(expansionEvent);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  contextUnitId,
+                  path: unit.path,
+                  requestedResolution: getResolutionName(targetResolution),
+                  actualResolution: getResolutionName(materialized.resolution),
+                  fallbackReason,
+                  tokens: materialized.actualTokenCount,
+                  content: materialized.content,
+                  eventId: expansionEvent.eventId,
+                }, null, 2),
+              },
+            ],
+          };
+        }
+
+        // File path handling (separate namespace)
+        const safePath = resolveSafeWorkspacePath(workspaceDir, filePath!);
         if (!safePath || !fs.existsSync(safePath)) {
           return {
-            content: [{ type: 'text', text: `Error: File not found or outside workspace: ${resolvedPath}` }],
+            content: [{ type: 'text', text: `Error: File not found or path outside workspace: ${filePath}` }],
             isError: true,
           };
         }
 
         const rawContent = fs.readFileSync(safePath, 'utf-8');
+        const tokenEstimate = Math.ceil(rawContent.length / 3.7);
+
         return {
           content: [
             {
               type: 'text',
               text: JSON.stringify({
                 success: true,
-                path: resolvedPath,
+                path: filePath,
                 resolution: targetResolutionStr,
-                tokens: Math.ceil(rawContent.length / 3.7),
+                tokens: tokenEstimate,
                 content: rawContent,
               }, null, 2),
             },
@@ -753,29 +1183,138 @@ function createMcpServerInstance() {
 
       if (name === 'siftr_session') {
         const action = String(args?.action || 'status').toLowerCase();
-        const taskId = String(args?.taskId || '');
-        if (!taskId) {
+        const inputTaskId = args?.taskId ? String(args.taskId) : undefined;
+        const inputSessionId = args?.sessionId ? String(args.sessionId) : undefined;
+        const workspaceDir = (args?.directory as string) || process.cwd();
+        const agentModel = args?.agentModel ? String(args.agentModel) : undefined;
+
+        const siftrDir = path.join(workspaceDir, '.siftr');
+        if (!fs.existsSync(siftrDir)) {
+          fs.mkdirSync(siftrDir, { recursive: true });
+        }
+        const sqlitePath = path.join(siftrDir, 'observations.sqlite');
+        const store = fs.existsSync(sqlitePath) ? new SqliteStore(sqlitePath) : (getSharedStore() || new SqliteStore(sqlitePath));
+
+        if (action === 'start') {
+          const taskId = inputTaskId || `task_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+          const workspaceManager = new WorkspaceManager({ rootDir: workspaceDir });
+          const snapshot = await workspaceManager.captureSnapshot();
+          store.saveSnapshot(snapshot);
+
+          const env = createAgentEnvironment({
+            model: agentModel || 'unknown',
+            agentProvider: 'unknown',
+          });
+
+          const session = createSiftrSession({
+            sessionId: inputSessionId,
+            taskId,
+            agentEnvironmentId: env.systemConfigurationHash,
+            initialWorkspaceSnapshotId: snapshot.workspaceSnapshotId,
+            latestWorkspaceSnapshotId: snapshot.workspaceSnapshotId,
+            status: 'ACTIVE',
+          });
+
+          store.saveSiftrSession(session);
+
           return {
-            content: [{ type: 'text', text: 'Error: "taskId" parameter is required' }],
-            isError: true,
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  action: 'start',
+                  sessionId: session.sessionId,
+                  taskId: session.taskId,
+                  agentEnvironmentId: session.agentEnvironmentId,
+                  initialWorkspaceSnapshotId: session.initialWorkspaceSnapshotId,
+                  latestWorkspaceSnapshotId: session.latestWorkspaceSnapshotId,
+                  status: session.status,
+                  createdAt: session.createdAt,
+                }, null, 2),
+              },
+            ],
           };
         }
 
-        const store = getSharedStore();
+        if (action === 'end') {
+          let session: SiftrSession | undefined;
+          if (inputSessionId) {
+            session = store.getSiftrSession(inputSessionId);
+          } else if (inputTaskId) {
+            const plans = store.listContextPlans(inputTaskId);
+            if (plans.length > 0 && plans[0].sessionId) {
+              session = store.getSiftrSession(plans[0].sessionId);
+            }
+          }
+
+          if (!session && inputSessionId) {
+            session = {
+              sessionId: inputSessionId,
+              taskId: inputTaskId || 'unknown',
+              agentEnvironmentId: 'unknown',
+              initialWorkspaceSnapshotId: 'snapshot_init',
+              latestWorkspaceSnapshotId: 'snapshot_init',
+              status: 'COMPLETED',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              endedAt: new Date().toISOString(),
+            };
+          }
+
+          if (!session) {
+            return {
+              content: [{ type: 'text', text: 'Error: Session not found to end.' }],
+              isError: true,
+            };
+          }
+
+          const targetStatus: SiftrSessionStatus = args?.status === 'ABORTED' ? 'ABORTED' : 'COMPLETED';
+          store.updateSessionStatus(session.sessionId, targetStatus, new Date().toISOString());
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  action: 'end',
+                  sessionId: session.sessionId,
+                  taskId: session.taskId,
+                  status: targetStatus,
+                  endedAt: new Date().toISOString(),
+                }, null, 2),
+              },
+            ],
+          };
+        }
+
+        // status
         let plansCount = 0;
         let outcomesCount = 0;
         let totalTokens = 0;
+        let sessionStatus = 'ACTIVE';
 
-        if (store) {
-          try {
-            const plans = store.listContextPlans(taskId);
-            plansCount = plans.length;
-            for (const p of plans) {
-              totalTokens += p.actualProviderInputTokens || p.actualRenderedTokens || 0;
-            }
-            const outcomes = store.listOutcomeEvidence(taskId);
-            outcomesCount = outcomes.length;
-          } catch {}
+        if (inputSessionId) {
+          const s = store.getSiftrSession(inputSessionId);
+          if (s) {
+            sessionStatus = s.status;
+          }
+          const plans = store.listContextPlans(undefined, inputSessionId);
+          plansCount = plans.length;
+          for (const p of plans) {
+            totalTokens += p.actualProviderInputTokens || p.actualRenderedTokens || 0;
+          }
+          const outcomes = store.listOutcomeEvidence(inputTaskId, inputSessionId);
+          outcomesCount = outcomes.length;
+        } else if (inputTaskId) {
+          const plans = store.listContextPlans(inputTaskId);
+          plansCount = plans.length;
+          for (const p of plans) {
+            totalTokens += p.actualProviderInputTokens || p.actualRenderedTokens || 0;
+          }
+          const outcomes = store.listOutcomeEvidence(inputTaskId);
+          outcomesCount = outcomes.length;
         }
 
         return {
@@ -783,12 +1322,13 @@ function createMcpServerInstance() {
             {
               type: 'text',
               text: JSON.stringify({
-                action,
-                taskId,
+                action: 'status',
+                sessionId: inputSessionId,
+                taskId: inputTaskId,
                 plansCount,
                 outcomesCount,
                 totalTokens,
-                status: action === 'end' ? 'COMPLETED' : 'ACTIVE',
+                status: sessionStatus,
                 timestamp: new Date().toISOString(),
               }, null, 2),
             },

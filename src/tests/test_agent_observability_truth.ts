@@ -173,7 +173,7 @@ export async function runAgentObservabilityTruthTests(): Promise<void> {
   {
     const cursor = new CursorAdapter();
 
-    // Section 28 Invariant: "Cursor can support file-read hooks does not imply this session is observing reads"
+    // Section 21 & 43 Invariant: Cursor without handshake defaults to SIFTR_CALLS_ONLY
     assert.strictEqual(
       cursor.observationCoverage.activeCoverage.fileReads,
       false,
@@ -181,19 +181,27 @@ export async function runAgentObservabilityTruthTests(): Promise<void> {
     );
     assert.strictEqual(
       cursor.observabilityLevel,
-      'PARTIAL_AGENT_TRACE',
-      'Cursor must default to PARTIAL_AGENT_TRACE, never claiming FULL_TOOL_TRACE prematurely'
+      'SIFTR_CALLS_ONLY',
+      'Cursor must default to SIFTR_CALLS_ONLY without active verified handshake'
     );
 
-    // When file read hook is actively installed and verified:
-    cursor.verifyActiveCoverage({ fileReads: true });
+    // When file edits hook is actively installed and verified (or via handshake):
+    cursor.verifyActiveCoverage({ fileEdits: true });
+    assert.strictEqual(
+      cursor.observabilityLevel,
+      'PARTIAL_AGENT_TRACE',
+      'Cursor upgrades to PARTIAL_AGENT_TRACE when file edit hook is verified'
+    );
+
+    // When file read hook and commands are actively installed and verified:
+    cursor.verifyActiveCoverage({ fileReads: true, shellCommands: true });
     assert.strictEqual(
       cursor.observabilityLevel,
       'FULL_TOOL_TRACE',
-      'Cursor upgrades to FULL_TOOL_TRACE only when file read hook is verified'
+      'Cursor upgrades to FULL_TOOL_TRACE only when file read and commands hooks are verified'
     );
 
-    console.log('  ✔ CursorAdapter strictly separates theoretical capability from active hook verification');
+    console.log('  ✔ CursorAdapter strictly defaults to SIFTR_CALLS_ONLY and requires verified hooks to upgrade');
   }
 
   // ---------------------------------------------------------------------------

@@ -11,7 +11,7 @@ import {
   generateSymbolUnitId,
   generateContextUnitId,
 } from '../context/context_unit';
-import { TrustLevel } from '../security/trust';
+import { TrustLevel, RepositoryOrigin, RepositoryTrustPolicy } from '../security/trust';
 import { IndexQuality, createDefaultIndexQuality } from './index_quality';
 
 export interface IndexRepositoryOptions {
@@ -19,6 +19,7 @@ export interface IndexRepositoryOptions {
   workspaceSnapshotId?: string;
   includePatterns?: string[];
   excludePatterns?: string[];
+  trustPolicy?: RepositoryTrustPolicy;
 }
 
 export interface IndexRepositoryResult {
@@ -160,17 +161,45 @@ export function classifyArtifactKind(relPath: string): ContextUnitKind {
   return ContextUnitKind.SOURCE_FILE;
 }
 
-export function classifyTrustLevel(relPath: string, kind: ContextUnitKind): TrustLevel {
+export function classifyTrustLevel(
+  relPath: string,
+  kind: ContextUnitKind,
+  policyOrOrigin?: RepositoryTrustPolicy | RepositoryOrigin
+): TrustLevel {
   const norm = relPath.replace(/\\/g, '/').toLowerCase();
 
+  // Invariant: node_modules and vendor are always DEPENDENCY regardless of repository origin (Section 30)
   if (norm.startsWith('node_modules/') || norm.startsWith('vendor/')) {
     return TrustLevel.DEPENDENCY;
   }
 
-  if (norm.startsWith('dist/') || norm.startsWith('build/') || norm.endsWith('.min.js')) {
+  // Invariant: build artifacts are always GENERATED regardless of repository origin (Section 30)
+  if (norm.startsWith('dist/') || norm.startsWith('build/') || norm.endsWith('.min.js') || norm.includes('/generated/')) {
     return TrustLevel.GENERATED;
   }
 
+  const origin = policyOrOrigin
+    ? (typeof policyOrOrigin === 'object' && 'origin' in policyOrOrigin ? policyOrOrigin.origin : (policyOrOrigin as RepositoryOrigin))
+    : RepositoryOrigin.LOCAL_FIRST_PARTY;
+
+  // Derive ContextUnit trust from repository origin (Section 29)
+  if (origin === RepositoryOrigin.DEPENDENCY) {
+    return TrustLevel.DEPENDENCY;
+  }
+  if (origin === RepositoryOrigin.GENERATED) {
+    return TrustLevel.GENERATED;
+  }
+  if (origin === RepositoryOrigin.CLONED_EXTERNAL) {
+    return TrustLevel.EXTERNAL_SOURCE;
+  }
+  if (origin === RepositoryOrigin.UNKNOWN) {
+    if (kind === ContextUnitKind.DOCUMENTATION) {
+      return TrustLevel.UNTRUSTED;
+    }
+    return TrustLevel.EXTERNAL_SOURCE;
+  }
+
+  // LOCAL_FIRST_PARTY origin
   if (kind === ContextUnitKind.CONFIG || kind === ContextUnitKind.MANIFEST || kind === ContextUnitKind.LOCKFILE) {
     return TrustLevel.FIRST_PARTY_CONFIGURATION;
   }
@@ -215,7 +244,7 @@ export class RepositoryIndexer {
     for (const relFile of files) {
       const fullPath = path.join(rootDir, relFile);
       try {
-        const units = await this.indexFile(fullPath, relFile, snapshotId, repoId);
+        const units = await this.indexFile(fullPath, relFile, snapshotId, repoId, options.trustPolicy);
         allUnits.push(...units);
         parsedFiles++;
       } catch {
@@ -252,11 +281,17 @@ export class RepositoryIndexer {
     rawContent: string,
     snapshotId: string,
     repoId: string = 'root',
-    trustLevelOverride?: TrustLevel
+    trustOrPolicy?: TrustLevel | RepositoryTrustPolicy | RepositoryOrigin
   ): ContextUnit[] {
     const normPath = relPath.replace(/\\/g, '/');
     const kind = classifyArtifactKind(normPath);
-    const trust = trustLevelOverride ?? classifyTrustLevel(normPath, kind);
+    let trust: TrustLevel;
+
+    if (trustOrPolicy && typeof trustOrPolicy === 'string' && Object.values(TrustLevel).includes(trustOrPolicy as TrustLevel)) {
+      trust = trustOrPolicy as TrustLevel;
+    } else {
+      trust = classifyTrustLevel(normPath, kind, trustOrPolicy as RepositoryTrustPolicy | RepositoryOrigin);
+    }
 
     const fileUnitId = generateContextUnitId(kind, repoId, normPath, normPath);
     const fileUnit: ContextUnit = {
@@ -299,10 +334,11 @@ export class RepositoryIndexer {
     fullPath: string,
     relPath: string,
     snapshotId: string,
-    repoId: string = 'root'
+    repoId: string = 'root',
+    trustOrPolicy?: TrustLevel | RepositoryTrustPolicy | RepositoryOrigin
   ): Promise<ContextUnit[]> {
     const rawContent = fs.readFileSync(fullPath, 'utf-8');
-    return this.indexContent(relPath, rawContent, snapshotId, repoId);
+    return this.indexContent(relPath, rawContent, snapshotId, repoId, trustOrPolicy);
   }
 
   /**

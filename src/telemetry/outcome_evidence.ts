@@ -7,6 +7,7 @@ export interface OutcomeEvidence {
   outcomeId: string;
   taskId: string;
   sessionId: string;
+  contextPlanId?: string;
   agentEnvironmentId: string;
   workspaceSnapshotBefore: string;
   workspaceSnapshotAfter?: string;
@@ -126,7 +127,16 @@ export class DefaultOutcomePolicyV1 implements OutcomePolicy {
       };
     }
 
-    // 3d. Public tests + static checks passed
+    // 3d. Build + public tests + regression tests passed
+    if (evidence.buildPassed === true && evidence.publicTestsPassed === true && evidence.regressionTestsPassed === true) {
+      return {
+        verifiedSuccess: true,
+        confidence: 0.95,
+        rationale: 'Strong automated verification: build, task tests, and full regression suite passed',
+      };
+    }
+
+    // 3e. Public tests + static checks passed
     if (evidence.publicTestsPassed === true && evidence.staticChecksPassed === true) {
       return {
         verifiedSuccess: true,

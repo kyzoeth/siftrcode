@@ -4,6 +4,7 @@ import { AgentEnvironment } from '../agents/agent_environment';
 
 export interface TaskContext {
   taskId: string;
+  sessionId?: string;
   primaryPrompt: string;
   evidence: TaskEvidence[];
   workspaceSnapshotId: string;
@@ -13,6 +14,7 @@ export interface TaskContext {
 
 export function createTaskContext(params: {
   taskId?: string;
+  sessionId?: string;
   primaryPrompt: string;
   evidence?: TaskEvidence[];
   workspaceSnapshotId: string;
@@ -37,6 +39,7 @@ export function createTaskContext(params: {
 
   return {
     taskId,
+    sessionId: params.sessionId,
     primaryPrompt: params.primaryPrompt,
     evidence: evidenceList,
     workspaceSnapshotId: params.workspaceSnapshotId,

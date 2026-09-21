@@ -58,8 +58,11 @@ export interface ContextEngineOptions {
 export interface OptimizeWorkspaceOptions {
   workspaceDir: string;
   prompt: string;
+  taskId?: string;
+  sessionId?: string;
   agentModel?: string;
   agentKind?: 'claude_code' | 'cursor' | 'generic_mcp';
+  availableTools?: string[];
   budgetProfile?: BudgetProfileName;
   budgetLimits?: BudgetLimits;
   tokenBudget?: number;
@@ -89,6 +92,9 @@ export interface OptimizeWorkspaceResult {
 export interface RankWorkspaceOptions {
   workspaceDir: string;
   prompt: string;
+  taskId?: string;
+  sessionId?: string;
+  availableTools?: string[];
   limit?: number;
   excludePatterns?: string[];
   includePatterns?: string[];
@@ -619,6 +625,9 @@ export class ContextEngine {
     const contextPlan: ContextPlan = {
       taskId: task.taskId,
       planId,
+      sessionId: task.sessionId,
+      workspaceSnapshotId: snapshot.workspaceSnapshotId,
+      agentEnvironmentId: task.agentEnvironment.systemConfigurationHash,
       budgetPlan: reconciledBudgetPlan,
       units: plannedUnits,
       formattedContext,
@@ -738,7 +747,7 @@ export class ContextEngine {
           adapter = new ClaudeCodeAdapter();
         }
 
-        const taskId = `task_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+        const taskId = options.taskId || `task_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
         const userPromptEvidence: UserPromptEvidence = {
           evidenceId: 'ev_' + crypto.randomUUID().slice(0, 8),
           kind: TaskEvidenceKind.USER_PROMPT,
@@ -760,9 +769,11 @@ export class ContextEngine {
 
         const agentProviderVal = kind === 'cursor' ? 'cursor' : (options.agentKind || 'unknown');
         const modelVal = options.agentModel || 'unknown';
+        const availableTools = options.availableTools ? [...options.availableTools] : [];
 
         const task = createTaskContext({
           taskId,
+          sessionId: options.sessionId,
           workspaceSnapshotId: snapshot.workspaceSnapshotId,
           primaryPrompt: options.prompt,
           evidence: evidenceList,
@@ -771,7 +782,7 @@ export class ContextEngine {
             agentVersion: 'unknown',
             model: modelVal,
             harnessVersion: 'unknown',
-            availableTools: ['read_file', 'edit_file'],
+            availableTools,
             provenance: {
               agentProvider: {
                 value: agentProviderVal !== 'unknown' ? agentProviderVal : null,
@@ -900,7 +911,7 @@ export class ContextEngine {
     const graph = graphBuilder.buildGraph(units, { repoDir: rootDir, sourceReader, snapshot });
     const gitIntelligence = new GitGraphIntelligence({ repoDir: rootDir });
 
-    const taskId = `task_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    const taskId = options.taskId || `task_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     const userPromptEvidence: UserPromptEvidence = {
       evidenceId: 'ev_' + crypto.randomUUID().slice(0, 8),
       kind: TaskEvidenceKind.USER_PROMPT,
@@ -908,8 +919,11 @@ export class ContextEngine {
       prompt: options.prompt,
     };
 
+    const availableTools = options.availableTools ? [...options.availableTools] : [];
+
     const task = createTaskContext({
       taskId,
+      sessionId: options.sessionId,
       workspaceSnapshotId: snapshot.workspaceSnapshotId,
       primaryPrompt: options.prompt,
       evidence: [userPromptEvidence],
@@ -918,7 +932,7 @@ export class ContextEngine {
         agentVersion: 'unknown',
         model: 'unknown',
         harnessVersion: 'unknown',
-        availableTools: ['read_file', 'edit_file'],
+        availableTools,
         provenance: {
           agentProvider: { value: null, source: 'UNKNOWN' },
           agentVersion: { value: null, source: 'UNKNOWN' },

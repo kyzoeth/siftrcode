@@ -22,6 +22,11 @@ export interface AgentEnvironmentProvenance {
   maxTurns?: EnvironmentField<number>;
 }
 
+export interface ToolAvailability {
+  name: string;
+  source: 'BENCHMARK_CONFIG' | 'AGENT_HANDSHAKE' | 'USER_SUPPLIED' | 'DETECTED';
+}
+
 export interface AgentEnvironment {
   agentProvider: string;
   agentVersion: string;
@@ -30,6 +35,7 @@ export interface AgentEnvironment {
   harnessVersion: string;
   reasoningMode?: string;
   availableTools: string[];
+  toolAvailabilities?: ToolAvailability[];
   maxTurns?: number;
   systemConfigurationHash: string;
   provenance?: AgentEnvironmentProvenance;

@@ -102,6 +102,19 @@ export interface FormattingOptions {
   instructionPrefix?: string;
 }
 
+export interface ObservationHandshake {
+  sessionId: string;
+  agent: string;
+  activeHooks: {
+    fileReads?: boolean;
+    fileEdits?: boolean;
+    shellCommands?: boolean;
+    tests?: boolean;
+    nativeSearch?: boolean;
+  };
+  verifiedAt: string;
+}
+
 export interface AgentAdapter {
   id: string;
   name: string;
@@ -118,6 +131,7 @@ export interface AgentAdapter {
   extractObservations(toolCalls: ToolCallRecord[]): AgentObservation;
 
   verifyActiveCoverage?(activeCoverage?: Partial<ActiveObservationCoverage>): AgentObservationCoverage;
+  performHandshake?(handshake: ObservationHandshake): AgentObservationCoverage;
 }
 
 /**
@@ -211,6 +225,16 @@ export class ClaudeCodeAdapter implements AgentAdapter {
       this.observabilityLevel = computeObservabilityLevel(this.observationCoverage.activeCoverage);
     }
     return this.observationCoverage;
+  }
+
+  performHandshake(handshake: ObservationHandshake): AgentObservationCoverage {
+    const active: Partial<ActiveObservationCoverage> = {};
+    if (handshake.activeHooks.fileReads !== undefined) active.fileReads = handshake.activeHooks.fileReads;
+    if (handshake.activeHooks.fileEdits !== undefined) active.fileEdits = handshake.activeHooks.fileEdits;
+    if (handshake.activeHooks.shellCommands !== undefined) active.shellCommands = handshake.activeHooks.shellCommands;
+    if (handshake.activeHooks.tests !== undefined) active.tests = handshake.activeHooks.tests;
+    if (handshake.activeHooks.nativeSearch !== undefined) active.nativeSearch = handshake.activeHooks.nativeSearch;
+    return this.verifyActiveCoverage(active);
   }
 
   formatContext(
@@ -322,10 +346,12 @@ export class CursorAdapter implements AgentAdapter {
   observationCoverage: AgentObservationCoverage;
 
   constructor(customCoverage?: Partial<ActiveObservationCoverage>) {
+    // Closure PR F4 / Section 20 & 21: Conservative defaults everywhere.
+    // Do not assume fileEdits or shellCommands are observable without verified handshake.
     const active: ActiveObservationCoverage = {
-      fileReads: false, // In Cursor without active hook, reads are NOT observed
-      fileEdits: true,  // Edits are captured via save/edit calls
-      shellCommands: true,
+      fileReads: false,
+      fileEdits: false,
+      shellCommands: false,
       tests: false,
       nativeSearch: false,
       mcpCalls: true,
@@ -349,6 +375,16 @@ export class CursorAdapter implements AgentAdapter {
       this.observabilityLevel = computeObservabilityLevel(this.observationCoverage.activeCoverage);
     }
     return this.observationCoverage;
+  }
+
+  performHandshake(handshake: ObservationHandshake): AgentObservationCoverage {
+    const active: Partial<ActiveObservationCoverage> = {};
+    if (handshake.activeHooks.fileReads !== undefined) active.fileReads = handshake.activeHooks.fileReads;
+    if (handshake.activeHooks.fileEdits !== undefined) active.fileEdits = handshake.activeHooks.fileEdits;
+    if (handshake.activeHooks.shellCommands !== undefined) active.shellCommands = handshake.activeHooks.shellCommands;
+    if (handshake.activeHooks.tests !== undefined) active.tests = handshake.activeHooks.tests;
+    if (handshake.activeHooks.nativeSearch !== undefined) active.nativeSearch = handshake.activeHooks.nativeSearch;
+    return this.verifyActiveCoverage(active);
   }
 
   formatContext(
@@ -470,6 +506,16 @@ export class GenericMcpAdapter implements AgentAdapter {
       this.observabilityLevel = computeObservabilityLevel(this.observationCoverage.activeCoverage);
     }
     return this.observationCoverage;
+  }
+
+  performHandshake(handshake: ObservationHandshake): AgentObservationCoverage {
+    const active: Partial<ActiveObservationCoverage> = {};
+    if (handshake.activeHooks.fileReads !== undefined) active.fileReads = handshake.activeHooks.fileReads;
+    if (handshake.activeHooks.fileEdits !== undefined) active.fileEdits = handshake.activeHooks.fileEdits;
+    if (handshake.activeHooks.shellCommands !== undefined) active.shellCommands = handshake.activeHooks.shellCommands;
+    if (handshake.activeHooks.tests !== undefined) active.tests = handshake.activeHooks.tests;
+    if (handshake.activeHooks.nativeSearch !== undefined) active.nativeSearch = handshake.activeHooks.nativeSearch;
+    return this.verifyActiveCoverage(active);
   }
 
   formatContext(
