@@ -12,12 +12,51 @@ export type ObservabilityLevel =
   | 'FULL_TOOL_TRACE' 
   | 'HARNESS_NATIVE';
 
-export interface AgentCapabilities {
+export interface AgentIntegrationCapabilities {
   supportsFileTree: boolean;
   supportsTerminal: boolean;
   supportsTestRunner: boolean;
   supportsLinter: boolean;
   customTools: string[];
+}
+
+export type AgentCapabilities = AgentIntegrationCapabilities;
+
+/**
+ * Authoritative Active Observation Coverage (Section 29)
+ * Distinguishes theoretical adapter capabilities from actively verified hooks.
+ */
+export interface ActiveObservationCoverage {
+  fileReads: boolean;
+  fileEdits: boolean;
+  shellCommands: boolean;
+  tests: boolean;
+  nativeSearch: boolean;
+  mcpCalls: boolean;
+}
+
+export interface AgentObservationCoverage {
+  adapterCapabilities: AgentIntegrationCapabilities;
+  activeCoverage: ActiveObservationCoverage;
+  verificationTimestamp: string;
+}
+
+/**
+ * Computes ObservabilityLevel dynamically from active verified coverage (Section 29 & 31).
+ */
+export function computeObservabilityLevel(coverage: ActiveObservationCoverage): ObservabilityLevel {
+  // FULL_TOOL_TRACE strictly requires active verified observation across file reads, file edits, and commands
+  if (coverage.fileReads && coverage.fileEdits && coverage.shellCommands) {
+    return 'FULL_TOOL_TRACE';
+  }
+
+  // PARTIAL_AGENT_TRACE if some file or command interactions are captured
+  if (coverage.fileReads || coverage.fileEdits || coverage.shellCommands || coverage.tests) {
+    return 'PARTIAL_AGENT_TRACE';
+  }
+
+  // Conservative default: SIFTR_CALLS_ONLY (Section 30)
+  return 'SIFTR_CALLS_ONLY';
 }
 
 export interface ToolCallRecord {
@@ -68,6 +107,7 @@ export interface AgentAdapter {
   name: string;
   capabilities: AgentCapabilities;
   observabilityLevel: ObservabilityLevel;
+  observationCoverage?: AgentObservationCoverage;
 
   formatContext(
     units: ContextUnitResolved[],
@@ -76,6 +116,8 @@ export interface AgentAdapter {
 
   parseToolCalls(raw: unknown): ToolCallRecord[];
   extractObservations(toolCalls: ToolCallRecord[]): AgentObservation;
+
+  verifyActiveCoverage?(activeCoverage?: Partial<ActiveObservationCoverage>): AgentObservationCoverage;
 }
 
 /**
@@ -136,7 +178,38 @@ export class ClaudeCodeAdapter implements AgentAdapter {
     supportsLinter: true,
     customTools: ['View', 'Edit', 'Bash', 'Grep', 'Glob', 'Agent'],
   };
-  observabilityLevel: ObservabilityLevel = 'FULL_TOOL_TRACE';
+  observabilityLevel: ObservabilityLevel;
+  observationCoverage: AgentObservationCoverage;
+
+  constructor(customCoverage?: Partial<ActiveObservationCoverage>) {
+    const active: ActiveObservationCoverage = {
+      fileReads: true,
+      fileEdits: true,
+      shellCommands: true,
+      tests: true,
+      nativeSearch: true,
+      mcpCalls: true,
+      ...customCoverage,
+    };
+    this.observationCoverage = {
+      adapterCapabilities: this.capabilities,
+      activeCoverage: active,
+      verificationTimestamp: new Date().toISOString(),
+    };
+    this.observabilityLevel = computeObservabilityLevel(active);
+  }
+
+  verifyActiveCoverage(activeCoverage?: Partial<ActiveObservationCoverage>): AgentObservationCoverage {
+    if (activeCoverage) {
+      this.observationCoverage.activeCoverage = {
+        ...this.observationCoverage.activeCoverage,
+        ...activeCoverage,
+      };
+      this.observationCoverage.verificationTimestamp = new Date().toISOString();
+      this.observabilityLevel = computeObservabilityLevel(this.observationCoverage.activeCoverage);
+    }
+    return this.observationCoverage;
+  }
 
   formatContext(
     units: ContextUnitResolved[],
@@ -243,7 +316,38 @@ export class CursorAdapter implements AgentAdapter {
     supportsLinter: true,
     customTools: ['read_file', 'edit_file', 'run_command'],
   };
-  observabilityLevel: ObservabilityLevel = 'PARTIAL_AGENT_TRACE';
+  observabilityLevel: ObservabilityLevel;
+  observationCoverage: AgentObservationCoverage;
+
+  constructor(customCoverage?: Partial<ActiveObservationCoverage>) {
+    const active: ActiveObservationCoverage = {
+      fileReads: false, // In Cursor without active hook, reads are NOT observed
+      fileEdits: true,  // Edits are captured via save/edit calls
+      shellCommands: true,
+      tests: false,
+      nativeSearch: false,
+      mcpCalls: true,
+      ...customCoverage,
+    };
+    this.observationCoverage = {
+      adapterCapabilities: this.capabilities,
+      activeCoverage: active,
+      verificationTimestamp: new Date().toISOString(),
+    };
+    this.observabilityLevel = computeObservabilityLevel(active);
+  }
+
+  verifyActiveCoverage(activeCoverage?: Partial<ActiveObservationCoverage>): AgentObservationCoverage {
+    if (activeCoverage) {
+      this.observationCoverage.activeCoverage = {
+        ...this.observationCoverage.activeCoverage,
+        ...activeCoverage,
+      };
+      this.observationCoverage.verificationTimestamp = new Date().toISOString();
+      this.observabilityLevel = computeObservabilityLevel(this.observationCoverage.activeCoverage);
+    }
+    return this.observationCoverage;
+  }
 
   formatContext(
     units: ContextUnitResolved[],
@@ -333,7 +437,38 @@ export class GenericMcpAdapter implements AgentAdapter {
     supportsLinter: false,
     customTools: ['mcp_call_tool', 'mcp_read_resource'],
   };
-  observabilityLevel: ObservabilityLevel = 'SIFTR_CALLS_ONLY';
+  observabilityLevel: ObservabilityLevel;
+  observationCoverage: AgentObservationCoverage;
+
+  constructor(customCoverage?: Partial<ActiveObservationCoverage>) {
+    const active: ActiveObservationCoverage = {
+      fileReads: false,
+      fileEdits: false,
+      shellCommands: false,
+      tests: false,
+      nativeSearch: false,
+      mcpCalls: true, // Only MCP calls verified by default
+      ...customCoverage,
+    };
+    this.observationCoverage = {
+      adapterCapabilities: this.capabilities,
+      activeCoverage: active,
+      verificationTimestamp: new Date().toISOString(),
+    };
+    this.observabilityLevel = computeObservabilityLevel(active);
+  }
+
+  verifyActiveCoverage(activeCoverage?: Partial<ActiveObservationCoverage>): AgentObservationCoverage {
+    if (activeCoverage) {
+      this.observationCoverage.activeCoverage = {
+        ...this.observationCoverage.activeCoverage,
+        ...activeCoverage,
+      };
+      this.observationCoverage.verificationTimestamp = new Date().toISOString();
+      this.observabilityLevel = computeObservabilityLevel(this.observationCoverage.activeCoverage);
+    }
+    return this.observationCoverage;
+  }
 
   formatContext(
     units: ContextUnitResolved[],
