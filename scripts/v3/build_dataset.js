@@ -148,10 +148,11 @@ async function runBuildDataset(options = {}) {
     const unitsMap = new Map();
     for (const u of rInfo.units) unitsMap.set(u.id, u);
 
+    // Extract features for all candidates
+    const candidateFeatures = [];
     for (const cand of candidates) {
       const u = unitsMap.get(cand.contextUnitId);
       if (!u) continue;
-
       const features = FeatureBuilderV3_1.buildFeatures({
         candidate: cand,
         unit: u,
@@ -160,6 +161,26 @@ async function runBuildDataset(options = {}) {
         gitIntelligence: rInfo.gitInt,
         featureCutoff,
       });
+      candidateFeatures.push({ cand, u, features });
+    }
+
+    // Determine actual exposed bundle under 8,000-token budget
+    candidateFeatures.sort((a, b) => b.features.heuristicScore - a.features.heuristicScore || a.cand.contextUnitId.localeCompare(b.cand.contextUnitId));
+
+    let accumulatedTokens = 0;
+    const exposedUnitIds = new Set();
+    for (const cf of candidateFeatures) {
+      const tok = cf.u.tokenEstimate || 100;
+      if (accumulatedTokens + tok <= 8000) {
+        exposedUnitIds.add(cf.cand.contextUnitId);
+        accumulatedTokens += tok;
+      }
+    }
+
+    for (const cf of candidateFeatures) {
+      const { cand, u, features } = cf;
+      const isExposed = exposedUnitIds.has(cand.contextUnitId);
+      const isTarget = u.path ? ep.expectedTargetPaths.some(tp => u.path.toLowerCase().endsWith(tp.toLowerCase()) || u.path.toLowerCase().includes(tp.toLowerCase())) : false;
 
       const row = datasetBuilder.createRow({
         episode: ep,
@@ -168,10 +189,10 @@ async function runBuildDataset(options = {}) {
         unitPath: u.path,
         features,
         candidateSources: cand.retrievalSources,
-        isExposed: true,
-        observability: 'FULL_TOOL_TRACE',
-        read: u.path ? ep.expectedTargetPaths.some(tp => u.path.includes(tp)) : false,
-        edited: u.path ? ep.expectedTargetPaths.some(tp => u.path.includes(tp)) : false,
+        isExposed,
+        observability: isExposed ? 'FULL_TOOL_TRACE' : 'UNOBSERVED',
+        read: isExposed && isTarget,
+        edited: isExposed && isTarget,
         taskSucceeded: true,
         dataRights: defaultRights,
       });
@@ -180,6 +201,7 @@ async function runBuildDataset(options = {}) {
         rows.push(row);
       }
     }
+
   }
 
   console.log(`✔ Extracted ${rows.length} candidate rows.`);

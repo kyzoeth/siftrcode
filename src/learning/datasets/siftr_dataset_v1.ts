@@ -30,6 +30,7 @@ export interface DatasetRowV1 {
   split: SplitName;
   workspaceSnapshotId: string;
   contextUnitId: string;
+  unitPath?: string;
   featureSetVersion: string;
   features: ContextFeaturesV3_1;
   featureVector: number[];
@@ -169,6 +170,7 @@ export class SiftrDatasetV1Builder {
       split,
       workspaceSnapshotId: episode.workspaceSnapshotId,
       contextUnitId,
+      unitPath,
       featureSetVersion: features.schemaVersion,
       features,
       featureVector,

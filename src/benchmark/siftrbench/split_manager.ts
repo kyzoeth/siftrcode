@@ -72,66 +72,88 @@ export class SplitManager {
     episodes: SiftrBenchEpisode[],
     options: SplitOptions = {}
   ): SplitResult {
-    const trainRatio = options.trainRatio ?? 0.70;
+    const trainRatio = options.trainRatio ?? 0.60;
     const valRatio = options.valRatio ?? 0.15;
-    const testRatio = options.testRatio ?? 0.15;
+    const testRatio = options.testRatio ?? 0.25;
     const seed = options.seed ?? 42;
 
-    // Group episodes by splitGroupId
-    const groups = new Map<string, SiftrBenchEpisode[]>();
+    // Group episodes by repository, then by splitGroupId
+    const repoGroups = new Map<string, Map<string, SiftrBenchEpisode[]>>();
     for (const ep of episodes) {
-      if (!groups.has(ep.splitGroupId)) {
-        groups.set(ep.splitGroupId, []);
+      if (!repoGroups.has(ep.repositoryId)) {
+        repoGroups.set(ep.repositoryId, new Map());
       }
-      groups.get(ep.splitGroupId)!.push(ep);
-    }
-
-    // Sort group IDs deterministically to ensure reproducibility
-    const sortedGroupIds = Array.from(groups.keys()).sort();
-
-    // Deterministic pseudo-random shuffle using seed
-    const shuffledGroupIds = [...sortedGroupIds];
-    let s = seed;
-    for (let i = shuffledGroupIds.length - 1; i > 0; i--) {
-      s = (s * 9301 + 49297) % 233280;
-      const j = Math.floor((s / 233280) * (i + 1));
-      const temp = shuffledGroupIds[i];
-      shuffledGroupIds[i] = shuffledGroupIds[j];
-      shuffledGroupIds[j] = temp;
+      const gMap = repoGroups.get(ep.repositoryId)!;
+      if (!gMap.has(ep.splitGroupId)) {
+        gMap.set(ep.splitGroupId, []);
+      }
+      gMap.get(ep.splitGroupId)!.push(ep);
     }
 
     const trainGroups = new Set<string>();
     const valGroups = new Set<string>();
     const testGroups = new Set<string>();
 
-    const targetTrainEpisodes = Math.round(episodes.length * trainRatio);
-    const targetValEpisodes = Math.round(episodes.length * valRatio);
+    let s = seed;
+    const nextRandom = () => {
+      s = (s * 9301 + 49297) % 233280;
+      return s / 233280;
+    };
 
-    let currentTrainCount = 0;
-    let currentValCount = 0;
+    // Stratify partition per repository to guarantee representation in all splits
+    const sortedRepos = Array.from(repoGroups.keys()).sort();
+    for (const repoId of sortedRepos) {
+      const gMap = repoGroups.get(repoId)!;
+      const sortedGIds = Array.from(gMap.keys()).sort();
 
-    for (const gId of shuffledGroupIds) {
-      const gEpisodes = groups.get(gId)!;
-      const count = gEpisodes.length;
+      // Deterministic shuffle
+      const shuffled = [...sortedGIds];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(nextRandom() * (i + 1));
+        const temp = shuffled[i];
+        shuffled[i] = shuffled[j];
+        shuffled[j] = temp;
+      }
 
-      if (currentTrainCount + count <= targetTrainEpisodes || (trainGroups.size === 0 && currentTrainCount < targetTrainEpisodes)) {
-        trainGroups.add(gId);
-        currentTrainCount += count;
-      } else if (currentValCount + count <= targetValEpisodes || valGroups.size === 0) {
-        valGroups.add(gId);
-        currentValCount += count;
-      } else {
-        testGroups.add(gId);
+      const totalRepoEpisodes = Array.from(gMap.values()).reduce((acc, eps) => acc + eps.length, 0);
+      const targetTest = Math.max(1, Math.round(totalRepoEpisodes * testRatio));
+      const targetVal = Math.max(1, Math.round(totalRepoEpisodes * valRatio));
+
+      let curTest = 0;
+      let curVal = 0;
+
+      for (const gId of shuffled) {
+        const count = gMap.get(gId)!.length;
+        if (curTest + count <= targetTest || !Array.from(testGroups).some(g => gMap.has(g))) {
+          testGroups.add(gId);
+          curTest += count;
+        } else if (curVal + count <= targetVal || !Array.from(valGroups).some(g => gMap.has(g))) {
+          valGroups.add(gId);
+          curVal += count;
+        } else {
+          trainGroups.add(gId);
+        }
+      }
+
+      // Guarantee each split has at least one group for this repo if shuffled.length >= 3
+      if (shuffled.length >= 3) {
+        const repoTrain = shuffled.filter((g) => trainGroups.has(g));
+        const repoVal = shuffled.filter((g) => valGroups.has(g));
+        const repoTest = shuffled.filter((g) => testGroups.has(g));
+
+        if (repoTrain.length === 0 && repoTest.length > 1) {
+          const move = repoTest.pop()!;
+          testGroups.delete(move);
+          trainGroups.add(move);
+        }
+        if (repoVal.length === 0 && repoTest.length > 1) {
+          const move = repoTest.pop()!;
+          testGroups.delete(move);
+          valGroups.add(move);
+        }
       }
     }
 
-    // Ensure at least one group in each split if possible
-    if (testGroups.size === 0 && shuffledGroupIds.length >= 3) {
-      const gId = shuffledGroupIds[shuffledGroupIds.length - 1];
-      trainGroups.delete(gId);
-      valGroups.delete(gId);
-      testGroups.add(gId);
-    }
 
     const train: SiftrBenchEpisode[] = [];
     const validation: SiftrBenchEpisode[] = [];

@@ -6,6 +6,11 @@ siftr_context.md
 *.log
 benchmarks/
 .cursor/
-data/
+data/*
+!data/siftrbench_v1_manifest.json
+!data/siftrbench_v1_splits.json
+!data/learning_curve.json
+!data/models
+!data/models/*
 .siftr/
 temp_*

@@ -54,38 +54,46 @@ export class RankingMetricsCalculator {
     const { taskId, rankedUnits, expectedTargetPaths, tokenLimit = 8000, latencyMs = 0 } = params;
     const targets = expectedTargetPaths.map((p) => p.toLowerCase());
 
-    let dcg5 = 0, idcg5 = 0;
-    let dcg10 = 0, idcg10 = 0;
-    let dcg20 = 0, idcg20 = 0;
-    let hits5 = 0, hits10 = 0, hits20 = 0, hits50 = 0;
+    const totalTargets = Math.max(1, targets.length);
+
+    // Track targets that have been discovered to enforce deduplication
+    const discoveredTargets = new Set<string>();
     let firstHitRank = 0;
     let tokensAccumulated = 0;
+
+    let dcg5 = 0;
+    let dcg10 = 0;
+    let dcg20 = 0;
 
     for (let r = 0; r < rankedUnits.length; r++) {
       const rankNum = r + 1;
       const unit = rankedUnits[r];
       const uPath = (unit.path || '').toLowerCase();
-      const isTarget = targets.some((tp) => uPath.endsWith(tp) || uPath.includes(tp));
-      const rel = isTarget ? 1 : 0;
 
-      if (isTarget && firstHitRank === 0) {
-        firstHitRank = rankNum;
+      // Check if unit matches any target not yet discovered
+      let isNewTargetHit = false;
+      for (const tp of targets) {
+        if (uPath.endsWith(tp) || uPath.includes(tp)) {
+          if (firstHitRank === 0) {
+            firstHitRank = rankNum;
+          }
+          if (!discoveredTargets.has(tp)) {
+            discoveredTargets.add(tp);
+            isNewTargetHit = true;
+          }
+        }
       }
 
-      if (rankNum <= 5) {
-        if (rel > 0) hits5++;
+      const rel = isNewTargetHit ? 1 : 0;
+
+      if (rankNum <= 5 && rel > 0) {
         dcg5 += rel / Math.log2(rankNum + 1);
       }
-      if (rankNum <= 10) {
-        if (rel > 0) hits10++;
+      if (rankNum <= 10 && rel > 0) {
         dcg10 += rel / Math.log2(rankNum + 1);
       }
-      if (rankNum <= 20) {
-        if (rel > 0) hits20++;
+      if (rankNum <= 20 && rel > 0) {
         dcg20 += rel / Math.log2(rankNum + 1);
-      }
-      if (rankNum <= 50 && rel > 0) {
-        hits50++;
       }
 
       const tok = unit.tokenEstimate || 100;
@@ -94,19 +102,41 @@ export class RankingMetricsCalculator {
       }
     }
 
-    const totalTargets = Math.max(1, targets.length);
+    // Compute unique targets hit at each cutoff k
+    const countUniqueHitsAtK = (k: number) => {
+      const seen = new Set<string>();
+      for (let r = 0; r < Math.min(k, rankedUnits.length); r++) {
+        const uPath = (rankedUnits[r].path || '').toLowerCase();
+        for (const tp of targets) {
+          if (uPath.endsWith(tp) || uPath.includes(tp)) {
+            seen.add(tp);
+          }
+        }
+      }
+      return seen.size;
+    };
+
+    const hits5 = countUniqueHitsAtK(5);
+    const hits10 = countUniqueHitsAtK(10);
+    const hits20 = countUniqueHitsAtK(20);
+    const hits50 = countUniqueHitsAtK(50);
+
+    let idcg5 = 0;
+    let idcg10 = 0;
+    let idcg20 = 0;
     for (let t = 1; t <= Math.min(totalTargets, 5); t++) idcg5 += 1 / Math.log2(t + 1);
     for (let t = 1; t <= Math.min(totalTargets, 10); t++) idcg10 += 1 / Math.log2(t + 1);
     for (let t = 1; t <= Math.min(totalTargets, 20); t++) idcg20 += 1 / Math.log2(t + 1);
 
-    const ndcg5 = idcg5 > 0 ? dcg5 / idcg5 : 0;
-    const ndcg10 = idcg10 > 0 ? dcg10 / idcg10 : 0;
-    const ndcg20 = idcg20 > 0 ? dcg20 / idcg20 : 0;
-    const recall5 = hits5 / totalTargets;
-    const recall10 = hits10 / totalTargets;
-    const recall20 = hits20 / totalTargets;
-    const recall50 = hits50 / totalTargets;
-    const mrr = firstHitRank > 0 ? 1 / firstHitRank : 0;
+    const ndcg5 = idcg5 > 0 ? Math.min(1.0, Math.max(0.0, dcg5 / idcg5)) : 0;
+    const ndcg10 = idcg10 > 0 ? Math.min(1.0, Math.max(0.0, dcg10 / idcg10)) : 0;
+    const ndcg20 = idcg20 > 0 ? Math.min(1.0, Math.max(0.0, dcg20 / idcg20)) : 0;
+
+    const recall5 = Math.min(1.0, Math.max(0.0, hits5 / totalTargets));
+    const recall10 = Math.min(1.0, Math.max(0.0, hits10 / totalTargets));
+    const recall20 = Math.min(1.0, Math.max(0.0, hits20 / totalTargets));
+    const recall50 = Math.min(1.0, Math.max(0.0, hits50 / totalTargets));
+    const mrr = firstHitRank > 0 ? Math.min(1.0, Math.max(0.0, 1 / firstHitRank)) : 0;
 
     return {
       taskId,
@@ -125,6 +155,7 @@ export class RankingMetricsCalculator {
       targetHit: firstHitRank > 0,
     };
   }
+
 
   /**
    * Computes aggregate metrics across multiple task evaluations.

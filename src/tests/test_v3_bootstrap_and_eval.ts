@@ -91,9 +91,28 @@ assert.strictEqual(evalMetrics.firstHitRank, 2, 'Target is at rank 2');
 assert.strictEqual(evalMetrics.tokensConsumed, 1100, 'Context tokens capped under 1200');
 assert.strictEqual(evalMetrics.recall5, 1.0, 'Recall@5 should be 1.0');
 assert.ok(evalMetrics.ndcg5 > 0, 'NDCG@5 must be positive');
-console.log('  ✔ Ranking metrics and token budget enforcement validated');
+
+// Deduplication & [0, 1] bounds validation on multiple units for same target
+const duplicateTargetUnits = [
+  { contextUnitId: 'cu_d1', path: 'lib/response.js', tokenEstimate: 200 },
+  { contextUnitId: 'cu_d2', path: 'lib/response.js', tokenEstimate: 200 },
+  { contextUnitId: 'cu_d3', path: 'lib/response.js', tokenEstimate: 200 },
+  { contextUnitId: 'cu_d4', path: 'lib/response.js', tokenEstimate: 200 },
+  { contextUnitId: 'cu_d5', path: 'lib/response.js', tokenEstimate: 200 },
+];
+const dupEval = RankingMetricsCalculator.evaluateTaskRanking({
+  taskId: 't_dup',
+  rankedUnits: duplicateTargetUnits,
+  expectedTargetPaths: ['lib/response.js'],
+});
+assert.ok(dupEval.recall5 <= 1.0 && dupEval.recall5 >= 0.0, 'Recall@5 must be in [0, 1]');
+assert.ok(dupEval.ndcg5 <= 1.0 && dupEval.ndcg5 >= 0.0, 'NDCG@5 must be in [0, 1]');
+assert.strictEqual(dupEval.recall5, 1.0, 'Deduplicated recall on 1 target must equal exactly 1.0');
+assert.strictEqual(dupEval.ndcg5, 1.0, 'Deduplicated ideal rank NDCG on 1 target must equal exactly 1.0');
+console.log('  ✔ Ranking metrics, deduplicated targets, and [0, 1] bounds validated');
 
 // 3. CPVST Formulation & Zero-Success Handling
+
 console.log('\n--- 3. CPVST Formulation & Zero-Success Handling ---');
 // Scenario A: Successes present
 const summaryWithSuccess = VerifiedTaskEvaluator.computeSummary('V3_LEARNED', [
