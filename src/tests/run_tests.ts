@@ -37,7 +37,8 @@ const tests = [
   { name: 'V2 OutcomeEvidence Pipeline Tests', file: 'test_outcome_evidence_pipeline.js' },
   { name: 'V2 Rights / Lineage Enforcement Tests', file: 'test_rights_lineage_enforcement.js' },
   { name: 'V2 ContextEngine (End-to-End Orchestration) Tests', file: 'test_context_engine.js' },
-  { name: 'V2 CLI & MCP Server Integration Tests', file: 'test_v2_integration.js' }
+  { name: 'V2 CLI & MCP Server Integration Tests', file: 'test_v2_integration.js' },
+  { name: 'V2 Multi-Language Symbol Correctness & Spans (PR 0.1) Tests', file: 'test_multi_language_symbols.js' }
 ];
 
 
