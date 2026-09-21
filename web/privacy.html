@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy — SiftrCode V2 Outcome-Aware Context Engine</title>
-  <meta name="description" content="Privacy Policy for SiftrCode V2. Zero-egress local processing, zero model training, zero raw source retention, and UNEXPOSED_UNKNOWN evaluation invariant.">
+  <title>Privacy Policy & Data Rights — SiftrCode</title>
+  <meta name="description" content="Privacy Policy for SiftrCode V2. Zero-egress local processing, zero model training, zero raw source retention, and mathematical decision invariants.">
   <link rel="canonical" href="https://siftrcode.com/privacy">
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -28,7 +28,6 @@
           fontFamily: {
             sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
             serif: ['"Instrument Serif"', 'Georgia', 'serif'],
-            display: ['"Instrument Serif"', 'Georgia', 'serif'],
             mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
           },
           colors: {
@@ -45,7 +44,6 @@
               700: '#B34E2E',
               800: '#934026',
               900: '#773722',
-              950: '#411A0E',
             }
           }
         }
@@ -54,323 +52,170 @@
   </script>
 
   <style>
-    html {
-      overflow-y: scroll;
-      scrollbar-gutter: stable;
-    }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       letter-spacing: -0.015em;
-      background-color: #f7f3f0;
-      background-image: radial-gradient(circle at 50% 0%, #faf5f2 0%, #f5eee8 55%, #ede3dc 100%);
-      background-attachment: fixed;
     }
-    .font-serif, h1.font-serif, h2.font-serif, h3.font-serif, .font-display { font-family: 'Instrument Serif', Georgia, serif; letter-spacing: -0.02em; }
-    code, pre, .font-mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; }
-    ::selection { background: #ECCBBE; color: #411A0E; }
-    html.dark ::selection { background: rgba(217, 119, 87, 0.35); color: #FAF3F0; }
-    body, header, section, footer { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #D97757; }
-    html.dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
-    html.dark ::-webkit-scrollbar-thumb:hover { background: #D97757; }
-
-    html.dark { color-scheme: dark; }
-    html.dark body {
-      background-color: #09090b !important;
-      background-image: radial-gradient(circle at 50% 0%, #111218 0%, #09090b 70%) !important;
-      background-attachment: fixed;
-      color: #fafafa !important;
-    }
-    html.dark header { background-color: rgba(9, 9, 11, 0.85) !important; border-color: rgba(39, 39, 42, 0.8) !important; }
-    html.dark .text-ink { color: #fafafa !important; }
-    html.dark .hover\:text-ink:hover { color: #fafafa !important; }
-    html.dark .text-ink-secondary { color: #a1a1aa !important; }
-    html.dark .bg-surface-50 { background-color: #09090b !important; }
-    html.dark .bg-white { background-color: #121215 !important; }
-    html.dark .border-zinc-200 { border-color: #27272a !important; }
-    html.dark .border-zinc-100 { border-color: #1c1c20 !important; }
-    html.dark .bg-zinc-50 { background-color: #141418 !important; }
-    html.dark .bg-zinc-100 { background-color: #18181c !important; }
-    html.dark .text-zinc-800 { color: #f4f4f5 !important; }
-    html.dark .text-zinc-700 { color: #e4e4e7 !important; }
-    html.dark .text-zinc-600 { color: #d4d4d8 !important; }
-    html.dark .text-zinc-500 { color: #a1a1aa !important; }
-    html.dark #themeToggleBtn { background-color: #18181c !important; border-color: #27272a !important; }
-    html.dark footer { background-color: #09090b !important; border-color: #27272a !important; }
-    .btn-press:active { transform: translateY(1px); }
-    @keyframes ci-live-blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.25; transform: scale(0.85); } }
-    .ci-live-dot { animation: ci-live-blink 2.2s ease-in-out infinite; }
+    .font-serif { font-family: 'Instrument Serif', Georgia, serif; }
+    .font-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
   </style>
 </head>
-<body class="bg-surface-50 text-ink font-sans antialiased overflow-x-hidden selection:bg-[#ECCBBE] selection:text-[#411A0E] dark:selection:bg-[#D97757]/30 dark:selection:text-[#FAF3F0]">
+<body class="bg-surface-50 dark:bg-zinc-950 text-ink dark:text-zinc-100 antialiased selection:bg-brand-200 dark:selection:bg-brand-900/50 min-h-screen flex flex-col">
 
-  <!-- Header Navigation -->
-  <header class="border-b border-zinc-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-      <div class="flex items-center gap-6">
-        <a href="/" class="flex items-center gap-2.5 font-bold tracking-tight text-ink text-sm group">
-          <svg class="w-6 h-[20px] text-[#D97757] dark:text-[#F39C82] group-hover:scale-105 transition shrink-0" viewBox="0 0 216 184" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="SiftrCode Logo">
-            <mask id="brand-logo-mask-priv">
-              <rect width="216" height="184" fill="white" />
-              <rect x="82" y="69" width="107" height="88" rx="8" fill="black" />
-            </mask>
-            <g mask="url(#brand-logo-mask-priv)">
-              <rect x="0" y="0" width="158" height="141" rx="24" fill="currentColor" />
-              <rect x="56" y="41" width="159" height="141" rx="24" fill="currentColor" />
-            </g>
-          </svg>
-          <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
-          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-medium">v0.2.1</span>
-        </a>
-        <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
-          <a href="/how-it-works" class="hover:text-ink transition">How It Works</a>
-          <a href="/claude" class="hover:text-ink transition">Claude Code</a>
-          <a href="/#pipeline" class="hover:text-ink transition">6-Stage Pipeline</a>
-          <a href="/#benchmark" class="hover:text-ink transition flex items-center gap-1 text-[#D97757] dark:text-[#F39C82]">
-            <span>SiftrBench</span>
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          </a>
-          <a href="/#economics" class="hover:text-ink transition">Economics</a>
-        </nav>
-      </div>
+  <!-- Navigation -->
+  <header class="sticky top-0 z-40 bg-surface-50/85 dark:bg-zinc-950/85 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800">
+    <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5 font-bold tracking-tight text-ink dark:text-white">
+        <svg class="w-6 h-[20px] text-brand-500" viewBox="0 0 216 184" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <mask id="brand-logo-mask">
+            <rect width="216" height="184" fill="white" />
+            <rect x="82" y="69" width="107" height="88" rx="8" fill="black" />
+          </mask>
+          <g mask="url(#brand-logo-mask)">
+            <rect x="0" y="0" width="158" height="141" rx="24" fill="currentColor" />
+            <rect x="56" y="41" width="159" height="141" rx="24" fill="currentColor" />
+          </g>
+        </svg>
+        <span class="font-serif text-lg tracking-normal">SiftrCode</span>
+        <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800/40">v0.2.1</span>
+      </a>
 
-      <div class="flex items-center gap-1.5 sm:gap-2.5">
-        <a href="mailto:info@siftrcode.com" title="Contact Us" aria-label="Contact Us" class="hidden sm:flex w-9 h-9 sm:w-8 sm:h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press items-center justify-center shadow-2xs cursor-pointer min-w-[36px] min-h-[36px]">
-          <svg class="w-4 h-4 text-zinc-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-          </svg>
+      <nav class="hidden md:flex items-center gap-6 text-xs text-zinc-600 dark:text-zinc-400 font-medium">
+        <a href="/how-it-works" class="hover:text-brand-500 dark:hover:text-brand-400 transition">How It Works</a>
+        <a href="/#workbench" class="hover:text-brand-500 dark:hover:text-brand-400 transition">Interactive Demo</a>
+        <a href="/claude" class="hover:text-brand-500 dark:hover:text-brand-400 transition flex items-center gap-1.5">
+          <span>Claude Code</span>
+          <span class="text-[10px] font-mono px-1 py-0.2 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">MCP</span>
         </a>
-        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" title="GitHub" aria-label="GitHub" class="hidden sm:flex w-9 h-9 sm:w-8 sm:h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press items-center justify-center shadow-2xs cursor-pointer min-w-[36px] min-h-[36px]">
-          <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-        </a>
+        <a href="/#benchmarks" class="hover:text-brand-500 dark:hover:text-brand-400 transition">Benchmarks</a>
+        <a href="/about" class="hover:text-brand-500 dark:hover:text-brand-400 transition">About</a>
+      </nav>
 
-        <!-- Light / Dark Theme Switch Button -->
-        <button id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light / Dark Theme" aria-label="Toggle theme" class="w-11 h-11 sm:w-8 sm:h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0">
-          <svg id="themeSunIcon" class="w-4 h-4 text-[#F39C82] hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-          <svg id="themeMoonIcon" class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-          </svg>
+      <div class="flex items-center gap-3">
+        <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition" aria-label="Toggle dark mode">
+          <svg id="sunIcon" class="w-4 h-4 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+          <svg id="moonIcon" class="w-4 h-4 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
         </button>
-
-        <a href="/#quickstart" title="Start Team Trial" aria-label="Start Team Trial" class="w-11 h-11 sm:w-8 sm:h-8 rounded bg-[#D97757] hover:bg-[#C86241] text-white transition cursor-pointer btn-press flex items-center justify-center shadow-sm min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0">
-          <svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>
-        </a>
-
-        <!-- Mobile Menu Toggle Button (visible only on mobile) -->
-        <button id="mobileMenuBtn" onclick="toggleMobileMenu()" title="Toggle Navigation Menu" aria-label="Toggle navigation menu" class="md:hidden w-11 h-11 sm:w-8 sm:h-8 rounded bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-ink border border-zinc-200 transition btn-press flex items-center justify-center shadow-2xs cursor-pointer min-w-[44px] min-h-[44px]">
-          <svg id="mobileMenuIconOpen" class="w-5 h-5 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-          <svg id="mobileMenuIconClose" class="w-5 h-5 text-zinc-700 dark:text-zinc-300 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">GitHub</a>
+        <a href="/#quickstart" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 hover:bg-brand-600 transition shadow-sm">Get Started</a>
+        <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-zinc-600 dark:text-zinc-300" aria-label="Toggle navigation">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
       </div>
-
     </div>
 
-    <!-- Mobile Navigation Drawer / Dropdown -->
-    <div id="mobileNavMenu" class="hidden md:hidden border-t border-zinc-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md px-4 py-3 space-y-1 transition-all duration-200">
-      <a href="/how-it-works" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
-        <span>How It Works</span>
-        <span class="text-zinc-400 font-mono text-[10px]">→</span>
-      </a>
-      <a href="/claude" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
-        <span>Claude Code Integration</span>
-        <span class="text-zinc-400 font-mono text-[10px]">→</span>
-      </a>
-      <a href="/#pipeline" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
-        <span>6-Stage Pipeline</span>
-        <span class="text-zinc-400 font-mono text-[10px]">→</span>
-      </a>
-      <a href="/#benchmark" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-[#D97757] dark:text-[#F39C82] font-semibold transition">
-        <span class="flex items-center gap-1.5">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>SiftrBench Validation</span>
-        </span>
-        <span class="text-[#D97757] font-mono text-[10px]">NEW</span>
-      </a>
-      <a href="/#economics" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
-        <span>Token Economics</span>
-        <span class="text-zinc-400 font-mono text-[10px]">→</span>
-      </a>
-      <a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
-        <span class="flex items-center gap-2">
-          <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-          <span>GitHub Repository</span>
-        </span>
-        <span class="text-zinc-400 font-mono text-[10px]">↗</span>
-      </a>
-      <a href="mailto:info@siftrcode.com" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
-        <span>Contact Us</span>
-        <span class="text-zinc-400 font-mono text-[10px]">→</span>
-      </a>
-      <a href="/about" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
-        <span>About SiftrCode</span>
-        <span class="text-zinc-400 font-mono text-[10px]">→</span>
-      </a>
+    <div id="mobileMenu" class="hidden md:hidden border-t border-zinc-200 dark:border-zinc-800 bg-surface-50 dark:bg-zinc-950 px-4 py-4 space-y-3 text-sm">
+      <a href="/how-it-works" class="block py-1 text-zinc-700 dark:text-zinc-300">How It Works</a>
+      <a href="/#workbench" class="block py-1 text-zinc-700 dark:text-zinc-300">Interactive Demo</a>
+      <a href="/claude" class="block py-1 text-zinc-700 dark:text-zinc-300">Claude Code (MCP)</a>
+      <a href="/#benchmarks" class="block py-1 text-zinc-700 dark:text-zinc-300">Benchmarks</a>
+      <a href="/about" class="block py-1 text-zinc-700 dark:text-zinc-300">About</a>
     </div>
   </header>
 
-  <!-- Main Content Container -->
-  <main class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 space-y-12">
+  <!-- Content -->
+  <main class="max-w-4xl mx-auto px-4 py-12 md:py-16 space-y-12">
     
     <!-- Title Area -->
-    <div class="space-y-3 border-b border-zinc-200/80 pb-8">
-      <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-mono font-semibold uppercase tracking-wider">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ci-live-dot"></span>
-        SIFTRCODE V2 • ZERO-EGRESS &amp; DATA RIGHTS GUARANTEES
+    <div class="space-y-3 border-b border-zinc-200/80 dark:border-zinc-800 pb-8">
+      <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/40 text-emerald-800 dark:text-emerald-300 text-[10px] font-mono font-semibold uppercase tracking-wider">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        Zero-Egress &amp; Data Rights Policy
       </div>
-      <h1 class="text-4xl sm:text-5xl font-normal text-ink font-serif tracking-tight">Privacy Policy &amp; Data Rights</h1>
-      <p class="text-xs sm:text-sm text-ink-secondary">
-        Last updated: September 20, 2026 • Effective immediately across all SiftrCode software distributions.
+      <h1 class="text-4xl sm:text-5xl font-serif text-ink dark:text-white">
+        Privacy Policy &amp; Data Rights
+      </h1>
+      <p class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+        Last updated: September 21, 2026 • Effective across all SiftrCode releases and MCP tooling.
       </p>
     </div>
 
     <!-- Core Principle Card -->
-    <div class="p-5 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md space-y-4 shadow-2xs">
-      <div class="flex items-center gap-2 text-[#B34E2E] dark:text-[#F39C82] font-bold text-xs uppercase tracking-wider font-mono">
+    <div class="p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl space-y-4 shadow-sm">
+      <div class="flex items-center gap-2 text-brand-600 dark:text-brand-400 font-bold text-xs uppercase tracking-wider font-mono">
         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-        <span>Foundational Commitment: Strict Zero-Egress Architecture</span>
+        <span>Foundational Commitment: Local-First Zero Egress</span>
       </div>
-      <p class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed font-sans">
-        SiftrCode V2 is architected from the ground up as a <strong>100% offline, local-first context optimization engine</strong>. We believe intellectual property and codebase confidentiality are inviolable. SiftrCode does not upload your files, does not maintain remote telemetry, does not train machine learning models on your syntax, and operates zero network proxies.
+      <p class="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed font-sans">
+        SiftrCode is engineered from the ground up as a <strong>100% offline, local-first context optimization engine</strong>. Your source code, syntax trees, and proprietary intellectual property never leave your machine. SiftrCode does not upload your files to any remote server, does not train models on your syntax, and runs zero background network proxies.
       </p>
       
-      <!-- 8-Part Data Rights Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 font-mono text-xs pt-1">
-        <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+      <!-- 8-Part Invariant Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs pt-2">
+        <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
           <span class="text-emerald-700 dark:text-emerald-400 font-bold">1. trainingAllowed: false</span>
-          <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">SiftrCode never trains, fine-tunes, or adapts machine learning models on your syntax, prompts, or proprietary code.</p>
+          <p class="text-zinc-500 font-sans text-xs">SiftrCode never trains, fine-tunes, or adapts public models on your code or prompts.</p>
         </div>
-        <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-          <span class="text-emerald-700 dark:text-emerald-400 font-bold">2. rawSourceRetentionAllowed: false</span>
-          <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Processed strictly in volatile RAM. No raw source code or tokens are ever written to disk logs or remote storage.</p>
+        <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+          <span class="text-emerald-700 dark:text-emerald-400 font-bold">2. rawSourceRetention: false</span>
+          <p class="text-zinc-500 font-sans text-xs">Processed strictly in volatile RAM. No raw source files or tokens are written to disk logs.</p>
         </div>
-        <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-          <span class="text-emerald-700 dark:text-emerald-400 font-bold">3. remoteProcessingAllowed: false</span>
-          <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">100% of candidate recall, ranking, bundling, and budget solving runs on local CPU. 0 outbound network sockets.</p>
+        <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+          <span class="text-emerald-700 dark:text-emerald-400 font-bold">3. remoteProcessing: false</span>
+          <p class="text-zinc-500 font-sans text-xs">100% of candidate recall, AST ranking, and knapsack solving runs on your local CPU.</p>
         </div>
-        <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+        <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
           <span class="text-emerald-700 dark:text-emerald-400 font-bold">4. UNEXPOSED Invariant</span>
-          <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">In local evaluation telemetry, files not exposed to the agent are labeled unknown, never falsely assumed negative.</p>
+          <p class="text-zinc-500 font-sans text-xs">Files not exposed to the agent are labeled unknown, never falsely presumed negative.</p>
         </div>
-        <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-          <span class="text-emerald-700 dark:text-emerald-400 font-bold">5. RightsFilter Boundary (Sec 50)</span>
-          <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Raw telemetry is isolated behind a RightsFilter gate. No training dataset builder can operate directly on raw tables.</p>
+        <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+          <span class="text-emerald-700 dark:text-emerald-400 font-bold">5. RightsFilter Boundary</span>
+          <p class="text-zinc-500 font-sans text-xs">Raw local telemetry is gated behind strict rights filters before any export pipeline runs.</p>
         </div>
-        <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-          <span class="text-emerald-700 dark:text-emerald-400 font-bold">6. Traceable Erasure (Sec 52)</span>
-          <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Full lineage ties every training row to upstream observations, ensuring complete GDPR/CCPA traceable deletion.</p>
+        <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+          <span class="text-emerald-700 dark:text-emerald-400 font-bold">6. Traceable Erasure</span>
+          <p class="text-zinc-500 font-sans text-xs">Full lineage ties every record to upstream observations for instant GDPR/CCPA purge.</p>
         </div>
-        <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-          <span class="text-emerald-700 dark:text-emerald-400 font-bold">7. Canonical Agent Lineage</span>
-          <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs"><code class="text-[10px]">systemConfigurationHash</code> binds sessions, plans, and observations cryptographically.</p>
+        <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+          <span class="text-emerald-700 dark:text-emerald-400 font-bold">7. Canonical Lineage</span>
+          <p class="text-zinc-500 font-sans text-xs">systemConfigurationHash cryptographically binds sessions, plans, and observations.</p>
         </div>
-        <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-          <span class="text-emerald-700 dark:text-emerald-400 font-bold">8. Sanctioned Exporter Gate</span>
-          <p class="text-zinc-500 dark:text-zinc-400 font-sans text-xs">Raw rows cannot enter persistent training storage without sanctioned <code class="text-[10px]">texport_</code> export IDs.</p>
+        <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+          <span class="text-emerald-700 dark:text-emerald-400 font-bold">8. Sanctioned Exporters</span>
+          <p class="text-zinc-500 font-sans text-xs">Raw tables cannot be written without cryptographically sanctioned export tokens.</p>
         </div>
-      </div>
-
-      <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-sans">
-        <span class="text-zinc-600 dark:text-zinc-400">Auditors and operators can inspect live source provenance registrations, graph metrics, and execute traceable purges directly in the management portal.</span>
-        <a href="/admin#rights" class="text-[#B34E2E] dark:text-[#F39C82] font-semibold hover:underline flex items-center gap-1 shrink-0 font-mono text-[11px]">
-          Open Data Rights &amp; Lineage Console &rarr;
-        </a>
       </div>
     </div>
 
     <!-- Detailed Policy Sections -->
-    <div class="space-y-10 text-xs sm:text-sm leading-relaxed font-sans text-zinc-600 dark:text-zinc-300">
+    <div class="space-y-10 text-sm leading-relaxed font-sans text-zinc-700 dark:text-zinc-300">
       
       <section class="space-y-3">
-        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">1. Source Code Execution &amp; Processing</h2>
+        <h2 class="text-2xl font-serif text-ink dark:text-white">1. Source Code Execution &amp; Processing</h2>
         <p>
-          When you execute <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">siftrcode context</code>, <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">siftrcode audit</code>, or invoke MCP tools through your coding agent, all syntax tree analysis, multi-channel candidate recall, transparent ranking, and knapsack budget solving occur exclusively on your local device's CPU using SiftrCode's air-gapped runtime.
+          When you execute <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">siftrcode context</code>, <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">siftrcode audit</code>, or invoke MCP tools through Claude Code, Cursor, or Windsurf, all syntax tree analysis, multi-channel recall, transparent ranking, and knapsack budget solving occur exclusively on your local device's CPU.
         </p>
-        <ul class="list-disc pl-5 space-y-1.5 text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
+        <ul class="list-disc pl-5 space-y-1.5 text-zinc-600 dark:text-zinc-400 text-xs">
           <li><strong>Zero Network Sockets:</strong> The parsing and optimization engine opens 0 network connections during code analysis.</li>
-          <li><strong>Memory-Only Syntheses:</strong> Context bundles are generated in volatile RAM and emitted directly across local standard input/output (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">stdio</code>) pipes to your agent client.</li>
+          <li><strong>Memory-Only Syntheses:</strong> Context bundles are generated in volatile RAM and emitted directly across local standard input/output (<code class="font-mono text-[11px]">stdio</code>) pipes to your agent client.</li>
           <li><strong>No Remote Parsing Queues:</strong> No source files, directory paths, git commits, or AST representations are ever streamed to external cloud servers.</li>
         </ul>
       </section>
 
       <section class="space-y-3">
-        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">2. Telemetry &amp; Analytics</h2>
+        <h2 class="text-2xl font-serif text-ink dark:text-white">2. Telemetry &amp; Open Source Guarantee</h2>
         <p>
-          The SiftrCode Open Source CLI (<code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">npx siftrcode</code>) contains <strong>no usage tracking, no user telemetry, no analytics beacons, and no crash report uploads</strong>. We do not track what repositories you optimize, which files you prune, or what AI agents you pair with SiftrCode.
+          The SiftrCode Open Source CLI (<code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">npx siftrcode</code>) contains <strong>no usage tracking, no remote telemetry, no analytics beacons, and no crash report uploads</strong>. We do not track what repositories you optimize, which files you prune, or what AI agents you pair with SiftrCode.
         </p>
       </section>
 
       <section class="space-y-3">
-        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">3. Model Context Protocol (MCP) Boundaries</h2>
+        <h2 class="text-2xl font-serif text-ink dark:text-white">3. Model Context Protocol (MCP) Security Boundaries</h2>
         <p>
-          The SiftrCode MCP Server communicates with coding agents (such as Claude Code, Cursor, or Antigravity) strictly over local Unix standard streams (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">stdio</code>). All 10 native MCP tool calls (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">siftr_context</code>, <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">siftr_optimize</code>, <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">siftr_rank</code>, <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">siftr_expand</code>, <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">siftr_outcome</code>, <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">siftr_session</code>, <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">siftr_skeleton</code>, <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">siftr_batch_skeleton</code>, <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">siftr_pack</code>, <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">siftr_audit</code>) execute as direct child processes of your IDE, preserving your IDE's established security boundary.
+          The SiftrCode MCP Server communicates with coding agents strictly over local Unix standard streams (<code class="font-mono text-[11px]">stdio</code>). Native MCP tool calls (<code class="font-mono text-[11px]">siftr_context</code>, <code class="font-mono text-[11px]">siftr_skeleton</code>, <code class="font-mono text-[11px]">siftr_pack</code>, <code class="font-mono text-[11px]">siftr_audit</code>) execute as direct child processes of your IDE or CLI, preserving your existing security boundary.
         </p>
       </section>
 
       <section class="space-y-3">
-        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">4. Learning Plane, RightsFilter Boundary &amp; Deletion Traceability (Sections 50–52)</h2>
-        <p>
-          For self-hosted enterprise or research environments utilizing SiftrCode's optional learning plane to refine ranking heuristics, strict algorithmic firewalls and traceable lineage protect your intellectual property:
-        </p>
-        <ul class="list-disc pl-5 space-y-2 text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
-          <li>
-            <strong>Authoritative Operation Rights &amp; Storage Sanitization:</strong> Durable SQLite persistence (<code class="font-mono text-[11px]">.siftr/observations.sqlite</code>) is governed authoritatively by <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">operationRights.*.retention.local</code>. Under default customer rights, all raw source code strings, snippets, and prompts are automatically stripped prior to insertion. Legacy flat flags serve strictly as backward-compatible fallbacks.
-          </li>
-          <li>
-            <strong>Fail-Closed Remote Processing &amp; Credential Isolation:</strong> External provider processing is strictly fail-closed: unless explicitly enabled with granular permissions (<code class="font-mono text-[11px]">createJevPermittedDataRights</code>), all remote operations are denied. In addition, deprecated clients disable environment-key inheritance, guaranteeing that legacy tools (such as <code class="font-mono text-[11px]">siftr_pack</code>) cannot leak credentials or bypass V2 data rights.
-          </li>
-          <li>
-            <strong>Enforced Egress Security Gateway:</strong> External provider calls (rerankers, embeddings, JEV) are structurally wrapped by <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">EnforcedEgressGateway</code>, which checks customer DataRights, filters secrets, and strictly guarantees that execution callbacks receive only sanitized, redacted contents.
-          </li>
-          <li>
-            <strong>Strict RightsFilter Export Boundary:</strong> The local telemetry store operates behind an enforced pipeline: <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">Raw Observation Store &rarr; RightsFilter &rarr; Training Export</code>. Candidate decision observations are rights-sanitized before insertion, and training set generation pipelines are strictly prohibited from querying raw observation tables directly.
-          </li>
-          <li>
-            <strong>Tri-State Evidence &amp; Null Training Labels:</strong> Downstream outcomes are captured as tri-state verification records (<code class="font-mono text-[11px]">verifiedSuccess: boolean | null</code>). Unexposed or unobserved candidates are labeled as <code class="font-mono text-[11px]">UNKNOWN</code> with <code class="font-mono text-[11px]">label: null</code>, mathematically preventing unobserved code from being penalized as negative examples.
-          </li>
-          <li>
-            <strong>Source Provenance &amp; Default Review Gate:</strong> Every source file and repository is stamped with provenance permissions (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 font-semibold">ALLOWED</code>, <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-rose-600 dark:text-rose-400 font-semibold">FORBIDDEN</code>, or <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-amber-600 dark:text-amber-400 font-semibold">REVIEW</code>). Per Section 51, any code with ambiguous, unspecified, or proprietary commercial licensing automatically defaults to <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-amber-600 dark:text-amber-400 font-semibold">REVIEW</code> and is unconditionally blocked from training exports.
-          </li>
-          <li>
-            <strong>Multi-Dimensional Training Evidence Lineage:</strong> Exported training records (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">TrainingEvidenceRecord</code>) retain deep lineage metadata (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">DerivedDataLineage</code>) linking feature vectors back to observation record IDs, license state, feature transform versions, and retention windows without leaking source code.
-          </li>
-          <li>
-            <strong>Traceable Erasure (GDPR Art. 17 / Right to be Forgotten):</strong> When a repository is purged or access rights are revoked, the <code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">DeletionManager</code> cascades across all derived training rows, purges all associated downstream records, and records an immutable, verifiable audit record (<code class="font-mono text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">DeletionAuditRecord</code>).
-          </li>
-          <li>
-            <strong>Canonical AgentEnvironment Lineage &amp; Migration 13:</strong> All runtime stores (<code class="font-mono text-[11px]">sessions</code>, <code class="font-mono text-[11px]">context_plans</code>, <code class="font-mono text-[11px]">candidate_decision_observations</code>, and <code class="font-mono text-[11px]">jev_shadow_judgments</code>) enforce exact environment lineage derived from <code class="font-mono text-[11px]">systemConfigurationHash</code>. Mismatched agent environments throw <code class="font-mono text-[11px]">AGENT_ENVIRONMENT_MISMATCH</code>, preventing poisoned or uncurated state.
-          </li>
-          <li>
-            <strong>Sanctioned Exporter Boundary:</strong> Raw training rows and evidence records cannot be written to persistent storage without a sanctioned export ID (<code class="font-mono text-[11px]">texport_</code> / <code class="font-mono text-[11px]">texport_ev_</code>) issued by <code class="font-mono text-[11px]">TrainingExporter</code> with verified multi-dataclass data rights. Direct raw inserts are blocked at the database boundary.
-          </li>
-        </ul>
-      </section>
-
-      <section class="space-y-4">
-        <div class="flex items-center gap-2">
-          <span class="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink font-mono text-xs font-bold">SECTION 05</span>
-          <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Data Classifications &amp; Lifecycle Boundaries</h2>
-        </div>
+        <h2 class="text-2xl font-serif text-ink dark:text-white">4. Data Classifications &amp; Lifecycle Boundaries</h2>
         <p>
           To eliminate ambiguity regarding what SiftrCode reads, transforms, or stores, our architecture strictly delineates five formal data classifications:
         </p>
 
-        <div class="overflow-x-auto border border-zinc-200/90 dark:border-zinc-800 rounded-md">
+        <div class="overflow-x-auto border border-zinc-200 dark:border-zinc-800 rounded-xl">
           <table class="w-full text-left font-sans text-xs border-collapse">
             <thead>
-              <tr class="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200/90 dark:border-zinc-800 text-ink font-mono text-[11px]">
+              <tr class="bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 text-ink dark:text-white font-mono text-[11px]">
                 <th class="py-2.5 px-3">Classification</th>
                 <th class="py-2.5 px-3">Examples</th>
                 <th class="py-2.5 px-3">Processing State</th>
@@ -379,10 +224,10 @@
             </thead>
             <tbody class="divide-y divide-zinc-200/60 dark:divide-zinc-800/60 font-mono text-[11.5px]">
               <tr class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30">
-                <td class="py-2.5 px-3 text-[#B34E2E] dark:text-[#F39C82] font-semibold">SYMBOL_METADATA</td>
+                <td class="py-2.5 px-3 text-brand-600 dark:text-brand-400 font-semibold">SYMBOL_METADATA</td>
                 <td class="py-2.5 px-3 font-sans text-zinc-600 dark:text-zinc-400">Function names, line ranges, symbol types, export signatures</td>
                 <td class="py-2.5 px-3 text-emerald-600 dark:text-emerald-400">Local Volatile RAM</td>
-                <td class="py-2.5 px-3 font-sans text-zinc-600 dark:text-zinc-400">Persisted strictly in local SQLite (<code class="font-mono text-[10px]">.siftr/observations.sqlite</code>). Never sent to remote servers.</td>
+                <td class="py-2.5 px-3 font-sans text-zinc-600 dark:text-zinc-400">Stored strictly in local SQLite (<code class="font-mono text-[10px]">.siftr/observations.sqlite</code>). Never sent to remote servers.</td>
               </tr>
               <tr class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30">
                 <td class="py-2.5 px-3 text-blue-600 dark:text-blue-400 font-semibold">AST_STRUCTURE</td>
@@ -413,84 +258,34 @@
         </div>
       </section>
 
-      <section class="space-y-4">
-        <div class="flex items-center gap-2">
-          <span class="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink font-mono text-xs font-bold">SECTION 06</span>
-          <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Structured Zero-Egress Gateway &amp; Shadow JEV Air-Gapped Privacy</h2>
-        </div>
-        <p>
-          SiftrCode v0.2.1 introduces the <strong>Structured Zero-Egress Gateway</strong> (<code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">EnforcedEgressGateway</code>) and rigorous shadow-mode boundaries for experimental judgment evaluation:
-        </p>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-          <div class="p-4 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-2">
-            <div class="text-xs font-mono font-bold text-ink flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-              Automated Regex Credential Scrubbing
-            </div>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed font-sans">
-              All data egress paths enforce automated credential scrubbing using strict regular expressions. AWS Access Keys (<code class="font-mono text-[10px]">AKIA[0-9A-Z]{16}</code>), Stripe Secret Keys (<code class="font-mono text-[10px]">sk_live_[0-9a-zA-Z]{24,}</code>), and Bearer authentication tokens are scrubbed and replaced with deterministic redaction tokens before any provider callback can execute.
-            </p>
-          </div>
-
-          <div class="p-4 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-2">
-            <div class="text-xs font-mono font-bold text-ink flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-              Shadow JEV 100% Plan Invariance
-            </div>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed font-sans">
-              When Judged Evidence Validation (JEV) runs in shadow mode or under SiftrBench validation (500 bounded shadow calls across 25 audited real tasks on Express, FastAPI, and SiftrCode), it operates as a silent shadow provider. Deterministic ContextRank remains the sole, unmodified decision-maker, guaranteeing 100% normalized decision plan invariance (SHA-256 match across units, resolutions, allocations, and exposures). Shadow observations are air-gapped from production bundles.
-            </p>
-          </div>
-        </div>
-      </section>
-
       <section class="space-y-3">
-        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">7. Website &amp; Team Trial Inquiries</h2>
+        <h2 class="text-2xl font-serif text-ink dark:text-white">5. Security Disclosures &amp; Inquiries</h2>
         <p>
-          When you visit our marketing website (<a href="https://siftrcode.com" class="text-[#B34E2E] dark:text-[#F39C82] hover:underline">siftrcode.com</a>) or request a Team Pro trial via our activation form, we may collect:
+          Because SiftrCode is open source, our AST engine and local daemon are completely transparent and auditable. If you have questions regarding security or wish to report a vulnerability, contact our engineering team directly at:
         </p>
-        <ul class="list-disc pl-5 space-y-1.5 text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
-          <li><strong>Work Email Address:</strong> Provided voluntarily to issue team trial credentials and setup guides.</li>
-          <li><strong>Team Size &amp; Primary Agent Stack:</strong> To provision appropriate team cache resources.</li>
-          <li><strong>Standard Web Server Logs:</strong> Standard IP addresses, timestamps, and browser user-agent headers generated during HTTP requests, retained strictly for server security and rate-limiting.</li>
-        </ul>
-        <p class="text-xs text-zinc-500 dark:text-zinc-400">
-          We never sell, rent, monetize, or trade contact details with third-party advertising networks.
-        </p>
-      </section>
-
-      <section class="space-y-3">
-        <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">8. Security Disclosures &amp; Inquiries</h2>
-        <p>
-          Because SiftrCode is open source, our AST engine and local daemon are completely transparent and verifiable. If you have questions regarding security or wish to report a vulnerability, contact our engineering team directly at:
-        </p>
-        <div class="p-4 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 font-mono text-xs shadow-2xs">
-          <a href="mailto:info@siftrcode.com" class="text-[#B34E2E] dark:text-[#F39C82] font-semibold hover:underline">info@siftrcode.com</a>
+        <div class="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 font-mono text-xs">
+          <a href="mailto:info@siftrcode.com" class="text-brand-600 dark:text-brand-400 font-semibold hover:underline">info@siftrcode.com</a>
         </div>
       </section>
 
     </div>
 
     <!-- Quickstart Link Callout -->
-    <div class="p-6 sm:p-8 bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-md shadow-xs flex flex-col sm:flex-row items-center justify-between gap-5 text-center sm:text-left">
+    <div class="p-6 sm:p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-5 text-center sm:text-left">
       <div class="space-y-1.5">
-        <h3 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Ready to test it on your codebase?</h3>
-        <p class="text-xs sm:text-sm text-ink-secondary font-sans">Run a 5-second audit or register SiftrCode directly with your agent.</p>
+        <h3 class="text-2xl font-serif text-ink dark:text-white">Ready to test it on your codebase?</h3>
+        <p class="text-xs sm:text-sm text-zinc-500 font-sans">Run a 5-second audit or register SiftrCode directly with your agent.</p>
         <div class="pt-1 flex flex-wrap items-center justify-center sm:justify-start gap-2">
-          <span class="text-[11px] font-sans text-zinc-500">Run audit:</span>
-          <div class="inline-flex items-center gap-2 bg-zinc-950 text-zinc-100 px-2.5 py-1 rounded font-mono text-[11px] border border-zinc-800 select-all shadow-2xs">
+          <span class="text-xs font-mono text-zinc-500">Run audit:</span>
+          <div class="inline-flex items-center gap-2 bg-zinc-950 text-zinc-100 px-3 py-1 rounded-lg font-mono text-xs border border-zinc-800 select-all">
             <span class="text-emerald-400 select-none">$</span>
             <code>npx siftrcode audit</code>
-            <button onclick="copySnippet('npx siftrcode audit', this)" class="text-[9px] text-zinc-400 hover:text-white px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer">
-              COPY
-            </button>
           </div>
         </div>
       </div>
       <div class="flex items-center gap-3 shrink-0">
-        <a href="/#quickstart" class="px-5 py-2.5 bg-[#D97757] hover:bg-[#C86241] text-white rounded text-xs font-bold transition btn-press shadow-xs">
-          Run 30-Second Setup →
+        <a href="/#quickstart" class="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-xs font-semibold transition shadow-sm">
+          Run 30-Second Setup &rarr;
         </a>
       </div>
     </div>
@@ -498,233 +293,58 @@
   </main>
 
   <!-- Footer -->
-  <footer class="py-6 px-4 sm:px-6 border-t border-zinc-200/80 dark:border-zinc-800 bg-surface-50 text-xs text-zinc-500">
-    <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs sm:text-[11px] leading-normal">
-      <p class="text-zinc-400 font-sans text-center md:text-left m-0 shrink-0">
-        © 2026 SiftrCode. Released under the MIT Open Source License.
-      </p>
-      
-      <nav class="flex flex-wrap items-center justify-center md:justify-end gap-x-5 gap-y-2 font-sans font-medium text-zinc-600 dark:text-zinc-400">
-        <a href="/about" class="hover:text-ink dark:hover:text-white transition">About us</a>
-        <a href="/how-it-works" class="hover:text-ink dark:hover:text-white transition">How it works</a>
-        <a href="/claude" class="hover:text-ink dark:hover:text-white transition">Claude Code</a>
-        <a href="/privacy" class="text-[#B34E2E] dark:text-[#F39C82] font-semibold transition">Privacy</a>
-        <a href="/terms" class="hover:text-ink dark:hover:text-white transition">Terms</a>
-        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" rel="noopener noreferrer" class="hover:text-ink dark:hover:text-white transition">GitHub</a>
-        <a href="mailto:info@siftrcode.com" class="hover:text-ink dark:hover:text-white transition">Contact</a>
-        <button onclick="openFeedbackModal()" class="hover:text-ink dark:hover:text-white transition cursor-pointer flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
-          <svg class="w-3.5 h-3.5 text-[#D97757] dark:text-[#F39C82]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
-          </svg>
-          Feedback
-        </button>
-      </nav>
+  <footer class="bg-surface-50 dark:bg-zinc-950 border-t border-zinc-200/80 dark:border-zinc-800 py-12 px-4 mt-auto">
+    <div class="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-xs">
+      <div class="space-y-3">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded bg-brand-500 flex items-center justify-center text-white font-bold text-xs">S</div>
+          <span class="font-serif text-base font-bold text-ink dark:text-white">SiftrCode</span>
+        </div>
+        <p class="text-zinc-500 text-[11px] leading-relaxed">Outcome-aware context optimization for AI coding agents.</p>
+      </div>
+      <div class="space-y-2">
+        <div class="font-mono font-semibold text-zinc-900 dark:text-zinc-100 uppercase text-[11px]">Product</div>
+        <div class="space-y-1.5 text-zinc-600 dark:text-zinc-400">
+          <div><a href="/how-it-works" class="hover:text-brand-500">How It Works</a></div>
+          <div><a href="/claude" class="hover:text-brand-500">Claude Code Guide</a></div>
+          <div><a href="/#workbench" class="hover:text-brand-500">Interactive Demo</a></div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <div class="font-mono font-semibold text-zinc-900 dark:text-zinc-100 uppercase text-[11px]">Resources</div>
+        <div class="space-y-1.5 text-zinc-600 dark:text-zinc-400">
+          <div><a href="https://github.com/kyzoeth/siftrcode" target="_blank" class="hover:text-brand-500">GitHub</a></div>
+          <div><a href="/about" class="hover:text-brand-500">About Us</a></div>
+          <div><a href="/privacy" class="text-brand-600 dark:text-brand-400 font-semibold">Privacy Policy</a></div>
+          <div><a href="/terms" class="hover:text-brand-500">Terms of Service</a></div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <div class="font-mono font-semibold text-zinc-900 dark:text-zinc-100 uppercase text-[11px]">Status</div>
+        <div class="p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
+          &bull; V2 Certified Production
+        </div>
+      </div>
+    </div>
+    <div class="max-w-6xl mx-auto pt-8 mt-8 border-t border-zinc-200 dark:border-zinc-800 text-center text-zinc-500 text-[11px]">
+      &copy; 2026 SiftrCode Team. All rights reserved.
     </div>
   </footer>
 
-  <!-- Anonymous Feedback Modal -->
-  <div id="feedbackModal" onclick="if(event.target===this) closeFeedbackModal()" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-zinc-950/75 backdrop-blur-sm transition-all duration-200">
-    <div class="relative w-full max-w-md max-h-[92vh] overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-md shadow-2xl p-5 sm:p-6 flex flex-col gap-3.5 sm:gap-4 animate-in fade-in zoom-in-95 duration-200">
-      
-      <button onclick="closeFeedbackModal()" aria-label="Close" class="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer">
-        <svg class="w-4 h-4 fill-none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-      </button>
-
-      <div class="space-y-1 text-left pr-7">
-        <h3 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight leading-snug">Help us improve SiftrCode</h3>
-        <p class="text-[11px] sm:text-xs text-ink-secondary font-sans leading-relaxed">
-          Found a bug? Have an idea? Share your honest thoughts directly with our engineering team.
-        </p>
-      </div>
-
-      <form id="feedbackForm" onsubmit="submitFeedback(event)" class="space-y-3.5 text-left font-sans text-xs">
-        <div>
-          <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1.5 text-[10px] uppercase tracking-wider">Category</label>
-          <div class="grid grid-cols-3 gap-1.5 text-[11px]">
-            <label class="flex items-center justify-center gap-1 py-1.5 px-2 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 cursor-pointer hover:border-[#D97757] has-[:checked]:border-[#D97757] has-[:checked]:bg-[#FAF3F0] dark:has-[:checked]:bg-[#411A0E]/40 has-[:checked]:text-[#B34E2E] dark:has-[:checked]:text-[#F39C82] transition">
-              <input type="radio" name="fbCategory" value="feature" class="hidden" checked>
-              <span>Idea / Feature</span>
-            </label>
-            <label class="flex items-center justify-center gap-1 py-1.5 px-2 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 cursor-pointer hover:border-[#D97757] has-[:checked]:border-[#D97757] has-[:checked]:bg-[#FAF3F0] dark:has-[:checked]:bg-[#411A0E]/40 has-[:checked]:text-[#B34E2E] dark:has-[:checked]:text-[#F39C82] transition">
-              <input type="radio" name="fbCategory" value="bug" class="hidden">
-              <span>Bug / Issue</span>
-            </label>
-            <label class="flex items-center justify-center gap-1 py-1.5 px-2 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 cursor-pointer hover:border-[#D97757] has-[:checked]:border-[#D97757] has-[:checked]:bg-[#FAF3F0] dark:has-[:checked]:bg-[#411A0E]/40 has-[:checked]:text-[#B34E2E] dark:has-[:checked]:text-[#F39C82] transition">
-              <input type="radio" name="fbCategory" value="general" class="hidden">
-              <span>General DX</span>
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Your Feedback *</label>
-          <textarea id="fbMessage" required rows="4" placeholder="What works well, what feels clunky, or what language/feature should we support next?..." class="w-full px-3 py-2 rounded border border-zinc-300 dark:border-zinc-700 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-ink font-sans text-base sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-800 resize-none"></textarea>
-        </div>
-
-        <div>
-          <label class="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1 text-[10px] uppercase tracking-wider">Email (Optional — only if you'd like a response)</label>
-          <input type="email" id="fbEmail" placeholder="alex@company.com" class="w-full px-3 py-2 rounded border border-zinc-300 dark:border-zinc-700 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/25 outline-none text-ink font-sans text-base sm:text-xs transition placeholder:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-zinc-800" />
-        </div>
-
-        <div id="fbError" class="hidden text-[11px] text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded p-2 font-sans"></div>
-
-        <button type="submit" id="fbSubmitBtn" class="w-full py-2.5 rounded bg-[#D97757] hover:bg-[#C86241] text-white font-bold text-xs transition btn-press shadow-xs hover:shadow flex items-center justify-center gap-1.5 cursor-pointer">
-          <span>Send Feedback</span>
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-        </button>
-
-        <div class="pt-0.5 text-center">
-          <p class="text-[10px] text-zinc-400 dark:text-zinc-500 font-sans flex items-center justify-center gap-1">
-            <svg class="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            100% anonymous • No tracking cookies • Sent directly to creators
-          </p>
-        </div>
-      </form>
-
-      <div id="fbSuccess" class="hidden space-y-3.5 text-center py-2">
-        <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded flex items-center justify-center mx-auto text-lg font-bold shadow-xs">
-          ✓
-        </div>
-        <div class="space-y-1">
-          <h4 class="text-lg font-bold text-ink">Thank you for your feedback!</h4>
-          <p class="text-xs text-ink-secondary max-w-xs mx-auto font-sans leading-relaxed" id="fbSuccessMsg">
-            Your note has been received anonymously and shared with the engineering team.
-          </p>
-        </div>
-        <button onclick="closeFeedbackModal()" class="w-full py-2 rounded bg-zinc-900 dark:bg-zinc-800 text-white font-medium text-xs hover:bg-zinc-800 dark:hover:bg-zinc-700 transition cursor-pointer">
-          Done
-        </button>
-      </div>
-
-    </div>
-  </div>
-
   <script>
-    function copySnippet(text, btn) {
-      navigator.clipboard.writeText(text).then(() => {
-        const original = btn.innerText;
-        btn.innerText = 'COPIED!';
-        btn.classList.add('text-emerald-400');
-        setTimeout(() => {
-          btn.innerText = original;
-          btn.classList.remove('text-emerald-400');
-        }, 1800);
-      });
-    }
-
     function toggleTheme() {
-      const isDark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-      updateThemeIcons();
-    }
-    function updateThemeIcons() {
-      const isDark = document.documentElement.classList.contains('dark');
-      const sun = document.getElementById('themeSunIcon');
-      const moon = document.getElementById('themeMoonIcon');
-      if (sun && moon) {
-        if (isDark) { sun.classList.remove('hidden'); moon.classList.add('hidden'); }
-        else { sun.classList.add('hidden'); moon.classList.remove('hidden'); }
-      }
-    }
-    updateThemeIcons();
-
-    // Mobile Navigation Drawer Toggle
-    function toggleMobileMenu() {
-      const menu = document.getElementById('mobileNavMenu');
-      const iconOpen = document.getElementById('mobileMenuIconOpen');
-      const iconClose = document.getElementById('mobileMenuIconClose');
-      if (!menu) return;
-      const isHidden = menu.classList.contains('hidden');
-      if (isHidden) {
-        menu.classList.remove('hidden');
-        iconOpen?.classList.add('hidden');
-        iconClose?.classList.remove('hidden');
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.theme = 'light';
       } else {
-        menu.classList.add('hidden');
-        iconOpen?.classList.remove('hidden');
-        iconClose?.classList.add('hidden');
+        document.documentElement.classList.add('dark');
+        localStorage.theme = 'dark';
       }
     }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('#mobileNavMenu a').forEach(link => {
-        link.addEventListener('click', () => {
-          const menu = document.getElementById('mobileNavMenu');
-          const iconOpen = document.getElementById('mobileMenuIconOpen');
-          const iconClose = document.getElementById('mobileMenuIconClose');
-          if (menu && !menu.classList.contains('hidden')) {
-            menu.classList.add('hidden');
-            iconOpen?.classList.remove('hidden');
-            iconClose?.classList.add('hidden');
-          }
-        });
-      });
-    });
-
-    // Feedback Modal Handlers
-    function openFeedbackModal() {
-      const modal = document.getElementById('feedbackModal');
-      if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        document.body.style.overflow = 'hidden';
-        setTimeout(() => document.getElementById('fbMessage')?.focus(), 50);
-      }
-    }
-
-    function closeFeedbackModal() {
-      const modal = document.getElementById('feedbackModal');
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        document.body.style.overflow = '';
-      }
-    }
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeFeedbackModal();
-    });
-
-    async function submitFeedback(e) {
-      e.preventDefault();
-      const btn = document.getElementById('fbSubmitBtn');
-      const errEl = document.getElementById('fbError');
-      errEl.classList.add('hidden');
-      btn.disabled = true;
-      const originalText = btn.innerHTML;
-      btn.innerHTML = `<span class="flex items-center gap-2"><svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Sending...</span>`;
-
-      const category = document.querySelector('input[name="fbCategory"]:checked')?.value || 'general';
-      const message = document.getElementById('fbMessage').value.trim();
-      const email = document.getElementById('fbEmail').value.trim();
-      const page = window.location.pathname;
-
-      try {
-        const res = await fetch('/api/feedback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ category, message, email, page })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          document.getElementById('feedbackForm').classList.add('hidden');
-          document.getElementById('fbSuccess').classList.remove('hidden');
-          if (data.message) {
-            document.getElementById('fbSuccessMsg').innerText = data.message;
-          }
-        } else {
-          errEl.innerText = data.error || 'Failed to send feedback. Please try again.';
-          errEl.classList.remove('hidden');
-          btn.disabled = false;
-          btn.innerHTML = originalText;
-        }
-      } catch (err) {
-        document.getElementById('feedbackForm').classList.add('hidden');
-        document.getElementById('fbSuccess').classList.remove('hidden');
-        document.getElementById('fbSuccessMsg').innerText = 'Thank you! Your feedback has been recorded.';
-      }
+    function toggleMobileMenu() {
+      document.getElementById('mobileMenu').classList.toggle('hidden');
     }
   </script>
-  <script src="/telemetry.js" defer></script>
+  <script src="/telemetry.js" async></script>
 </body>
 </html>

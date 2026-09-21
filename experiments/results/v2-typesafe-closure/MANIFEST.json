@@ -1,0 +1,219 @@
+{
+  "schemaVersion": "siftrcode-experiment-manifest-v1",
+  "studyName": "SiftrCode V2 Final Closure: Live TypeSafe JEV Smoke & Pilot Study",
+  "archivedAt": "2026-09-21T19:26:00.000Z",
+  "environment": {
+    "gitCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+    "gitDirty": false,
+    "sourceTreeHash": "85f9c41cea38316d8c97a258ca27b594e3afb878fbd6d46e97c9b682f9eb7392",
+    "nodeVersion": "v20.x",
+    "platform": "darwin",
+    "sdk": {
+      "name": "@typesafe-ai/sdk",
+      "version": "0.6.0"
+    }
+  },
+  "remoteProvider": {
+    "endpoint": "https://api.typesafe.ai",
+    "endpointIsProduction": true,
+    "requestedModel": "jev-latest",
+    "returnedProviderModels": [
+      "jev-1.13.0"
+    ],
+    "questionSetVersion": "jev-context-v1",
+    "dataRights": {
+      "rawSourceExcluded": true,
+      "secretsRedacted": true,
+      "tokensOmitted": true,
+      "allowedDataClasses": [
+        "TASK_PROMPT",
+        "SYMBOL_NAME",
+        "SYMBOL_METADATA",
+        "PATH",
+        "NUMERIC_FEATURE"
+      ],
+      "deniedDataClasses": [
+        "RAW_SOURCE",
+        "SOURCE_SNIPPET",
+        "PATCH"
+      ]
+    }
+  },
+  "benchmarkRepositories": {
+    "express": {
+      "repository": "expressjs/express",
+      "headCommit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+      "workspaceSnapshotId": "ws_5f24ec44faf3ee13"
+    },
+    "fastapi": {
+      "repository": "fastapi/fastapi",
+      "headCommit": "50113da16fec53b66b80d75e80a89296de4fa5a5",
+      "workspaceSnapshotId": "ws_bbe7ab0256387db6"
+    },
+    "siftrcode": {
+      "repository": "kyzoeth/siftrcode",
+      "headCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+      "workspaceSnapshotId": "ws_8dc93498fae1af17"
+    }
+  },
+  "reports": {
+    "smoke": {
+      "file": "live_smoke_report.json",
+      "sha256": "09d397701a2f858b643af70a6ebe31677a9304aa479a997ba8f282091cdccaeb",
+      "fileSizeBytes": 10052,
+      "executedAt": "2026-09-21T18:51:49.780Z",
+      "mode": "LIVE_SMOKE",
+      "totalTasks": 5,
+      "taskBreakdown": {
+        "express": 2,
+        "fastapi": 2,
+        "siftrcode": 1
+      },
+      "candidateCount": 25,
+      "callsPerTask": 5,
+      "retriesConfigured": 0,
+      "retryPolicy": "smoke_zero_retry",
+      "maxHttpRequestsPerTask": 10,
+      "totalHttpRequests": 25,
+      "httpRequestsPerCall": 1,
+      "providerAttempts": 25,
+      "providerSuccesses": 25,
+      "providerRetriesObserved": 0,
+      "terminalFailures": 0,
+      "attemptFailures": 0,
+      "peakConcurrency": 4,
+      "concurrencyLimit": 4,
+      "latencyMs": {
+        "median": 220,
+        "p95": 551,
+        "mean": 256.48,
+        "min": 150,
+        "max": 569
+      },
+      "decisionPlanInvariance": {
+        "holds": true,
+        "percentage": 100.0,
+        "matchingTasks": 5,
+        "totalTasks": 5
+      },
+      "lineage": {
+        "totalJevSignals": 25,
+        "orphanJevSignals": 0,
+        "totalContextPlans": 10,
+        "orphanContextPlans": 0,
+        "totalCandidateDecisions": 2000,
+        "orphanCandidateDecisions": 0,
+        "lineageVerificationSucceeded": true
+      },
+      "failedCriteriaCount": 0,
+      "recommendation": "PASS_TO_30_TASK_PILOT",
+      "reportConsistencyPassed": true
+    },
+    "pilot": {
+      "file": "live_pilot_report.json",
+      "sha256": "18a610a34f9bc0e71561cc8c0b79650d137398ea324be3687dc6fff768dfae32",
+      "fileSizeBytes": 15284,
+      "executedAt": "2026-09-21T19:13:31.697Z",
+      "mode": "LIVE_PILOT",
+      "totalTasks": 25,
+      "taskBreakdown": {
+        "express": 10,
+        "fastapi": 10,
+        "siftrcode": 5
+      },
+      "candidateCount": 125,
+      "callsPerTask": 5,
+      "retriesConfigured": 2,
+      "retryPolicy": "pilot_two_retries_with_backoff",
+      "maxHttpRequestsPerTask": 60,
+      "totalHttpRequests": 125,
+      "httpRequestsPerCall": 1,
+      "providerAttempts": 125,
+      "providerSuccesses": 125,
+      "providerRetriesObserved": 0,
+      "terminalFailures": 0,
+      "attemptFailures": 0,
+      "peakConcurrency": 4,
+      "concurrencyLimit": 4,
+      "latencyMs": {
+        "median": 175,
+        "p95": 294,
+        "mean": 191.05,
+        "min": 134,
+        "max": 472
+      },
+      "decisionPlanInvariance": {
+        "holds": true,
+        "percentage": 100.0,
+        "matchingTasks": 25,
+        "totalTasks": 25
+      },
+      "lineage": {
+        "totalJevSignals": 125,
+        "orphanJevSignals": 0,
+        "totalContextPlans": 50,
+        "orphanContextPlans": 0,
+        "totalCandidateDecisions": 9018,
+        "orphanCandidateDecisions": 0,
+        "lineageVerificationSucceeded": true
+      },
+      "probabilityDistributions": {
+        "semanticRelevance": {
+          "mean": 0.4676,
+          "median": 0.50,
+          "range": [0.06, 0.87]
+        },
+        "implementationNeeded": {
+          "mean": 0.5662,
+          "median": 0.62,
+          "range": [0.09, 0.89]
+        },
+        "likelyEditTarget": {
+          "mean": 0.6194,
+          "median": 0.63,
+          "range": [0.26, 0.89]
+        },
+        "likelyRootCause": {
+          "mean": 0.4299,
+          "median": 0.44,
+          "range": [0.04, 0.91]
+        }
+      },
+      "rankingAblation": {
+        "ndcgAt5": {
+          "baseline": 0.4122,
+          "jev": 0.4162,
+          "delta": 0.0040
+        },
+        "ndcgAt10": {
+          "baseline": 0.3738,
+          "jev": 0.3764,
+          "delta": 0.0026
+        },
+        "recallAt5": {
+          "baseline": 0.1615,
+          "jev": 0.1615,
+          "delta": 0.0
+        },
+        "recallAt10": {
+          "baseline": 0.2378,
+          "jev": 0.2378,
+          "delta": 0.0
+        },
+        "mrr": {
+          "baseline": 0.6990,
+          "jev": 0.7123,
+          "delta": 0.0133
+        }
+      },
+      "failedCriteriaCount": 0,
+      "recommendation": "PASS_TO_30_TASK_PILOT",
+      "reportConsistencyPassed": true
+    }
+  },
+  "certification": {
+    "status": "V2_CERTIFIED_PRODUCTION",
+    "readyForV3ModelTraining": true,
+    "exitCode": 0
+  }
+}

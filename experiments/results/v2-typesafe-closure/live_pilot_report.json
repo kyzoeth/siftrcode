@@ -1,0 +1,478 @@
+{
+  "mode": "LIVE_PILOT",
+  "endpoint": "https://api.typesafe.ai",
+  "endpointIsProduction": true,
+  "provenance": {
+    "testedGitCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+    "dirty": false,
+    "sourceTreeHash": "85f9c41cea38316d8c97a258ca27b594e3afb878fbd6d46e97c9b682f9eb7392",
+    "isClean": true
+  },
+  "testedGitCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+  "sdkVersion": "0.6.0",
+  "requestedModel": "jev-latest",
+  "returnedProviderModels": [
+    "jev-1.13.0"
+  ],
+  "questionSetVersion": "jev-context-v1",
+  "totalTasks": 25,
+  "selectedTaskCount": 25,
+  "startedTaskCount": 25,
+  "completedTaskCount": 25,
+  "tasksWithValidProviderSignal": 25,
+  "tasksPerRepo": {
+    "express": 10,
+    "fastapi": 10,
+    "siftrcode": 5
+  },
+  "tasksPerType": {
+    "BUG_FIX": 10,
+    "TEST_FAILURE": 1,
+    "FEATURE_ADDITION": 12,
+    "REFACTOR": 2
+  },
+  "resolvedMaxCallsPerTask": 5,
+  "resolvedMaxHttpRequestsPerTask": 60,
+  "retriesConfigured": 2,
+  "selectedCandidates": 125,
+  "provider": {
+    "attempts": 125,
+    "successes": 125,
+    "retries": 0,
+    "httpRequests": 125,
+    "failuresByCategory": {
+      "timeouts": 0,
+      "rateLimited": 0,
+      "malformed": 0,
+      "connectionErrors": 0,
+      "providerErrors": 0
+    },
+    "httpAttemptFailures": {
+      "timeouts": 0,
+      "rateLimited": 0,
+      "malformed": 0,
+      "connectionErrors": 0,
+      "providerErrors": 0
+    },
+    "rightsDenied": 0,
+    "trustDenied": 0,
+    "budgetSkipped": 0
+  },
+  "signals": {
+    "total": 125,
+    "validSignals": 125,
+    "fallbackSignals": 0
+  },
+  "operational": {
+    "totalCalls": 125,
+    "successfulCalls": 125,
+    "failedCalls": 0,
+    "fallbackCalls": 0,
+    "trustDeniedCalls": 0,
+    "rightsDeniedCalls": 0,
+    "budgetSkippedCalls": 0,
+    "meanCallsPerTask": 5,
+    "peakConcurrency": 4,
+    "configuredMaxConcurrency": 4,
+    "latencySummary": {
+      "mean": 191.048,
+      "std": 61.977,
+      "median": 175,
+      "min": 134,
+      "max": 472,
+      "p95": 294
+    }
+  },
+  "redactionCount": 0,
+  "workspaceSnapshotIds": {
+    "express": "ws_5f24ec44faf3ee13",
+    "fastapi": "ws_bbe7ab0256387db6",
+    "siftrcode": "ws_8dc93498fae1af17"
+  },
+  "benchmarkRepoHeadShas": {
+    "express": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+    "fastapi": "50113da16fec53b66b80d75e80a89296de4fa5a5",
+    "siftrcode": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a"
+  },
+  "lineage": {
+    "orphanJevSignals": 0,
+    "totalJevSignals": 125,
+    "joinedJevSignals": 125,
+    "orphanContextPlans": 0,
+    "totalContextPlans": 50,
+    "joinedContextPlans": 50,
+    "orphanCandidateDecisions": 0,
+    "totalCandidateDecisions": 9018,
+    "joinedCandidateDecisions": 9018,
+    "mismatchedJevAgentEnvs": 0,
+    "mismatchedPlanAgentEnvs": 0,
+    "mismatchedDecisionAgentEnvs": 0,
+    "mismatchedPlanSnapshots": 0,
+    "mismatchedJevSnapshots": 0,
+    "mismatchedDecisionSnapshots": 0,
+    "completeLineageCoverage": true,
+    "lineageVerificationSucceeded": true
+  },
+  "lineageCoverage": {
+    "totalSessions": 25,
+    "totalJudgments": 125,
+    "orphanJudgments": 0,
+    "totalPlans": 50,
+    "orphanPlans": 0,
+    "totalObservations": 9018,
+    "orphanObservations": 0,
+    "mismatchedAgentEnvs": 0,
+    "mismatchedSnapshots": 0,
+    "mismatchedDecisionSnapshots": 0,
+    "lineageVerificationSucceeded": true
+  },
+  "zeroLineageMismatches": true,
+  "zeroUnexpectedEgress": true,
+  "liveMetrics": {
+    "liveMode": true,
+    "totalTasks": 25,
+    "selectedTaskCount": 25,
+    "startedTaskCount": 25,
+    "completedTaskCount": 25,
+    "tasksWithValidProviderSignal": 25,
+    "maxHttpRequests": 1500,
+    "successfulCalls": 125,
+    "failedCalls": 0,
+    "rateLimitedCalls": 0,
+    "timeoutCalls": 0,
+    "malformedCalls": 0,
+    "connectionErrorCalls": 0,
+    "totalHttpRequests": 125,
+    "totalRetries": 0,
+    "trustDeniedCalls": 0,
+    "rightsDeniedCalls": 0,
+    "planInvarianceHolds": true,
+    "zeroLineageMismatches": true,
+    "zeroUnexpectedEgress": true,
+    "endpoint": "https://api.typesafe.ai",
+    "endpointIsProduction": true,
+    "provenanceClean": true,
+    "providerAttempts": 125,
+    "providerSuccesses": 125,
+    "validSignals": 125,
+    "syntheticSignals": 0,
+    "fallbackOnlySignals": 0,
+    "snapshotMismatches": 0,
+    "sessionMismatches": 0,
+    "agentEnvironmentMismatches": 0,
+    "orphanJevSignals": 0,
+    "orphanContextPlans": 0,
+    "orphanCandidateDecisions": 0,
+    "orphanJevSession": 0,
+    "orphanJevContextUnit": 0,
+    "orphanJevContextPlan": 0,
+    "orphanJevWorkspaceSnapshot": 0,
+    "orphanContextPlanSession": 0,
+    "orphanContextPlanWorkspaceSnapshot": 0,
+    "orphanCandidateDecisionSession": 0,
+    "orphanCandidateDecisionWorkspaceSnapshot": 0,
+    "orphanTaskContextSession": 0,
+    "orphanTaskContextWorkspaceSnapshot": 0,
+    "mismatchedDecisionSnapshots": 0,
+    "totalJevSignals": 125,
+    "joinedJevSignals": 125,
+    "totalContextPlans": 50,
+    "joinedContextPlans": 50,
+    "totalCandidateDecisions": 9018,
+    "joinedCandidateDecisions": 9018,
+    "completeLineageCoverage": true,
+    "lineageVerificationSucceeded": true,
+    "perTaskAttemptsExceeded": false,
+    "httpRequestsExceededBudget": false
+  },
+  "perTaskPlanInvariance": [
+    {
+      "taskId": "task_real_exp_01",
+      "baselinePlanHash": "78f65f2c66870f146a698426d0aa0f37947a55780f40b7e273a19dcbc66995f2",
+      "shadowPlanHash": "78f65f2c66870f146a698426d0aa0f37947a55780f40b7e273a19dcbc66995f2",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_exp_02",
+      "baselinePlanHash": "05d4ff34decf1db2f0e1b5601483ba9b8069ac85a91e54bf2a16d388e8369530",
+      "shadowPlanHash": "05d4ff34decf1db2f0e1b5601483ba9b8069ac85a91e54bf2a16d388e8369530",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_exp_03",
+      "baselinePlanHash": "aa29fb6f6c7a081394eced88849d6959bd1e76f68ccc3f741818984cfc41d864",
+      "shadowPlanHash": "aa29fb6f6c7a081394eced88849d6959bd1e76f68ccc3f741818984cfc41d864",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_exp_04",
+      "baselinePlanHash": "e0abdfe0639a434e72d200e543f5abf081930529f914fdd10ad9b91ec3342b4e",
+      "shadowPlanHash": "e0abdfe0639a434e72d200e543f5abf081930529f914fdd10ad9b91ec3342b4e",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_exp_05",
+      "baselinePlanHash": "d7a054773f417d0f8ecbffac6bf77c102d83199a5cb13714264b20c78c818433",
+      "shadowPlanHash": "d7a054773f417d0f8ecbffac6bf77c102d83199a5cb13714264b20c78c818433",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_exp_06",
+      "baselinePlanHash": "e0ab55de36f336f3eb16e399db3e59d5a95a746828e4bbcb46e0e6eba7e2b9ed",
+      "shadowPlanHash": "e0ab55de36f336f3eb16e399db3e59d5a95a746828e4bbcb46e0e6eba7e2b9ed",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_exp_07",
+      "baselinePlanHash": "cca60ed6311056ae41a3cff71d7704225803acda8fb854c8a461bfec257e3941",
+      "shadowPlanHash": "cca60ed6311056ae41a3cff71d7704225803acda8fb854c8a461bfec257e3941",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_exp_08",
+      "baselinePlanHash": "a5c7d25b5e3810305940efed60eaeac30d58c76cfde4d88ab9b75de6172d7516",
+      "shadowPlanHash": "a5c7d25b5e3810305940efed60eaeac30d58c76cfde4d88ab9b75de6172d7516",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_exp_09",
+      "baselinePlanHash": "4a304d8862a73553fab36cb087169279e4d4456341992a29ffb338d93463adfa",
+      "shadowPlanHash": "4a304d8862a73553fab36cb087169279e4d4456341992a29ffb338d93463adfa",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_exp_10",
+      "baselinePlanHash": "4890160b3f18a5d195a81f300c151b4bfcbdf93efc27baa4dc6fc3ade9ecbe52",
+      "shadowPlanHash": "4890160b3f18a5d195a81f300c151b4bfcbdf93efc27baa4dc6fc3ade9ecbe52",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_fa_01",
+      "baselinePlanHash": "b427fb9305f2416d3ec5fa1d7d32d715feacc8b2a5518a6a425a83c0de829d8f",
+      "shadowPlanHash": "b427fb9305f2416d3ec5fa1d7d32d715feacc8b2a5518a6a425a83c0de829d8f",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_fa_02",
+      "baselinePlanHash": "3c1f664a9ee6c2875a55bbccbc7bacc732e79b834a7d55a56518ae4a5fbf5de5",
+      "shadowPlanHash": "3c1f664a9ee6c2875a55bbccbc7bacc732e79b834a7d55a56518ae4a5fbf5de5",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_fa_03",
+      "baselinePlanHash": "9d4bb633102f273b8cadffbb6d39da99f1e462d01a55699dc463131fcd613a25",
+      "shadowPlanHash": "9d4bb633102f273b8cadffbb6d39da99f1e462d01a55699dc463131fcd613a25",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_fa_04",
+      "baselinePlanHash": "2dc624e0421b2cee0d73ffa91e293009257350e970796d173fbb292d5339b57c",
+      "shadowPlanHash": "2dc624e0421b2cee0d73ffa91e293009257350e970796d173fbb292d5339b57c",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_fa_05",
+      "baselinePlanHash": "67f0198f379962dc201a60935261e147b7d243d001d6a1fee8c60badb3d61451",
+      "shadowPlanHash": "67f0198f379962dc201a60935261e147b7d243d001d6a1fee8c60badb3d61451",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_fa_06",
+      "baselinePlanHash": "5cc31478a3e03857891f4236672edeac6e045f1431b92d9d78340f35defee601",
+      "shadowPlanHash": "5cc31478a3e03857891f4236672edeac6e045f1431b92d9d78340f35defee601",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_fa_07",
+      "baselinePlanHash": "8bf25e144d7393799be44608490da375c935ea60fc15060083a009a9e35d7291",
+      "shadowPlanHash": "8bf25e144d7393799be44608490da375c935ea60fc15060083a009a9e35d7291",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_fa_08",
+      "baselinePlanHash": "912e48d9e330d8fd51dab7bf23cf8bbb4f63add095fff535a57fd66818efb4a2",
+      "shadowPlanHash": "912e48d9e330d8fd51dab7bf23cf8bbb4f63add095fff535a57fd66818efb4a2",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_fa_09",
+      "baselinePlanHash": "3f925ed025aec6221e0b54e9aee820cba99108843b185a7e7124c19dc0dcce15",
+      "shadowPlanHash": "3f925ed025aec6221e0b54e9aee820cba99108843b185a7e7124c19dc0dcce15",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_fa_10",
+      "baselinePlanHash": "990e7fc0a3acf63dfdd74bf9c93b5932ca0dcd1cb27bbcf465a111afa71c44a9",
+      "shadowPlanHash": "990e7fc0a3acf63dfdd74bf9c93b5932ca0dcd1cb27bbcf465a111afa71c44a9",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_siftr_01",
+      "baselinePlanHash": "54dc2b420736ac7b20a73f905335522132a0ffbe38177f55bfcea339acfd20ba",
+      "shadowPlanHash": "54dc2b420736ac7b20a73f905335522132a0ffbe38177f55bfcea339acfd20ba",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_siftr_02",
+      "baselinePlanHash": "8707c6108fb29d14cee5cab36a0400fb9861d60773abbf70f5b24e115f5190d0",
+      "shadowPlanHash": "8707c6108fb29d14cee5cab36a0400fb9861d60773abbf70f5b24e115f5190d0",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_siftr_03",
+      "baselinePlanHash": "122ea694f4f888d9ceefcd5830863e1dba7c65fb29785e0dc26f38d865864445",
+      "shadowPlanHash": "122ea694f4f888d9ceefcd5830863e1dba7c65fb29785e0dc26f38d865864445",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_siftr_04",
+      "baselinePlanHash": "1ef2daab93683d4a9c7ed07f053e81d7281158f56b89847f542ccd570713bfc4",
+      "shadowPlanHash": "1ef2daab93683d4a9c7ed07f053e81d7281158f56b89847f542ccd570713bfc4",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_siftr_05",
+      "baselinePlanHash": "82bbe5d0bf00245ad7e0941652ce46cb35c6db9b18b4cd20349fbd33eb6963ad",
+      "shadowPlanHash": "82bbe5d0bf00245ad7e0941652ce46cb35c6db9b18b4cd20349fbd33eb6963ad",
+      "invariant": true
+    }
+  ],
+  "planInvarianceHolds": true,
+  "distributions": {
+    "semanticRelevance": {
+      "mean": 0.4676,
+      "std": 0.2488,
+      "median": 0.5,
+      "min": 0.06,
+      "max": 0.87,
+      "p95": 0.81
+    },
+    "implementationNeeded": {
+      "mean": 0.5662,
+      "std": 0.23,
+      "median": 0.62,
+      "min": 0.09,
+      "max": 0.89,
+      "p95": 0.85
+    },
+    "likelyEditTarget": {
+      "mean": 0.6194,
+      "std": 0.1264,
+      "median": 0.63,
+      "min": 0.26,
+      "max": 0.89,
+      "p95": 0.8
+    },
+    "likelyRootCause": {
+      "mean": 0.4299,
+      "std": 0.2582,
+      "median": 0.44,
+      "min": 0.04,
+      "max": 0.91,
+      "p95": 0.83
+    }
+  },
+  "correlations": {
+    "editTargetVsGroundTruth": 0.1609,
+    "rootCauseVsGroundTruth": 0.513,
+    "semanticRelevanceVsGroundTruth": 0.5004
+  },
+  "rankingAblation": {
+    "baseline": {
+      "ndcg5": 0.4122,
+      "ndcg10": 0.3738,
+      "recall5": 0.1615,
+      "recall10": 0.2378,
+      "recall20": 0.3158,
+      "mrr": 0.699
+    },
+    "jevAugmented": {
+      "ndcg5": 0.4162,
+      "ndcg10": 0.3764,
+      "recall5": 0.1615,
+      "recall10": 0.2378,
+      "recall20": 0.3158,
+      "mrr": 0.7123
+    },
+    "ndcg10Delta": 0.0026,
+    "recall10Delta": 0,
+    "mrrDelta": 0.0133
+  },
+  "metadata": {
+    "sdk": {
+      "name": "@typesafe-ai/sdk",
+      "version": "0.6.0"
+    },
+    "model": "jev-latest",
+    "questionSet": {
+      "version": "jev-context-v1",
+      "questionCount": 4,
+      "questions": [
+        {
+          "key": "semanticRelevance",
+          "prompt": "Would access to this candidate materially help a coding agent understand or solve the task?"
+        },
+        {
+          "key": "implementationNeeded",
+          "prompt": "Is seeing the implementation/detail contained in this candidate likely necessary or materially useful for completing the task, rather than only knowing its name/signature?"
+        },
+        {
+          "key": "likelyEditTarget",
+          "prompt": "Is this candidate likely to require modification to successfully complete the task?"
+        },
+        {
+          "key": "likelyRootCause",
+          "prompt": "Is this candidate likely to contain, control, or directly explain the behavior that must change to solve the task?"
+        }
+      ]
+    },
+    "redaction": {
+      "rawSourceExcluded": true,
+      "secretsRedacted": true,
+      "tokensOmitted": true,
+      "allowedDataClasses": [
+        "TASK_PROMPT",
+        "SYMBOL_NAME",
+        "SYMBOL_METADATA",
+        "PATH",
+        "NUMERIC_FEATURE"
+      ],
+      "deniedDataClasses": [
+        "RAW_SOURCE",
+        "SOURCE_SNIPPET",
+        "PATCH"
+      ]
+    },
+    "fallback": {
+      "strategy": "pilot_two_retries_with_backoff",
+      "retriesConfigured": 2,
+      "failClosedOnZeroRemoteProbabilities": true
+    },
+    "sampleSanitizedPayloadShape": {
+      "schemaVersion": "string (12 chars)",
+      "task": {
+        "prompt": "string (73 chars)",
+        "evidenceSummary": "string (13 chars)",
+        "taskType": "string (11 chars)"
+      },
+      "candidate": {
+        "contextUnitId": "string (21 chars)",
+        "kind": "string (11 chars)",
+        "title": "string (11 chars)",
+        "path": "string (30 chars)"
+      },
+      "relationships": {},
+      "history": {
+        "coChange": "number (0.0000)",
+        "recentChange": "number (1.0000)"
+      }
+    },
+    "sampleRequestId": "req_01a0c55da4b4719482b44473ddd2c0a0"
+  },
+  "failedCriteria": [],
+  "recommendation": "PASS_TO_30_TASK_PILOT",
+  "reportConsistency": {
+    "consistent": true,
+    "diffs": []
+  }
+}

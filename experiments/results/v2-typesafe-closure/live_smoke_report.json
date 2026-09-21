@@ -1,0 +1,358 @@
+{
+  "mode": "LIVE_SMOKE",
+  "endpoint": "https://api.typesafe.ai",
+  "endpointIsProduction": true,
+  "provenance": {
+    "testedGitCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+    "dirty": false,
+    "sourceTreeHash": "85f9c41cea38316d8c97a258ca27b594e3afb878fbd6d46e97c9b682f9eb7392",
+    "isClean": true
+  },
+  "testedGitCommit": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a",
+  "sdkVersion": "0.6.0",
+  "requestedModel": "jev-latest",
+  "returnedProviderModels": [
+    "jev-1.13.0"
+  ],
+  "questionSetVersion": "jev-context-v1",
+  "totalTasks": 5,
+  "selectedTaskCount": 5,
+  "startedTaskCount": 5,
+  "completedTaskCount": 5,
+  "tasksWithValidProviderSignal": 5,
+  "tasksPerRepo": {
+    "express": 2,
+    "fastapi": 2,
+    "siftrcode": 1
+  },
+  "tasksPerType": {
+    "BUG_FIX": 2,
+    "TEST_FAILURE": 0,
+    "FEATURE_ADDITION": 3,
+    "REFACTOR": 0
+  },
+  "resolvedMaxCallsPerTask": 5,
+  "resolvedMaxHttpRequestsPerTask": 10,
+  "retriesConfigured": 0,
+  "selectedCandidates": 25,
+  "provider": {
+    "attempts": 25,
+    "successes": 25,
+    "retries": 0,
+    "httpRequests": 25,
+    "failuresByCategory": {
+      "timeouts": 0,
+      "rateLimited": 0,
+      "malformed": 0,
+      "connectionErrors": 0,
+      "providerErrors": 0
+    },
+    "httpAttemptFailures": {
+      "timeouts": 0,
+      "rateLimited": 0,
+      "malformed": 0,
+      "connectionErrors": 0,
+      "providerErrors": 0
+    },
+    "rightsDenied": 0,
+    "trustDenied": 0,
+    "budgetSkipped": 0
+  },
+  "signals": {
+    "total": 25,
+    "validSignals": 25,
+    "fallbackSignals": 0
+  },
+  "operational": {
+    "totalCalls": 25,
+    "successfulCalls": 25,
+    "failedCalls": 0,
+    "fallbackCalls": 0,
+    "trustDeniedCalls": 0,
+    "rightsDeniedCalls": 0,
+    "budgetSkippedCalls": 0,
+    "meanCallsPerTask": 5,
+    "peakConcurrency": 4,
+    "configuredMaxConcurrency": 4,
+    "latencySummary": {
+      "mean": 256.48,
+      "std": 131.2668,
+      "median": 220,
+      "min": 150,
+      "max": 569,
+      "p95": 551
+    }
+  },
+  "redactionCount": 0,
+  "workspaceSnapshotIds": {
+    "express": "ws_5f24ec44faf3ee13",
+    "fastapi": "ws_bbe7ab0256387db6",
+    "siftrcode": "ws_8dc93498fae1af17"
+  },
+  "benchmarkRepoHeadShas": {
+    "express": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+    "fastapi": "50113da16fec53b66b80d75e80a89296de4fa5a5",
+    "siftrcode": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a"
+  },
+  "lineage": {
+    "orphanJevSignals": 0,
+    "totalJevSignals": 25,
+    "joinedJevSignals": 25,
+    "orphanContextPlans": 0,
+    "totalContextPlans": 10,
+    "joinedContextPlans": 10,
+    "orphanCandidateDecisions": 0,
+    "totalCandidateDecisions": 2000,
+    "joinedCandidateDecisions": 2000,
+    "mismatchedJevAgentEnvs": 0,
+    "mismatchedPlanAgentEnvs": 0,
+    "mismatchedDecisionAgentEnvs": 0,
+    "mismatchedPlanSnapshots": 0,
+    "mismatchedJevSnapshots": 0,
+    "mismatchedDecisionSnapshots": 0,
+    "completeLineageCoverage": true,
+    "lineageVerificationSucceeded": true
+  },
+  "lineageCoverage": {
+    "totalSessions": 5,
+    "totalJudgments": 25,
+    "orphanJudgments": 0,
+    "totalPlans": 10,
+    "orphanPlans": 0,
+    "totalObservations": 2000,
+    "orphanObservations": 0,
+    "mismatchedAgentEnvs": 0,
+    "mismatchedSnapshots": 0,
+    "mismatchedDecisionSnapshots": 0,
+    "lineageVerificationSucceeded": true
+  },
+  "zeroLineageMismatches": true,
+  "zeroUnexpectedEgress": true,
+  "liveMetrics": {
+    "liveMode": true,
+    "totalTasks": 5,
+    "selectedTaskCount": 5,
+    "startedTaskCount": 5,
+    "completedTaskCount": 5,
+    "tasksWithValidProviderSignal": 5,
+    "maxHttpRequests": 50,
+    "successfulCalls": 25,
+    "failedCalls": 0,
+    "rateLimitedCalls": 0,
+    "timeoutCalls": 0,
+    "malformedCalls": 0,
+    "connectionErrorCalls": 0,
+    "totalHttpRequests": 25,
+    "totalRetries": 0,
+    "trustDeniedCalls": 0,
+    "rightsDeniedCalls": 0,
+    "planInvarianceHolds": true,
+    "zeroLineageMismatches": true,
+    "zeroUnexpectedEgress": true,
+    "endpoint": "https://api.typesafe.ai",
+    "endpointIsProduction": true,
+    "provenanceClean": true,
+    "providerAttempts": 25,
+    "providerSuccesses": 25,
+    "validSignals": 25,
+    "syntheticSignals": 0,
+    "fallbackOnlySignals": 0,
+    "snapshotMismatches": 0,
+    "sessionMismatches": 0,
+    "agentEnvironmentMismatches": 0,
+    "orphanJevSignals": 0,
+    "orphanContextPlans": 0,
+    "orphanCandidateDecisions": 0,
+    "orphanJevSession": 0,
+    "orphanJevContextUnit": 0,
+    "orphanJevContextPlan": 0,
+    "orphanJevWorkspaceSnapshot": 0,
+    "orphanContextPlanSession": 0,
+    "orphanContextPlanWorkspaceSnapshot": 0,
+    "orphanCandidateDecisionSession": 0,
+    "orphanCandidateDecisionWorkspaceSnapshot": 0,
+    "orphanTaskContextSession": 0,
+    "orphanTaskContextWorkspaceSnapshot": 0,
+    "mismatchedDecisionSnapshots": 0,
+    "totalJevSignals": 25,
+    "joinedJevSignals": 25,
+    "totalContextPlans": 10,
+    "joinedContextPlans": 10,
+    "totalCandidateDecisions": 2000,
+    "joinedCandidateDecisions": 2000,
+    "completeLineageCoverage": true,
+    "lineageVerificationSucceeded": true,
+    "perTaskAttemptsExceeded": false,
+    "httpRequestsExceededBudget": false
+  },
+  "perTaskPlanInvariance": [
+    {
+      "taskId": "task_real_exp_01",
+      "baselinePlanHash": "78f65f2c66870f146a698426d0aa0f37947a55780f40b7e273a19dcbc66995f2",
+      "shadowPlanHash": "78f65f2c66870f146a698426d0aa0f37947a55780f40b7e273a19dcbc66995f2",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_exp_02",
+      "baselinePlanHash": "05d4ff34decf1db2f0e1b5601483ba9b8069ac85a91e54bf2a16d388e8369530",
+      "shadowPlanHash": "05d4ff34decf1db2f0e1b5601483ba9b8069ac85a91e54bf2a16d388e8369530",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_fa_01",
+      "baselinePlanHash": "5f7ddbad4c04ebccfe806f26de823a6aec981c17f630a3f13c1d0a5fcbd90cde",
+      "shadowPlanHash": "5f7ddbad4c04ebccfe806f26de823a6aec981c17f630a3f13c1d0a5fcbd90cde",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_fa_02",
+      "baselinePlanHash": "3dcee0e469f11684cac9ddf831be328219831f18e928c840b35dcdb6c2dbac88",
+      "shadowPlanHash": "3dcee0e469f11684cac9ddf831be328219831f18e928c840b35dcdb6c2dbac88",
+      "invariant": true
+    },
+    {
+      "taskId": "task_real_siftr_01",
+      "baselinePlanHash": "54dc2b420736ac7b20a73f905335522132a0ffbe38177f55bfcea339acfd20ba",
+      "shadowPlanHash": "54dc2b420736ac7b20a73f905335522132a0ffbe38177f55bfcea339acfd20ba",
+      "invariant": true
+    }
+  ],
+  "planInvarianceHolds": true,
+  "distributions": {
+    "semanticRelevance": {
+      "mean": 0.494,
+      "std": 0.2359,
+      "median": 0.5,
+      "min": 0.06,
+      "max": 0.8,
+      "p95": 0.79
+    },
+    "implementationNeeded": {
+      "mean": 0.6056,
+      "std": 0.224,
+      "median": 0.67,
+      "min": 0.11,
+      "max": 0.86,
+      "p95": 0.85
+    },
+    "likelyEditTarget": {
+      "mean": 0.6676,
+      "std": 0.1274,
+      "median": 0.65,
+      "min": 0.45,
+      "max": 0.89,
+      "p95": 0.86
+    },
+    "likelyRootCause": {
+      "mean": 0.4568,
+      "std": 0.2614,
+      "median": 0.42,
+      "min": 0.04,
+      "max": 0.87,
+      "p95": 0.84
+    }
+  },
+  "correlations": {
+    "editTargetVsGroundTruth": 0.2589,
+    "rootCauseVsGroundTruth": 0.541,
+    "semanticRelevanceVsGroundTruth": 0.4743
+  },
+  "rankingAblation": {
+    "baseline": {
+      "ndcg5": 0.4725,
+      "ndcg10": 0.4235,
+      "recall5": 0.1072,
+      "recall10": 0.2009,
+      "recall20": 0.2849,
+      "mrr": 0.8286
+    },
+    "jevAugmented": {
+      "ndcg5": 0.4891,
+      "ndcg10": 0.4342,
+      "recall5": 0.1072,
+      "recall10": 0.2009,
+      "recall20": 0.2849,
+      "mrr": 0.8286
+    },
+    "ndcg10Delta": 0.0107,
+    "recall10Delta": 0,
+    "mrrDelta": 0
+  },
+  "metadata": {
+    "sdk": {
+      "name": "@typesafe-ai/sdk",
+      "version": "0.6.0"
+    },
+    "model": "jev-latest",
+    "questionSet": {
+      "version": "jev-context-v1",
+      "questionCount": 4,
+      "questions": [
+        {
+          "key": "semanticRelevance",
+          "prompt": "Would access to this candidate materially help a coding agent understand or solve the task?"
+        },
+        {
+          "key": "implementationNeeded",
+          "prompt": "Is seeing the implementation/detail contained in this candidate likely necessary or materially useful for completing the task, rather than only knowing its name/signature?"
+        },
+        {
+          "key": "likelyEditTarget",
+          "prompt": "Is this candidate likely to require modification to successfully complete the task?"
+        },
+        {
+          "key": "likelyRootCause",
+          "prompt": "Is this candidate likely to contain, control, or directly explain the behavior that must change to solve the task?"
+        }
+      ]
+    },
+    "redaction": {
+      "rawSourceExcluded": true,
+      "secretsRedacted": true,
+      "tokensOmitted": true,
+      "allowedDataClasses": [
+        "TASK_PROMPT",
+        "SYMBOL_NAME",
+        "SYMBOL_METADATA",
+        "PATH",
+        "NUMERIC_FEATURE"
+      ],
+      "deniedDataClasses": [
+        "RAW_SOURCE",
+        "SOURCE_SNIPPET",
+        "PATCH"
+      ]
+    },
+    "fallback": {
+      "strategy": "smoke_zero_retry",
+      "retriesConfigured": 0,
+      "failClosedOnZeroRemoteProbabilities": true
+    },
+    "sampleSanitizedPayloadShape": {
+      "schemaVersion": "string (12 chars)",
+      "task": {
+        "prompt": "string (73 chars)",
+        "evidenceSummary": "string (13 chars)",
+        "taskType": "string (11 chars)"
+      },
+      "candidate": {
+        "contextUnitId": "string (21 chars)",
+        "kind": "string (11 chars)",
+        "title": "string (11 chars)",
+        "path": "string (30 chars)"
+      },
+      "relationships": {},
+      "history": {
+        "coChange": "number (0.0000)",
+        "recentChange": "number (1.0000)"
+      }
+    },
+    "sampleRequestId": "req_01a0c54e7629705baff94a3880817dc0"
+  },
+  "failedCriteria": [],
+  "recommendation": "PASS_TO_30_TASK_PILOT",
+  "reportConsistency": {
+    "consistent": true,
+    "diffs": []
+  }
+}
