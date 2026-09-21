@@ -53,6 +53,7 @@
   "author": "SiftrCode Team",
   "license": "MIT",
   "dependencies": {
+    "@google/genai": "^2.23.0",
     "@modelcontextprotocol/sdk": "^1.6.1",
     "@typesafe-ai/sdk": "0.6.0",
     "chalk": "^4.1.2",

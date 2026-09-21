@@ -14,3 +14,5 @@ data/*
 !data/models/*
 .siftr/
 temp_*
+.env
+.env.*
