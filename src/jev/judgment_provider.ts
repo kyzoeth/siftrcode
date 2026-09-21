@@ -13,9 +13,9 @@ export interface JudgmentGraphContext {
 export interface JudgmentResult {
   candidateUnitId: string;
   semanticRelevance: number; // 0.0 to 1.0
-  implementationNeeded: boolean;
-  likelyEditTarget: boolean;
-  likelyRootCause: boolean;
+  implementationNeeded?: boolean;
+  likelyEditTarget?: boolean;
+  likelyRootCause?: boolean;
   confidence: number; // 0.0 to 1.0
   provider: string; // 'typesafe-jev' | 'local-heuristic' | 'mock'
   latencyMs: number;

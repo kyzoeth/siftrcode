@@ -1373,24 +1373,24 @@ export async function runHeldOutRankingStudy(options: {
       }
 
       const sem = sig.semanticRelevanceProbability;
-      const imp = sig.implementationNeededProbability ?? 0.0;
-      const edit = sig.likelyEditTargetProbability ?? 0.0;
-      const root = sig.likelyRootCauseProbability ?? 0.0;
+      const imp = sig.implementationNeededProbability ?? undefined;
+      const edit = sig.likelyEditTargetProbability ?? undefined;
+      const root = sig.likelyRootCauseProbability ?? undefined;
 
       probObj.semRel.push(sem);
-      if (sig.implementationNeededProbability !== null) probObj.impNeed.push(imp);
-      if (sig.likelyEditTargetProbability !== null) probObj.editTarget.push(edit);
-      if (sig.likelyRootCauseProbability !== null) probObj.rootCause.push(root);
+      if (imp !== undefined) probObj.impNeed.push(imp);
+      if (edit !== undefined) probObj.editTarget.push(edit);
+      if (root !== undefined) probObj.rootCause.push(root);
 
       judgmentsMap.set(sig.contextUnitId, {
         candidateUnitId: sig.contextUnitId,
         semanticRelevance: sem,
         semanticRelevanceProbability: sem,
-        implementationNeeded: imp > 0.5,
+        implementationNeeded: imp !== undefined ? imp > 0.5 : undefined,
         implementationNeededProbability: imp,
-        likelyEditTarget: edit > 0.5,
+        likelyEditTarget: edit !== undefined ? edit > 0.5 : undefined,
         likelyEditTargetProbability: edit,
-        likelyRootCause: root > 0.5,
+        likelyRootCause: root !== undefined ? root > 0.5 : undefined,
         likelyRootCauseProbability: root,
         confidence: 0.9,
         provider: 'typesafe-jev',

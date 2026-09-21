@@ -30,6 +30,7 @@ import {
   validateToolCall,
   zodToJsonSchema,
 } from '../mcp/schemas';
+import { resolveApplicationDataRights } from '../rights/data_rights';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -361,6 +362,7 @@ function createMcpServerInstance() {
           budgetProfile,
           tokenBudget,
           maxCostUSD,
+          dataRights: resolveApplicationDataRights(),
         });
 
         const plan = result.plan;
@@ -422,6 +424,7 @@ function createMcpServerInstance() {
           workspaceDir,
           prompt,
           limit,
+          dataRights: resolveApplicationDataRights(),
         });
 
         const rankedFormatted = result.ranked.map((rc) => ({
@@ -1418,6 +1421,7 @@ const server = http.createServer(async (req, res) => {
           budgetProfile,
           tokenBudget,
           maxCostUSD,
+          dataRights: resolveApplicationDataRights(),
         });
 
         const plan = result.plan;
@@ -1530,6 +1534,7 @@ const server = http.createServer(async (req, res) => {
           workspaceDir,
           prompt,
           limit,
+          dataRights: resolveApplicationDataRights(),
         });
 
         const rankedFormatted = result.ranked.map((rc) => ({

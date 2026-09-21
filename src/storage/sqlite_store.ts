@@ -33,6 +33,7 @@ import {
   sanitizeContextPlanForPersistence,
   sanitizeContextUnitForPersistence,
   sanitizeTaskContextForPersistence,
+  sanitizeCandidateDecisionObservation,
   ContextPlanMetadataRecord,
 } from './rights_aware_dto';
 
@@ -40,6 +41,7 @@ export {
   sanitizeContextPlanForPersistence,
   sanitizeContextUnitForPersistence,
   sanitizeTaskContextForPersistence,
+  sanitizeCandidateDecisionObservation,
   ContextPlanMetadataRecord,
 } from './rights_aware_dto';
 export { TrainingEvidenceRecord } from '../learning/lineage';
@@ -334,7 +336,7 @@ const MIGRATIONS: Migration[] = [
         source_observation_ids TEXT NOT NULL,
         labeler_version TEXT NOT NULL,
         feature_builder_version TEXT NOT NULL,
-        label INTEGER NOT NULL,
+        label INTEGER,
         confidence REAL NOT NULL,
         outcome_label TEXT NOT NULL,
         rights_reference TEXT NOT NULL,
@@ -1032,8 +1034,14 @@ export class SqliteStore {
   // CandidateDecisionObservation Operations (Closure PR 0.4)
   // ==========================================
 
-  public saveCandidateDecisionObservations(decisions: CandidateDecisionObservation[]): void {
+  public saveCandidateDecisionObservations(decisions: CandidateDecisionObservation[], rights?: DataRights): void {
     if (decisions.length === 0) return;
+
+    const effectiveRights = rights || createDefaultDataRights({
+      symbolMetadataAllowed: true,
+      pathRetentionAllowed: true,
+      symbolNameRetentionAllowed: true,
+    });
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO candidate_decision_observations (
@@ -1044,19 +1052,20 @@ export class SqliteStore {
     `);
 
     for (const dec of decisions) {
+      const sanitized = sanitizeCandidateDecisionObservation(dec, effectiveRights);
       stmt.run(
-        dec.decisionObservationId,
-        dec.taskId,
-        dec.workspaceSnapshotId,
-        dec.contextUnitId,
-        dec.rank ?? null,
-        dec.exposureDecision.resolution,
-        dec.policyId,
-        dec.policyVersion,
-        dec.observabilityLevel,
-        JSON.stringify(dec.features),
-        JSON.stringify(dec),
-        dec.recordedAt
+        sanitized.decisionObservationId,
+        sanitized.taskId,
+        sanitized.workspaceSnapshotId,
+        sanitized.contextUnitId,
+        sanitized.rank ?? null,
+        sanitized.exposureDecision.resolution,
+        sanitized.policyId,
+        sanitized.policyVersion,
+        sanitized.observabilityLevel,
+        JSON.stringify(sanitized.features),
+        JSON.stringify(sanitized),
+        sanitized.recordedAt
       );
     }
   }
@@ -1805,7 +1814,7 @@ export class SqliteStore {
         JSON.stringify(r.lineage.sourceObservationIds),
         r.lineage.labelerVersion,
         r.lineage.featureBuilderVersion,
-        r.label,
+        r.label ?? null,
         r.confidence,
         r.outcomeLabel,
         r.rightsReference,

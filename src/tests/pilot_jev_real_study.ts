@@ -853,9 +853,12 @@ export async function runTypeSafeJevPilotStudy(options: {
     const judgmentsMap = new Map<string, any>();
     for (const [unitId, sig] of signalsMap.entries()) {
       judgmentsMap.set(unitId, {
-        semanticRelevance: sig.semanticRelevanceProbability ?? 0,
-        likelyEditTarget: (sig.likelyEditTargetProbability ?? 0) > 0.5,
-        likelyRootCause: (sig.likelyRootCauseProbability ?? 0) > 0.5,
+        semanticRelevance: sig.semanticRelevanceProbability ?? undefined,
+        semanticRelevanceProbability: sig.semanticRelevanceProbability ?? undefined,
+        likelyEditTarget: sig.likelyEditTargetProbability !== null && sig.likelyEditTargetProbability !== undefined ? sig.likelyEditTargetProbability > 0.5 : undefined,
+        likelyEditTargetProbability: sig.likelyEditTargetProbability ?? undefined,
+        likelyRootCause: sig.likelyRootCauseProbability !== null && sig.likelyRootCauseProbability !== undefined ? sig.likelyRootCauseProbability > 0.5 : undefined,
+        likelyRootCauseProbability: sig.likelyRootCauseProbability ?? undefined,
         confidence: 0.9,
       });
     }

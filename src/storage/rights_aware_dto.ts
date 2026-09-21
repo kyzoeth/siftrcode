@@ -7,6 +7,7 @@
  * DataRights explicitly permit rawSourceRetentionAllowed or sourceSnippetRetentionAllowed.
  */
 
+import * as crypto from 'crypto';
 import { ContextPlan, PlannedUnit } from '../engine/context_plan';
 import { ContextUnit, CodeSymbolUnit, ContextUnitKind } from '../context/context_unit';
 import { DataRights, DataClass, isDataClassPermitted } from '../rights/data_rights';
@@ -356,3 +357,63 @@ export function sanitizeTaskContextForPersistence(
     evidence: cleanEvidence,
   };
 }
+
+/**
+ * Sanitizes a CandidateDecisionObservation before SQLite insertion or ML export.
+ * Strips numeric features if NUMERIC_FEATURE retention is forbidden.
+ * Redacts path and symbol names in contextUnitId if PATH or SYMBOL_NAME retention is forbidden.
+ */
+export function sanitizeCandidateDecisionObservation(
+  obs: CandidateDecisionObservation,
+  rights: DataRights
+): CandidateDecisionObservation {
+  const allowNumeric = isDataClassPermitted(rights, DataClass.NUMERIC_FEATURE);
+  const allowPath = isDataClassPermitted(rights, DataClass.PATH);
+  const allowSymbolName = isDataClassPermitted(rights, DataClass.SYMBOL_NAME);
+
+  let sanitizedFeatures = obs.features ? { ...obs.features } : obs.features;
+  if (sanitizedFeatures && !allowNumeric) {
+    sanitizedFeatures = {
+      schemaVersion: obs.features.schemaVersion || 'v1',
+      contextUnitId: obs.features.contextUnitId || obs.contextUnitId,
+      unitKind: obs.features.unitKind || ContextUnitKind.SOURCE_FILE,
+      tokenEstimate: 0,
+      isTest: false,
+      isConfig: false,
+      isDocumentation: false,
+      isSchema: false,
+      isExported: false,
+      exactSymbolMatch: false,
+      exactPathMatch: false,
+      bm25Score: 0,
+      tokenOverlapRatio: 0,
+      graphDegree: 0,
+      minDistanceToSeed: null,
+      minDistanceToErrorFrame: null,
+      isDirectDependency: false,
+      isDirectDependent: false,
+      changeFrequency: 0,
+      recentChangeFrequency: 0,
+      maxCoChangeWithSeeds: 0,
+      inStackTrace: false,
+      isFailingTestTarget: false,
+      inCompilerError: false,
+      inDirtyDiff: false,
+      heuristicScore: 0,
+    };
+  }
+
+  let sanitizedContextUnitId = obs.contextUnitId;
+  if (!allowPath && (sanitizedContextUnitId.includes('/') || sanitizedContextUnitId.includes('\\'))) {
+    sanitizedContextUnitId = `[REDACTED_PATH_${crypto.createHash('sha256').update(obs.contextUnitId).digest('hex').substring(0, 8)}]`;
+  } else if (!allowSymbolName && (sanitizedContextUnitId.includes('#') || sanitizedContextUnitId.includes('::') || sanitizedContextUnitId.startsWith('sym_'))) {
+    sanitizedContextUnitId = `[REDACTED_SYMBOL_${crypto.createHash('sha256').update(obs.contextUnitId).digest('hex').substring(0, 8)}]`;
+  }
+
+  return {
+    ...obs,
+    contextUnitId: sanitizedContextUnitId,
+    features: sanitizedFeatures,
+  };
+}
+

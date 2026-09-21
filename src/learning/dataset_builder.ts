@@ -10,6 +10,7 @@ import { CandidateDecisionObservation } from '../telemetry/decision_observation'
 import { OutcomeEvidence } from '../telemetry/outcome_evidence';
 import { isExposedV2 } from '../telemetry/exposure_decision';
 import { TrainingEvidenceRecord, createTrainingEvidenceRecord } from './lineage';
+import { DataRights, isOperationPermitted, DataClass } from '../rights/data_rights';
 
 export interface BuildObservationOptions {
   decision: CandidateDecisionObservation;
@@ -19,6 +20,7 @@ export interface BuildObservationOptions {
   siftrSessionId?: string;
   outcomeId?: string;
   rightsReference?: string;
+  dataRights?: DataRights;
 }
 
 export interface BuildDatasetOptions {
@@ -29,6 +31,17 @@ export interface BuildDatasetOptions {
   siftrSessionId?: string;
   outcomeId?: string;
   rightsReference?: string;
+  dataRights?: DataRights;
+}
+
+function assertTrainingPermitted(rights?: DataRights): void {
+  if (!rights) return;
+  if (!rights.trainingAllowed) {
+    throw new Error('TRAINING_FORBIDDEN: Customer DataRights forbids training (trainingAllowed = false).');
+  }
+  if (rights.operationRights && !isOperationPermitted(rights.operationRights, DataClass.NUMERIC_FEATURE, 'training')) {
+    throw new Error('TRAINING_FORBIDDEN: operationRights forbids training on NUMERIC_FEATURE.');
+  }
 }
 
 /**
@@ -42,6 +55,7 @@ export class DatasetBuilder {
    * with downstream behavior and outcome evidence.
    */
   public static buildCandidateObservation(options: BuildObservationOptions): CandidateObservationV2 {
+    assertTrainingPermitted(options.dataRights);
     const { decision } = options;
     const behavior: ObservedBehavior = options.behavior || {};
 
@@ -101,7 +115,8 @@ export class DatasetBuilder {
    * Builds an entire dataset of CandidateObservationV2 records for a collection of decisions.
    */
   public static buildDataset(options: BuildDatasetOptions): CandidateObservationV2[] {
-    const { decisions, behaviorsByUnitId, outcomeEvidence, taskSucceeded, siftrSessionId, outcomeId, rightsReference } = options;
+    assertTrainingPermitted(options.dataRights);
+    const { decisions, behaviorsByUnitId, outcomeEvidence, taskSucceeded, siftrSessionId, outcomeId, rightsReference, dataRights } = options;
 
     return decisions.map((dec) => {
       let unitBehavior: ObservedBehavior | undefined;
@@ -119,6 +134,7 @@ export class DatasetBuilder {
         siftrSessionId,
         outcomeId,
         rightsReference,
+        dataRights,
       });
     });
   }
@@ -134,7 +150,9 @@ export class DatasetBuilder {
     repository?: string;
     tenantId?: string;
     rightsReference?: string;
+    dataRights?: DataRights;
   }): TrainingEvidenceRecord {
+    assertTrainingPermitted(params.dataRights);
     const { decision, behavior, outcomeEvidence } = params;
     const wasExposed = isExposedV2(decision.exposureDecision);
     const obsLevel = decision.observabilityLevel;

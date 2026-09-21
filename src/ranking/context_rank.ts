@@ -98,28 +98,40 @@ export class ContextRanker {
       // 0. Independent Judgment Signals (Section 46 - Four Continuous Probabilities)
       const judgment = judgments?.get(f.contextUnitId);
       if (judgment) {
-        const editProb = judgment.likelyEditTargetProbability ?? (judgment.likelyEditTarget ? 1.0 : 0.0);
-        const rootProb = judgment.likelyRootCauseProbability ?? (judgment.likelyRootCause ? 1.0 : 0.0);
-        const impProb = judgment.implementationNeededProbability ?? (judgment.implementationNeeded ? 1.0 : 0.0);
-        const semProb = judgment.semanticRelevanceProbability ?? judgment.semanticRelevance;
+        const editProb =
+          judgment.likelyEditTargetProbability !== undefined && judgment.likelyEditTargetProbability !== null
+            ? judgment.likelyEditTargetProbability
+            : (judgment.likelyEditTarget !== undefined ? (judgment.likelyEditTarget ? 1.0 : 0.0) : undefined);
+        const rootProb =
+          judgment.likelyRootCauseProbability !== undefined && judgment.likelyRootCauseProbability !== null
+            ? judgment.likelyRootCauseProbability
+            : (judgment.likelyRootCause !== undefined ? (judgment.likelyRootCause ? 1.0 : 0.0) : undefined);
+        const impProb =
+          judgment.implementationNeededProbability !== undefined && judgment.implementationNeededProbability !== null
+            ? judgment.implementationNeededProbability
+            : (judgment.implementationNeeded !== undefined ? (judgment.implementationNeeded ? 1.0 : 0.0) : undefined);
+        const semProb =
+          judgment.semanticRelevanceProbability !== undefined && judgment.semanticRelevanceProbability !== null
+            ? judgment.semanticRelevanceProbability
+            : judgment.semanticRelevance;
         const confidence = judgment.confidence ?? 1.0;
 
-        if (editProb > 0) {
+        if (editProb !== undefined && editProb > 0) {
           const boost = this.weights.jevEditTargetWeight * editProb * confidence;
           judgmentBoost += boost;
           reasons.push(`jev_likely_edit_target (+${boost.toFixed(1)})`);
         }
-        if (rootProb > 0) {
+        if (rootProb !== undefined && rootProb > 0) {
           const boost = this.weights.jevRootCauseWeight * rootProb * confidence;
           judgmentBoost += boost;
           reasons.push(`jev_likely_root_cause (+${boost.toFixed(1)})`);
         }
-        if (impProb > 0) {
+        if (impProb !== undefined && impProb > 0) {
           const boost = this.weights.jevImplementationWeight * impProb * confidence;
           judgmentBoost += boost;
           reasons.push(`jev_implementation_needed (+${boost.toFixed(1)})`);
         }
-        if (semProb > 0) {
+        if (semProb !== undefined && semProb > 0) {
           const boost = this.weights.jevSemanticWeight * semProb * confidence;
           judgmentBoost += boost;
           reasons.push(`jev_semantic_relevance (+${boost.toFixed(1)})`);

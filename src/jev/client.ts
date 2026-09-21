@@ -41,8 +41,14 @@ export class JevClient {
   private endpoint: string;
 
   constructor(apiKey?: string, endpoint: string = 'https://api.typesafe.ai/v1/decisions') {
-    this.apiKey = apiKey || process.env.TYPESAFE_API_KEY || process.env.JEV_API_KEY || null;
+    // Environment-key inheritance is strictly disabled to prevent live System One credential usage
+    // and prevent legacy callers (like siftr_pack) from bypassing SiftrCode V2 data rights.
+    this.apiKey = apiKey || null;
     this.endpoint = endpoint;
+  }
+
+  public getApiKey(): string | null {
+    return this.apiKey;
   }
 
   /**

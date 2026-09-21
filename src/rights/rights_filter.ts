@@ -16,7 +16,7 @@
  * 5. Unexposed or ambiguous labels (UNEXPOSED_UNKNOWN, UNKNOWN) cannot enter training rows.
  */
 
-import { DataRights, isDataClassPermitted, DataClass } from './data_rights';
+import { DataRights, isDataClassPermitted, isOperationPermitted, DataClass } from './data_rights';
 import { CandidateObservationV2 } from '../telemetry/candidate_observation';
 import { SourceProvenance, isProvenanceEligibleForTraining } from './source_provenance';
 import { ContextFeaturesV1 } from '../ranking/feature_schema';
@@ -65,6 +65,13 @@ export class RightsFilter {
     if (!dataRights.trainingAllowed) {
       reasons.push(
         `TRAINING_NOT_ALLOWED: Customer DataRights forbids training (trainingAllowed = false).`
+      );
+    } else if (
+      dataRights.operationRights &&
+      !isOperationPermitted(dataRights.operationRights, DataClass.NUMERIC_FEATURE, 'training')
+    ) {
+      reasons.push(
+        `TRAINING_OPERATION_FORBIDDEN: operationRights forbids training on NUMERIC_FEATURE.`
       );
     }
 

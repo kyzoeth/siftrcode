@@ -38,7 +38,7 @@ export interface TrainingRow {
   repository: string;
   tenantId?: string;
   features: ContextFeaturesV1;
-  label: 0 | 1;
+  label: 0 | 1 | null;
   confidence: number;
   outcomeLabel: ResolvedOutcomeLabel;
   lineage: DerivedDataLineage;
@@ -89,7 +89,7 @@ export function createTrainingRow(params: {
   repository: string;
   tenantId?: string;
   features: ContextFeaturesV1;
-  label: 0 | 1;
+  label: 0 | 1 | null;
   confidence?: number;
   outcomeLabel: ResolvedOutcomeLabel;
   sourceObservationIds: string[];
@@ -130,7 +130,7 @@ export function createTrainingRow(params: {
     tenantId: params.tenantId,
     features: params.features,
     label: params.label,
-    confidence: params.confidence ?? (params.label === 1 ? 0.95 : 0.7),
+    confidence: params.confidence ?? (params.label === 1 ? 0.95 : params.label === 0 ? 0.7 : 0.0),
     outcomeLabel: params.outcomeLabel,
     lineage,
     rightsReference: params.rightsReference,
@@ -256,28 +256,37 @@ export function deriveBinaryTrainingRow(evidence: TrainingEvidenceRecord): Train
     evidence.editEvidence.wasEdited ||
     (evidence.verifiedOutcomeAssociation.verifiedSuccess === true && evidence.readEvidence.wasRead === true);
 
-  const confidence = Math.max(
-    evidence.editEvidence.confidence,
-    evidence.verifiedOutcomeAssociation.confidence,
-    evidence.readEvidence.confidence
-  );
-
   let outcomeLabel: ResolvedOutcomeLabel = 'UNKNOWN';
+  let label: 0 | 1 | null = null;
   if (isPositive) {
     outcomeLabel = 'POSITIVE';
+    label = 1;
   } else if (evidence.exposure && !evidence.exposure.wasExposed) {
     outcomeLabel = 'UNEXPOSED_UNKNOWN';
+    label = null;
   } else if (
     evidence.observabilityLevel === 'SIFTR_CALLS_ONLY' ||
     evidence.observabilityLevel === 'PARTIAL_AGENT_TRACE' ||
     evidence.readEvidence.wasRead === null
   ) {
     outcomeLabel = 'UNKNOWN';
+    label = null;
   } else if (evidence.verifiedOutcomeAssociation.verifiedSuccess === true) {
     outcomeLabel = 'WEAK_NEGATIVE';
+    label = 0;
   } else {
     outcomeLabel = 'UNKNOWN';
+    label = null;
   }
+
+  const confidence =
+    label === null
+      ? 0.0
+      : Math.max(
+          evidence.editEvidence.confidence,
+          evidence.verifiedOutcomeAssociation.confidence,
+          evidence.readEvidence.confidence
+        );
 
   return {
     rowId: `trow_${evidence.evidenceId}`,
@@ -287,7 +296,7 @@ export function deriveBinaryTrainingRow(evidence: TrainingEvidenceRecord): Train
     repository: evidence.repository,
     tenantId: evidence.tenantId,
     features: evidence.features,
-    label: isPositive ? 1 : 0,
+    label,
     confidence,
     outcomeLabel,
     lineage: evidence.lineage,

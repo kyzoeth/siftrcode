@@ -288,10 +288,38 @@ export function isRemoteProcessingPermitted(rights: DataRights, dataClass: DataC
   if (!rights.remoteProcessingAllowed) {
     return false;
   }
-  if (rights.operationRights) {
-    return isOperationPermitted(rights.operationRights, dataClass, 'processing_remote');
+  // Granular operation-rights policy must always be present before enabling remote processing (fail-closed).
+  if (!rights.operationRights) {
+    return false;
   }
-  return true;
+  return isOperationPermitted(rights.operationRights, dataClass, 'processing_remote');
+}
+
+/**
+ * Translates application/environment configuration into explicit DataRights.
+ * When remote JEV processing is enabled in environment or configuration, translates it strictly to
+ * createJevPermittedDataRights()—never to a blanket global allow.
+ */
+export function resolveApplicationDataRights(configuredRights?: DataRights): DataRights {
+  if (configuredRights) {
+    // If remote processing is enabled on configuredRights, verify that operationRights is present;
+    // if missing, translate to createJevPermittedDataRights to avoid blanket global allows.
+    if (configuredRights.remoteProcessingAllowed && !configuredRights.operationRights) {
+      return createJevPermittedDataRights(configuredRights);
+    }
+    return configuredRights;
+  }
+
+  // Check explicit V2 JEV remote-processing configuration (e.g. at Railway boundary)
+  const jevRemoteEnabled =
+    process.env.SIFTR_JEV_ENABLED === 'true' ||
+    process.env.SIFTR_JEV_REMOTE_PROCESSING === 'true';
+
+  if (jevRemoteEnabled) {
+    return createJevPermittedDataRights();
+  }
+
+  return createDefaultDataRights();
 }
 
 /**
@@ -304,11 +332,15 @@ export function createJevPermittedDataRights(overrides: Partial<DataRights> = {}
     [DataClass.SYMBOL_NAME]: { processing: { local: true, remote: true } },
     [DataClass.SYMBOL_METADATA]: { processing: { local: true, remote: true } },
     [DataClass.PATH]: { processing: { local: true, remote: true } },
+    [DataClass.NUMERIC_FEATURE]: { processing: { local: true, remote: true } },
   });
+
+  const { operationRights: explicitOpRights, ...safeOverrides } = overrides;
 
   return createDefaultDataRights({
     remoteProcessingAllowed: true,
-    operationRights: jevPolicy,
-    ...overrides,
+    ...safeOverrides,
+    operationRights: explicitOpRights || jevPolicy,
+    hasExplicitOperationRights: true,
   });
 }

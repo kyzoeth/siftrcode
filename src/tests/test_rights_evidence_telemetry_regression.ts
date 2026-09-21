@@ -15,8 +15,23 @@ import {
   DataClass,
   createDefaultDataRights,
   createDefaultOperationRightsPolicy,
+  createJevPermittedDataRights,
+  resolveApplicationDataRights,
+  isRemoteProcessingPermitted,
+  isOperationPermitted,
   isDataClassPermitted,
 } from '../rights/data_rights';
+import { JevClient } from '../jev/client';
+import {
+  CandidateDecisionObservation,
+  createCandidateDecisionObservation,
+} from '../telemetry/decision_observation';
+import { sanitizeCandidateDecisionObservation } from '../storage/rights_aware_dto';
+import { DatasetBuilder } from '../learning/dataset_builder';
+import { TrainingExporter } from '../learning/training_exporter';
+import { RightsFilter } from '../rights/rights_filter';
+import { ContextRanker } from '../ranking/context_rank';
+import { ContextResolution } from '../context/context_resolution';
 import {
   ContextUnitKind,
   CodeSymbolUnit,
@@ -270,6 +285,11 @@ export async function runRegressionTests() {
       'UNEXPOSED_UNKNOWN',
       'Unexposed candidate must have outcomeLabel UNEXPOSED_UNKNOWN'
     );
+    assert.strictEqual(
+      unexposedBinary.label,
+      null,
+      'Unexposed candidate must have binary label null (never 0)'
+    );
 
     // Case 2B: Limited observability (SIFTR_CALLS_ONLY) cannot observe reads -> tri-state null, NEVER grade 0
     const unobservedEvidence = createTrainingEvidenceRecord({
@@ -293,6 +313,12 @@ export async function runRegressionTests() {
       unobservedGrading.relevanceGrade,
       null,
       'Unobserved candidate under SIFTR_CALLS_ONLY must have relevanceGrade null (never automatically 0)'
+    );
+    const unobservedBinary = deriveBinaryTrainingRow(unobservedEvidence);
+    assert.strictEqual(
+      unobservedBinary.label,
+      null,
+      'Unobserved candidate under SIFTR_CALLS_ONLY must have binary label null'
     );
 
     // Case 2C: Failed task cannot support confirmed negative distractor -> relevanceGrade null
@@ -318,6 +344,12 @@ export async function runRegressionTests() {
       null,
       'Candidate in failed task must remain relevanceGrade null (never 0)'
     );
+    const failedBinary = deriveBinaryTrainingRow(failedTaskEvidence);
+    assert.strictEqual(
+      failedBinary.label,
+      null,
+      'Candidate in failed task must remain binary label null (never 0)'
+    );
 
     // Case 2D: Confirmed negative distractor (Grade 0) ONLY under full observability + task success
     const confirmedNegative = createTrainingEvidenceRecord({
@@ -341,6 +373,17 @@ export async function runRegressionTests() {
       negGrading.relevanceGrade,
       0,
       'Candidate confirmed unread & unedited in verified successful task under FULL_TOOL_TRACE receives grade 0'
+    );
+    const confirmedNegBinary = deriveBinaryTrainingRow(confirmedNegative);
+    assert.strictEqual(
+      confirmedNegBinary.label,
+      0,
+      'Confirmed negative candidate in successful task receives binary label 0'
+    );
+    assert.strictEqual(
+      confirmedNegBinary.outcomeLabel,
+      'WEAK_NEGATIVE',
+      'Confirmed negative candidate receives outcomeLabel WEAK_NEGATIVE'
     );
 
     // Case 2E: Positive interactions (Grades 1, 2, 3, 4)
@@ -656,24 +699,24 @@ export async function runRegressionTests() {
       }
 
       const sem = sig.semanticRelevanceProbability;
-      const imp = sig.implementationNeededProbability ?? 0.0;
-      const edit = sig.likelyEditTargetProbability ?? 0.0;
-      const root = sig.likelyRootCauseProbability ?? 0.0;
+      const imp = sig.implementationNeededProbability ?? undefined;
+      const edit = sig.likelyEditTargetProbability ?? undefined;
+      const root = sig.likelyRootCauseProbability ?? undefined;
 
       probObj.semRel.push(sem);
-      if (sig.implementationNeededProbability !== null) probObj.impNeed.push(imp);
-      if (sig.likelyEditTargetProbability !== null) probObj.editTarget.push(edit);
-      if (sig.likelyRootCauseProbability !== null) probObj.rootCause.push(root);
+      if (imp !== undefined) probObj.impNeed.push(imp);
+      if (edit !== undefined) probObj.editTarget.push(edit);
+      if (root !== undefined) probObj.rootCause.push(root);
 
       judgmentsMap.set(sig.contextUnitId, {
         candidateUnitId: sig.contextUnitId,
         semanticRelevance: sem,
         semanticRelevanceProbability: sem,
-        implementationNeeded: imp > 0.5,
+        implementationNeeded: imp !== undefined ? imp > 0.5 : undefined,
         implementationNeededProbability: imp,
-        likelyEditTarget: edit > 0.5,
+        likelyEditTarget: edit !== undefined ? edit > 0.5 : undefined,
         likelyEditTargetProbability: edit,
-        likelyRootCause: root > 0.5,
+        likelyRootCause: root !== undefined ? root > 0.5 : undefined,
         likelyRootCauseProbability: root,
       });
     }
@@ -689,7 +732,439 @@ export async function runRegressionTests() {
     console.log('  ✔ Suite 4 passed: Zero fixed probabilities substituted for missing JEV answers\n');
   }
 
-  console.log('🎉 ALL FOUR REGRESSION SUITES PASSED CLEANLY!\n');
+  // ==========================================================================
+  // SUITE 5: JevClient Zero Environment-Key Inheritance
+  // ==========================================================================
+  console.log('--- Suite 5: JevClient Zero Environment-Key Inheritance ---');
+  {
+    const origTypesafe = process.env.TYPESAFE_API_KEY;
+    const origJev = process.env.JEV_API_KEY;
+    try {
+      process.env.TYPESAFE_API_KEY = 'secret-typesafe-key-leak';
+      process.env.JEV_API_KEY = 'secret-jev-key-leak';
+
+      // Instantiating JevClient without explicit apiKey MUST NOT inherit environment keys
+      const uncredentialedClient = new JevClient();
+      assert.strictEqual(
+        uncredentialedClient.getApiKey(),
+        null,
+        'JevClient without arguments must have null apiKey and never inherit process.env keys'
+      );
+
+      // Explicit apiKey must be respected
+      const explicitClient = new JevClient('explicit-key-123');
+      assert.strictEqual(
+        explicitClient.getApiKey(),
+        'explicit-key-123',
+        'JevClient with explicit key retains explicit key'
+      );
+    } finally {
+      if (origTypesafe !== undefined) process.env.TYPESAFE_API_KEY = origTypesafe;
+      else delete process.env.TYPESAFE_API_KEY;
+      if (origJev !== undefined) process.env.JEV_API_KEY = origJev;
+      else delete process.env.JEV_API_KEY;
+    }
+    console.log('  ✔ Suite 5 passed: Deprecated JevClient zero environment-key inheritance verified\n');
+  }
+
+  // ==========================================================================
+  // SUITE 6: Application Boundary Translation & Fail-Closed Remote Processing
+  // ==========================================================================
+  console.log('--- Suite 6: Application Boundary Translation & Fail-Closed Remote Processing ---');
+  {
+    const origJevEnabled = process.env.SIFTR_JEV_ENABLED;
+    const origJevRemote = process.env.SIFTR_JEV_REMOTE_PROCESSING;
+    try {
+      // 1. Without environment config: defaults to local privacy-by-default
+      delete process.env.SIFTR_JEV_ENABLED;
+      delete process.env.SIFTR_JEV_REMOTE_PROCESSING;
+      const defaultAppRights = resolveApplicationDataRights();
+      assert.strictEqual(
+        defaultAppRights.remoteProcessingAllowed,
+        false,
+        'Default application rights have remoteProcessingAllowed = false'
+      );
+      assert.strictEqual(
+        isRemoteProcessingPermitted(defaultAppRights, DataClass.RAW_SOURCE),
+        false,
+        'Remote processing not permitted under default rights'
+      );
+
+      // 2. Fail-closed invariant: remoteProcessingAllowed = true with missing operationRights MUST return false
+      const blanketRights: DataRights = {
+        ...createDefaultDataRights(),
+        remoteProcessingAllowed: true,
+        operationRights: undefined,
+      };
+      assert.strictEqual(
+        isRemoteProcessingPermitted(blanketRights, DataClass.RAW_SOURCE),
+        false,
+        'isRemoteProcessingPermitted MUST fail-closed when operationRights is missing'
+      );
+      assert.strictEqual(
+        isRemoteProcessingPermitted(blanketRights, DataClass.SYMBOL_NAME),
+        false,
+        'isRemoteProcessingPermitted MUST fail-closed for all data classes when operationRights is missing'
+      );
+
+      // 3. resolveApplicationDataRights translates configured rights without operationRights to createJevPermittedDataRights
+      const resolvedConfigured = resolveApplicationDataRights(blanketRights);
+      assert.ok(resolvedConfigured.operationRights !== undefined, 'Translates to rights with explicit operationRights');
+      assert.strictEqual(
+        isRemoteProcessingPermitted(resolvedConfigured, DataClass.RAW_SOURCE),
+        false,
+        'Remote processing on RAW_SOURCE strictly forbidden under translated JEV rights'
+      );
+      assert.strictEqual(
+        isRemoteProcessingPermitted(resolvedConfigured, DataClass.SYMBOL_NAME),
+        true,
+        'Remote processing on SYMBOL_NAME permitted under translated JEV rights'
+      );
+
+      // 4. Railway boundary environment variable translates strictly to createJevPermittedDataRights
+      process.env.SIFTR_JEV_REMOTE_PROCESSING = 'true';
+      const railwayRights = resolveApplicationDataRights();
+      assert.strictEqual(railwayRights.remoteProcessingAllowed, true);
+      assert.strictEqual(
+        isRemoteProcessingPermitted(railwayRights, DataClass.RAW_SOURCE),
+        false,
+        'Railway JEV configuration never permits RAW_SOURCE remote processing'
+      );
+      assert.strictEqual(
+        isRemoteProcessingPermitted(railwayRights, DataClass.SOURCE_SNIPPET),
+        false,
+        'Railway JEV configuration never permits SOURCE_SNIPPET remote processing'
+      );
+      assert.strictEqual(
+        isRemoteProcessingPermitted(railwayRights, DataClass.NUMERIC_FEATURE),
+        true,
+        'Railway JEV configuration permits NUMERIC_FEATURE remote processing'
+      );
+    } finally {
+      if (origJevEnabled !== undefined) process.env.SIFTR_JEV_ENABLED = origJevEnabled;
+      else delete process.env.SIFTR_JEV_ENABLED;
+      if (origJevRemote !== undefined) process.env.SIFTR_JEV_REMOTE_PROCESSING = origJevRemote;
+      else delete process.env.SIFTR_JEV_REMOTE_PROCESSING;
+    }
+    console.log('  ✔ Suite 6 passed: Boundary translation & fail-closed remote processing verified\n');
+  }
+
+  // ==========================================================================
+  // SUITE 7: CandidateDecisionObservation Rights Sanitization & Persistence
+  // ==========================================================================
+  console.log('--- Suite 7: CandidateDecisionObservation Rights Sanitization & Persistence ---');
+  {
+    const sampleFeatures = {
+      schemaVersion: 'v1' as const,
+      contextUnitId: 'src/core/auth_handler.ts',
+      unitKind: ContextUnitKind.SOURCE_FILE,
+      tokenEstimate: 500,
+      isTest: false,
+      isConfig: false,
+      isDocumentation: false,
+      isSchema: false,
+      isExported: true,
+      exactSymbolMatch: true,
+      exactPathMatch: true,
+      bm25Score: 8.5,
+      tokenOverlapRatio: 0.75,
+      graphDegree: 4,
+      minDistanceToSeed: 1,
+      minDistanceToErrorFrame: null,
+      isDirectDependency: true,
+      isDirectDependent: false,
+      changeFrequency: 15,
+      recentChangeFrequency: 5,
+      maxCoChangeWithSeeds: 0.6,
+      inStackTrace: true,
+      isFailingTestTarget: false,
+      inCompilerError: false,
+      inDirtyDiff: false,
+      heuristicScore: 0.88,
+    };
+
+    const decObs = createCandidateDecisionObservation({
+      taskId: 'task_sanitization_test',
+      workspaceSnapshotId: 'ws_snap_1',
+      contextUnitId: 'src/core/auth_handler.ts',
+      candidate: {
+        generated: true,
+        candidateRank: 1,
+        retrievalSources: ['generator'],
+      },
+      features: sampleFeatures,
+      rank: 1,
+      exposureDecision: {
+        contextUnitId: 'src/core/auth_handler.ts',
+        eligibleForSelection: true,
+        selected: true,
+        resolution: ContextResolution.FULL,
+        contextPlanId: 'plan_1',
+        policyId: 'policy_test',
+        policyVersion: '1.0.0',
+        timestamp: new Date().toISOString(),
+      },
+      agentEnvironment: createAgentEnvironment(),
+      observabilityLevel: 'FULL_TOOL_TRACE',
+    });
+
+    // 1. Sanitize without numeric features permission
+    const noNumericRights = createDefaultDataRights({
+      operationRights: {
+        ...createDefaultOperationRightsPolicy(),
+        [DataClass.NUMERIC_FEATURE]: {
+          processing: { local: true, remote: false },
+          retention: { local: false, remote: false },
+          training: false,
+        },
+      },
+    });
+
+    const sanitizedObs = sanitizeCandidateDecisionObservation(decObs, noNumericRights);
+    assert.strictEqual(
+      sanitizedObs.features.heuristicScore,
+      0,
+      'Heuristic score zeroed when NUMERIC_FEATURE retention denied'
+    );
+    assert.strictEqual(
+      sanitizedObs.features.bm25Score,
+      0,
+      'BM25 score zeroed when NUMERIC_FEATURE retention denied'
+    );
+    assert.strictEqual(
+      sanitizedObs.features.changeFrequency,
+      0,
+      'Change frequency zeroed when NUMERIC_FEATURE retention denied'
+    );
+
+    // 2. Sanitize without path retention permission
+    const noPathRights = createDefaultDataRights({
+      pathRetentionAllowed: false,
+    });
+    const sanitizedPathObs = sanitizeCandidateDecisionObservation(decObs, noPathRights);
+    assert.ok(
+      sanitizedPathObs.contextUnitId.startsWith('[REDACTED_PATH_'),
+      'File path redacted in contextUnitId when PATH retention denied'
+    );
+
+    // 3. Durably persist and verify via SqliteStore
+    const testDbPath = path.join(os.tmpdir(), `test_dec_sanitization_${Date.now()}.db`);
+    const store = new SqliteStore(testDbPath);
+    try {
+      store.saveCandidateDecisionObservations([decObs], noNumericRights);
+      const retrieved = store.getCandidateDecisionObservation(decObs.decisionObservationId);
+      assert.ok(retrieved !== undefined, 'Observation retrieved from SQLite');
+      assert.strictEqual(
+        retrieved!.features.heuristicScore,
+        0,
+        'Retrieved observation features must have zeroed heuristic score'
+      );
+      assert.strictEqual(
+        retrieved!.features.bm25Score,
+        0,
+        'Retrieved observation features must have zeroed bm25 score'
+      );
+    } finally {
+      store.close();
+      if (fs.existsSync(testDbPath)) fs.unlinkSync(testDbPath);
+    }
+    console.log('  ✔ Suite 7 passed: CandidateDecisionObservation rights sanitization & persistence verified\n');
+  }
+
+  // ==========================================================================
+  // SUITE 8: Training Rights Enforcement in DatasetBuilder & RightsFilter
+  // ==========================================================================
+  console.log('--- Suite 8: Training Rights Enforcement in DatasetBuilder & RightsFilter ---');
+  {
+    const dummyFeatures: any = { schemaVersion: 'v1', heuristicScore: 0.9 };
+    const decObs = createCandidateDecisionObservation({
+      taskId: 'task_training_rights',
+      workspaceSnapshotId: 'ws_snap_train',
+      contextUnitId: 'src/core/test.ts',
+      candidate: { generated: true, candidateRank: 1, retrievalSources: ['generator'] },
+      features: dummyFeatures,
+      rank: 1,
+      exposureDecision: {
+        contextUnitId: 'src/core/test.ts',
+        eligibleForSelection: true,
+        selected: true,
+        resolution: ContextResolution.FULL,
+        contextPlanId: 'plan_train',
+        policyId: 'policy_train',
+        policyVersion: '1.0.0',
+        timestamp: new Date().toISOString(),
+      },
+      agentEnvironment: createAgentEnvironment(),
+      observabilityLevel: 'FULL_TOOL_TRACE',
+    });
+
+    const forbiddenTrainingRights = createDefaultDataRights({
+      trainingAllowed: false,
+    });
+
+    // 1. DatasetBuilder.buildCandidateObservation enforces trainingAllowed
+    assert.throws(
+      () => {
+        DatasetBuilder.buildCandidateObservation({
+          decision: decObs,
+          dataRights: forbiddenTrainingRights,
+        });
+      },
+      /TRAINING_FORBIDDEN/,
+      'buildCandidateObservation must throw when trainingAllowed is false'
+    );
+
+    // 2. DatasetBuilder.buildDataset enforces trainingAllowed
+    assert.throws(
+      () => {
+        DatasetBuilder.buildDataset({
+          decisions: [decObs],
+          dataRights: forbiddenTrainingRights,
+        });
+      },
+      /TRAINING_FORBIDDEN/,
+      'buildDataset must throw when trainingAllowed is false'
+    );
+
+    // 3. DatasetBuilder.buildTrainingEvidenceRecord enforces trainingAllowed
+    assert.throws(
+      () => {
+        DatasetBuilder.buildTrainingEvidenceRecord({
+          decision: decObs,
+          dataRights: forbiddenTrainingRights,
+        });
+      },
+      /TRAINING_FORBIDDEN/,
+      'buildTrainingEvidenceRecord must throw when trainingAllowed is false'
+    );
+
+    // 4. operationRights training check on NUMERIC_FEATURE
+    const deniedOpTrainingRights = createDefaultDataRights({
+      trainingAllowed: true,
+      operationRights: {
+        ...createDefaultOperationRightsPolicy(),
+        [DataClass.NUMERIC_FEATURE]: {
+          processing: { local: true, remote: false },
+          retention: { local: true, remote: false },
+          training: false,
+        },
+      },
+    });
+
+    assert.throws(
+      () => {
+        DatasetBuilder.buildCandidateObservation({
+          decision: decObs,
+          dataRights: deniedOpTrainingRights,
+        });
+      },
+      /TRAINING_FORBIDDEN/,
+      'buildCandidateObservation must throw when operationRights denies training on NUMERIC_FEATURE'
+    );
+
+    // 5. RightsFilter.evaluate rejects when operationRights denies training on NUMERIC_FEATURE
+    const filter = new RightsFilter();
+    const candidateObs = DatasetBuilder.buildCandidateObservation({
+      decision: decObs,
+      behavior: { read: true, edited: true },
+      taskSucceeded: true,
+    });
+
+    const filterResult = filter.evaluate({
+      observation: candidateObs,
+      dataRights: deniedOpTrainingRights,
+    });
+    assert.strictEqual(filterResult.passed, false, 'RightsFilter must reject observation when operationRights denies training');
+    assert.ok(
+      filterResult.reasons.some((r) => r.includes('TRAINING_OPERATION_FORBIDDEN')),
+      'Filter reason must cite TRAINING_OPERATION_FORBIDDEN'
+    );
+
+    console.log('  ✔ Suite 8 passed: Training rights enforcement across DatasetBuilder & RightsFilter verified\n');
+  }
+
+  // ==========================================================================
+  // SUITE 9: Preservation of Partially Missing JEV Heads in ContextRank
+  // ==========================================================================
+  console.log('--- Suite 9: Preservation of Partially Missing JEV Heads in ContextRank ---');
+  {
+    const ranker = new ContextRanker({
+      jevSemanticWeight: 20,
+      jevEditTargetWeight: 30,
+      jevRootCauseWeight: 25,
+      jevImplementationWeight: 15,
+    });
+
+    const candidateFeatures: any = {
+      schemaVersion: 'v1',
+      contextUnitId: 'sym_partially_missing_heads',
+      unitKind: ContextUnitKind.CODE_SYMBOL,
+      tokenEstimate: 50,
+      isTest: false,
+      isConfig: false,
+      isDocumentation: false,
+      isSchema: false,
+      isExported: true,
+      exactSymbolMatch: false,
+      exactPathMatch: false,
+      bm25Score: 0,
+      tokenOverlapRatio: 0,
+      graphDegree: 0,
+      minDistanceToSeed: null,
+      minDistanceToErrorFrame: null,
+      isDirectDependency: false,
+      isDirectDependent: false,
+      changeFrequency: 0,
+      recentChangeFrequency: 0,
+      maxCoChangeWithSeeds: 0,
+      inStackTrace: false,
+      isFailingTestTarget: false,
+      inCompilerError: false,
+      inDirtyDiff: false,
+      heuristicScore: 10,
+    };
+
+    // Candidate has only likelyEditTargetProbability (missing rootCause, impNeeded, semRel)
+    const partialJudgment: any = {
+      candidateUnitId: 'sym_partially_missing_heads',
+      likelyEditTargetProbability: 0.8,
+      likelyRootCauseProbability: undefined,
+      implementationNeededProbability: undefined,
+      semanticRelevanceProbability: undefined,
+      confidence: 1.0,
+    };
+
+    const judgmentsMap = new Map<string, any>([
+      ['sym_partially_missing_heads', partialJudgment],
+    ]);
+
+    const ranked = ranker.rank([candidateFeatures], judgmentsMap);
+    assert.strictEqual(ranked.length, 1);
+    const rc = ranked[0];
+
+    // Likely edit target boost: 30 * 0.8 * 1.0 = 24
+    assert.ok(
+      rc.reasons.some((r: string) => r.includes('jev_likely_edit_target (+24.0)')),
+      'Likely edit target applied +24.0 boost'
+    );
+    // Missing heads must NOT add reasons with 0.0 or penalize
+    assert.ok(
+      !rc.reasons.some((r: string) => r.includes('jev_likely_root_cause')),
+      'Missing root cause head must not inject reasons'
+    );
+    assert.ok(
+      !rc.reasons.some((r: string) => r.includes('jev_implementation_needed')),
+      'Missing implementation head must not inject reasons'
+    );
+    assert.ok(
+      !rc.reasons.some((r: string) => r.includes('jev_semantic_relevance')),
+      'Missing semantic relevance head must not inject reasons'
+    );
+
+    console.log('  ✔ Suite 9 passed: Partially missing JEV heads preserved without synthetic 0.0 injection\n');
+  }
+
+  console.log('🎉 ALL NINE REGRESSION SUITES PASSED CLEANLY!\n');
 }
 
 if (require.main === module) {

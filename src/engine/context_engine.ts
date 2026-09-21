@@ -13,7 +13,7 @@ import { ContextUnit, ContextUnitKind } from '../context/context_unit';
 import { ContextGraph } from '../graph/context_graph';
 import { GitGraphIntelligence } from '../graph/git_graph';
 import { FeatureCutoff } from '../learning/point_in_time_features';
-import { DataRights, createDefaultDataRights } from '../rights/data_rights';
+import { DataRights, createDefaultDataRights, resolveApplicationDataRights } from '../rights/data_rights';
 import { AgentAdapter, ClaudeCodeAdapter, CursorAdapter, GenericMcpAdapter, ContextUnitResolved, FormattedContext } from '../agents/agent_adapter';
 import { CandidateGenerator } from '../retrieval/candidate_generator';
 import { FeatureBuilderV1 } from '../ranking/feature_builder';
@@ -107,6 +107,7 @@ export interface RankWorkspaceOptions {
   limit?: number;
   excludePatterns?: string[];
   includePatterns?: string[];
+  dataRights?: DataRights;
 }
 
 export interface RankWorkspaceResult {
@@ -130,7 +131,7 @@ export class ContextEngine {
   constructor(options: ContextEngineOptions = {}) {
     this.repoRootDir = options.repoRootDir;
     this.adapter = options.adapter || new ClaudeCodeAdapter();
-    this.dataRights = options.dataRights || createDefaultDataRights();
+    this.dataRights = resolveApplicationDataRights(options.dataRights);
     this.budgetProfile = options.budgetProfile || 'BALANCED';
     this.budgetLimits = options.budgetLimits || (
       this.budgetProfile !== 'CUSTOM' ? BUDGET_PROFILES[this.budgetProfile] : { maxTokens: 16000 }
@@ -681,7 +682,7 @@ export class ContextEngine {
           this.sqliteStore.saveExposureDecisions(exposureDecisionsV2, task.taskId);
         }
         if (decisionObservations.length > 0) {
-          this.sqliteStore.saveCandidateDecisionObservations(decisionObservations);
+          this.sqliteStore.saveCandidateDecisionObservations(decisionObservations, this.dataRights);
         }
         this.sqliteStore.saveTrajectoryEvents(
           trajectoryLogger.getEvents(),
