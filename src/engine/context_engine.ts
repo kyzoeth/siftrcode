@@ -61,6 +61,7 @@ export interface ContextEngineOptions {
   jevShadowRunner?: JevShadowRunner;
   enableJevShadow?: boolean;
   ranker?: { rank(candidates: ContextFeaturesV1[], judgments?: any): RankedCandidate[] };
+  candidateBudget?: number;
 }
 
 export interface OptimizeWorkspaceOptions {
@@ -74,6 +75,7 @@ export interface OptimizeWorkspaceOptions {
   budgetProfile?: BudgetProfileName;
   budgetLimits?: BudgetLimits;
   tokenBudget?: number;
+  candidateBudget?: number;
   maxCostUSD?: number;
   dataRights?: DataRights;
   seedUnitIds?: string[];
@@ -108,6 +110,7 @@ export interface RankWorkspaceOptions {
   sessionId?: string;
   availableTools?: string[];
   limit?: number;
+  candidateBudget?: number;
   excludePatterns?: string[];
   includePatterns?: string[];
   dataRights?: DataRights;
@@ -133,10 +136,12 @@ export class ContextEngine {
   private jevShadowRunner?: JevShadowRunner;
   private sessionCache = new Map<string, SiftrSession>();
   private ranker?: { rank(candidates: ContextFeaturesV1[], judgments?: any): RankedCandidate[] };
+  private candidateBudget?: number;
 
   constructor(options: ContextEngineOptions = {}) {
     this.repoRootDir = options.repoRootDir;
     this.ranker = options.ranker;
+    this.candidateBudget = options.candidateBudget;
     this.adapter = options.adapter || new ClaudeCodeAdapter();
     this.dataRights = resolveApplicationDataRights(options.dataRights);
     this.budgetProfile = options.budgetProfile || 'BALANCED';
@@ -274,6 +279,7 @@ export class ContextEngine {
     dirtyPaths?: string[];
     seedUnitIds?: string[];
     snapshot?: WorkspaceSnapshot;
+    candidateBudget?: number;
   }): ContextPlan {
     const {
       task,
@@ -293,6 +299,7 @@ export class ContextEngine {
           },
         ],
       }),
+      candidateBudget,
     } = params;
 
     const planId = 'cplan_' + crypto.randomUUID().replace(/-/g, '').slice(0, 16);
@@ -306,8 +313,11 @@ export class ContextEngine {
     }
 
     // 2. Candidate Discovery (Multi-channel: exact, lexical, stack_trace, graph, git)
+    const effectiveCandidateBudget = candidateBudget ?? this.candidateBudget ?? 50;
     const generator = new CandidateGenerator();
-    const candidates = generator.generateCandidates(task, units, graph, gitIntelligence);
+    const candidates = generator.generateCandidates(task, units, graph, gitIntelligence, {
+      maxCandidates: effectiveCandidateBudget,
+    });
     const candidateMap = new Map<string, (typeof candidates)[0]>();
     for (const c of candidates) candidateMap.set(c.contextUnitId, c);
 
@@ -927,6 +937,7 @@ export class ContextEngine {
     dirtyPaths?: string[];
     seedUnitIds?: string[];
     snapshot?: WorkspaceSnapshot;
+    candidateBudget?: number;
   }): Promise<ContextPlan> {
     const plan = this.generatePlan(params);
     if (plan.jevPromise) {
@@ -1091,6 +1102,7 @@ export class ContextEngine {
           jevShadowRunner: options.jevShadowRunner,
           enableJevShadow: options.enableJevShadow,
           ranker: options.ranker,
+          candidateBudget: options.candidateBudget,
         });
 
         // Canonical construction order (Milestone Part I Sections 2-4):
@@ -1148,6 +1160,7 @@ export class ContextEngine {
           dirtyPaths,
           seedUnitIds: options.seedUnitIds,
           snapshot,
+          candidateBudget: options.candidateBudget,
         });
 
         plan.replanningAttempts = attempt;
@@ -1231,8 +1244,11 @@ export class ContextEngine {
       }),
     });
 
+    const effectiveMax = options.candidateBudget ?? options.limit ?? 50;
     const generator = new CandidateGenerator();
-    const candidates = generator.generateCandidates(task, units, graph, gitIntelligence);
+    const candidates = generator.generateCandidates(task, units, graph, gitIntelligence, {
+      maxCandidates: effectiveMax,
+    });
 
     const unitsMap = new Map<string, ContextUnit>();
     for (const u of units) unitsMap.set(u.id, u);
