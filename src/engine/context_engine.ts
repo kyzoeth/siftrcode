@@ -868,10 +868,17 @@ export class ContextEngine {
       runtimePolicyId = this.contextPolicyIdentity?.contextPolicyId || PRODUCTION_V2_POLICY_IDENTITY.contextPolicyId;
     }
 
+    const runtimeRankerStatus: 'PRODUCTION' | 'SHADOW' | 'RESEARCH' | 'UNKNOWN' =
+      runtimeRankerId === 'custom_unidentified'
+        ? 'UNKNOWN'
+        : (this.contextPolicyIdentity?.rankerStatus ||
+           (runtimeRankerId === PRODUCTION_V2_POLICY_IDENTITY.rankerId ? 'PRODUCTION' : 'RESEARCH'));
+
     const contextPolicyIdentity: ContextPolicyIdentity = {
       contextPolicyId: runtimePolicyId,
       rankerId: runtimeRankerId,
       rankerVersion: runtimeRankerVersion,
+      rankerStatus: runtimeRankerStatus,
       featureSetVersion: runtimeFeatureSetVersion,
       candidateGeneratorVersion:
         this.contextPolicyIdentity?.candidateGeneratorVersion ||

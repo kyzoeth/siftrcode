@@ -430,7 +430,7 @@ export class EpisodeAssembler {
         siftrGitSha: buildProv.siftrGitSha,
         contextPolicyId: policyIdent.contextPolicyId,
         rankerId: policyIdent.rankerId,
-        rankerStatus: 'PRODUCTION',
+        rankerStatus: (policyIdent as any).rankerStatus || (policyIdent.rankerId === PRODUCTION_V2_POLICY_IDENTITY.rankerId ? 'PRODUCTION' : 'UNKNOWN'),
         contextPolicyIdentity: policyIdent,
         toolConfigurationHash: toolConfigHash,
         systemConfigurationHash: null,

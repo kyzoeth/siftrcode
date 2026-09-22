@@ -28,6 +28,7 @@ export interface ContextPolicyIdentity {
   contextPolicyId: string;
   rankerId: string;
   rankerVersion: string;
+  rankerStatus?: 'PRODUCTION' | 'SHADOW' | 'RESEARCH' | 'UNKNOWN';
   featureSetVersion: string;
   candidateGeneratorVersion: string;
   budgetPolicyVersion: string;
@@ -38,6 +39,7 @@ export const PRODUCTION_V2_POLICY_IDENTITY: ContextPolicyIdentity = {
   contextPolicyId: 'production-v2-deterministic-2026-09',
   rankerId: 'deterministic_context_ranker_v2',
   rankerVersion: '2.0.0',
+  rankerStatus: 'PRODUCTION',
   featureSetVersion: 'CONTEXT_FEATURES_V1',
   candidateGeneratorVersion: '2.0.0',
   budgetPolicyVersion: '2.0.0',

@@ -14,8 +14,8 @@
  * 4. Never generate synthetic session IDs during outcome finalization.
  */
 
-import { ContextPlan } from '../../engine/context_plan';
-import { PreOutcomeEpisodeSnapshot } from './pre_outcome_snapshot';
+import { ContextPlan, PRODUCTION_V2_POLICY_IDENTITY } from '../../engine/context_plan';
+import { PreOutcomeEpisodeSnapshot, loadVerifiedPreOutcomeSnapshot } from './pre_outcome_snapshot';
 import { SqliteStore } from '../../storage/sqlite_store';
 
 export interface LineageResolutionInput {
@@ -98,6 +98,14 @@ export function resolveOutcomeLineage(
         error: `Lineage mismatch: ContextPlan "${planId}" belongs to workspaceSnapshotId "${plan.workspaceSnapshotId}", not "${workspaceSnapshotId}".`,
       };
     }
+
+    if (input.agentEnvironmentId && plan.agentEnvironmentId && input.agentEnvironmentId !== plan.agentEnvironmentId) {
+      return {
+        valid: false,
+        code: 'FAIL_CLOSED_LINEAGE_MISMATCH',
+        error: `Lineage mismatch: Caller agentEnvironmentId "${input.agentEnvironmentId}" differs from ContextPlan agentEnvironmentId "${plan.agentEnvironmentId}".`,
+      };
+    }
   } else {
     // Rule 2: contextPlanId omitted, require exactly 1 unambiguous plan for taskId
     if (!taskId) {
@@ -126,6 +134,14 @@ export function resolveOutcomeLineage(
     }
 
     plan = plans[0];
+
+    if (input.agentEnvironmentId && plan.agentEnvironmentId && input.agentEnvironmentId !== plan.agentEnvironmentId) {
+      return {
+        valid: false,
+        code: 'FAIL_CLOSED_LINEAGE_MISMATCH',
+        error: `Lineage mismatch: Caller agentEnvironmentId "${input.agentEnvironmentId}" differs from ContextPlan agentEnvironmentId "${plan.agentEnvironmentId}".`,
+      };
+    }
   }
 
   // Resolve associated PreOutcomeEpisodeSnapshot
@@ -171,7 +187,35 @@ export function resolveOutcomeLineage(
     };
   }
 
-  const effectiveSessionId = plan.sessionId || sessionId || snapshot.episodeId;
+  // Phase 20.4 Invariant: Snapshot verification through all lineage paths (fail closed on hash mismatch)
+  try {
+    snapshot = loadVerifiedPreOutcomeSnapshot(snapshot);
+  } catch (err: any) {
+    return {
+      valid: false,
+      code: 'FAIL_CLOSED_LINEAGE_MISMATCH',
+      error: `Pre-outcome snapshot integrity verification failed: ${err.message}`,
+    };
+  }
+
+  if (workspaceSnapshotId && snapshot.workspaceSnapshotId && workspaceSnapshotId !== snapshot.workspaceSnapshotId) {
+    return {
+      valid: false,
+      code: 'FAIL_CLOSED_LINEAGE_MISMATCH',
+      error: `Lineage mismatch: Caller workspaceSnapshotId "${workspaceSnapshotId}" differs from PreOutcomeEpisodeSnapshot workspaceSnapshotId "${snapshot.workspaceSnapshotId}".`,
+    };
+  }
+
+  // Phase 20.4 Invariant: Eliminate synthetic sessionId = snapshot.episodeId fallback
+  const effectiveSessionId = plan.sessionId || sessionId;
+  if (!effectiveSessionId) {
+    return {
+      valid: false,
+      code: 'FAIL_CLOSED_LINEAGE_MISMATCH',
+      error: 'Lineage failure: sessionId is missing and synthetic session generation is forbidden.',
+    };
+  }
+
   const effectiveAgentEnvId =
     input.agentEnvironmentId ||
     plan.agentEnvironmentId ||
