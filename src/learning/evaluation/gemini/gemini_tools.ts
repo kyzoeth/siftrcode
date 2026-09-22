@@ -393,9 +393,6 @@ export class GeminiWorkspaceSandbox {
         case 'run_build':
           output = this.runBuild();
           break;
-        case 'run_command':
-          output = this.runCommand(String(args.command));
-          break;
         default:
           throw new Error(`Unknown tool: '${name}'`);
       }
@@ -560,20 +557,6 @@ export const GEMINI_TOOL_DECLARATIONS = [
       type: Type.OBJECT,
       properties: {},
       required: [],
-    },
-  },
-  {
-    name: 'run_command',
-    description: 'Executes a sandboxed shell command in the workspace directory.',
-    parameters: {
-      type: Type.OBJECT,
-      properties: {
-        command: {
-          type: Type.STRING,
-          description: 'The shell command line to execute.',
-        },
-      },
-      required: ['command'],
     },
   },
 ];

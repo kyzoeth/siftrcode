@@ -221,7 +221,7 @@ export class GeminiCodingAgent {
       totalPromptTokens,
       totalCandidateTokens,
       totalThoughtsTokens,
-      'standard'
+      this.config.billingTier
     );
 
     return {

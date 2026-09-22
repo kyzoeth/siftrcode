@@ -96,18 +96,23 @@ export async function runGeminiHarnessTests(): Promise<void> {
     // 3. Provider Pricing Calculations
     // -------------------------------------------------------------------------
     console.log('\n--- 3. Provider Pricing Calculations ---');
-    const cost = calculateModelCostUSD('gemini-3.6-flash', 1_000_000, 1_000_000);
-    // 1M input ($0.10) + 1M output ($0.40) = $0.50
+    const cost = calculateModelCostUSD('gemini-3.6-flash', 1_000_000, 1_000_000, 0, 'standard');
+    // 1M input ($0.75) + 1M output ($3.75) = $4.50
     assert.strictEqual(cost.costStatus, 'VALID');
-    assert.strictEqual(cost.providerCostUSD, 0.50);
+    assert.strictEqual(cost.providerCostUSD, 4.50);
 
-    const costSmall = calculateModelCostUSD('gemini-3.6-flash', 10_000, 2_000);
-    // 10K / 1M * 0.10 = 0.0010 + 2K / 1M * 0.40 = 0.0008 = 0.0018
+    const costSmall = calculateModelCostUSD('gemini-3.6-flash', 10_000, 2_000, 0, 'standard');
+    // 10K / 1M * 0.75 = 0.0075 + 2K / 1M * 3.75 = 0.0075 = 0.0150
     assert.strictEqual(costSmall.costStatus, 'VALID');
-    assert.strictEqual(costSmall.providerCostUSD, 0.0018);
+    assert.strictEqual(costSmall.providerCostUSD, 0.0150);
+
+    // Fail-closed test on unknown billing tier
+    const unknownTierCost = calculateModelCostUSD('gemini-3.6-flash', 10_000, 2_000, 0, 'unknown');
+    assert.strictEqual(unknownTierCost.costStatus, 'PRICING_UNAVAILABLE');
+    assert.strictEqual(unknownTierCost.providerCostUSD, null);
 
     // Fail-closed test on unknown model
-    const unknownCost = calculateModelCostUSD('non-existent-model', 1000, 1000);
+    const unknownCost = calculateModelCostUSD('non-existent-model', 1000, 1000, 0, 'standard');
     assert.strictEqual(unknownCost.costStatus, 'PRICING_UNAVAILABLE');
     assert.strictEqual(unknownCost.providerCostUSD, null);
 
@@ -142,7 +147,7 @@ export async function runGeminiHarnessTests(): Promise<void> {
     ]);
 
     const agent = new GeminiCodingAgent(tmpWorkspace, {
-      configOverrides: { apiKey: 'mock-key', model: 'gemini-3.6-flash' },
+      configOverrides: { apiKey: 'mock-key', model: 'gemini-3.6-flash', billingTier: 'standard' },
       clientOverride: mockClient,
     });
 

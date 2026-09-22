@@ -3,13 +3,15 @@
  * SiftrCode V3.1 - Verified Coding-Task Paired Evaluator (Phase 12)
  *
  * Evaluates frozen deterministic V2 vs learned ContextRank V3 on the genuinely
- * fresh, untouched 34-task holdout using real Gemini coding-agent execution:
- * - Real code context materialized (not just filenames) without target labels
+ * fresh natural 40-task holdout using real Gemini coding-agent execution:
+ * - True end-to-end FrozenV2ContextProvider (authoritative V2 baseline @ 1eedac0, fail-closed)
+ * - True end-to-end LearnedV3ContextProvider (real materializer & bundle composer)
+ * - Both context bundles generated from each exact episode.baseCommit
  * - Randomize A/B ordering (V2 first vs V3 first) with recorded seed
  * - Sandboxed execution with isolated HOME/TMPDIR, disabled network, command inspection
- * - Fail-closed official Google GenAI pricing ($0.10/M prompt, $0.40/M candidate/thoughts)
+ * - Fail-closed official Google GenAI pricing ($0.75/M prompt, $3.75/M candidate/thoughts)
  * - Tri-state verification (true | false | null)
- * - Emits experiments/v3-1-final/paired_gemini_report.json
+ * - Emits experiments/v3-1-final-natural/paired_gemini_report.json
  *
  * Gate Decision:
  * - V3.1_PROMOTION_GATE_PASSED
@@ -27,20 +29,14 @@ import {
   SingleTaskVerifiedRun,
 } from '../../src/learning/evaluation/verified_task_evaluator';
 import { SiftrBenchManifest, SiftrBenchEpisode } from '../../src/benchmark/siftrbench/episode_schema';
-import { RepositoryIndexer } from '../../src/indexing/repository_index';
-import { GraphBuilder } from '../../src/graph/graph_builder';
-import { GitGraphIntelligence } from '../../src/graph/git_graph';
-import { CandidateGenerator } from '../../src/retrieval/candidate_generator';
-import { createTaskContext } from '../../src/context/task_context';
-import { createAgentEnvironment } from '../../src/agents/agent_environment';
-import { FeatureBuilderV3_1 } from '../../src/learning/features/feature_builder_v3_1';
-import { ContextFeaturesV3_1, featuresToVector } from '../../src/learning/features/feature_set_v3_1';
-import { ContextFeaturesV1 } from '../../src/ranking/feature_schema';
-import { ContextRanker } from '../../src/ranking/context_rank';
 import { TreeRanker } from '../../src/learning/models/context_rank/tree_ranker';
-import { ContextUnit } from '../../src/context/context_unit';
 import { resolveGeminiApiKey } from '../../src/learning/evaluation/gemini/gemini_config';
 import { GeminiCodingAgent } from '../../src/learning/evaluation/gemini/gemini_agent';
+import {
+  FrozenV2ContextProvider,
+  LearnedV3ContextProvider,
+  ContextBundleResult,
+} from '../../src/learning/evaluation/context_providers';
 
 export interface VerifiedEvalOptions {
   minTasks?: number;
@@ -86,6 +82,12 @@ function createEphemeralWorkspace(repoId: string, baseCommit: string): { dir: st
         fs.symlinkSync(venv, path.join(tmp, 'venv'), 'dir');
       } catch {}
     }
+    const dotVenv = path.join(sourceDir, '.venv');
+    if (fs.existsSync(dotVenv)) {
+      try {
+        fs.symlinkSync(dotVenv, path.join(tmp, '.venv'), 'dir');
+      } catch {}
+    }
   } else if (repoId === 'siftrcode') {
     const nm = path.join(rootDir, 'node_modules');
     if (fs.existsSync(nm)) {
@@ -114,50 +116,13 @@ function createEphemeralWorkspace(repoId: string, baseCommit: string): { dir: st
   };
 }
 
-/**
- * Materializes real code context from repository units up to token budget.
- * Invariant: Never contains ground-truth target annotations or relevance labels.
- */
-function formatMaterializedContext(
-  repoRoot: string,
-  units: Array<{ path?: string }>,
-  maxTokens: number = 8000
-): string {
-  if (units.length === 0) return '(No initial context retrieved)';
-  const parts: string[] = [];
-  let tokenSum = 0;
-
-  for (const u of units) {
-    if (!u.path) continue;
-    const fullPath = path.join(repoRoot, u.path);
-    if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) continue;
-
-    try {
-      const content = fs.readFileSync(fullPath, 'utf8');
-      const lines = content.split('\n');
-      let truncated = content;
-      if (lines.length > 400) {
-        truncated = lines.slice(0, 400).join('\n') + '\n// ... [truncated for context budget]';
-      }
-      const approxTokens = Math.ceil(truncated.length / 4);
-      if (tokenSum + approxTokens > maxTokens && parts.length > 0) {
-        break;
-      }
-      parts.push(`--- File: ${u.path} ---\n${truncated}`);
-      tokenSum += approxTokens;
-    } catch {}
-  }
-
-  return parts.join('\n\n');
-}
-
 function resolveVerifierCommand(repoId: string, verifierFilename: string): string {
   if (repoId === 'fastapi') {
-    return `./venv/bin/python ${verifierFilename}`;
+    return `[ -f .venv/bin/python ] && .venv/bin/python "${verifierFilename}" || ./venv/bin/python "${verifierFilename}"`;
   } else if (repoId === 'siftrcode') {
-    return `npx tsc --skipLibCheck && node ${verifierFilename}`;
+    return `npm run build && node "${verifierFilename}"`;
   }
-  return `node ${verifierFilename}`;
+  return `node "${verifierFilename}"`;
 }
 
 async function runSingleVariant(
@@ -187,7 +152,11 @@ async function runSingleVariant(
     };
   }
 
-  const verifierFilename = String((ep.verifier?.metadata as any)?.verifierFilename || '');
+  const verifierFilename = String(
+    (ep as any).verifierFilename ||
+    (ep.verifier?.metadata as any)?.verifierFilename ||
+    ''
+  );
   if (!verifierFilename) {
     throw new Error(`Verifier filename missing in episode metadata: ${ep.taskId}`);
   }
@@ -259,16 +228,15 @@ export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
   const gbdtArtifact = JSON.parse(fs.readFileSync(gbdtArtifactPath, 'utf8'));
   const v3TreeRanker = TreeRanker.fromArtifact(gbdtArtifact);
 
-  // Load frozen authoritative V2 ContextRanker from compiled baseline worktree
-  let v2DeterministicRanker: any;
-  try {
-    const v2Module = require(path.join(rootDir, '.v2-baseline-worktree/dist'));
-    v2DeterministicRanker = new v2Module.ContextRanker();
-    console.log('🏛️  [Verified Task Evaluator] Loaded frozen authoritative V2 ContextRanker (.v2-baseline-worktree/dist @ 1eedac0)');
-  } catch (err) {
-    v2DeterministicRanker = new ContextRanker();
-    console.log('ℹ️  [Verified Task Evaluator] Using local ContextRanker fallback');
-  }
+  // Fail-closed verification and loading of frozen authoritative V2 ContextProvider (NO fallback)
+  console.log('🏛️  [Verified Task Evaluator] Loading frozen authoritative V2 ContextProvider (.v2-baseline-worktree @ 1eedac0)...');
+  const v2Provider = new FrozenV2ContextProvider();
+  console.log('✔ Frozen authoritative V2 ContextProvider loaded successfully (fail-closed verified).');
+
+  // Loading of real V3 ContextProvider (GBDT TreeRanker + real materializer / bundle composer)
+  console.log('🌲 [Verified Task Evaluator] Loading learned V3 ContextProvider (GBDT TreeRanker adapter)...');
+  const v3Provider = new LearnedV3ContextProvider(v3TreeRanker);
+  console.log('✔ Learned V3 ContextProvider loaded successfully.');
 
   let episodes = manifest.episodes;
   if (options.taskFilter) {
@@ -297,41 +265,7 @@ export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
     console.log(`✔ Real coding-agent credentials active (Provider: Google Gemini / gemini-3.6-flash).`);
   }
 
-  // 1. Index repositories for candidate retrieval and feature extraction
-  console.log('\n📚 Indexing benchmark repositories...');
-  const repoPaths: Record<string, string> = {
-    express: path.join(rootDir, 'benchmarks/express-repo'),
-    fastapi: path.join(rootDir, 'benchmarks/fastapi-repo'),
-    commander: path.join(rootDir, 'benchmarks/commander-repo'),
-    siftrcode: path.join(rootDir, '.v2-baseline-worktree'),
-  };
-
-  const repoFilters: Record<string, any> = {
-    express: {},
-    fastapi: { includePatterns: ['fastapi/**'], excludePatterns: ['**/tests/**', '**/docs/**'] },
-    commander: { includePatterns: ['lib/**'], excludePatterns: ['**/tests/**'] },
-    siftrcode: { includePatterns: ['src/**'], excludePatterns: ['**/node_modules/**', '**/dist/**', '**/benchmarks/**'] },
-  };
-
-  const indexes: Record<string, { units: ContextUnit[]; graph: any; gitInt?: GitGraphIntelligence }> = {};
-  for (const [repoKey, rPath] of Object.entries(repoPaths)) {
-    if (fs.existsSync(rPath)) {
-      process.stdout.write(`   Indexing ${repoKey}... `);
-      const indexer = new RepositoryIndexer();
-      const idx = await indexer.indexRepository(rPath, repoFilters[repoKey]);
-      const gb = new GraphBuilder();
-      const graph = gb.buildGraph(idx.units, { repoDir: rPath });
-      let gitInt: GitGraphIntelligence | undefined;
-      try {
-        gitInt = new GitGraphIntelligence({ repoDir: rPath });
-      } catch {}
-      indexes[repoKey] = { units: idx.units, graph, gitInt };
-      console.log(`done (${idx.units.length} units)`);
-    }
-  }
-
-  // 2. Evaluate all paired tasks
-  const candGen = new CandidateGenerator();
+  // Paired task evaluation loop
   const pairedResults: PairedTaskEvaluation[] = [];
   const orderSeed = options.seed ?? 42;
   console.log(`\n🎲 A/B Randomization Seed: ${orderSeed}`);
@@ -339,125 +273,33 @@ export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
 
   for (let i = 0; i < episodes.length; i++) {
     const ep = episodes[i];
-    const repoKey = ep.repositoryId;
-    const repoData = indexes[repoKey];
-    if (!repoData) {
-      throw new Error(`Repository index not available for: ${repoKey}`);
-    }
-
     console.log(`\n▶ [Task ${i + 1}/${episodes.length}] ${ep.taskId} (${ep.repositoryId})`);
+    console.log(`   Base Commit: ${ep.baseCommit}`);
     console.log(`   Prompt: "${ep.taskPrompt.slice(0, 85)}..."`);
 
-    // A. Generate Candidates & Features
-    const taskCtx = createTaskContext({
-      taskId: ep.taskId,
-      primaryPrompt: ep.taskPrompt,
-      workspaceSnapshotId: ep.workspaceSnapshotId,
-      agentEnvironment: createAgentEnvironment({
-        agentProvider: 'google',
-        model: 'gemini-3.6-flash',
-        harnessVersion: 'v3.1.0',
-      }),
-    });
-
-    const candidates = candGen.generateCandidates(
-      taskCtx,
-      repoData.units,
-      repoData.graph,
-      repoData.gitInt,
-      { maxCandidates: 50 }
-    );
-
-    const unitMap = new Map<string, ContextUnit>();
-    for (const u of repoData.units) unitMap.set(u.id, u);
-
-    const validCandidatePairs: Array<{ cand: any; unit: ContextUnit; features: ContextFeaturesV3_1 }> = [];
-    for (const c of candidates) {
-      const u = unitMap.get(c.contextUnitId);
-      if (!u) continue;
-      const f = FeatureBuilderV3_1.buildFeatures({
-        candidate: c,
-        unit: u,
-        task: taskCtx,
-        graph: repoData.graph,
-        gitIntelligence: repoData.gitInt,
+    // Generate both context bundles from each exact episode.baseCommit using real providers
+    process.stdout.write('   Generating V2 & V3 context bundles from exact baseCommit... ');
+    const prepWs = createEphemeralWorkspace(ep.repositoryId, ep.baseCommit);
+    let v2Bundle: ContextBundleResult;
+    let v3Bundle: ContextBundleResult;
+    try {
+      v2Bundle = await v2Provider.getContext({
+        workspaceDir: prepWs.dir,
+        prompt: ep.taskPrompt,
+        tokenBudget: 8000,
+        repoId: ep.repositoryId,
       });
-      validCandidatePairs.push({ cand: c, unit: u, features: f });
+
+      v3Bundle = await v3Provider.getContext({
+        workspaceDir: prepWs.dir,
+        prompt: ep.taskPrompt,
+        tokenBudget: 8000,
+        repoId: ep.repositoryId,
+      });
+      process.stdout.write(`done (V2: ${v2Bundle.tokenEstimate} tok, V3: ${v3Bundle.tokenEstimate} tok)\n`);
+    } finally {
+      prepWs.cleanup();
     }
-
-    // B. V2 Frozen Deterministic Ranking
-    const v1Features: ContextFeaturesV1[] = validCandidatePairs.map(({ features: f }) => ({
-      schemaVersion: 'v1',
-      contextUnitId: f.contextUnitId,
-      unitKind: f.unitKind,
-      tokenEstimate: f.tokenEstimate,
-      isTest: f.isTest,
-      isConfig: f.isConfig,
-      isDocumentation: f.isDocumentation,
-      isSchema: f.isSchema,
-      isExported: f.isExported,
-      exactSymbolMatch: f.exactSymbolMatch,
-      exactPathMatch: f.exactPathMatch,
-      bm25Score: f.bm25Score,
-      tokenOverlapRatio: f.tokenOverlapRatio,
-      graphDegree: f.graphDegree,
-      minDistanceToSeed: f.minDistanceToSeed,
-      minDistanceToErrorFrame: f.minDistanceToErrorFrame,
-      isDirectDependency: f.isDirectDependency,
-      isDirectDependent: f.isDirectDependent,
-      changeFrequency: f.changeFrequency,
-      recentChangeFrequency: f.recentChangeFrequency,
-      maxCoChangeWithSeeds: f.maxCoChangeWithSeeds,
-      inStackTrace: f.inStackTrace,
-      isFailingTestTarget: f.isFailingTestTarget,
-      inCompilerError: f.inCompilerError,
-      inDirtyDiff: f.inDirtyDiff,
-      heuristicScore: f.heuristicScore,
-    }));
-
-    const v2Ranked = v2DeterministicRanker.rank(v1Features);
-    const v2Units: ContextUnit[] = [];
-    let v2Tokens = 0;
-    for (const r of v2Ranked) {
-      const pair = validCandidatePairs.find((p) => p.cand.contextUnitId === r.contextUnitId);
-      if (!pair) continue;
-      const tok = r.features.tokenEstimate || 100;
-      if (v2Tokens + tok <= 8000) {
-        v2Units.push(pair.unit);
-        v2Tokens += tok;
-      }
-    }
-
-    // C. V3 Learned GBDT Ranking
-    const v3Scored = validCandidatePairs.map(({ cand, unit, features: f }) => {
-      const vec = featuresToVector(f, true);
-      const rawScore = v3TreeRanker.scoreVector(vec);
-      const score = rawScore * 10.0 + f.heuristicScore * 0.1;
-      return {
-        unit,
-        score,
-        tokenEstimate: f.tokenEstimate || 100,
-      };
-    });
-
-    v3Scored.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return a.unit.id.localeCompare(b.unit.id);
-    });
-
-    const v3Units: ContextUnit[] = [];
-    let v3Tokens = 0;
-    for (const s of v3Scored) {
-      if (v3Tokens + s.tokenEstimate <= 8000) {
-        v3Units.push(s.unit);
-        v3Tokens += s.tokenEstimate;
-      }
-    }
-
-    // Materialize real code content without target labels
-    const repoDir = repoPaths[repoKey];
-    const v2Context = formatMaterializedContext(repoDir, v2Units, 8000);
-    const v3Context = formatMaterializedContext(repoDir, v3Units, 8000);
 
     // Randomize A/B order
     const runV2First = ((orderSeed * 37 + i * 17 + 101) % 2 === 0);
@@ -476,8 +318,8 @@ export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
         v2Run = await runSingleVariant(
           'V2_FROZEN',
           ep,
-          v2Context,
-          v2Tokens,
+          v2Bundle.contextString,
+          v2Bundle.tokenEstimate,
           { maxTurns: options.maxTurns, executeRealAgent }
         );
         const resLabel = v2Run.verifiedSuccess === true ? 'PASS 🟢' : v2Run.verifiedSuccess === false ? 'FAIL 🔴' : 'NULL ⚪';
@@ -487,8 +329,8 @@ export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
         v3Run = await runSingleVariant(
           'V3_LEARNED',
           ep,
-          v3Context,
-          v3Tokens,
+          v3Bundle.contextString,
+          v3Bundle.tokenEstimate,
           { maxTurns: options.maxTurns, executeRealAgent }
         );
         const resLabel = v3Run.verifiedSuccess === true ? 'PASS 🟢' : v3Run.verifiedSuccess === false ? 'FAIL 🔴' : 'NULL ⚪';
@@ -510,7 +352,7 @@ export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
       v2: v2Run,
       v3: v3Run,
       successDelta,
-      tokenDelta: v3Tokens - v2Tokens,
+      tokenDelta: v3Bundle.tokenEstimate - v2Bundle.tokenEstimate,
       costDeltaUSD: Number(((v3Run.providerCostUSD || 0) - (v2Run.providerCostUSD || 0)).toFixed(5)),
       latencyDeltaMs: v3Run.wallClockLatencyMs - v2Run.wallClockLatencyMs,
     });

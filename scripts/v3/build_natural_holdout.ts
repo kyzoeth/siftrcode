@@ -1596,6 +1596,19 @@ export async function buildNaturalHoldout(): Promise<void> {
           });
         }
 
+        // 3b. Patch SHA256 check
+        const taskPatchSha256 = preflightReport.find((p) => p.taskId === task.taskId)?.patchSha256;
+        const priorPatchSha256 = pEp.patchSha256 || (pEp.patch ? sha256(pEp.patch) : undefined);
+        if (taskPatchSha256 && priorPatchSha256 && taskPatchSha256.toLowerCase() === priorPatchSha256.toLowerCase()) {
+          collisions.push({
+            naturalTaskId: task.taskId,
+            priorDataset: prior.name,
+            priorTaskId: pId,
+            matchType: 'EXACT_PATCH_HASH',
+            details: `Identical patch hash ${taskPatchSha256}`,
+          });
+        }
+
         // 4. Prompt near-duplicate check (> 0.85 Jaccard similarity)
         const pPrompt = pEp.prompt || pEp.taskPrompt || pEp.primaryPrompt;
         if (pPrompt) {

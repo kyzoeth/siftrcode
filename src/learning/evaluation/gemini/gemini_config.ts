@@ -7,6 +7,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { BillingTier } from '../provider_pricing';
 
 export interface GeminiAgentConfig {
   model: string;
@@ -17,6 +18,7 @@ export interface GeminiAgentConfig {
   maxOutputBytes: number;
   maxRetries: number;
   baseRetryDelayMs: number;
+  billingTier?: BillingTier;
 }
 
 /**
@@ -81,5 +83,6 @@ export function resolveGeminiConfig(overrides?: Partial<GeminiAgentConfig>): Gem
     maxOutputBytes: overrides?.maxOutputBytes ?? 100_000,
     maxRetries: overrides?.maxRetries ?? 3,
     baseRetryDelayMs: overrides?.baseRetryDelayMs ?? 2000,
+    billingTier: overrides?.billingTier ?? (process.env.GEMINI_BILLING_TIER as BillingTier) ?? 'unknown',
   };
 }

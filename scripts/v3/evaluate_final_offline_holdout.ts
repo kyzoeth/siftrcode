@@ -152,6 +152,15 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
     siftrcode: { includePatterns: ['src/**'], excludePatterns: ['**/node_modules/**', '**/dist/**', '**/benchmarks/**'] },
   };
 
+  const initialShas: Record<string, string> = {};
+  for (const [rId, rPath] of Object.entries(repoPaths)) {
+    if (rId !== 'siftrcode' && fs.existsSync(rPath)) {
+      try {
+        initialShas[rId] = execSync(`git -C "${rPath}" rev-parse HEAD`, { encoding: 'utf8' }).trim();
+      } catch {}
+    }
+  }
+
   const indexCache = new Map<string, { units: ContextUnit[]; graph: any; gitInt?: GitGraphIntelligence }>();
   const tmpDirsToClean: string[] = [];
 
@@ -522,7 +531,8 @@ export async function runFinalOfflineEvaluation(): Promise<FinalOfflineEvaluatio
     for (const [rId, rPath] of Object.entries(repoPaths)) {
       if (rId !== 'siftrcode' && fs.existsSync(rPath)) {
         try {
-          execSync(`git -C "${rPath}" checkout --quiet origin/master 2>/dev/null || git -C "${rPath}" checkout --quiet master 2>/dev/null || true`);
+          const target = initialShas[rId] || 'origin/master';
+          execSync(`git -C "${rPath}" checkout --quiet "${target}" 2>/dev/null || git -C "${rPath}" checkout --quiet master 2>/dev/null || true`);
         } catch {}
       }
     }
