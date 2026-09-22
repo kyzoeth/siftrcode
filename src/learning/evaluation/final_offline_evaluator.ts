@@ -184,16 +184,6 @@ function createArmWorktree(
     throw new Error(`Failed to create worktree for ${repoId} at ${baseCommit}: ${err}`);
   }
 
-  if (repoId === 'siftrcode') {
-    const rootNodeModules = path.join(rootDir, 'node_modules');
-    const wtNodeModules = path.join(tmpPath, 'node_modules');
-    if (fs.existsSync(rootNodeModules) && !fs.existsSync(wtNodeModules)) {
-      try {
-        fs.symlinkSync(rootNodeModules, wtNodeModules, 'dir');
-      } catch {}
-    }
-  }
-
   const actualSha = execSync(`git -C "${tmpPath}" rev-parse HEAD`, { encoding: 'utf8' }).trim();
   if (actualSha !== baseCommit) {
     throw new Error(`POINT_IN_TIME_VIOLATION: ${repoId} workspace at ${actualSha}, expected ${baseCommit}`);
