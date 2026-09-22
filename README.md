@@ -8,8 +8,8 @@
   </picture>
 </p>
 
-> **Outcome-Aware Context Optimization & Learned Context Intelligence for Coding Agents.**  
-> Cut agent context bloat by 60%–88% while preserving 100% full implementation fidelity on causal edit targets. Local-first, zero egress, sub-100ms AST compilation, truthful token accounting, and sub-millisecond learned context ranking.
+> **SiftrCode — The context optimizer for coding agents.**  
+> Give your coding agent focused repository context instead of dumping the whole codebase into its prompt. Local-first, zero code egress, AST typed interfaces, knapsack token budgeting, and native Model Context Protocol (MCP) support.
 
 [![Version](https://img.shields.io/badge/version-0.3.0-amber.svg)](https://siftrcode.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -19,49 +19,44 @@
 
 ---
 
-## 🧠 SiftrCode V3: Learned Context Intelligence (V3.1 Experimental Integrity Audit)
+## 🏛️ Model Governance & Evaluation Integrity
 
-SiftrCode V3 introduces **Learned Context Intelligence** evaluated against the authoritative frozen deterministic V2 baseline (`v2-final` / `1eedac03b0d83025ebf08ed2945e0ab015c46f6a`). V3 was designed to answer the central product and economic question:
+SiftrCode operates under an **empirical promotion gate policy**: learned ranking models remain strictly in `RESEARCH` status unless they demonstrate statistically significant superiority ($\Delta\text{NDCG@10} > +0.02$, win/loss ratio $> 1.0$) over the frozen deterministic baseline across independent holdout tasks.
 
-> **Can learned context intelligence measurably improve verified coding-task success and/or reduce cost at the same success level compared with frozen deterministic V2?**
+- **Active Production Baseline**: Deterministic `ContextRank` (`v2-final` @ `1eedac03b0d83025ebf08ed2945e0ab015c46f6a`)
+- **Learned Model Candidate**: `gbdt_pairwise_v1` (Pairwise GBDT ranking model)
+- **Lifecycle Status**: **`RESEARCH` (Unpromoted)**
+- **Promotion Decision**: **`V3.1_FAILED_TO_BEAT_BASELINE`**
+- **Canonical Artifacts**:
+  - Evaluation: `experiments/v3-1-final-natural/offline_evaluation.json`
+  - Status: `experiments/v3-1-final-natural/final_status.json`
+  - Model Weights: `data/models/gbdt_pairwise_v1.json`
 
-### 🔬 Empirical Benchmark & Held-Out Evaluation (SiftrBench v1)
+### 🔬 Authoritative Natural Holdout Benchmark (40 Tasks, 4 Repositories)
 
-Following the rigorous V3.1 Experimental Integrity Closure, evaluations were executed on the authoritative 33 held-out test episodes across production repositories (**Express**, **FastAPI**, and **SiftrCode**) under equal candidate ($N=50$) and token ($\le 8,000$) budgets:
+Evaluations were performed on exact point-in-time git checkouts across **Commander**, **Express**, **FastAPI**, and **SiftrCode** under equal candidate ($N=50$) and token ($\le 8,000$) budgets:
 
-| Evaluation Metric | Frozen Deterministic V2 (`v2-final`) | Learned ContextRank V3 (GBDT) | Absolute Delta | Scientific & Statistical Finding |
-| :--- | :---: | :---: | :---: | :--- |
-| **NDCG@10 (Materialized Bundle)** | 0.4863 | **0.5538** | **+0.0675** | **+13.9% Lift Over Frozen V2 Baseline** |
-| **NDCG@5 (Materialized Bundle)** | 0.4755 | **0.5229** | **+0.0474** | **+10.0% Lift in Top-5 Ranking** |
-| **Recall@10 (Target Deduplicated)**| 0.5758 | **0.6970** | **+0.1212** | **+21.1% Increase in Top-10 Target Inclusion** |
-| **Recall@5 (Target Deduplicated)** | 0.5455 | **0.6061** | **+0.0606** | **+11.1% Increase in Top-5 Inclusion** |
-| **MRR (Mean Reciprocal Rank)** | 0.4571 | **0.5212** | **+0.0641** | **+14.0% Faster Target Hit Rank** |
-| **Inference Latency** | 4,681.4ms (indexing + search) | **0.1ms** | **-4,681.3ms** | **>99.9% Faster Scoring Engine (Sub-Millisecond)** |
-| **Diagnostic Target Bundle Coverage** | 57.58% | **69.70%** | **+12.12%** | **+21.1% Target Inclusion in Agent Context** |
-| **Gate A (Gemini Coding Agent Harness)** | — | — | — | **PASSED & VERIFIED** (Hermetic sandboxing & exit code verifier) |
-| **Gate B (Offline Ranking Superiority)** | — | — | — | **PASSED** (Beats frozen V2 on every ranking metric) |
-| **Gate C (Paired Live Verifier Runs)** | — | — | — | **GATED BY API QUOTA** (Google AI Free Tier enforces 20 req/day) |
-| **V3.1 Promotion Gate Decision** | — | — | — | **`V3.1_INSUFFICIENT_EVIDENCE`** |
+| Metric | Frozen V2 Baseline (`1eedac03...`) | Learned ContextRank V3 (`gbdt_pairwise_v1`) | Delta | Gate Threshold | Result |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **NDCG@10** | **0.8174** | 0.8008 | **-0.0166** | $> +0.0200$ | **FAIL** |
+| **NDCG@5** | **0.8174** | 0.8008 | **-0.0166** | Informational | — |
+| **Recall@10** | 0.9750 | 0.9750 | $+0.0000$ | $\ge 0.0000$ | **PASS** |
+| **MRR** | **0.7750** | 0.7417 | **-0.0333** | Informational | — |
+| **Target Coverage** | 97.5% | 97.5% | $+0.0\%$ | Parity | **PASS** |
 
-### 🎲 Task-Level Bootstrap Confidence Intervals (2,000 Resamples, Seed 42)
-- **NDCG@10 Mean Delta**: $+0.0675$ [95% CI: $-0.0100$ to $+0.1595$], $p = 0.105$
-- **Task Wins / Ties / Losses**: **6 Wins / 25 Ties / 2 Losses** (Net +4 wins, 3x more wins than losses)
+- **Task Outcomes**: **3 V3 Wins (7.5%) / 31 Ties (77.5%) / 6 V2 Wins (15.0%)** (Win/Loss = 0.50, required $> 1.0$)
+- **Bootstrap 95% Confidence Interval (NDCG@10)**: `[-0.0478, +0.0076]` (2,000 resamples)
 - **Per-Repository NDCG@10 Breakdown**:
-  - **Express** (12 tasks): Base 0.2718 vs V3 0.2966 (**$\Delta +0.0248$**) | Recall@10: Base 0.3333 vs V3 0.5000 (**$\Delta +0.1667$**)
-  - **FastAPI** (14 tasks): Base 0.4848 vs V3 0.6227 (**$\Delta +0.1379$**) | Recall@10: Base 0.6429 vs V3 0.7857 (**$\Delta +0.1429$**)
-  - **SiftrCode** (7 tasks): Base 0.8571 vs V3 0.8571 (**$\Delta +0.0000$ parity**) | Recall@10: Base 0.8571 vs V3 0.8571 (**$\Delta +0.0000$ parity**)
+  - **Express** (10 tasks): Frozen V2 0.9082 vs Learned V3 0.8653 ($\Delta -0.0429$)
+  - **Commander** (10 tasks): Frozen V2 0.7303 vs Learned V3 0.7155 ($\Delta -0.0148$)
+  - **FastAPI** (10 tasks): Frozen V2 0.7709 vs Learned V3 0.7626 ($\Delta -0.0083$)
+  - **SiftrCode** (10 tasks): Frozen V2 0.8601 vs Learned V3 0.8601 ($\Delta +0.0000$)
 
-### 🔒 Core Architectural & Scientific Invariants
-1. **No Simulated Outcomes**: Experimental integrity strictly prohibits proxy substitution (e.g. target presence) for verified task success and forbids fabricating token/cost counts. When live coding-agent runs cannot be executed across all 66 tasks due to API daily quota limits (20 requests/day on Free Tier), the harness honestly emits `V3.1_INSUFFICIENT_EVIDENCE`.
-2. **`UNKNOWN != NEGATIVE`**: Unexposed candidates or candidates with partial observability are marked `UNKNOWN` and strictly excluded from negative pairs in training sets.
-3. **Point-in-Time Git Safety**: `EpisodeWorkspaceResolver` enforces `git rev-parse HEAD === episode.baseCommit` in isolated worktrees with zero future source-tree leakage.
-4. **Leakage-Safe Partitioning**: Benchmark episodes are partitioned into 66 Train / 22 Val / 33 Test by fine-grained `splitGroupId` with anti-joins across splits.
-5. **Native TypeScript Scoring Engines**:
-   - `TreeRanker`: Fast Pairwise GBDT decision tree ensemble with closed-form least-squares split optimization and cryptographically verified model artifact provenance.
-   - `LinearPairwiseRanker`: Coordinate ascent margin ranker without artificial bias drift.
-6. **Gemini Coding Agent Harness**: Workspace sandboxing (`gemini_tools.ts`), path traversal rejection, sensitive secret scrubbing, native function calling, token accounting, and verifier integration.
-7. **Runtime Safety & Fallback**: `SafeFallbackRanker` catches any unexpected exception or non-finite output and falls back to deterministic V2 ranking instantly.
-8. **Shadow Mode**: `ShadowRanker` verifies model predictions in production with zero impact on user context bundles.
+### 🔒 Architectural Invariants & Production Safety
+1. **Deterministic Production Path**: Because learned ranking failed the empirical promotion gate, production workloads continue to serve deterministic ContextRank. No learned model weights are invoked in production by default.
+2. **Point-in-Time Historical Accuracy**: Each benchmark episode evaluates context retrieval at `episode.baseCommit` in isolated git worktrees, preventing lookahead leakage.
+3. **Budget Parity**: Both baseline and learned arms are evaluated with identical candidate budgets ($N=50$) and hard token budgets ($\le 8,000$ tokens).
+4. **Zero-Egress & Data Rights**: Local CPU indexing and ranking execute hermetically with zero customer code transmission or remote retention.
 
 ---
 
@@ -69,10 +64,10 @@ Following the rigorous V3.1 Experimental Integrity Closure, evaluations were exe
 
 When an AI coding agent (Claude Code, Cursor, Antigravity) investigates a task, teams encounter two opposite but equally costly failure modes:
 
-1. **Unconstrained Context Bloat**: The agent ingests 30–50 full files (150k–250k+ tokens). Latency spikes to 30–60s per turn, models lose critical instructions in the middle of giant prompts, and token burn reaches hundreds of dollars per developer per month.
-2. **Naive Token Stripping**: Indiscriminately collapsing all function bodies destroys the exact code the agent needs to edit. The model hallucinates missing variables, introduces subtle regressions, or triggers expensive $2–$5 multi-turn re-prompting loops.
+1. **Unconstrained Context Bloat**: The agent ingests 30–50 full files (150k–250k+ tokens). Latency spikes, models lose critical instructions in giant prompts, and token burn reaches hundreds of dollars per developer per month.
+2. **Naive Token Stripping**: Indiscriminately collapsing all function bodies destroys the exact code the agent needs to edit. The model hallucinates missing variables, introduces subtle regressions, or triggers expensive multi-turn re-prompting loops.
 
-**SiftrCode solves both problems with Outcome-Aware Context Optimization**: dynamically allocating full implementation bodies to causal edit targets, compiler-verified AST interface skeletons to structural dependencies, and dropping unrelated distractor bloat completely.
+**SiftrCode solves both problems with Focused Context Optimization**: dynamically allocating full implementation bodies to causal edit targets, typed AST interface skeletons to structural dependencies, and dropping unrelated distractor bloat completely.
 
 ---
 
