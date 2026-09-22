@@ -31,6 +31,7 @@
  * 27. Outcome endpoints stop reporting trainingEligible = verifiedSuccess (evaluates finalized episode)
  * 28. Canonical episode assembly fails closed on missing sessionId (no sess_default)
  * 29. Gate 7 rationale deleted unmeasured <= 25ms claim
+ * 30. 1,000 apparently good but rights-ineligible episodes leave readiness false (non-vacuous Gate 4)
  */
 
 import * as fs from 'fs';
@@ -860,6 +861,43 @@ export async function runPhase204ClosureTests() {
       capturedAt: new Date().toISOString(),
     });
     store.savePreOutcomeSnapshot(snap21a);
+    const ep21a = createTaskEpisodeV1({
+      episodeId: 'ep_21a',
+      repositoryId: 'kyzoeth/siftrcode',
+      sessionId: 'sess_21a',
+      taskId: 'task_21a',
+      workspace: {
+        repositoryIdentity: 'kyzoeth/siftrcode',
+        baseCommit: 'a'.repeat(40),
+        dirtyAtStart: false,
+        workspaceSnapshotId: 'snap_21a',
+      },
+      task: { prompt: 'Prompt 21a' },
+      environment: {
+        contextPolicyId: 'siftr-default-v2',
+        rankerId: 'deterministic-v2',
+        rankerStatus: 'PRODUCTION',
+      },
+      rights: {
+        trainingAllowed: true,
+        permissionSource: 'USER_CONSENT',
+      },
+      contextDecision: {
+        candidateCount: 0,
+        bundleSha256: 'bundle_21a',
+        actualRenderedTokens: 100,
+        tokenBudget: 4000,
+        candidates: [],
+        selectedUnits: [],
+      },
+      outcome: {
+        episodeId: 'ep_21a',
+        verifiedSuccess: true,
+        verificationConfidence: 'HIGH',
+        verificationSources: ['BEHAVIORAL_ORACLE'],
+      },
+    });
+    store.saveTaskEpisode(ep21a);
 
     // Audit snap21a with passing audit
     store.auditPreOutcomeSnapshot(JSON.stringify(snap21a));
@@ -893,6 +931,43 @@ export async function runPhase204ClosureTests() {
       capturedAt: new Date().toISOString(),
     });
     store.savePreOutcomeSnapshot(snap21b);
+    const ep21b = createTaskEpisodeV1({
+      episodeId: 'ep_21b',
+      repositoryId: 'kyzoeth/siftrcode',
+      sessionId: 'sess_21b',
+      taskId: 'task_21b',
+      workspace: {
+        repositoryIdentity: 'kyzoeth/siftrcode',
+        baseCommit: 'b'.repeat(40),
+        dirtyAtStart: false,
+        workspaceSnapshotId: 'snap_21b',
+      },
+      task: { prompt: 'Prompt 21b' },
+      environment: {
+        contextPolicyId: 'siftr-default-v2',
+        rankerId: 'deterministic-v2',
+        rankerStatus: 'PRODUCTION',
+      },
+      rights: {
+        trainingAllowed: true,
+        permissionSource: 'USER_CONSENT',
+      },
+      contextDecision: {
+        candidateCount: 0,
+        bundleSha256: 'bundle_21b',
+        actualRenderedTokens: 100,
+        tokenBudget: 4000,
+        candidates: [],
+        selectedUnits: [],
+      },
+      outcome: {
+        episodeId: 'ep_21b',
+        verifiedSuccess: true,
+        verificationConfidence: 'HIGH',
+        verificationSources: ['BEHAVIORAL_ORACLE'],
+      },
+    });
+    store.saveTaskEpisode(ep21b);
 
     // Manually record a failed audit for snap21b
     store.savePreOutcomeIntegrityAudit({
@@ -1197,37 +1272,44 @@ export async function runPhase204ClosureTests() {
       isEpisodeTrainingEligible(episode24, { exposuresProvider: (id) => engineStore.getContextExposures(id) }),
       'episode24 is training eligible'
     );
+    // Blocked if exposuresProvider is missing (mandatory fail closed)
+    const missingExpRes = evaluateEpisodeTrainingEligibility(episode24);
+    assertStrictEqual(missingExpRes.eligible, false, 'Missing exposuresProvider fails closed');
+    assert(
+      missingExpRes.reasons.some((r) => r.includes('Mandatory exposuresProvider is required')),
+      'Reason cites missing mandatory exposuresProvider'
+    );
     // Blocked if trainingAllowed is false
     const rightsBlockedEp: TaskEpisodeV1 = { ...episode24, rights: { ...episode24.rights, trainingAllowed: false } };
     assertStrictEqual(
-      isEpisodeTrainingEligible(rightsBlockedEp),
+      isEpisodeTrainingEligible(rightsBlockedEp, { exposuresProvider: (id) => engineStore.getContextExposures(id) }),
       false,
       'Episode with trainingAllowed = false is not training eligible'
     );
     // Blocked if permissionSource is UNKNOWN
     const unknownSourceEp: TaskEpisodeV1 = { ...episode24, rights: { ...episode24.rights, permissionSource: 'UNKNOWN' } };
     assertStrictEqual(
-      isEpisodeTrainingEligible(unknownSourceEp),
+      isEpisodeTrainingEligible(unknownSourceEp, { exposuresProvider: (id) => engineStore.getContextExposures(id) }),
       false,
       'Episode with permissionSource = UNKNOWN is not training eligible'
     );
     // Blocked if rankerStatus is not PRODUCTION
     const nonProdRankerEp: TaskEpisodeV1 = { ...episode24, environment: { ...episode24.environment, rankerStatus: 'SHADOW' } };
     assertStrictEqual(
-      isEpisodeTrainingEligible(nonProdRankerEp),
+      isEpisodeTrainingEligible(nonProdRankerEp, { exposuresProvider: (id) => engineStore.getContextExposures(id) }),
       false,
       'Episode with rankerStatus = SHADOW is not training eligible'
     );
     // Blocked if rankerId is custom_unidentified
     const customRankerEp: TaskEpisodeV1 = { ...episode24, environment: { ...episode24.environment, rankerId: 'custom_unidentified' } };
     assertStrictEqual(
-      isEpisodeTrainingEligible(customRankerEp),
+      isEpisodeTrainingEligible(customRankerEp, { exposuresProvider: (id) => engineStore.getContextExposures(id) }),
       false,
       'Episode with rankerId = custom_unidentified is not training eligible'
     );
     // Blocked if revoked
     assertStrictEqual(
-      isEpisodeTrainingEligible(episode24, { isRevoked: () => true }),
+      isEpisodeTrainingEligible(episode24, { isRevoked: () => true, exposuresProvider: (id) => engineStore.getContextExposures(id) }),
       false,
       'Revoked episode is not training eligible'
     );
@@ -1334,7 +1416,293 @@ export async function runPhase204ClosureTests() {
       `Gate 7 rationale includes "operational stability": "${gate7!.rationale}"`
     );
 
-    console.log('\n🎉 ALL 29 PHASE 20.4 INTEGRITY CLOSURE INVARIANTS SATISFIED!\n');
+    // =========================================================================
+    // Case 30: 1,000 apparently good but rights-ineligible episodes leave readiness false (non-vacuous Gate 4)
+    // =========================================================================
+    console.log('\n--- 30. 1,000 rights-ineligible episodes leave readiness false ---');
+    const case30Dir = fs.mkdtempSync(path.join(os.tmpdir(), 'siftr_case30_'));
+    try {
+      const case30Store = new SqliteStore(path.join(case30Dir, 'test.db'));
+      const db = (case30Store as any).db;
+
+      // Seed 1,000 episodes:
+      // - 700 verified successes, 300 verified failures
+      // - Full candidate universes logged in episode_candidates
+      // - Context unit exposures logged in context_exposures
+      // - Valid pre-outcome snapshots with passing integrity audits
+      // - 100 production shadow policy runs with 0 crashes
+      // - BUT trainingAllowed = false (rights ineligible)
+      const insertEpisode = db.prepare(`
+        INSERT INTO task_episodes (
+          episode_id, tenant_id, repository_id, session_id, task_id,
+          task_type, base_commit, context_policy_id, ranker_id, ranker_status,
+          training_allowed, service_processing_allowed, redistribution_allowed,
+          candidate_count, bundle_sha256, actual_rendered_tokens, token_budget,
+          verified_success, verification_confidence, total_cost_usd, pricing_status,
+          record_sha256, started_at, completed_at, created_at, raw_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const insertCandidate = db.prepare(`
+        INSERT INTO episode_candidates (
+          candidate_id, episode_id, context_unit_id, path, unit_kind,
+          retrieval_sources_json, pre_rank_position, final_rank, final_score,
+          feature_set_version, feature_snapshot_json, estimated_tokens,
+          selected, selected_resolution, recorded_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const insertExposure = db.prepare(`
+        INSERT INTO context_exposures (
+          exposure_id, episode_id, context_unit_id, path, unit_kind,
+          state, final_rank, candidate_at, selected_at, shown_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const insertSnapshot = db.prepare(`
+        INSERT INTO pre_outcome_snapshots (
+          snapshot_id, episode_id, task_id, repository_id,
+          base_commit, feature_cutoff_commit, prompt_sha256, bundle_sha256,
+          snapshot_sha256, token_budget, actual_rendered_tokens, context_policy_id,
+          ranker_id, captured_at, raw_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const insertAudit = db.prepare(`
+        INSERT INTO pre_outcome_integrity_audits (
+          audit_id, episode_id, snapshot_sha256, recomputed_sha256, passed,
+          has_leakage, has_hash_mismatch, has_provenance_error, audited_at, details_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const insertShadow = db.prepare(`
+        INSERT INTO shadow_policy_evaluations (
+          evaluation_id, task_id, production_policy_id, shadow_policy_id,
+          candidate_count, rank_overlap_jaccard, token_difference,
+          shadow_latency_ms, crashed, error_message, evaluated_at, raw_json,
+          environment, is_synthetic
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      db.exec('BEGIN IMMEDIATE');
+      for (let i = 0; i < 1000; i++) {
+          const epId = `ep_rights_ineligible_${i}`;
+          const isSuccess = i < 700;
+          const snapSha = `sha256_snap_${i}`;
+          const rawSnapshot = {
+            snapshotVersion: 'v1.0.0',
+            episodeId: epId,
+            sessionId: `sess_${i}`,
+            taskId: `task_${i}`,
+            workspaceSnapshotId: `ws_${i}`,
+            contentRootHash: `root_${i}`,
+            snapshotSha256: snapSha,
+            createdAt: '2026-09-22T00:00:00.000Z',
+            units: [],
+            candidates: [],
+          };
+
+          const rawEpisode = {
+            schemaVersion: 'v1.0.0',
+            episodeId: epId,
+            sessionId: `sess_${i}`,
+            taskId: `task_${i}`,
+            repositoryId: 'repo_ineligible',
+            rights: {
+              trainingAllowed: false, // Explicitly rights ineligible!
+              serviceProcessingAllowed: true,
+              redistributionAllowed: false,
+              permissionSource: 'OPT_OUT',
+            },
+            environment: {
+              contextPolicyId: 'default_v1',
+              rankerId: 'heuristic_v1',
+              rankerStatus: 'PRODUCTION',
+            },
+            outcome: {
+              verifiedSuccess: isSuccess,
+              verificationConfidence: 'HIGH',
+              verificationSources: ['BEHAVIORAL_ORACLE'],
+            },
+            contextDecision: {
+              candidateCount: 1,
+              bundleSha256: 'bundle_sha',
+              actualRenderedTokens: 100,
+              tokenBudget: 2000,
+              candidates: [
+                {
+                  contextUnitId: `unit_${i}`,
+                  path: `src/file_${i}.ts`,
+                  finalRank: 1,
+                  finalScore: 0.95,
+                  selected: true,
+                },
+              ],
+            },
+          };
+
+          insertEpisode.run(
+            epId,
+            'tenant_default',
+            'repo_ineligible',
+            `sess_${i}`,
+            `task_${i}`,
+            'BUG_FIX',
+            'base_commit_123',
+            'default_v1',
+            'heuristic_v1',
+            'PRODUCTION',
+            0, // training_allowed = 0
+            1,
+            0,
+            1,
+            'bundle_sha',
+            100,
+            2000,
+            isSuccess ? 1 : 0,
+            'HIGH',
+            null,
+            null,
+            'rec_sha',
+            '2026-09-22T00:00:00.000Z',
+            '2026-09-22T00:01:00.000Z',
+            '2026-09-22T00:01:00.000Z',
+            JSON.stringify(rawEpisode)
+          );
+
+          insertCandidate.run(
+            `cand_${i}`,
+            epId,
+            `unit_${i}`,
+            `src/file_${i}.ts`,
+            'SOURCE_FILE',
+            JSON.stringify(['retrieval']),
+            1,
+            1,
+            0.95,
+            'v1',
+            '{}',
+            100,
+            1,
+            'FULL',
+            '2026-09-22T00:00:00.000Z'
+          );
+
+          insertExposure.run(
+            `exp_${i}`,
+            epId,
+            `unit_${i}`,
+            `src/file_${i}.ts`,
+            'SOURCE_FILE',
+            'SHOWN',
+            1,
+            '2026-09-22T00:00:00.000Z',
+            '2026-09-22T00:00:01.000Z',
+            '2026-09-22T00:00:02.000Z'
+          );
+
+          insertSnapshot.run(
+            `snap_id_${i}`,
+            epId,
+            `task_${i}`,
+            'repo_ineligible',
+            'base_commit_123',
+            'base_commit_123',
+            'prompt_sha',
+            'bundle_sha',
+            snapSha,
+            2000,
+            100,
+            'default_v1',
+            'heuristic_v1',
+            '2026-09-22T00:00:00.000Z',
+            JSON.stringify(rawSnapshot)
+          );
+
+          insertAudit.run(
+            `audit_${i}`,
+            epId,
+            snapSha,
+            snapSha,
+            1, // passed = 1
+            0,
+            0,
+            0,
+            '2026-09-22T00:00:00.000Z',
+            '{}'
+          );
+        }
+
+      // Insert 100 passing production shadow evaluations
+      for (let j = 0; j < 100; j++) {
+        insertShadow.run(
+          `shadow_${j}`,
+          `task_shadow_${j}`,
+          'prod_v1',
+          'shadow_v1',
+          10,
+          0.9,
+          50,
+          12,
+          0, // crashed = 0
+          null,
+          '2026-09-22T00:00:00.000Z',
+          '{}',
+          'PRODUCTION', // environment = PRODUCTION
+          0 // is_synthetic = 0
+        );
+      }
+      db.exec('COMMIT');
+
+      const summary = case30Store.getLearningFlywheelSummary();
+      assertStrictEqual(summary.totalEpisodes, 1000, 'Raw totalEpisodes in summary is 1,000');
+
+      const readinessReport = case30Store.getV32DataReadinessReport();
+
+      // Eligible population is strictly 0
+      assertStrictEqual(readinessReport.trainingEligibleEpisodes, 0, 'Training-eligible episodes is strictly 0');
+      assertStrictEqual(readinessReport.currentVerifiedEpisodes, 0, 'Eligible verified episodes is strictly 0');
+      assertStrictEqual(readinessReport.isV32Ready, false, 'isV32Ready is strictly false');
+      assert(readinessReport.canonicalEvaluation !== undefined, 'Canonical evaluation is present');
+      assertStrictEqual(readinessReport.canonicalEvaluation!.allGatesPassed, false, 'allGatesPassed is strictly false');
+
+      // Gate 1: Total Episodes fails (0 < 1,000)
+      const g1 = readinessReport.canonicalEvaluation!.gates.find((g) => g.gateId === 'GATE_1_TOTAL_EPISODES')!;
+      assertStrictEqual(g1.passed, false, 'Gate 1 failed');
+      assertStrictEqual(g1.currentValue, 0, 'Gate 1 currentValue is 0');
+
+      // Gate 2: Verified Outcomes fails (0 < 500)
+      const g2 = readinessReport.canonicalEvaluation!.gates.find((g) => g.gateId === 'GATE_2_VERIFIED_OUTCOMES')!;
+      assertStrictEqual(g2.passed, false, 'Gate 2 failed');
+
+      // Gate 3: Candidate Logging Coverage fails (0 eligible episodes)
+      const g3 = readinessReport.canonicalEvaluation!.gates.find((g) => g.gateId === 'GATE_3_CANDIDATE_LOGGING_COVERAGE')!;
+      assertStrictEqual(g3.passed, false, 'Gate 3 failed');
+
+      // Gate 4: Rights Clearance fails non-vacuously (pool is empty, cannot pass vacuously)
+      const g4 = readinessReport.canonicalEvaluation!.gates.find((g) => g.gateId === 'GATE_4_RIGHTS_CLEARANCE')!;
+      assertStrictEqual(g4.passed, false, 'Gate 4 failed (cannot pass vacuously when pool is empty)');
+      assertStrictEqual(g4.currentValue, 0.0, 'Gate 4 currentValue is 0.0');
+      assert(g4.details !== undefined && g4.details.includes('NO_ELIGIBLE_EPISODES'), 'Gate 4 details notes NO_ELIGIBLE_EPISODES');
+
+      // Gate 5: Supervision Diversity fails (0 verified outcomes)
+      const g5 = readinessReport.canonicalEvaluation!.gates.find((g) => g.gateId === 'GATE_5_SUPERVISION_DIVERSITY')!;
+      assertStrictEqual(g5.passed, false, 'Gate 5 failed');
+
+      // Gate 6: Zero Leakage Audit fails (0 eligible snapshots audited)
+      const g6 = readinessReport.canonicalEvaluation!.gates.find((g) => g.gateId === 'GATE_6_ZERO_LEAKAGE_AUDIT')!;
+      assertStrictEqual(g6.passed, false, 'Gate 6 failed');
+
+      // Gate 7: Shadow Parity passes (100 real production shadow runs)
+      const g7 = readinessReport.canonicalEvaluation!.gates.find((g) => g.gateId === 'GATE_7_SHADOW_POLICY_PARITY')!;
+      assertStrictEqual(g7.passed, true, 'Gate 7 passed');
+    } finally {
+      try {
+        fs.rmSync(case30Dir, { recursive: true, force: true });
+      } catch {}
+    }
+
+    console.log('\n🎉 ALL 30 PHASE 20.4 INTEGRITY CLOSURE INVARIANTS SATISFIED!\n');
   } finally {
     await new Promise<void>((resolve) => httpServer.close(() => resolve()));
     setSharedStore(null);

@@ -104,16 +104,19 @@ export function evaluateCanonicalReadinessGates(
 
   // 4. Rights Clearance Gate
   const rightsViolations = input.unpermittedEpisodesInPool + input.revokedEpisodesInPool;
+  const passedRightsClearance = input.totalEpisodes > 0 && rightsViolations === 0;
   const gateRightsClearance: CanonicalGateEvaluation = {
     gateId: 'GATE_4_RIGHTS_CLEARANCE',
     name: 'Rights Clearance',
     targetRequirement: '100% zero unpermitted or revoked episodes in training pool',
     rationale: 'Strict compliance with data rights, retention limits, and deletion requests.',
-    passed: rightsViolations === 0,
-    currentValue: rightsViolations === 0 ? 1.0 : 0.0,
+    passed: passedRightsClearance,
+    currentValue: passedRightsClearance ? 1.0 : 0.0,
     targetValue: 1.0,
     details:
-      rightsViolations === 0
+      input.totalEpisodes === 0
+        ? 'NO_ELIGIBLE_EPISODES: Training pool is empty; rights clearance cannot pass vacuously.'
+        : rightsViolations === 0
         ? 'Zero unpermitted or revoked episodes in training pool (100% compliant)'
         : `VIOLATION: ${input.unpermittedEpisodesInPool} unpermitted and ${input.revokedEpisodesInPool} revoked episodes found in pool`,
   };
@@ -186,7 +189,7 @@ export function evaluateCanonicalReadinessGates(
   const failureProgress = Math.min(1.0, input.verifiedFailures / minFailures);
   const outcomeProgress = (successProgress + failureProgress) / 2;
   const coverageProgress = Math.min(1.0, candidateCoverage / minCoverage);
-  const rightsProgress = rightsViolations === 0 ? 1.0 : 0.0;
+  const rightsProgress = passedRightsClearance ? 1.0 : 0.0;
   const shadowProgress = Math.min(1.0, input.shadowEvaluationRuns / minShadowRuns);
 
   const readinessScore =

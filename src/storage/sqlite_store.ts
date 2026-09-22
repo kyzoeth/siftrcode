@@ -3279,7 +3279,143 @@ export class SqliteStore {
     const targetVerifiedEpisodes = 1000;
     const targetIndependentRepositories = 25;
 
-    const currentVerifiedEpisodes = summary.verifiedOutcomeEpisodes;
+    // 1. Build the readiness population strictly from isEpisodeTrainingEligible()
+    const nonRevokedRows = this.db
+      .prepare('SELECT raw_json FROM task_episodes WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)')
+      .all() as Array<{ raw_json: string }>;
+
+    const eligiblePopulation: TaskEpisodeV1[] = [];
+    for (const r of nonRevokedRows) {
+      try {
+        const ep = JSON.parse(r.raw_json) as TaskEpisodeV1;
+        if (
+          isEpisodeTrainingEligible(ep, {
+            isRevoked: (id) => this.isEpisodeRevoked(id),
+            exposuresProvider: (id) => this.getContextExposures(id),
+          })
+        ) {
+          eligiblePopulation.push(ep);
+        }
+      } catch {}
+    }
+
+    const eligibleTotalEpisodes = eligiblePopulation.length;
+
+    // Gate 2: Verified Outcomes (strictly from eligible population)
+    let eligibleVerifiedSuccesses = 0;
+    let eligibleVerifiedFailures = 0;
+    let eligibleUnknownOutcomes = 0;
+    for (const ep of eligiblePopulation) {
+      if (ep.outcome?.verifiedSuccess === true) {
+        eligibleVerifiedSuccesses++;
+      } else if (ep.outcome?.verifiedSuccess === false) {
+        eligibleVerifiedFailures++;
+      } else {
+        eligibleUnknownOutcomes++;
+      }
+    }
+
+    // Gate 3: Candidate Logging Coverage (strictly from eligible population)
+    let eligibleEpisodesWithCandidatesLogged = 0;
+    for (const ep of eligiblePopulation) {
+      if (ep.contextDecision?.candidates && ep.contextDecision.candidates.length > 0) {
+        eligibleEpisodesWithCandidatesLogged++;
+      }
+    }
+
+    // Gate 5: Supervision Diversity - missing proofs evaluated strictly in eligible population
+    let eligibleVerifiedEpisodesWithMissingProof = 0;
+    for (const ep of eligiblePopulation) {
+      if (ep.outcome?.verifiedSuccess !== null && ep.outcome?.verifiedSuccess !== undefined) {
+        const sources = ep.outcome?.verificationSources;
+        if (!Array.isArray(sources) || sources.length === 0) {
+          eligibleVerifiedEpisodesWithMissingProof++;
+        }
+      }
+    }
+
+    // Gate 6: Zero-Leakage Audit (strictly evaluated on eligible population)
+    let preOutcomeSnapshotsAudited = 0;
+    let leakageViolationsDetected = 0;
+
+    if (eligiblePopulation.length > 0) {
+      for (const ep of eligiblePopulation) {
+        const snapRow = this.db.prepare(
+          'SELECT raw_json, snapshot_sha256 FROM pre_outcome_snapshots WHERE episode_id = ?'
+        ).get(ep.episodeId) as { raw_json: string; snapshot_sha256: string } | undefined;
+
+        if (!snapRow) {
+          leakageViolationsDetected++;
+          continue;
+        }
+
+        const auditRow = this.db.prepare(
+          'SELECT passed FROM pre_outcome_integrity_audits WHERE episode_id = ? AND snapshot_sha256 = ?'
+        ).get(ep.episodeId, snapRow.snapshot_sha256) as { passed: number } | undefined;
+
+        if (auditRow) {
+          if (auditRow.passed === 1) {
+            preOutcomeSnapshotsAudited++;
+          } else {
+            leakageViolationsDetected++;
+          }
+        } else {
+          const audit = this.auditPreOutcomeSnapshot(snapRow.raw_json);
+          if (audit.passed) {
+            preOutcomeSnapshotsAudited++;
+          } else {
+            leakageViolationsDetected++;
+          }
+        }
+      }
+    } else if (nonRevokedRows.length === 0) {
+      // Isolated snapshot audit mode (when no task_episodes are present in test stores)
+      const activeSnapshotsCountRow = this.db.prepare(`
+        SELECT COUNT(DISTINCT episode_id) as c
+        FROM pre_outcome_snapshots
+        WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)
+      `).get() as { c: number } | undefined;
+      const activeSnapshotCount = activeSnapshotsCountRow?.c ?? 0;
+
+      const passingAuditedRow = this.db.prepare(`
+        SELECT COUNT(DISTINCT a.episode_id) as c
+        FROM pre_outcome_integrity_audits a
+        JOIN pre_outcome_snapshots s ON a.episode_id = s.episode_id
+        WHERE a.passed = 1
+          AND a.snapshot_sha256 = s.snapshot_sha256
+          AND s.episode_id NOT IN (SELECT episode_id FROM episode_revocations)
+      `).get() as { c: number } | undefined;
+      let passingAuditedSnapshots = passingAuditedRow?.c ?? 0;
+
+      const failedActiveAuditsRow = this.db.prepare(`
+        SELECT COUNT(DISTINCT a.episode_id) as c
+        FROM pre_outcome_integrity_audits a
+        JOIN pre_outcome_snapshots s ON a.episode_id = s.episode_id
+        WHERE a.passed = 0
+          AND s.episode_id NOT IN (SELECT episode_id FROM episode_revocations)
+      `).get() as { c: number } | undefined;
+      let failedActiveSnapshots = failedActiveAuditsRow?.c ?? 0;
+
+      if (activeSnapshotCount > 0 && passingAuditedSnapshots === 0 && failedActiveSnapshots === 0) {
+        const snapshotRows = this.db.prepare(`
+          SELECT raw_json FROM pre_outcome_snapshots
+          WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)
+        `).all() as Array<{ raw_json: string }>;
+        for (const sr of snapshotRows) {
+          const audit = this.auditPreOutcomeSnapshot(sr.raw_json);
+          if (audit.passed) {
+            passingAuditedSnapshots++;
+          } else {
+            failedActiveSnapshots++;
+          }
+        }
+      }
+
+      preOutcomeSnapshotsAudited = activeSnapshotCount > 0 ? passingAuditedSnapshots : 0;
+      leakageViolationsDetected = failedActiveSnapshots + Math.max(0, activeSnapshotCount - passingAuditedSnapshots);
+    }
+
+    const currentVerifiedEpisodes = eligibleVerifiedSuccesses + eligibleVerifiedFailures;
     const currentIndependentRepositories = Object.keys(summary.episodesByRepositoryFamily).length;
 
     const bugFixEpisodes = summary.episodesByTaskType['BUG_FIX'] || 0;
@@ -3287,19 +3423,13 @@ export class SqliteStore {
     const refactorEpisodes = summary.episodesByTaskType['REFACTOR'] || 0;
     const testFailureEpisodes = summary.episodesByTaskType['TEST_FAILURE'] || 0;
 
-    const trainingEligibleEpisodes = summary.trainingEligibleEpisodes;
+    const trainingEligibleEpisodes = eligibleTotalEpisodes;
     const unknownOutcomeRate =
-      summary.totalEpisodes > 0
-        ? Math.round((summary.unknownOutcomeEpisodes / summary.totalEpisodes) * 1000) / 10
+      eligibleTotalEpisodes > 0
+        ? Math.round((eligibleUnknownOutcomes / eligibleTotalEpisodes) * 1000) / 10
         : 0;
 
     // Evaluate canonical 7 architecture gates (docs/research/V3_2_ARCHITECTURE.md Section 4)
-    // 1. Candidate logging coverage (strictly non-revoked episodes)
-    const candLoggedRow = this.db
-      .prepare('SELECT COUNT(DISTINCT episode_id) as c FROM episode_candidates WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)')
-      .get() as { c: number } | undefined;
-    const episodesWithCandidatesLogged = candLoggedRow?.c ?? 0;
-
     // 2. Unpermitted in effective training pool (dataset_v2_rows exported with training_allowed = 0 or unpermitted ranker)
     const unpermittedInPoolRow = this.db
       .prepare(`
@@ -3320,72 +3450,6 @@ export class SqliteStore {
       .get() as { c: number } | undefined;
     const revokedEpisodesInPool = revokedInPoolRow?.c ?? 0;
 
-    // 4. Real verification proof audit (measuring missing proofs instead of assumed zero)
-    const verifiedRows = this.db.prepare(`
-      SELECT raw_json FROM task_episodes
-      WHERE verified_success IS NOT NULL
-      AND episode_id NOT IN (SELECT episode_id FROM episode_revocations)
-    `).all() as Array<{ raw_json: string }>;
-    let verifiedEpisodesWithMissingProof = 0;
-    for (const vr of verifiedRows) {
-      try {
-        const parsed = JSON.parse(vr.raw_json);
-        const sources = parsed.outcome?.verificationSources;
-        if (!Array.isArray(sources) || sources.length === 0) {
-          verifiedEpisodesWithMissingProof++;
-        }
-      } catch {
-        verifiedEpisodesWithMissingProof++;
-      }
-    }
-
-    // 5. Real pre-outcome snapshot leakage audit (Phase 20.4: 100% distinct active eligible snapshots with current passing audit)
-    const activeSnapshotsCountRow = this.db.prepare(`
-      SELECT COUNT(DISTINCT episode_id) as c
-      FROM pre_outcome_snapshots
-      WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)
-    `).get() as { c: number } | undefined;
-    const activeSnapshotCount = activeSnapshotsCountRow?.c ?? 0;
-
-    const passingAuditedRow = this.db.prepare(`
-      SELECT COUNT(DISTINCT a.episode_id) as c
-      FROM pre_outcome_integrity_audits a
-      JOIN pre_outcome_snapshots s ON a.episode_id = s.episode_id
-      WHERE a.passed = 1
-        AND a.snapshot_sha256 = s.snapshot_sha256
-        AND s.episode_id NOT IN (SELECT episode_id FROM episode_revocations)
-    `).get() as { c: number } | undefined;
-    let passingAuditedSnapshots = passingAuditedRow?.c ?? 0;
-
-    const failedActiveAuditsRow = this.db.prepare(`
-      SELECT COUNT(DISTINCT a.episode_id) as c
-      FROM pre_outcome_integrity_audits a
-      JOIN pre_outcome_snapshots s ON a.episode_id = s.episode_id
-      WHERE a.passed = 0
-        AND s.episode_id NOT IN (SELECT episode_id FROM episode_revocations)
-    `).get() as { c: number } | undefined;
-    let failedActiveSnapshots = failedActiveAuditsRow?.c ?? 0;
-
-    // If there are active snapshots but none have been audited yet, run the audit on the fly and persist
-    if (activeSnapshotCount > 0 && passingAuditedSnapshots === 0 && failedActiveSnapshots === 0) {
-      const snapshotRows = this.db.prepare(`
-        SELECT raw_json FROM pre_outcome_snapshots
-        WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)
-      `).all() as Array<{ raw_json: string }>;
-      for (const sr of snapshotRows) {
-        const audit = this.auditPreOutcomeSnapshot(sr.raw_json);
-        if (audit.passed) {
-          passingAuditedSnapshots++;
-        } else {
-          failedActiveSnapshots++;
-        }
-      }
-    }
-
-    // Zero-leakage audit gate requirement: 100% of distinct active eligible snapshots must have passing audits, with 0 violations
-    const preOutcomeSnapshotsAudited = activeSnapshotCount > 0 ? passingAuditedSnapshots : 0;
-    const leakageViolationsDetected = failedActiveSnapshots + Math.max(0, activeSnapshotCount - passingAuditedSnapshots);
-
     // 6. Real shadow policy runs and crashes (measuring real shadow_policy_evaluations table strictly with is_synthetic = 0 AND environment = 'PRODUCTION')
     const shadowRunsRow = this.db
       .prepare("SELECT COUNT(*) as c FROM shadow_policy_evaluations WHERE crashed = 0 AND is_synthetic = 0 AND environment = 'PRODUCTION'")
@@ -3398,14 +3462,14 @@ export class SqliteStore {
     const shadowEvaluationCrashes = shadowCrashRow?.c ?? 0;
 
     const canonicalEvaluation = evaluateCanonicalReadinessGates({
-      totalEpisodes: summary.totalEpisodes,
-      verifiedSuccesses: summary.successfulVerifiedEpisodes,
-      verifiedFailures: summary.failedVerifiedEpisodes,
-      unknownOutcomes: summary.unknownOutcomeEpisodes,
-      episodesWithCandidatesLogged,
+      totalEpisodes: eligibleTotalEpisodes,
+      verifiedSuccesses: eligibleVerifiedSuccesses,
+      verifiedFailures: eligibleVerifiedFailures,
+      unknownOutcomes: eligibleUnknownOutcomes,
+      episodesWithCandidatesLogged: eligibleEpisodesWithCandidatesLogged,
       unpermittedEpisodesInPool,
       revokedEpisodesInPool,
-      verifiedEpisodesWithMissingProof,
+      verifiedEpisodesWithMissingProof: eligibleVerifiedEpisodesWithMissingProof,
       preOutcomeSnapshotsAudited,
       leakageViolationsDetected,
       shadowEvaluationRuns,

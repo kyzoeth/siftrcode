@@ -88,8 +88,12 @@ export function evaluateEpisodeTrainingEligibility(
     }
   }
 
-  // 7. Authoritative exposure records check
-  if (options.exposuresProvider) {
+  // 7. Authoritative exposure records check (mandatory: missing provider fails closed)
+  if (!options.exposuresProvider) {
+    reasons.push(
+      'MISSING_EXPOSURE_RECORD: Mandatory exposuresProvider is required to evaluate training eligibility (fail closed).'
+    );
+  } else {
     try {
       const exposures = options.exposuresProvider(episode.episodeId) || [];
       const exposureMap = new Map(exposures.map((e) => [e.contextUnitId, e]));
