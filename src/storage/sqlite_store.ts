@@ -1811,7 +1811,7 @@ export class SqliteStore {
   // Task OutcomeEvidence Operations (Section 48, 49)
   // ==========================================
 
-  public saveTaskOutcome(outcome: OutcomeEvidence): void {
+  public saveTaskOutcome(outcome: OutcomeEvidence): { episodeFinalized: boolean; finalizationErrorCode?: string } {
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO task_outcome_records (
         outcome_id, task_id, session_id, agent_environment_id,
@@ -1854,9 +1854,13 @@ export class SqliteStore {
 
     // Automatic Episode Finalization on Real Outcome Submission (Phase 20.2)
     try {
-      this.finalizeEpisodeFromOutcome(outcome);
-    } catch (err) {
-      console.warn('[SqliteStore] Automatic episode finalization skipped or failed:', err);
+      const episode = this.finalizeEpisodeFromOutcome(outcome);
+      return { episodeFinalized: episode !== null };
+    } catch (err: any) {
+      return {
+        episodeFinalized: false,
+        finalizationErrorCode: err.code || err.message || 'FINALIZATION_FAILED',
+      };
     }
   }
 
@@ -2828,14 +2832,21 @@ export class SqliteStore {
     }, this);
 
     if (!lineage.valid) {
-      return null;
+      const err: any = new Error(lineage.error);
+      err.code = lineage.code;
+      throw err;
     }
 
     const plan = lineage.plan;
     const snapshot = lineage.snapshot;
-    const task = this.getTaskContext(lineage.taskId);
+    let task = this.getTaskContext(lineage.taskId);
     if (!task) {
-      return null;
+      task = {
+        taskId: lineage.taskId,
+        sessionId: lineage.sessionId,
+        primaryPrompt: snapshot.prompt || '',
+        evidence: [],
+      } as any;
     }
 
     // 2. Resolve authoritative outcome

@@ -76,67 +76,33 @@ export class DefaultOutcomePolicyV1 implements OutcomePolicy {
       };
     }
 
-    // 2. Hard Failures (Build broken, regressions broken, security check failed)
-    if (evidence.buildPassed === false) {
-      return {
-        verifiedSuccess: false,
-        confidence: 0.99,
-        rationale: 'Hard failure: project build failed',
-      };
-    }
-    if (evidence.regressionTestsPassed === false) {
-      return {
-        verifiedSuccess: false,
-        confidence: 0.99,
-        rationale: 'Hard failure: regression tests failed',
-      };
-    }
-    if (evidence.securityChecksPassed === false) {
-      return {
-        verifiedSuccess: false,
-        confidence: 0.99,
-        rationale: 'Hard failure: security verification failed',
-      };
-    }
-
-    // 3. Strong Automated Success Oracles
-    // 3a. Hidden behavioral tests pass + regressions pass
-    if (evidence.hiddenTestsPassed === true) {
+    // 2. Strong Automated Success Oracles
+    // Requires authoritative oracle (hidden tests or behavioral oracle) AND regressions / security not failing
+    if (
+      evidence.hiddenTestsPassed === true &&
+      evidence.regressionTestsPassed !== false &&
+      evidence.securityChecksPassed !== false
+    ) {
       return {
         verifiedSuccess: true,
         confidence: 0.98,
-        rationale: 'Strong success: hidden behavioral evaluation tests and regressions passed',
+        rationale: 'Strong success: hidden behavioral evaluation tests passed without regression or security failures',
       };
     }
 
-    // 3b. User accepted + public tests passed
-    if (evidence.userAccepted === true && evidence.publicTestsPassed === true) {
+    if (
+      evidence.behavioralOraclePassed === true &&
+      evidence.regressionTestsPassed !== false &&
+      evidence.securityChecksPassed !== false
+    ) {
       return {
         verifiedSuccess: true,
         confidence: 0.95,
-        rationale: 'Strong success: user accepted changes and public test suite passed',
+        rationale: 'High confidence: independent behavioral oracle passed without regression or security failures',
       };
     }
 
-    // 3c. Behavioral oracle passed + regressions pass
-    if (evidence.behavioralOraclePassed === true) {
-      return {
-        verifiedSuccess: true,
-        confidence: 0.95,
-        rationale: 'High confidence: independent behavioral oracle passed cleanly',
-      };
-    }
-
-    // 3d. Public tests + full regression tests passed (NOT public tests alone)
-    if (evidence.publicTestsPassed === true && evidence.regressionTestsPassed === true) {
-      return {
-        verifiedSuccess: true,
-        confidence: 0.90,
-        rationale: 'Strong automated verification: task tests and full regression suite passed cleanly',
-      };
-    }
-
-    // 4. Automated Oracle Failures
+    // 3. Strong Automated Oracle Failures
     if (evidence.hiddenTestsPassed === false) {
       return {
         verifiedSuccess: false,
@@ -147,34 +113,46 @@ export class DefaultOutcomePolicyV1 implements OutcomePolicy {
     if (evidence.behavioralOraclePassed === false) {
       return {
         verifiedSuccess: false,
-        confidence: 0.92,
+        confidence: 0.98,
         rationale: 'Automated verification failure: behavioral oracle failed',
       };
     }
-    if (evidence.publicTestsPassed === false) {
+
+    // 4. Weak / Unverified Signals (NEVER certify verifiedSuccess = true or false alone)
+    // Section 49 & Phase 20.4 Invariant: build failure/pass, public tests, regression failure alone,
+    // agent self-report, and unverified user acceptance yield verifiedSuccess = null (UNKNOWN).
+    if (evidence.regressionTestsPassed === false) {
       return {
-        verifiedSuccess: false,
-        confidence: 0.95,
-        rationale: 'Automated verification failure: public test suite failed',
-      };
-    }
-    if (evidence.userAccepted === false) {
-      return {
-        verifiedSuccess: false,
-        confidence: 0.90,
-        rationale: 'User explicitly rejected proposed task solution',
+        verifiedSuccess: null,
+        confidence: 0.50,
+        rationale: 'Unverified: regression tests failed without authoritative oracle verification; verifiedSuccess remains UNKNOWN.',
       };
     }
 
-    // 5. Weak Evidence: Public tests passed alone, build passed alone, or agent self-report alone
-    // Section 49 & Phase 20.3 Invariant: weak signals NEVER certify verifiedSuccess = true.
+    if (evidence.buildPassed === false) {
+      return {
+        verifiedSuccess: null,
+        confidence: 0.40,
+        rationale: 'Weak evidence: project build failed without authoritative oracle verification; verifiedSuccess remains UNKNOWN.',
+      };
+    }
+
+    if (evidence.publicTestsPassed === false) {
+      return {
+        verifiedSuccess: null,
+        confidence: 0.50,
+        rationale: 'Weak evidence: public test suite failed without authoritative behavioral oracle; verifiedSuccess remains UNKNOWN.',
+      };
+    }
+
     if (evidence.publicTestsPassed === true) {
       return {
         verifiedSuccess: null,
         confidence: 0.60,
-        rationale: 'Weak evidence: public tests passed, but no authoritative behavioral oracle, hidden verifier, or human acceptance; verifiedSuccess remains UNKNOWN.',
+        rationale: 'Weak evidence: public tests passed, but no authoritative behavioral oracle or hidden verifier; verifiedSuccess remains UNKNOWN.',
       };
     }
+
     if (evidence.buildPassed === true) {
       return {
         verifiedSuccess: null,
@@ -183,29 +161,35 @@ export class DefaultOutcomePolicyV1 implements OutcomePolicy {
       };
     }
 
-    // 5. Weak Evidence: Agent self-reported success alone (Section 49)
-    // Never treat "agent says done" as verified success!
-    if (evidence.agentReportedSuccess === true) {
+    if (evidence.userAccepted === false) {
+      return {
+        verifiedSuccess: null,
+        confidence: 0.50,
+        rationale: 'Unverified: user rejected solution without authoritative review certification; verifiedSuccess remains UNKNOWN.',
+      };
+    }
+
+    if (evidence.userAccepted === true) {
+      return {
+        verifiedSuccess: null,
+        confidence: 0.50,
+        rationale: 'Unverified: user accepted solution without authoritative review certification; verifiedSuccess remains UNKNOWN.',
+      };
+    }
+
+    if (evidence.agentReportedSuccess === true || evidence.agentReportedSuccess === false) {
       return {
         verifiedSuccess: null,
         confidence: 0.35,
-        rationale: 'Unverified: agent reported task complete but no automated tests/oracles verified the solution',
+        rationale: 'Unverified: agent reported completion/failure alone; verifiedSuccess remains UNKNOWN.',
       };
     }
 
-    if (evidence.agentReportedSuccess === false) {
-      return {
-        verifiedSuccess: false,
-        confidence: 0.70,
-        rationale: 'Agent self-reported task failure or unresolvable error',
-      };
-    }
-
-    // 6. Insufficient Evidence
+    // 5. Insufficient Evidence
     return {
       verifiedSuccess: null,
       confidence: 0.1,
-      rationale: 'Insufficient outcome evidence: no tests, builds, or user feedback available',
+      rationale: 'Insufficient outcome evidence: no tests, builds, or oracles available; verifiedSuccess remains UNKNOWN.',
     };
   }
 }

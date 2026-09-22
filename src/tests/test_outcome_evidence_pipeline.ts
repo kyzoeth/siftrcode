@@ -56,7 +56,7 @@ async function runOutcomeEvidencePipelineTests() {
     assert(humanFail.verifiedSuccess === false, 'Human review FAIL yields verifiedSuccess = false');
     assert(humanFail.confidence === 1.0, 'Human review FAIL yields absolute confidence 1.0');
 
-    // 1b. Hard Failures (Build failed, Regressions failed, Security failed)
+    // 1b. Weak Signals & Automated Oracle Failures
     const buildFail = policy.evaluateOutcome({
       taskId: 'task_build_fail',
       sessionId: 'sess_1',
@@ -65,8 +65,7 @@ async function runOutcomeEvidencePipelineTests() {
       buildPassed: false,
       agentReportedSuccess: true, // Agent says done, but build failed!
     });
-    assert(buildFail.verifiedSuccess === false, 'Build failure overrides agent claims, verifiedSuccess = false');
-    assert(buildFail.confidence >= 0.99, 'Build failure has >= 0.99 confidence');
+    assert(buildFail.verifiedSuccess === null, 'Phase 20.4 Invariant: Build failure alone preserves verifiedSuccess = null');
 
     const regressionFail = policy.evaluateOutcome({
       taskId: 'task_reg_fail',
@@ -77,8 +76,27 @@ async function runOutcomeEvidencePipelineTests() {
       publicTestsPassed: true,
       regressionTestsPassed: false,
     });
-    assert(regressionFail.verifiedSuccess === false, 'Regression test failure strictly marks verifiedSuccess = false');
-    assert(regressionFail.confidence >= 0.99, 'Regression test failure has >= 0.99 confidence');
+    assert(regressionFail.verifiedSuccess === null, 'Phase 20.4 Invariant: Regression failure alone preserves verifiedSuccess = null');
+
+    const hiddenFail = policy.evaluateOutcome({
+      taskId: 'task_hidden_fail',
+      sessionId: 'sess_1',
+      agentEnvironmentId: 'env_1',
+      workspaceSnapshotBefore: 'snap_before',
+      hiddenTestsPassed: false,
+    });
+    assert(hiddenFail.verifiedSuccess === false, 'Hidden test failure strictly marks verifiedSuccess = false');
+    assert(hiddenFail.confidence >= 0.98, 'Hidden test failure has >= 0.98 confidence');
+
+    const oracleFail = policy.evaluateOutcome({
+      taskId: 'task_oracle_fail',
+      sessionId: 'sess_1',
+      agentEnvironmentId: 'env_1',
+      workspaceSnapshotBefore: 'snap_before',
+      behavioralOraclePassed: false,
+    });
+    assert(oracleFail.verifiedSuccess === false, 'Behavioral oracle failure strictly marks verifiedSuccess = false');
+    assert(oracleFail.confidence >= 0.98, 'Behavioral oracle failure has >= 0.98 confidence');
 
     // 1c. Strong Automated Success: Hidden tests pass + regressions pass
     const strongOraclePass = policy.evaluateOutcome({
@@ -93,18 +111,17 @@ async function runOutcomeEvidencePipelineTests() {
     assert(strongOraclePass.verifiedSuccess === true, 'Hidden tests + regressions pass yields verifiedSuccess = true');
     assert(strongOraclePass.confidence >= 0.98, 'Strong oracle success has >= 0.98 confidence');
 
-    // 1d. User Accepted + Public tests pass
-    const userAcceptedPass = policy.evaluateOutcome({
-      taskId: 'task_user_accept',
+    // 1d. Behavioral oracle pass
+    const behavioralPass = policy.evaluateOutcome({
+      taskId: 'task_behavioral_pass',
       sessionId: 'sess_1',
       agentEnvironmentId: 'env_1',
       workspaceSnapshotBefore: 'snap_before',
-      buildPassed: true,
-      publicTestsPassed: true,
-      userAccepted: true,
+      behavioralOraclePassed: true,
+      regressionTestsPassed: true,
     });
-    assert(userAcceptedPass.verifiedSuccess === true, 'User accepted + public tests pass yields verifiedSuccess = true');
-    assert(userAcceptedPass.confidence >= 0.95, 'User accepted + public tests pass has >= 0.95 confidence');
+    assert(behavioralPass.verifiedSuccess === true, 'Behavioral oracle pass yields verifiedSuccess = true');
+    assert(behavioralPass.confidence >= 0.95, 'Behavioral oracle pass has >= 0.95 confidence');
 
     // 1e. Section 49 Critical Invariant: Agent says done alone (weak evidence only)
     const agentAlone = policy.evaluateOutcome({
@@ -192,6 +209,7 @@ async function runOutcomeEvidencePipelineTests() {
       agentEnvironmentId: 'env_claude_sonnet',
       workspaceSnapshotBefore: 'snap_before_102',
       buildPassed: false,
+      hiddenTestsPassed: false,
       agentReportedSuccess: true,
     });
 

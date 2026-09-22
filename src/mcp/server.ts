@@ -499,7 +499,20 @@ export function createMcpServer(): Server {
         });
 
         // Persist exact lineage and preserve tri-state UNKNOWN (null !== 0)
-        store.saveTaskOutcome(outcomeEvidence);
+        let episodeFinalized = false;
+        let finalizationErrorCode: string | undefined;
+        try {
+          const saveRes = store.saveTaskOutcome(outcomeEvidence);
+          if (saveRes && typeof saveRes === 'object') {
+            episodeFinalized = Boolean(saveRes.episodeFinalized);
+            finalizationErrorCode = saveRes.finalizationErrorCode;
+          } else {
+            episodeFinalized = Boolean(store.getTaskEpisode(resolvedPlanId || resolvedTaskId));
+          }
+        } catch (err: any) {
+          finalizationErrorCode = err.code || err.message || 'FINALIZATION_FAILED';
+        }
+
         store.saveOutcomeEvidence([
           {
             evidenceId: outcomeEvidence.outcomeId,
@@ -508,6 +521,7 @@ export function createMcpServer(): Server {
             contextPlanId: resolvedPlanId,
             snapshotId: resolvedSnapshotId,
             labelType: 'VERIFIED_SUCCESS',
+            value: outcomeEvidence.verifiedSuccess === true ? 1 : (outcomeEvidence.verifiedSuccess === false ? 0 : null),
             verifiedSuccess: outcomeEvidence.verifiedSuccess,
             confidence: outcomeEvidence.confidence,
             strength: outcomeEvidence.confidence >= 0.9 ? 'STRONG' : 'MEDIUM',
@@ -542,6 +556,10 @@ export function createMcpServer(): Server {
               type: 'text',
               text: JSON.stringify({
                 success: true,
+                outcomeRecorded: true,
+                episodeFinalized,
+                trainingEligible: outcomeEvidence.verifiedSuccess === true,
+                finalizationErrorCode,
                 taskId: outcomeEvidence.taskId,
                 sessionId: outcomeEvidence.sessionId,
                 planId: resolvedPlanId,
