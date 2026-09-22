@@ -436,11 +436,11 @@ export class EpisodeAssembler {
         systemConfigurationHash: null,
       },
       rights: {
-        serviceProcessingAllowed: (rights as any).serviceProcessingAllowed ?? null,
+        serviceProcessingAllowed: (rights as any).rightsProvenance?.serviceProcessingAllowed ?? (rights as any).serviceProcessingAllowed ?? null,
         trainingAllowed: rights.trainingAllowed === true,
-        redistributionAllowed: (rights as any).redistributionAllowed ?? null,
-        permissionSource: (rights as any).permissionSource || (rights.trainingAllowed === true ? 'USER_CONSENT' : 'UNKNOWN'),
-        decisionTimestamp: (rights as any).decisionTimestamp || (rights.trainingAllowed === true ? new Date().toISOString() : null),
+        redistributionAllowed: (rights as any).rightsProvenance?.redistributionAllowed ?? (rights as any).redistributionAllowed ?? null,
+        permissionSource: (rights as any).rightsProvenance?.permissionSource || (rights as any).permissionSource || 'UNKNOWN',
+        decisionTimestamp: (rights as any).rightsProvenance?.decisionTimestamp || (rights as any).decisionTimestamp || null,
       },
       contextDecision: {
         candidateCount: params.preOutcomeSnapshot.candidateUniverse.length,

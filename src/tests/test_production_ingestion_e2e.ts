@@ -84,6 +84,13 @@ async function runProductionIngestionE2ETests() {
     const rights = createDefaultDataRights();
     rights.trainingAllowed = true;
     rights.telemetryAllowed = true;
+    rights.rightsProvenance = {
+      serviceProcessingAllowed: true,
+      trainingAllowed: true,
+      redistributionAllowed: true,
+      permissionSource: 'USER_CONSENT',
+      decisionTimestamp: new Date().toISOString(),
+    };
 
     const prompt = 'Fix null pointer exception in authentication route handler auth_handler.ts and review user schema in user_model.ts';
     const optimizeResult = await ContextEngine.optimizeWorkspace({

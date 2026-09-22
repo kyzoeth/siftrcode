@@ -38,6 +38,8 @@ export type OperationType =
   | 'retention_remote'
   | 'training';
 
+import { RightsDecisionProvenance } from './rights_provenance';
+
 export type OperationRightsPolicy = Record<DataClass, DataClassRights>;
 
 export interface DataRights {
@@ -56,6 +58,7 @@ export interface DataRights {
   retentionDays?: number;
   operationRights?: OperationRightsPolicy;
   hasExplicitOperationRights?: boolean;
+  rightsProvenance?: RightsDecisionProvenance;
 }
 
 /**
