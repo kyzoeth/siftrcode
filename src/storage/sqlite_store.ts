@@ -44,7 +44,7 @@ import {
   sanitizeCandidateDecisionObservation,
   ContextPlanMetadataRecord,
 } from './rights_aware_dto';
-import { TaskEpisodeV1, TaskType } from '../learning/episodes/task_episode';
+import { TaskEpisodeV1, TaskType, loadVerifiedTaskEpisode } from '../learning/episodes/task_episode';
 import { CandidateObservation } from '../learning/episodes/candidate_observation';
 import { ContextUnitExposureRecord, ContextExposureState } from '../learning/episodes/context_exposure';
 import { AgentTrajectoryEvent } from '../learning/episodes/agent_trajectory';
@@ -69,7 +69,7 @@ export {
   sanitizeCandidateDecisionObservation,
   ContextPlanMetadataRecord,
 } from './rights_aware_dto';
-export { TaskEpisodeV1, TaskType } from '../learning/episodes/task_episode';
+export { TaskEpisodeV1, TaskType, loadVerifiedTaskEpisode } from '../learning/episodes/task_episode';
 export {
   CanonicalGateEvaluation,
   CanonicalReadinessEvaluation,
@@ -2463,10 +2463,11 @@ export class SqliteStore {
   // ===========================================================================
 
   public saveTaskEpisode(episode: TaskEpisodeV1): void {
+    const verified = loadVerifiedTaskEpisode(episode);
     const verifiedSuccessInt =
-      episode.outcome.verifiedSuccess === true
+      verified.outcome.verifiedSuccess === true
         ? 1
-        : episode.outcome.verifiedSuccess === false
+        : verified.outcome.verifiedSuccess === false
         ? 0
         : null;
 
@@ -2482,37 +2483,37 @@ export class SqliteStore {
     `);
 
     stmt.run(
-      episode.episodeId,
-      episode.tenantId ?? null,
-      episode.repositoryId,
-      episode.sessionId,
-      episode.taskId,
-      episode.task.taskType ?? 'OTHER',
-      episode.workspace.baseCommit,
-      episode.environment.contextPolicyId,
-      episode.environment.rankerId,
-      episode.environment.rankerStatus,
-      episode.rights.trainingAllowed ? 1 : 0,
-      episode.rights.serviceProcessingAllowed ? 1 : 0,
-      episode.rights.redistributionAllowed ? 1 : 0,
-      episode.contextDecision.candidateCount,
-      episode.contextDecision.bundleSha256,
-      episode.contextDecision.actualRenderedTokens,
-      episode.contextDecision.tokenBudget,
+      verified.episodeId,
+      verified.tenantId ?? null,
+      verified.repositoryId,
+      verified.sessionId,
+      verified.taskId,
+      verified.task.taskType ?? 'OTHER',
+      verified.workspace.baseCommit,
+      verified.environment.contextPolicyId,
+      verified.environment.rankerId,
+      verified.environment.rankerStatus,
+      verified.rights.trainingAllowed ? 1 : 0,
+      verified.rights.serviceProcessingAllowed ? 1 : 0,
+      verified.rights.redistributionAllowed ? 1 : 0,
+      verified.contextDecision.candidateCount,
+      verified.contextDecision.bundleSha256,
+      verified.contextDecision.actualRenderedTokens,
+      verified.contextDecision.tokenBudget,
       verifiedSuccessInt,
-      episode.outcome.verificationConfidence,
-      episode.economics?.totalCostUSD ?? null,
-      episode.economics?.pricingStatus ?? null,
-      episode.integrity.recordSha256,
-      episode.startedAt,
-      episode.completedAt ?? null,
-      episode.integrity.createdAt,
-      JSON.stringify(episode)
+      verified.outcome.verificationConfidence,
+      verified.economics?.totalCostUSD ?? null,
+      verified.economics?.pricingStatus ?? null,
+      verified.integrity.recordSha256,
+      verified.startedAt,
+      verified.completedAt ?? null,
+      verified.integrity.createdAt,
+      JSON.stringify(verified)
     );
 
     // Persist candidates if present
-    if (episode.contextDecision.candidates && episode.contextDecision.candidates.length > 0) {
-      this.saveEpisodeCandidates(episode.contextDecision.candidates, episode.episodeId);
+    if (verified.contextDecision.candidates && verified.contextDecision.candidates.length > 0) {
+      this.saveEpisodeCandidates(verified.contextDecision.candidates, verified.episodeId);
     }
   }
 
@@ -2522,7 +2523,7 @@ export class SqliteStore {
       .get(episodeId) as { raw_json: string } | undefined;
 
     if (!row) return null;
-    return JSON.parse(row.raw_json) as TaskEpisodeV1;
+    return loadVerifiedTaskEpisode(row.raw_json);
   }
 
   public listTaskEpisodes(filter: EpisodeFilter = {}): TaskEpisodeV1[] {
@@ -2570,7 +2571,7 @@ export class SqliteStore {
     }
 
     const rows = this.db.prepare(sql).all(...params) as Array<{ raw_json: string }>;
-    return rows.map((r) => JSON.parse(r.raw_json) as TaskEpisodeV1);
+    return rows.map((r) => loadVerifiedTaskEpisode(r.raw_json));
   }
 
   public savePreOutcomeSnapshot(snapshot: PreOutcomeEpisodeSnapshot): void {

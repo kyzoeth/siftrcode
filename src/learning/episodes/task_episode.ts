@@ -10,7 +10,7 @@ import * as crypto from 'crypto';
 import { TaskEvidence } from '../../context/task_evidence';
 import { ContextPolicyIdentity } from '../../engine/context_plan';
 import { CandidateObservation, SelectedContextObservation } from './candidate_observation';
-import { deepFreeze } from './pre_outcome_snapshot';
+import { deepFreeze, canonicalJsonSerialize } from './pre_outcome_snapshot';
 import { AgentTrajectorySummary } from './agent_trajectory';
 import { TaskOutcomeV1 } from '../outcome/task_outcome';
 import { TaskEconomicsV1 } from '../economics/task_economics';
@@ -104,28 +104,90 @@ export interface TaskEpisodeV1 {
 }
 
 /**
- * Computes record SHA-256 for a TaskEpisodeV1 record.
+ * Computes record SHA-256 for a TaskEpisodeV1 record over the full canonical payload
+ * excluding integrity.recordSha256.
  */
 export function computeEpisodeRecordSha256(episode: Omit<TaskEpisodeV1, 'integrity'> & { integrity: Omit<TaskEpisodeV1['integrity'], 'recordSha256'> }): string {
-  const content = JSON.stringify({
+  const fullPayload = {
     schemaVersion: episode.schemaVersion,
     episodeId: episode.episodeId,
+    tenantId: episode.tenantId,
     repositoryId: episode.repositoryId,
-    taskId: episode.taskId,
     sessionId: episode.sessionId,
-    baseCommit: episode.workspace.baseCommit,
-    promptSha256: episode.task.promptSha256,
-    bundleSha256: episode.contextDecision.bundleSha256,
-    contextPolicyId: episode.environment.contextPolicyId,
-    rankerId: episode.environment.rankerId,
-    rankerStatus: episode.environment.rankerStatus,
-    trainingAllowed: episode.rights.trainingAllowed,
-    verifiedSuccess: episode.outcome.verifiedSuccess,
-    verificationConfidence: episode.outcome.verificationConfidence,
-    featureCutoffCommit: episode.integrity.featureCutoffCommit,
-    createdAt: episode.integrity.createdAt,
-  });
-  return crypto.createHash('sha256').update(content).digest('hex');
+    taskId: episode.taskId,
+    startedAt: episode.startedAt,
+    completedAt: episode.completedAt,
+    workspace: episode.workspace,
+    task: episode.task,
+    environment: episode.environment,
+    rights: episode.rights,
+    contextDecision: episode.contextDecision,
+    trajectory: episode.trajectory,
+    outcome: episode.outcome,
+    economics: episode.economics,
+    integrity: {
+      createdAt: episode.integrity.createdAt,
+      featureCutoffCommit: episode.integrity.featureCutoffCommit,
+      containsPostOutcomeData: episode.integrity.containsPostOutcomeData,
+    },
+  };
+  const serialized = canonicalJsonSerialize(fullPayload);
+  return crypto.createHash('sha256').update(serialized).digest('hex');
+}
+
+/**
+ * Loads, verifies, and returns a verified TaskEpisodeV1.
+ * Invariants enforced:
+ * 1. Checks schemaVersion === 'TASK_EPISODE_V1'.
+ * 2. Recomputes SHA-256 over entire canonical payload without stored recordSha256.
+ * 3. Fails closed with FAIL_CLOSED_EPISODE_HASH_MISMATCH if payload was tampered with or corrupted.
+ * 4. Deeply freezes verified episode.
+ */
+export function loadVerifiedTaskEpisode(
+  rawJsonOrObj: string | Record<string, unknown> | TaskEpisodeV1
+): TaskEpisodeV1 {
+  let parsed: any;
+  if (typeof rawJsonOrObj === 'string') {
+    try {
+      parsed = JSON.parse(rawJsonOrObj);
+    } catch (err) {
+      throw new Error(`FAIL_CLOSED_CORRUPT_EPISODE: Failed to parse episode JSON: ${err}`);
+    }
+  } else {
+    parsed = JSON.parse(JSON.stringify(rawJsonOrObj));
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('FAIL_CLOSED_INVALID_EPISODE: Episode payload is not an object.');
+  }
+
+  if (parsed.schemaVersion !== 'TASK_EPISODE_V1') {
+    throw new Error(`FAIL_CLOSED_INVALID_SCHEMA: Unsupported episode schema version: ${parsed.schemaVersion}`);
+  }
+
+  const storedSha = parsed.integrity?.recordSha256;
+  if (!storedSha || typeof storedSha !== 'string') {
+    throw new Error('FAIL_CLOSED_EPISODE_UNHASHED: Episode missing integrity.recordSha256.');
+  }
+
+  const intermediate = {
+    ...parsed,
+    integrity: {
+      ...parsed.integrity,
+    },
+  };
+  delete intermediate.integrity.recordSha256;
+
+  const computedSha = computeEpisodeRecordSha256(intermediate);
+
+  if (computedSha !== storedSha) {
+    throw new Error(
+      `FAIL_CLOSED_EPISODE_HASH_MISMATCH: Stored episode record hash "${storedSha}" does not match recomputed full-payload hash "${computedSha}". Episode in database has been tampered with or corrupted.`
+    );
+  }
+
+  deepFreeze(parsed);
+  return parsed as TaskEpisodeV1;
 }
 
 /**

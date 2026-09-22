@@ -19,7 +19,7 @@ import { DataRights } from '../rights/data_rights';
 import { SourceProvenance } from '../rights/source_provenance';
 import { RightsFilter, RightsFilterConfig } from '../rights/rights_filter';
 import { TrainingRow, createTrainingRow, TrainingEvidenceRecord } from './lineage';
-import { TaskEpisodeV1 } from './episodes/task_episode';
+import { TaskEpisodeV1, loadVerifiedTaskEpisode } from './episodes/task_episode';
 import {
   SIFTR_CONTEXT_DATASET_V2_VERSION,
   SiftrContextDatasetV2Row,
@@ -374,7 +374,8 @@ export class TrainingExporter {
     const repositoryDistribution: Record<string, number> = {};
     const taskTypeDistribution: Record<string, number> = {};
 
-    for (const ep of episodes) {
+    for (const rawEp of episodes) {
+      const ep = loadVerifiedTaskEpisode(rawEp);
       // 1. Data Rights check (fail-closed)
       if (!ep.rights || ep.rights.trainingAllowed !== true || !ep.rights.permissionSource || ep.rights.permissionSource === 'UNKNOWN') {
         rejections.push({
