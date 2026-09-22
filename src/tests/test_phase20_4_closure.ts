@@ -32,6 +32,7 @@
  * 28. Canonical episode assembly fails closed on missing sessionId (no sess_default)
  * 29. Gate 7 rationale deleted unmeasured <= 25ms claim
  * 30. 1,000 apparently good but rights-ineligible episodes leave readiness false (non-vacuous Gate 4)
+ * 31. Gate 4 canonical eligibility enforcement on Dataset V2 training pool (UNKNOWN rights, orphan rows, foreign exposures)
  */
 
 import * as fs from 'fs';
@@ -1278,8 +1279,8 @@ export async function runPhase204ClosureTests() {
     );
     // Blocked if isRevoked is missing (mandatory fail closed)
     const missingRevRes = evaluateEpisodeTrainingEligibility(episode24, {
-      exposuresProvider: (id) => engineStore.getContextExposures(id),
-    });
+      exposuresProvider: (id: string) => engineStore.getContextExposures(id),
+    } as any);
     assertStrictEqual(missingRevRes.eligible, false, 'Missing isRevoked fails closed');
     assert(
       missingRevRes.reasons.some((r) => r.includes('Mandatory isRevoked authority is required')),
@@ -1288,7 +1289,7 @@ export async function runPhase204ClosureTests() {
     // Blocked if exposuresProvider is missing (mandatory fail closed)
     const missingExpRes = evaluateEpisodeTrainingEligibility(episode24, {
       isRevoked: () => false,
-    });
+    } as any);
     assertStrictEqual(missingExpRes.eligible, false, 'Missing exposuresProvider fails closed');
     assert(
       missingExpRes.reasons.some((r) => r.includes('Mandatory exposuresProvider is required')),
@@ -1756,7 +1757,433 @@ export async function runPhase204ClosureTests() {
       } catch {}
     }
 
-    console.log('\n🎉 ALL 30 PHASE 20.4 INTEGRITY CLOSURE INVARIANTS SATISFIED!\n');
+    // =========================================================================
+    // Case 31: Gate 4 canonical eligibility enforcement on Dataset V2 training pool
+    // =========================================================================
+    console.log('\n--- 31. Gate 4 canonical eligibility enforcement on Dataset V2 training pool ---');
+    const case31Dir = fs.mkdtempSync(path.join(os.tmpdir(), 'siftr_case31_'));
+    try {
+      const case31Store = new SqliteStore(path.join(case31Dir, 'test.db'));
+      const db = (case31Store as any).db;
+
+      // Seed 1,000 clean, eligible episodes:
+      // - 650 verified successes, 250 verified failures, 100 unknown outcomes (satisfies Gate 5 tri-state)
+      // - 25 independent repositories (repo_0 .. repo_24)
+      // - 4 task types: BUG_FIX, FEATURE_ADDITION, REFACTOR, TEST_FAILURE
+      // - production ranker, USER_CONSENT, valid pre-outcome snapshots with passing audits
+      // - 100 real production shadow evaluations with 0 crashes
+      db.exec('BEGIN IMMEDIATE');
+      const taskTypes = ['BUG_FIX', 'FEATURE_ADDITION', 'REFACTOR', 'TEST_FAILURE'] as const;
+      for (let i = 0; i < 1000; i++) {
+        const epId = `ep_clean_${i}`;
+        const isSuccess = i < 650 ? true : i < 900 ? false : null;
+        const candidateUnitId = `unit_clean_${i}`;
+        const candidatePath = `src/clean_${i}.ts`;
+        const repoId = `repo_${i % 25}`;
+        const taskType = taskTypes[i % 4];
+
+        const cleanEp = createTaskEpisodeV1({
+          episodeId: epId,
+          tenantId: 'tenant_default',
+          repositoryId: repoId,
+          sessionId: `sess_clean_${i}`,
+          taskId: `task_clean_${i}`,
+          workspace: {
+            repositoryIdentity: repoId,
+            baseCommit: 'base_commit_clean',
+            dirtyAtStart: false,
+            workspaceSnapshotId: `ws_clean_${i}`,
+          },
+          task: {
+            prompt: `Task prompt ${i}`,
+            taskType,
+            evidence: [],
+          },
+          environment: {
+            contextPolicyId: 'default_v1',
+            rankerId: 'heuristic_v1',
+            rankerStatus: 'PRODUCTION',
+          },
+          rights: {
+            trainingAllowed: true,
+            serviceProcessingAllowed: true,
+            redistributionAllowed: true,
+            permissionSource: 'USER_CONSENT',
+          },
+          contextDecision: {
+            candidateCount: 1,
+            bundleSha256: 'bundle_sha',
+            actualRenderedTokens: 100,
+            tokenBudget: 2000,
+            candidates: [
+              {
+                contextUnitId: candidateUnitId,
+                path: candidatePath,
+                unitKind: 'SOURCE_FILE',
+                retrievalSources: ['lexical'],
+                finalRank: 1,
+                finalScore: 0.95,
+                featureSetVersion: 'v1',
+                featureSnapshot: {},
+                estimatedTokens: 100,
+                selected: true,
+              },
+            ],
+            selectedUnits: [
+              {
+                contextUnitId: candidateUnitId,
+                path: candidatePath,
+                unitKind: 'SOURCE_FILE',
+                resolution: 'FULL',
+                rank: 1,
+                allocatedTokens: 100,
+              },
+            ],
+          },
+          outcome: {
+            episodeId: epId,
+            verifiedSuccess: isSuccess,
+            verificationConfidence: isSuccess !== null ? 'HIGH' : 'UNKNOWN',
+            verificationSources: isSuccess !== null ? ['BEHAVIORAL_ORACLE'] : [],
+          },
+        });
+
+        case31Store.saveTaskEpisode(cleanEp);
+
+        case31Store.saveContextExposures(
+          [
+            {
+              episodeId: epId,
+              contextUnitId: candidateUnitId,
+              path: candidatePath,
+              unitKind: 'SOURCE_FILE',
+              state: ContextExposureState.SHOWN,
+              finalRank: 1,
+              candidateAt: '2026-09-22T00:00:00.000Z',
+              selectedAt: '2026-09-22T00:00:01.000Z',
+              shownAt: '2026-09-22T00:00:02.000Z',
+            },
+          ],
+          epId
+        );
+
+        const preSnap = createPreOutcomeEpisodeSnapshot({
+          episodeId: epId,
+          taskId: `task_clean_${i}`,
+          prompt: `Task prompt ${i}`,
+          promptSha256: crypto.createHash('sha256').update(`Task prompt ${i}`).digest('hex'),
+          repositoryId: repoId,
+          baseCommit: 'base_commit_clean',
+          featureCutoffCommit: 'base_commit_clean',
+          workspaceSnapshotId: `ws_clean_${i}`,
+          candidateUniverse: cleanEp.contextDecision.candidates!,
+          selectedUnits: [
+            {
+              contextUnitId: candidateUnitId,
+              path: candidatePath,
+              unitKind: 'SOURCE_FILE',
+              resolution: 'FULL',
+              rank: 1,
+              allocatedTokens: 100,
+            },
+          ],
+          tokenBudget: 2000,
+          actualRenderedTokens: 100,
+          bundleSha256: 'bundle_sha',
+          contextPolicyId: 'default_v1',
+          rankerId: 'heuristic_v1',
+          capturedAt: '2026-09-22T00:00:00.000Z',
+        });
+        case31Store.savePreOutcomeSnapshot(preSnap);
+
+        case31Store.savePreOutcomeIntegrityAudit({
+          auditId: `audit_clean_${i}`,
+          episodeId: epId,
+          snapshotSha256: preSnap.snapshotSha256,
+          recomputedSha256: preSnap.snapshotSha256,
+          passed: true,
+          hasLeakage: false,
+          hasHashMismatch: false,
+          hasProvenanceError: false,
+          auditedAt: '2026-09-22T00:00:00.000Z',
+          details: {},
+        });
+      }
+
+      // Insert 100 passing production shadow evaluations
+      for (let j = 0; j < 100; j++) {
+        case31Store.saveShadowPolicyEvaluation(
+          {
+            taskId: `task_shadow_clean_${j}`,
+            productionPolicyId: 'prod_v1',
+            shadowPolicyId: 'shadow_v1',
+            candidateCount: 10,
+            topK: 10,
+            rankOverlapJaccard: 0.9,
+            topKDifferences: { inProductionOnly: [], inShadowOnly: [], sharedTopKCount: 10 },
+            inclusionDifferences: { inProductionOnly: [], inShadowOnly: [], sharedInclusionCount: 10 },
+            resolutionDifferences: [],
+            tokenDifference: 50,
+            productionTokens: 100,
+            shadowTokens: 150,
+            shadowLatencyMs: 12,
+            evaluatedAt: '2026-09-22T00:00:00.000Z',
+          },
+          false,
+          undefined,
+          'PRODUCTION',
+          false
+        );
+      }
+      db.exec('COMMIT');
+
+      // 1. Verify Clean Baseline passes 100% of readiness gates
+      const baselineReport = case31Store.getV32DataReadinessReport();
+      assertStrictEqual(baselineReport.trainingEligibleEpisodes, 1000, 'Baseline has 1,000 eligible episodes');
+      assertStrictEqual(baselineReport.currentVerifiedEpisodes, 900, 'Baseline has 900 verified episodes');
+      assertStrictEqual(baselineReport.isV32Ready, true, 'Baseline isV32Ready is strictly true');
+      assert(baselineReport.canonicalEvaluation !== undefined, 'Baseline canonical evaluation present');
+      assertStrictEqual(baselineReport.canonicalEvaluation!.allGatesPassed, true, 'Baseline allGatesPassed is true');
+      const baselineG4 = baselineReport.canonicalEvaluation!.gates.find((g) => g.gateId === 'GATE_4_RIGHTS_CLEARANCE')!;
+      assertStrictEqual(baselineG4.passed, true, 'Baseline Gate 4 passed (empty dataset_v2_rows with compliant pool)');
+
+      // 2. Variant 1: One persisted Dataset V2 row whose source episode fails ONLY because permissionSource='UNKNOWN'
+      const badRightsEp = createTaskEpisodeV1({
+        episodeId: 'ep_bad_rights_source',
+        tenantId: 'tenant_default',
+        repositoryId: 'repo_0',
+        sessionId: 'sess_bad_rights',
+        taskId: 'task_bad_rights',
+        workspace: {
+          repositoryIdentity: 'repo_0',
+          baseCommit: 'base_commit_clean',
+          dirtyAtStart: false,
+          workspaceSnapshotId: 'ws_bad_rights',
+        },
+        task: {
+          prompt: 'Bad rights task',
+          taskType: 'BUG_FIX',
+          evidence: [],
+        },
+        environment: {
+          contextPolicyId: 'default_v1',
+          rankerId: 'heuristic_v1',
+          rankerStatus: 'PRODUCTION',
+        },
+        rights: {
+          trainingAllowed: true, // trainingAllowed is true...
+          serviceProcessingAllowed: true,
+          redistributionAllowed: false,
+          permissionSource: 'UNKNOWN', // ...BUT permissionSource is UNKNOWN!
+        },
+        contextDecision: {
+          candidateCount: 1,
+          bundleSha256: 'bundle_sha',
+          actualRenderedTokens: 100,
+          tokenBudget: 2000,
+          candidates: [
+            {
+              contextUnitId: 'unit_bad_rights',
+              path: 'src/bad_rights.ts',
+              unitKind: 'SOURCE_FILE',
+              retrievalSources: ['lexical'],
+              finalRank: 1,
+              finalScore: 0.95,
+              featureSetVersion: 'v1',
+              featureSnapshot: {},
+              estimatedTokens: 100,
+              selected: true,
+            },
+          ],
+          selectedUnits: [
+            {
+              contextUnitId: 'unit_bad_rights',
+              path: 'src/bad_rights.ts',
+              unitKind: 'SOURCE_FILE',
+              resolution: 'FULL',
+              rank: 1,
+              allocatedTokens: 100,
+            },
+          ],
+        },
+        outcome: {
+          episodeId: 'ep_bad_rights_source',
+          verifiedSuccess: true,
+          verificationConfidence: 'HIGH',
+          verificationSources: ['BEHAVIORAL_ORACLE'],
+        },
+      });
+      case31Store.saveTaskEpisode(badRightsEp);
+      case31Store.saveContextExposures(
+        [
+          {
+            episodeId: 'ep_bad_rights_source',
+            contextUnitId: 'unit_bad_rights',
+            path: 'src/bad_rights.ts',
+            unitKind: 'SOURCE_FILE',
+            state: ContextExposureState.SHOWN,
+            finalRank: 1,
+            candidateAt: '2026-09-22T00:00:00.000Z',
+            selectedAt: '2026-09-22T00:00:01.000Z',
+            shownAt: '2026-09-22T00:00:02.000Z',
+          },
+        ],
+        'ep_bad_rights_source'
+      );
+
+      // Persist row in dataset_v2_rows referencing ep_bad_rights_source
+      case31Store.saveDatasetV2Row({
+        rowId: 'row_bad_rights',
+        exportId: 'export_v2_test',
+        episodeId: 'ep_bad_rights_source',
+        contextUnitId: 'unit_bad_rights',
+        exposureState: 'SHOWN',
+        wasSelected: true,
+        wasShown: true,
+        wasRead: false,
+        wasEdited: false,
+        wasInSuccessfulTask: true,
+        wasInFailedTask: false,
+        verifiedSuccess: true,
+        outcomeConfidence: 'HIGH',
+      });
+
+      const reportV1 = case31Store.getV32DataReadinessReport();
+      const g4_v1 = reportV1.canonicalEvaluation!.gates.find((g) => g.gateId === 'GATE_4_RIGHTS_CLEARANCE')!;
+      assertStrictEqual(g4_v1.passed, false, 'Gate 4 strictly fails when dataset row has permissionSource=UNKNOWN');
+      assertStrictEqual(reportV1.canonicalEvaluation!.allGatesPassed, false, 'allGatesPassed is false on permissionSource=UNKNOWN');
+      assertStrictEqual(reportV1.isV32Ready, false, 'isV32Ready is false on permissionSource=UNKNOWN');
+      assert(Boolean(g4_v1.details && g4_v1.details.includes('VIOLATION: 1 unpermitted')), `Gate 4 details notes unpermitted violation: ${g4_v1.details}`);
+
+      // 3. Variant 2: Orphan Dataset V2 row (source episode does not exist in task_episodes)
+      db.prepare('DELETE FROM dataset_v2_rows').run();
+      case31Store.saveDatasetV2Row({
+        rowId: 'row_orphan_row',
+        exportId: 'export_v2_test',
+        episodeId: 'ep_orphan_nonexistent',
+        contextUnitId: 'unit_orphan',
+        exposureState: 'SHOWN',
+        wasSelected: true,
+        wasShown: true,
+        wasRead: false,
+        wasEdited: false,
+        wasInSuccessfulTask: true,
+        wasInFailedTask: false,
+        verifiedSuccess: true,
+        outcomeConfidence: 'HIGH',
+      });
+
+      const reportV2 = case31Store.getV32DataReadinessReport();
+      const g4_v2 = reportV2.canonicalEvaluation!.gates.find((g) => g.gateId === 'GATE_4_RIGHTS_CLEARANCE')!;
+      assertStrictEqual(g4_v2.passed, false, 'Gate 4 strictly fails on orphan Dataset V2 row');
+      assertStrictEqual(reportV2.canonicalEvaluation!.allGatesPassed, false, 'allGatesPassed is false on orphan row');
+      assertStrictEqual(reportV2.isV32Ready, false, 'isV32Ready is false on orphan row');
+      assert(Boolean(g4_v2.details && g4_v2.details.includes('VIOLATION: 1 unpermitted')), `Gate 4 details notes orphan violation: ${g4_v2.details}`);
+
+      // 4. Variant 3: Foreign / missing exposure record
+      db.prepare('DELETE FROM dataset_v2_rows').run();
+      const foreignExpEp = createTaskEpisodeV1({
+        episodeId: 'ep_foreign_exp_source',
+        tenantId: 'tenant_default',
+        repositoryId: 'repo_0',
+        sessionId: 'sess_foreign_exp',
+        taskId: 'task_foreign_exp',
+        workspace: {
+          repositoryIdentity: 'repo_0',
+          baseCommit: 'base_commit_clean',
+          dirtyAtStart: false,
+          workspaceSnapshotId: 'ws_foreign_exp',
+        },
+        task: {
+          prompt: 'Foreign exp task',
+          taskType: 'BUG_FIX',
+          evidence: [],
+        },
+        environment: {
+          contextPolicyId: 'default_v1',
+          rankerId: 'heuristic_v1',
+          rankerStatus: 'PRODUCTION',
+        },
+        rights: {
+          trainingAllowed: true,
+          serviceProcessingAllowed: true,
+          redistributionAllowed: true,
+          permissionSource: 'USER_CONSENT',
+        },
+        contextDecision: {
+          candidateCount: 1,
+          bundleSha256: 'bundle_sha',
+          actualRenderedTokens: 100,
+          tokenBudget: 2000,
+          candidates: [
+            {
+              contextUnitId: 'unit_foreign_exp',
+              path: 'src/foreign_exp.ts',
+              unitKind: 'SOURCE_FILE',
+              retrievalSources: ['lexical'],
+              finalRank: 1,
+              finalScore: 0.95,
+              featureSetVersion: 'v1',
+              featureSnapshot: {},
+              estimatedTokens: 100,
+              selected: true,
+            },
+          ],
+          selectedUnits: [
+            {
+              contextUnitId: 'unit_foreign_exp',
+              path: 'src/foreign_exp.ts',
+              unitKind: 'SOURCE_FILE',
+              resolution: 'FULL',
+              rank: 1,
+              allocatedTokens: 100,
+            },
+          ],
+        },
+        outcome: {
+          episodeId: 'ep_foreign_exp_source',
+          verifiedSuccess: true,
+          verificationConfidence: 'HIGH',
+          verificationSources: ['BEHAVIORAL_ORACLE'],
+        },
+      });
+      case31Store.saveTaskEpisode(foreignExpEp);
+      // NOTE: Intentionally DO NOT save any exposure record for ep_foreign_exp_source in context_exposures!
+      case31Store.saveDatasetV2Row({
+        rowId: 'row_foreign_exp',
+        exportId: 'export_v2_test',
+        episodeId: 'ep_foreign_exp_source',
+        contextUnitId: 'unit_foreign_exp',
+        exposureState: 'SHOWN',
+        wasSelected: true,
+        wasShown: true,
+        wasRead: false,
+        wasEdited: false,
+        wasInSuccessfulTask: true,
+        wasInFailedTask: false,
+        verifiedSuccess: true,
+        outcomeConfidence: 'HIGH',
+      });
+
+      const reportV3 = case31Store.getV32DataReadinessReport();
+      const g4_v3 = reportV3.canonicalEvaluation!.gates.find((g) => g.gateId === 'GATE_4_RIGHTS_CLEARANCE')!;
+      assertStrictEqual(g4_v3.passed, false, 'Gate 4 strictly fails on source episode with missing/foreign exposure');
+      assertStrictEqual(reportV3.canonicalEvaluation!.allGatesPassed, false, 'allGatesPassed is false on missing/foreign exposure');
+      assertStrictEqual(reportV3.isV32Ready, false, 'isV32Ready is false on missing/foreign exposure');
+      assert(Boolean(g4_v3.details && g4_v3.details.includes('VIOLATION: 1 unpermitted')), `Gate 4 details notes exposure violation: ${g4_v3.details}`);
+
+      // 5. Clean dataset_v2_rows restores all gates passing
+      db.prepare('DELETE FROM dataset_v2_rows').run();
+      const restoredReport = case31Store.getV32DataReadinessReport();
+      assertStrictEqual(restoredReport.canonicalEvaluation!.allGatesPassed, true, 'Clean training pool restores allGatesPassed=true');
+      assertStrictEqual(restoredReport.isV32Ready, true, 'Clean training pool restores isV32Ready=true');
+    } finally {
+      try {
+        fs.rmSync(case31Dir, { recursive: true, force: true });
+      } catch {}
+    }
+
+    console.log('\n🎉 ALL 31 PHASE 20.4 INTEGRITY CLOSURE INVARIANTS SATISFIED!\n');
   } finally {
     await new Promise<void>((resolve) => httpServer.close(() => resolve()));
     setSharedStore(null);

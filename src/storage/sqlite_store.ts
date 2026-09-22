@@ -61,7 +61,10 @@ import {
   CanonicalGateEvaluation,
   CanonicalReadinessEvaluation,
 } from '../learning/analytics/readiness_gates';
-import { isEpisodeTrainingEligible } from '../learning/episodes/training_eligibility';
+import {
+  isEpisodeTrainingEligible,
+  evaluateEpisodeTrainingEligibility,
+} from '../learning/episodes/training_eligibility';
 
 export {
   sanitizeContextPlanForPersistence,
@@ -103,6 +106,7 @@ export interface LearningFlywheelSummary {
   successfulVerifiedEpisodes: number;
   failedVerifiedEpisodes: number;
   trainingEligibleEpisodes: number;
+  ineligibleEpisodes: number;
   rightsBlockedEpisodes: number;
   revokedEpisodes: number;
   episodesByRepositoryFamily: Record<string, number>;
@@ -134,6 +138,7 @@ export interface DataReadinessReport {
 export interface DataQualityReport {
   verifiedOutcomeRate: number;
   unknownOutcomeRate: number;
+  trainingEligibleRate: number;
   trainingRightsRate: number;
   trajectoryCompletenessRate: number;
   pricingCoverageRate: number;
@@ -3223,7 +3228,16 @@ export class SqliteStore {
       } catch {}
     }
 
-    const rightsBlockedEpisodes = totalEpisodes - trainingEligibleEpisodes;
+    // Rights-blocked episodes: episodes where customer rights do not permit training
+    const rightsBlockedRow = this.db
+      .prepare(`
+        SELECT COUNT(*) as c FROM task_episodes
+        WHERE (training_allowed = 0 OR training_allowed IS NULL)
+          AND episode_id NOT IN (SELECT episode_id FROM episode_revocations)
+      `)
+      .get() as { c: number } | undefined;
+    const rightsBlockedEpisodes = rightsBlockedRow?.c ?? 0;
+    const ineligibleEpisodes = totalEpisodes - trainingEligibleEpisodes;
 
     const revokedRow = this.db
       .prepare('SELECT COUNT(*) as c FROM episode_revocations')
@@ -3274,6 +3288,7 @@ export class SqliteStore {
       successfulVerifiedEpisodes,
       failedVerifiedEpisodes,
       trainingEligibleEpisodes,
+      ineligibleEpisodes,
       rightsBlockedEpisodes,
       revokedEpisodes,
       episodesByRepositoryFamily,
@@ -3449,25 +3464,63 @@ export class SqliteStore {
         : 0;
 
     // Evaluate canonical 7 architecture gates (docs/research/V3_2_ARCHITECTURE.md Section 4)
-    // 2. Unpermitted in effective training pool (dataset_v2_rows exported with training_allowed = 0 or unpermitted ranker)
-    const unpermittedInPoolRow = this.db
-      .prepare(`
-        SELECT COUNT(*) as c FROM dataset_v2_rows
-        WHERE episode_id IN (
-          SELECT episode_id FROM task_episodes
-          WHERE training_allowed = 0
-             OR ranker_status != 'PRODUCTION'
-             OR ranker_id = 'custom_unidentified'
-        )
-      `)
-      .get() as { c: number } | undefined;
-    const unpermittedEpisodesInPool = unpermittedInPoolRow?.c ?? 0;
+    // Gate 4: Rights Clearance & Effective Training Pool Audit
+    // Evaluates every distinct episode_id represented in dataset_v2_rows using the exact same canonical
+    // training eligibility authority as export and readiness.
+    const distinctDatasetEpisodes = this.db
+      .prepare('SELECT DISTINCT episode_id FROM dataset_v2_rows')
+      .all() as Array<{ episode_id: string }>;
 
-    // 3. Revoked episodes in effective training pool (dataset_v2_rows containing revoked episodes)
-    const revokedInPoolRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM dataset_v2_rows WHERE episode_id IN (SELECT episode_id FROM episode_revocations)')
-      .get() as { c: number } | undefined;
-    const revokedEpisodesInPool = revokedInPoolRow?.c ?? 0;
+    let unpermittedEpisodesInPool = 0;
+    let revokedEpisodesInPool = 0;
+
+    for (const r of distinctDatasetEpisodes) {
+      const epId = r.episode_id;
+
+      // 6. Explicit revocation check
+      const isRevoked = epId ? this.isEpisodeRevoked(epId) : false;
+      if (isRevoked) {
+        revokedEpisodesInPool++;
+      }
+
+      // 5. Treat an orphan Dataset V2 row (missing, null, or empty episode_id) as an effective training pool violation
+      if (!epId || typeof epId !== 'string' || epId.trim() === '') {
+        unpermittedEpisodesInPool++;
+        continue;
+      }
+
+      // 1. Require the corresponding TaskEpisodeV1 to exist
+      const epRow = this.db
+        .prepare('SELECT raw_json FROM task_episodes WHERE episode_id = ?')
+        .get(epId) as { raw_json: string } | undefined;
+
+      if (!epRow) {
+        // Orphan Dataset V2 row: no source TaskEpisodeV1 in task_episodes
+        unpermittedEpisodesInPool++;
+        continue;
+      }
+
+      // 2. Load and verify it
+      // 3. Run evaluateEpisodeTrainingEligibility() with real revocation and exposure providers
+      // 4. Count any failure as an effective-training-pool violation
+      try {
+        const verifiedEp = loadVerifiedTaskEpisode(epRow.raw_json);
+        const eligibility = evaluateEpisodeTrainingEligibility(verifiedEp, {
+          isRevoked: (id: string) => this.isEpisodeRevoked(id),
+          exposuresProvider: (id: string) => this.getContextExposures(id),
+        });
+        if (!eligibility.eligible) {
+          if (!isRevoked) {
+            unpermittedEpisodesInPool++;
+          }
+        }
+      } catch {
+        // Tampered or corrupted episode payload fails closed as violation
+        if (!isRevoked) {
+          unpermittedEpisodesInPool++;
+        }
+      }
+    }
 
     // 6. Real shadow policy runs and crashes (measuring real shadow_policy_evaluations table strictly with is_synthetic = 0 AND environment = 'PRODUCTION')
     const shadowRunsRow = this.db
@@ -3530,9 +3583,15 @@ export class SqliteStore {
         ? Math.round((summary.unknownOutcomeEpisodes / summary.totalEpisodes) * 1000) / 1000
         : 0;
 
-    const trainingRightsRate =
+    const trainingEligibleRate =
       summary.totalEpisodes > 0
         ? Math.round((summary.trainingEligibleEpisodes / summary.totalEpisodes) * 1000) / 1000
+        : 0;
+
+    const permittedRightsEpisodes = Math.max(0, summary.totalEpisodes - summary.rightsBlockedEpisodes);
+    const trainingRightsRate =
+      summary.totalEpisodes > 0
+        ? Math.round((permittedRightsEpisodes / summary.totalEpisodes) * 1000) / 1000
         : 0;
 
     // Completeness of baseCommit and pricing
@@ -3581,6 +3640,7 @@ export class SqliteStore {
     return {
       verifiedOutcomeRate,
       unknownOutcomeRate,
+      trainingEligibleRate,
       trainingRightsRate,
       trajectoryCompletenessRate,
       pricingCoverageRate,

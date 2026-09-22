@@ -15,8 +15,8 @@ export interface TrainingEligibilityResult {
 }
 
 export interface TrainingEligibilityOptions {
-  isRevoked?: (episodeId: string) => boolean;
-  exposuresProvider?: (episodeId: string) => ContextUnitExposureRecord[];
+  isRevoked: (episodeId: string) => boolean;
+  exposuresProvider: (episodeId: string) => ContextUnitExposureRecord[];
 }
 
 /**
@@ -32,7 +32,7 @@ export interface TrainingEligibilityOptions {
  */
 export function evaluateEpisodeTrainingEligibility(
   episode: TaskEpisodeV1,
-  options: TrainingEligibilityOptions = {}
+  options: TrainingEligibilityOptions
 ): TrainingEligibilityResult {
   const reasons: string[] = [];
 
@@ -139,7 +139,7 @@ export function evaluateEpisodeTrainingEligibility(
  */
 export function isEpisodeTrainingEligible(
   episode: TaskEpisodeV1,
-  options: TrainingEligibilityOptions = {}
+  options: TrainingEligibilityOptions
 ): boolean {
   return evaluateEpisodeTrainingEligibility(episode, options).eligible;
 }
