@@ -31,6 +31,7 @@ import {
   zodToJsonSchema,
 } from '../mcp/schemas';
 import { resolveApplicationDataRights } from '../rights/data_rights';
+import { loadResearchStatus, ResearchStatusResponse } from './research_status';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -1289,6 +1290,68 @@ function saveTelemetry(data: any) {
   fs.writeFileSync(TELEMETRY_FILE, JSON.stringify(data, null, 2), 'utf-8');
 }
 
+export function isAdminConfigured(): boolean {
+  return !!(process.env.ADMIN_TOKEN && process.env.ADMIN_TOKEN.trim().length > 0);
+}
+
+export function isInsecureDevAllowed(): boolean {
+  return process.env.NODE_ENV !== 'production' && process.env.SIFTR_ADMIN_INSECURE_DEV === 'true';
+}
+
+export function isAdminEnabled(): boolean {
+  return isAdminConfigured() || isInsecureDevAllowed();
+}
+
+export function verifyAdminToken(req: http.IncomingMessage): boolean {
+  if (isInsecureDevAllowed()) {
+    return true;
+  }
+  const adminToken = process.env.ADMIN_TOKEN;
+  if (!adminToken || adminToken.trim().length === 0) {
+    return false;
+  }
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || typeof authHeader !== 'string') {
+    return false;
+  }
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  if (!match) {
+    return false;
+  }
+  const providedToken = match[1].trim();
+  const hashA = crypto.createHash('sha256').update(providedToken).digest();
+  const hashB = crypto.createHash('sha256').update(adminToken.trim()).digest();
+  return crypto.timingSafeEqual(hashA, hashB);
+}
+
+export function handleAdminAuthFailure(req: http.IncomingMessage, res: http.ServerResponse): boolean {
+  // Overwrite wildcard CORS on protected admin endpoints
+  res.removeHeader('Access-Control-Allow-Origin');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+
+  if (!isAdminEnabled()) {
+    res.writeHead(503, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      error: 'Service Unavailable: Admin interface is disabled (ADMIN_TOKEN not configured)'
+    }));
+    return true;
+  }
+
+  if (!verifyAdminToken(req)) {
+    res.writeHead(401, {
+      'Content-Type': 'application/json',
+      'WWW-Authenticate': 'Bearer realm="SiftrCode Admin"'
+    });
+    res.end(JSON.stringify({
+      error: 'Unauthorized: Invalid or missing admin bearer token'
+    }));
+    return true;
+  }
+
+  return false;
+}
+
 const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const pathname = parsedUrl.pathname;
@@ -1825,10 +1888,14 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Admin Leads View (Protected or dev)
+  // Admin Leads View (Protected)
   if (pathname === '/api/leads' && req.method === 'GET') {
+    if (handleAdminAuthFailure(req, res)) return;
     const leads = loadLeads();
-    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private'
+    });
     res.end(JSON.stringify({ count: leads.length, leads }));
     return;
   }
@@ -1907,10 +1974,14 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Admin Feedback View
+  // Admin Feedback View (Protected)
   if (pathname === '/api/feedback' && req.method === 'GET') {
+    if (handleAdminAuthFailure(req, res)) return;
     const feedbackList = loadFeedback();
-    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private'
+    });
     res.end(JSON.stringify({ count: feedbackList.length, feedback: feedbackList }));
     return;
   }
@@ -2005,8 +2076,36 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Admin Consolidated Metrics API
+  // Admin Token Verification Endpoint
+  if (pathname === '/api/admin/auth/verify' && (req.method === 'POST' || req.method === 'GET')) {
+    if (handleAdminAuthFailure(req, res)) return;
+    res.removeHeader('Access-Control-Allow-Origin');
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private'
+    });
+    res.end(JSON.stringify({ success: true, message: 'Admin authenticated successfully' }));
+    return;
+  }
+
+  // Admin Canonical Research Status API
+  if (pathname === '/api/admin/research-status' && req.method === 'GET') {
+    if (handleAdminAuthFailure(req, res)) return;
+    res.removeHeader('Access-Control-Allow-Origin');
+    const status = loadResearchStatus();
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private'
+    });
+    res.end(JSON.stringify(status, null, 2));
+    return;
+  }
+
+  // Admin Consolidated Metrics API (Protected)
   if (pathname === '/api/admin/metrics' && req.method === 'GET') {
+    if (handleAdminAuthFailure(req, res)) return;
+    res.removeHeader('Access-Control-Allow-Origin');
+
     const telemetry = loadTelemetry();
     const leads = loadLeads();
     const feedback = loadFeedback();
@@ -2036,8 +2135,12 @@ const server = http.createServer(async (req, res) => {
     const taskOutcomes = store ? store.listTaskOutcomes(20) : [];
     const deletionAudits = store ? store.listDeletionAuditRecords() : [];
     const trainingRows = store ? store.listTrainingRows() : [];
+    const researchStatus = loadResearchStatus();
 
-    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private'
+    });
     res.end(JSON.stringify({
       success: true,
       timestamp: new Date().toISOString(),
@@ -2050,6 +2153,7 @@ const server = http.createServer(async (req, res) => {
       recentEvents: telemetry.recentEvents.slice(0, 50),
       leads: leads.slice(0, 50),
       feedback: feedback.slice(0, 50),
+      researchStatus,
       learningPlane: {
         sourceProvenances,
         taskOutcomes,
@@ -2066,13 +2170,15 @@ const server = http.createServer(async (req, res) => {
           deletionTraceabilityStatus: 'COMPLIANT',
         },
         graphProvenanceStats: {
-          totalEdges: 248,
-          bySource: { compiler: 112, scip: 58, 'tree-sitter': 46, git: 22, runtime: 8, heuristic: 2 },
-          byRelationship: { CALLS: 86, TYPE_USES: 64, REFERENCES: 48, IMPLEMENTS: 28, INHERITS: 22 },
+          status: 'NOT_MEASURED',
+          totalEdges: null,
+          dataClassification: 'UNAVAILABLE',
+          notes: 'Runtime web server process does not maintain active graph in memory; see offline indexing benchmarks.'
         },
         jevSignals: {
           providerName: 'typesafe-jev',
-          status: 'ACTIVE_HEALTHY',
+          status: 'STANDBY',
+          dataClassification: 'RESEARCH',
           signalsSupported: ['semanticRelevance', 'likelyEditTarget', 'likelyRootCause'],
           resilienceFallback: 'local-heuristic',
         }
@@ -2083,6 +2189,8 @@ const server = http.createServer(async (req, res) => {
 
   // Admin Traceable Purge & Right-to-be-Forgotten API (Section 52)
   if (pathname === '/api/admin/purge' && req.method === 'POST') {
+    if (handleAdminAuthFailure(req, res)) return;
+    res.removeHeader('Access-Control-Allow-Origin');
     let body = '';
     req.on('data', chunk => { body += chunk; });
     req.on('end', () => {
@@ -2119,6 +2227,8 @@ const server = http.createServer(async (req, res) => {
 
   // Admin Source Provenance Registration API (Section 51)
   if (pathname === '/api/admin/provenance' && req.method === 'POST') {
+    if (handleAdminAuthFailure(req, res)) return;
+    res.removeHeader('Access-Control-Allow-Origin');
     let body = '';
     req.on('data', chunk => { body += chunk; });
     req.on('end', () => {
@@ -2159,6 +2269,8 @@ const server = http.createServer(async (req, res) => {
 
   // Admin CSV Export API
   if (pathname === '/api/admin/export' && req.method === 'GET') {
+    if (handleAdminAuthFailure(req, res)) return;
+    res.removeHeader('Access-Control-Allow-Origin');
     const exportType = parsedUrl.searchParams.get('type') || 'leads';
     if (exportType === 'leads') {
       const leads = loadLeads();
@@ -2230,6 +2342,28 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // Admin page protection (fail closed if admin disabled)
+  if (pathname === '/admin' || pathname === '/admin.html') {
+    if (!isAdminEnabled()) {
+      res.writeHead(503, {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, private'
+      });
+      res.end('Service Unavailable: Admin interface is disabled (ADMIN_TOKEN not configured).');
+      return;
+    }
+    const adminHtmlPath = path.join(WEB_DIR, 'admin.html');
+    if (fs.existsSync(adminHtmlPath)) {
+      res.removeHeader('Access-Control-Allow-Origin');
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, private'
+      });
+      fs.createReadStream(adminHtmlPath).pipe(res);
+      return;
+    }
+  }
+
   // Serve static files from web/
   let filePath = path.join(WEB_DIR, pathname === '/' ? 'index.html' : pathname);
   
@@ -2246,6 +2380,19 @@ const server = http.createServer(async (req, res) => {
   // Support clean extensionless URLs: e.g. /privacy -> web/privacy.html
   if (!fs.existsSync(filePath) && fs.existsSync(filePath + '.html')) {
     filePath = filePath + '.html';
+  }
+
+  if (path.basename(filePath) === 'admin.html') {
+    if (!isAdminEnabled()) {
+      res.writeHead(503, {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, private'
+      });
+      res.end('Service Unavailable: Admin interface is disabled (ADMIN_TOKEN not configured).');
+      return;
+    }
+    res.removeHeader('Access-Control-Allow-Origin');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   }
 
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
