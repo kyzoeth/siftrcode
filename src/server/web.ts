@@ -2425,12 +2425,18 @@ const server = http.createServer(async (req, res) => {
   res.end('Not Found');
 });
 
-server.listen(PORT, HOST, () => {
-  console.log(`🌐 [SiftrCode Web Server] Running on http://${HOST}:${PORT}`);
-});
+if (require.main === module) {
+  server.listen(PORT, HOST, () => {
+    console.log(`🌐 [SiftrCode Web Server] Running on http://${HOST}:${PORT}`);
+  });
+}
 
 server.on('error', (err: any) => {
-  console.error('🌐 [SiftrCode Web Server Error]:', err);
+  if (err.code === 'EADDRINUSE') {
+    console.warn(`⚠️ [SiftrCode Web Server] Port ${PORT} in use, skipping background listen in test/import mode.`);
+  } else {
+    console.error('🌐 [SiftrCode Web Server Error]:', err);
+  }
 });
 
 process.on('uncaughtException', (err) => {

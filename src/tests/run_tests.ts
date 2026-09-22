@@ -60,7 +60,8 @@ const tests = [
   { name: 'V3.1 Gemini Agent Harness & Sandboxing Tests', file: 'test_gemini_harness.js' },
   { name: 'V3.1 Gemini Execution Sandboxing Regressions Tests', file: 'test_gemini_sandboxing_regressions.js' },
   { name: 'V3.1 Offline Evaluator Context Providers & Provenance Regressions Tests', file: 'test_v3_offline_eval_providers_regression.js' },
-  { name: 'V3.1 Evaluation Bridge Parity & Scientific Integrity Tests', file: 'test_v3_evaluation_bridge_parity.js' }
+  { name: 'V3.1 Evaluation Bridge Parity & Scientific Integrity Tests', file: 'test_v3_evaluation_bridge_parity.js' },
+  { name: 'Truth in Advertising, Model Governance & Admin Security Tests', file: 'test_truth_and_governance.js' }
 ];
 
 
