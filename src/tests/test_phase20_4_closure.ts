@@ -31,6 +31,7 @@
  * 27. Outcome endpoints stop reporting trainingEligible = verifiedSuccess (evaluates finalized episode)
  * 28. Canonical episode assembly fails closed on missing sessionId (no sess_default)
  * 29. Gate 7 rationale deleted unmeasured <= 25ms claim
+ * 30. Canonical training eligibility fails closed when revocation/exposure authorities are missing
  */
 
 import * as fs from 'fs';
@@ -1334,7 +1335,26 @@ export async function runPhase204ClosureTests() {
       `Gate 7 rationale includes "operational stability": "${gate7!.rationale}"`
     );
 
-    console.log('\n🎉 ALL 29 PHASE 20.4 INTEGRITY CLOSURE INVARIANTS SATISFIED!\n');
+    // =========================================================================
+    // Case 30: Canonical eligibility fails closed when mandatory authorities are missing
+    // =========================================================================
+    console.log('\n--- 30. Canonical eligibility requires revocation and exposure authorities ---');
+    const missingAuthorities = evaluateEpisodeTrainingEligibility(episode24);
+    assertStrictEqual(
+      missingAuthorities.eligible,
+      false,
+      'Canonical training eligibility fails closed without revocation/exposure authorities'
+    );
+    assert(
+      missingAuthorities.reasons.some((r) => r.startsWith('REVOCATION_STATUS_UNKNOWN')),
+      'Missing revocation checker is explicitly reported'
+    );
+    assert(
+      missingAuthorities.reasons.some((r) => r.startsWith('MISSING_EXPOSURE_PROVIDER')),
+      'Missing exposure provider is explicitly reported'
+    );
+
+    console.log('\n🎉 ALL 30 PHASE 20.4 INTEGRITY CLOSURE INVARIANTS SATISFIED!\n');
   } finally {
     await new Promise<void>((resolve) => httpServer.close(() => resolve()));
     setSharedStore(null);
