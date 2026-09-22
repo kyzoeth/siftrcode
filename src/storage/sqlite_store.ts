@@ -332,7 +332,7 @@ const MIGRATIONS: Migration[] = [
         session_id TEXT,
         snapshot_id TEXT,
         label_type TEXT NOT NULL,
-        value REAL NOT NULL,
+        value REAL,
         confidence REAL NOT NULL,
         strength TEXT NOT NULL,
         source TEXT NOT NULL,
@@ -1279,8 +1279,9 @@ export class SqliteStore {
   // ==========================================
 
   public saveContextPlan(plan: ContextPlan, snapshotId: string = 'default'): void {
+    const effectiveSnapshotId = (snapshotId && snapshotId !== 'default') ? snapshotId : (plan.workspaceSnapshotId || snapshotId || 'default');
     const rights = plan.dataRights || createDefaultDataRights();
-    const sanitizedRecord = sanitizeContextPlanForPersistence(plan, rights, snapshotId);
+    const sanitizedRecord = sanitizeContextPlanForPersistence(plan, rights, effectiveSnapshotId);
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO context_plans (plan_id, task_id, snapshot_id, raw_json, created_at, session_id)
@@ -1290,7 +1291,7 @@ export class SqliteStore {
     stmt.run(
       plan.planId,
       plan.taskId,
-      snapshotId,
+      effectiveSnapshotId,
       JSON.stringify(sanitizedRecord),
       plan.createdAt,
       plan.sessionId || null
@@ -1649,9 +1650,12 @@ export class SqliteStore {
           ? null
           : (ev.verifiedSuccess ? 1 : 0);
 
-      const scalarValue = (ev.value !== undefined && ev.value !== null)
-        ? ev.value
-        : (persistedVerifiedSuccess !== null ? persistedVerifiedSuccess : 0.5);
+      const scalarValue =
+        ev.value === null
+          ? null
+          : ev.value !== undefined
+          ? ev.value
+          : persistedVerifiedSuccess;
 
       stmt.run(
         id,

@@ -447,7 +447,15 @@ export function createMcpServer(): Server {
 
         if (!lineage.valid) {
           return {
-            content: [{ type: 'text', text: `Error: ${lineage.error}` }],
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                error: lineage.error,
+                code: lineage.code,
+                finalizationErrorCode: lineage.code,
+                episodeFinalized: false,
+              }),
+            }],
             isError: true,
           };
         }

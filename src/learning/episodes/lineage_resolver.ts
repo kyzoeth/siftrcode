@@ -147,36 +147,44 @@ export function resolveOutcomeLineage(
   // Resolve associated PreOutcomeEpisodeSnapshot
   let snapshot: PreOutcomeEpisodeSnapshot | undefined;
 
-  if (plan.preOutcomeSnapshot) {
-    snapshot = plan.preOutcomeSnapshot;
-  } else {
-    // Try resolving from store by episodeId if known, or by taskId if single
-    const episodeId = (plan as any).episodeId || (plan.preOutcomeSnapshot as any)?.episodeId;
-    if (episodeId) {
-      snapshot = store.getPreOutcomeSnapshot(episodeId) || undefined;
-    }
-    if (!snapshot) {
-      const candidateSnapshots = store.listPreOutcomeSnapshots
-        ? store.listPreOutcomeSnapshots().filter((s) => s.taskId === plan!.taskId)
-        : [];
-      if (candidateSnapshots.length === 1) {
-        snapshot = candidateSnapshots[0];
-      } else if (candidateSnapshots.length > 1) {
-        // Find snapshot matching workspaceSnapshotId
-        const matched = candidateSnapshots.find((s) => s.workspaceSnapshotId === plan!.workspaceSnapshotId);
-        if (matched) {
-          snapshot = matched;
+  try {
+    if (plan.preOutcomeSnapshot) {
+      snapshot = plan.preOutcomeSnapshot;
+    } else {
+      // Try resolving from store by episodeId if known, or by taskId if single
+      const episodeId = (plan as any).episodeId || (plan.preOutcomeSnapshot as any)?.episodeId;
+      if (episodeId) {
+        snapshot = store.getPreOutcomeSnapshot(episodeId) || undefined;
+      }
+      if (!snapshot) {
+        const candidateSnapshots = store.listPreOutcomeSnapshots
+          ? store.listPreOutcomeSnapshots().filter((s) => s.taskId === plan!.taskId)
+          : [];
+        if (candidateSnapshots.length === 1) {
+          snapshot = candidateSnapshots[0];
+        } else if (candidateSnapshots.length > 1) {
+          // Find snapshot matching workspaceSnapshotId
+          const matched = candidateSnapshots.find((s) => s.workspaceSnapshotId === plan!.workspaceSnapshotId);
+          if (matched) {
+            snapshot = matched;
+          }
         }
       }
     }
-  }
 
-  if (!snapshot) {
-    // Final attempt: lookup by task in store
-    const snap = store.getPreOutcomeSnapshotByTaskId(plan.taskId);
-    if (snap && snap.taskId === plan.taskId) {
-      snapshot = snap;
+    if (!snapshot) {
+      // Final attempt: lookup by task in store
+      const snap = store.getPreOutcomeSnapshotByTaskId(plan.taskId);
+      if (snap && snap.taskId === plan.taskId) {
+        snapshot = snap;
+      }
     }
+  } catch (err: any) {
+    return {
+      valid: false,
+      code: 'FAIL_CLOSED_LINEAGE_MISMATCH',
+      error: `Pre-outcome snapshot integrity verification failed: ${err.message}`,
+    };
   }
 
   if (!snapshot) {

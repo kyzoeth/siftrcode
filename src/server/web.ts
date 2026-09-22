@@ -39,7 +39,10 @@ const HOST = process.env.HOST || '0.0.0.0';
 const WEB_DIR = path.join(__dirname, '..', '..', 'web');
 
 let sharedStore: SqliteStore | null = null;
-function getSharedStore(): SqliteStore | null {
+export function setSharedStore(store: SqliteStore | null): void {
+  sharedStore = store;
+}
+export function getSharedStore(): SqliteStore | null {
   if (!sharedStore) {
     try {
       const dbPath = getDefaultDatabasePath();
@@ -1431,9 +1434,30 @@ const server = http.createServer(async (req, res) => {
 
         if (!lineage.valid) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: lineage.error, code: lineage.code }));
+          res.end(JSON.stringify({
+            error: lineage.error,
+            code: lineage.code,
+            finalizationErrorCode: lineage.code,
+            episodeFinalized: false,
+          }));
           return;
         }
+
+        const ev = (typeof payload.evidence === 'object' && payload.evidence !== null) ? payload.evidence : {};
+        const buildPassed = typeof ev.buildPassed === 'boolean' ? ev.buildPassed : (typeof payload.buildPassed === 'boolean' ? payload.buildPassed : undefined);
+        const publicTestsPassed = typeof ev.publicTestsPassed === 'boolean' ? ev.publicTestsPassed : (typeof ev.testsPassed === 'boolean' ? ev.testsPassed : (typeof payload.testsPassed === 'boolean' ? payload.testsPassed : undefined));
+        const hiddenTestsPassed = typeof ev.hiddenTestsPassed === 'boolean' ? ev.hiddenTestsPassed : (typeof payload.hiddenTestsPassed === 'boolean' ? payload.hiddenTestsPassed : undefined);
+        const regressionTestsPassed = typeof ev.regressionTestsPassed === 'boolean' ? ev.regressionTestsPassed : (typeof payload.regressionTestsPassed === 'boolean' ? payload.regressionTestsPassed : undefined);
+        const staticChecksPassed = typeof ev.staticChecksPassed === 'boolean' ? ev.staticChecksPassed : (typeof payload.staticChecksPassed === 'boolean' ? payload.staticChecksPassed : undefined);
+        const securityChecksPassed = typeof ev.securityChecksPassed === 'boolean' ? ev.securityChecksPassed : (typeof payload.securityChecksPassed === 'boolean' ? payload.securityChecksPassed : undefined);
+        const behavioralOraclePassed = typeof ev.behavioralOraclePassed === 'boolean' ? ev.behavioralOraclePassed : (typeof payload.behavioralOraclePassed === 'boolean' ? payload.behavioralOraclePassed : undefined);
+        const userAccepted = typeof ev.userAccepted === 'boolean' ? ev.userAccepted : (typeof payload.userAccepted === 'boolean' ? payload.userAccepted : undefined);
+        const humanReview = (ev.humanReview === 'PASS' || ev.humanReview === 'FAIL' || ev.humanReview === 'SKIPPED') ? ev.humanReview : ((payload.humanReview === 'PASS' || payload.humanReview === 'FAIL' || payload.humanReview === 'SKIPPED') ? payload.humanReview : undefined);
+        const agentReportedSuccess = typeof ev.agentReportedSuccess === 'boolean' ? ev.agentReportedSuccess : (typeof payload.agentClaimedSuccess === 'boolean' ? payload.agentClaimedSuccess : undefined);
+        const actualProviderInputTokens = typeof ev.actualProviderInputTokens === 'number' ? ev.actualProviderInputTokens : (typeof payload.actualProviderInputTokens === 'number' ? payload.actualProviderInputTokens : undefined);
+        const actualProviderOutputTokens = typeof ev.actualProviderOutputTokens === 'number' ? ev.actualProviderOutputTokens : (typeof payload.actualProviderOutputTokens === 'number' ? payload.actualProviderOutputTokens : undefined);
+        const costUSD = typeof ev.costUSD === 'number' ? ev.costUSD : (typeof payload.costUSD === 'number' ? payload.costUSD : undefined);
+        const wallTimeMs = typeof ev.wallTimeMs === 'number' ? ev.wallTimeMs : (typeof payload.wallTimeMs === 'number' ? payload.wallTimeMs : undefined);
 
         const outcomeEvidence = createOutcomeEvidence({
           taskId: lineage.taskId,
@@ -1441,15 +1465,20 @@ const server = http.createServer(async (req, res) => {
           contextPlanId: lineage.planId,
           agentEnvironmentId: lineage.agentEnvironmentId,
           workspaceSnapshotBefore: lineage.workspaceSnapshotId,
-          publicTestsPassed: typeof payload.testsPassed === 'boolean' ? payload.testsPassed : undefined,
-          regressionTestsPassed: typeof payload.regressionTestsPassed === 'boolean' ? payload.regressionTestsPassed : undefined,
-          staticChecksPassed: typeof payload.staticChecksPassed === 'boolean' ? payload.staticChecksPassed : undefined,
-          securityChecksPassed: typeof payload.securityChecksPassed === 'boolean' ? payload.securityChecksPassed : undefined,
-          agentReportedSuccess: typeof payload.agentClaimedSuccess === 'boolean' ? payload.agentClaimedSuccess : undefined,
-          actualProviderInputTokens: typeof payload.actualProviderInputTokens === 'number' ? payload.actualProviderInputTokens : undefined,
-          actualProviderOutputTokens: typeof payload.actualProviderOutputTokens === 'number' ? payload.actualProviderOutputTokens : undefined,
-          costUSD: typeof payload.costUSD === 'number' ? payload.costUSD : undefined,
-          wallTimeMs: typeof payload.wallTimeMs === 'number' ? payload.wallTimeMs : undefined,
+          buildPassed,
+          publicTestsPassed,
+          hiddenTestsPassed,
+          regressionTestsPassed,
+          staticChecksPassed,
+          securityChecksPassed,
+          behavioralOraclePassed,
+          userAccepted,
+          humanReview,
+          agentReportedSuccess,
+          actualProviderInputTokens,
+          actualProviderOutputTokens,
+          costUSD,
+          wallTimeMs,
         });
 
         let persisted = false;
@@ -2384,3 +2413,5 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason) => {
   console.error('🌐 [SiftrCode Unhandled Rejection]:', reason);
 });
+
+export { server };
