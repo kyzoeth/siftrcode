@@ -1291,7 +1291,8 @@ function saveTelemetry(data: any) {
 }
 
 export function isAdminConfigured(): boolean {
-  return !!(process.env.ADMIN_TOKEN && process.env.ADMIN_TOKEN.trim().length > 0);
+  const token = process.env.ADMIN_TOKEN || process.env.ADMIN_API_KEY;
+  return !!(token && token.trim().length > 0);
 }
 
 export function isInsecureDevAllowed(): boolean {
@@ -1306,7 +1307,7 @@ export function verifyAdminToken(req: http.IncomingMessage): boolean {
   if (isInsecureDevAllowed()) {
     return true;
   }
-  const adminToken = process.env.ADMIN_TOKEN;
+  const adminToken = process.env.ADMIN_TOKEN || process.env.ADMIN_API_KEY;
   if (!adminToken || adminToken.trim().length === 0) {
     return false;
   }
@@ -2222,6 +2223,134 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ error: err.message || 'Failed to execute purge' }));
       }
     });
+    return;
+  }
+
+  // Learning Flywheel Summary API (Phase 20V)
+  if (pathname === '/api/admin/learning/summary' && req.method === 'GET') {
+    if (handleAdminAuthFailure(req, res)) return;
+    res.removeHeader('Access-Control-Allow-Origin');
+    const store = getSharedStore();
+    if (!store) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Database store unavailable' }));
+      return;
+    }
+    const summary = store.getLearningFlywheelSummary();
+    const dataQuality = store.getDataQualityReport();
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+    });
+    res.end(JSON.stringify({ summary, dataQuality }, null, 2));
+    return;
+  }
+
+  // Learning Flywheel V3.2 Data Readiness API (Phase 20V)
+  if (pathname === '/api/admin/learning/readiness' && req.method === 'GET') {
+    if (handleAdminAuthFailure(req, res)) return;
+    res.removeHeader('Access-Control-Allow-Origin');
+    const store = getSharedStore();
+    if (!store) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Database store unavailable' }));
+      return;
+    }
+    const readiness = store.getV32DataReadinessReport();
+    const summary = store.getLearningFlywheelSummary();
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+    });
+    res.end(JSON.stringify({ readiness, summary }, null, 2));
+    return;
+  }
+
+  // Learning Flywheel Episodes List API (Phase 20V)
+  if (pathname === '/api/admin/learning/episodes' && req.method === 'GET') {
+    if (handleAdminAuthFailure(req, res)) return;
+    res.removeHeader('Access-Control-Allow-Origin');
+    const store = getSharedStore();
+    if (!store) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Database store unavailable' }));
+      return;
+    }
+    const repo = parsedUrl.searchParams.get('repositoryId') || undefined;
+    const taskType = (parsedUrl.searchParams.get('taskType') as any) || undefined;
+    const vSuccessParam = parsedUrl.searchParams.get('verifiedSuccess');
+    const verifiedSuccess =
+      vSuccessParam === 'true'
+        ? true
+        : vSuccessParam === 'false'
+        ? false
+        : vSuccessParam === 'null'
+        ? null
+        : undefined;
+    const trainingParam = parsedUrl.searchParams.get('trainingAllowed');
+    const trainingAllowed =
+      trainingParam === 'true' ? true : trainingParam === 'false' ? false : undefined;
+    const limit = parseInt(parsedUrl.searchParams.get('limit') || '50', 10);
+
+    const episodes = store.listTaskEpisodes({
+      repositoryId: repo,
+      taskType,
+      verifiedSuccess,
+      trainingAllowed,
+      limit,
+    });
+
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+    });
+    res.end(JSON.stringify({ episodes, count: episodes.length }, null, 2));
+    return;
+  }
+
+  // Learning Flywheel Episode Detail API (Phase 20V/W)
+  const episodeMatch = pathname.match(/^\/api\/admin\/learning\/episodes\/([a-zA-Z0-9_\-]+)$/);
+  if (episodeMatch && req.method === 'GET') {
+    if (handleAdminAuthFailure(req, res)) return;
+    res.removeHeader('Access-Control-Allow-Origin');
+    const store = getSharedStore();
+    if (!store) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Database store unavailable' }));
+      return;
+    }
+    const episodeId = episodeMatch[1];
+    const episode = store.getTaskEpisode(episodeId);
+    if (!episode) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: `Episode ${episodeId} not found` }));
+      return;
+    }
+
+    const candidates = store.getEpisodeCandidates(episodeId);
+    const exposures = store.getContextExposures(episodeId);
+    const trajectory = store.getEpisodeTrajectoryEvents(episodeId);
+    const snapshot = store.getPreOutcomeSnapshot(episodeId);
+    const isRevoked = store.isEpisodeRevoked(episodeId);
+
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+    });
+    res.end(
+      JSON.stringify(
+        {
+          episode,
+          candidates,
+          exposures,
+          trajectory,
+          snapshot,
+          isRevoked,
+        },
+        null,
+        2
+      )
+    );
     return;
   }
 

@@ -284,6 +284,15 @@
       </div>
     </div>
 
+    <!-- Section Quick Navigation Bar -->
+    <nav class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-mono">
+      <a href="#governance" class="px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink hover:text-[#D97757] transition border border-zinc-200 dark:border-zinc-700">Model Governance</a>
+      <a href="#flywheel" class="px-3 py-1.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/80 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-semibold">Learning Flywheel &amp; V3.2 Readiness</a>
+      <a href="#kpis" class="px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink hover:text-[#D97757] transition border border-zinc-200 dark:border-zinc-700">Live Telemetry</a>
+      <a href="#rights" class="px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink hover:text-[#D97757] transition border border-zinc-200 dark:border-zinc-700">Data Rights &amp; Provenance</a>
+      <a href="#trials" class="px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink hover:text-[#D97757] transition border border-zinc-200 dark:border-zinc-700">Holdout Benchmark</a>
+    </nav>
+
     <!-- Top Status Bar (5 System Indicators) -->
     <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 font-mono text-xs">
       <!-- 1: Production Engine -->
@@ -563,6 +572,386 @@
       </div>
 
     </section>
+
+    <!-- SECTION 2: Continuous Learning Flywheel & V3.2 Data Readiness (Phase 20) -->
+    <section id="flywheel" class="p-5 sm:p-6 rounded-md border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-6">
+      <!-- Flywheel Section Header -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#D97757] pulse-live-dot"></span>
+            <h3 class="text-lg font-bold text-ink tracking-tight font-serif">Learning Flywheel &amp; V3.2 Data Readiness</h3>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#FAF3F0] dark:bg-[#411A0E]/80 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40">Proprietary Training Asset</span>
+          </div>
+          <p class="text-xs text-ink-secondary mt-1 font-sans">
+            Point-in-time task episodes linking coding tasks, candidate universes, context decisions, agent trajectories, verified outcomes, and economics.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] font-mono px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800 text-ink-secondary font-semibold" id="flywheelLastRefreshed">Live DB Counts</span>
+        </div>
+      </div>
+
+      <!-- 8 Key Flywheel Volume Metrics -->
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2.5 font-mono text-xs">
+        <div class="p-2.5 rounded border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/70">
+          <div class="text-[10px] text-ink-secondary uppercase">Episodes</div>
+          <div class="text-lg font-bold text-ink" id="flywheelTotalEpisodes">0</div>
+          <div class="text-[9px] text-zinc-400">Total attempts</div>
+        </div>
+        <div class="p-2.5 rounded border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/70">
+          <div class="text-[10px] text-ink-secondary uppercase">Verified</div>
+          <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400" id="flywheelVerifiedEpisodes">0</div>
+          <div class="text-[9px] text-zinc-400">Ground truth</div>
+        </div>
+        <div class="p-2.5 rounded border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/70">
+          <div class="text-[10px] text-ink-secondary uppercase">Unknown</div>
+          <div class="text-lg font-bold text-amber-600 dark:text-amber-400" id="flywheelUnknownEpisodes">0</div>
+          <div class="text-[9px] text-zinc-400">Preserved tri-state</div>
+        </div>
+        <div class="p-2.5 rounded border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/70">
+          <div class="text-[10px] text-ink-secondary uppercase">Successes</div>
+          <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400" id="flywheelSuccessEpisodes">0</div>
+          <div class="text-[9px] text-zinc-400">Verified PASS</div>
+        </div>
+        <div class="p-2.5 rounded border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/70">
+          <div class="text-[10px] text-ink-secondary uppercase">Failures</div>
+          <div class="text-lg font-bold text-rose-600 dark:text-rose-400" id="flywheelFailedEpisodes">0</div>
+          <div class="text-[9px] text-zinc-400">Verified FAIL</div>
+        </div>
+        <div class="p-2.5 rounded border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/70">
+          <div class="text-[10px] text-ink-secondary uppercase">Eligible</div>
+          <div class="text-lg font-bold text-blue-600 dark:text-blue-400" id="flywheelTrainingEligible">0</div>
+          <div class="text-[9px] text-zinc-400">Rights allowed</div>
+        </div>
+        <div class="p-2.5 rounded border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/70">
+          <div class="text-[10px] text-ink-secondary uppercase">Blocked</div>
+          <div class="text-lg font-bold text-zinc-600 dark:text-zinc-400" id="flywheelRightsBlocked">0</div>
+          <div class="text-[9px] text-zinc-400">Privacy default</div>
+        </div>
+        <div class="p-2.5 rounded border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/70">
+          <div class="text-[10px] text-ink-secondary uppercase">Revoked</div>
+          <div class="text-lg font-bold text-rose-700 dark:text-rose-400" id="flywheelRevokedEpisodes">0</div>
+          <div class="text-[9px] text-zinc-400">Compliance deleted</div>
+        </div>
+      </div>
+
+      <!-- Two Core Analytical Columns: V3.2 Readiness & Data Quality/Exposure -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <!-- Panel 1: V3.2 Data Readiness Gate -->
+        <div class="p-4 rounded-md border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/50 space-y-4 font-mono text-xs">
+          <div class="flex items-center justify-between pb-2 border-b border-zinc-200/70 dark:border-zinc-800">
+            <div>
+              <span class="text-[10px] uppercase text-ink-secondary tracking-wider font-semibold">Scientific Gate</span>
+              <h4 class="text-sm font-bold text-ink">V3.2 DATA READINESS</h4>
+            </div>
+            <span id="v32GateBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+              DATA_COLLECTION_IN_PROGRESS
+            </span>
+          </div>
+
+          <!-- Progress Bars -->
+          <div class="space-y-3">
+            <div>
+              <div class="flex justify-between text-[11px] mb-1">
+                <span class="text-ink-secondary">Verified Outcome Episodes</span>
+                <span class="font-bold text-ink"><span id="readinessVerifiedEpisodes">0</span> / 1,000 Target</span>
+              </div>
+              <div class="w-full h-2 rounded bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                <div id="readinessVerifiedBar" class="h-full bg-[#D97757] rounded" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-[11px] mb-1">
+                <span class="text-ink-secondary">Independent Repositories</span>
+                <span class="font-bold text-ink"><span id="readinessRepos">0</span> / 25 Target</span>
+              </div>
+              <div class="w-full h-2 rounded bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                <div id="readinessReposBar" class="h-full bg-blue-600 dark:bg-blue-400 rounded" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Task Class Distribution Grid -->
+          <div>
+            <div class="text-[11px] text-ink-secondary mb-1.5 font-semibold">Task Class Diversity:</div>
+            <div class="grid grid-cols-4 gap-2 text-center text-[10px]">
+              <div class="p-2 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                <div class="text-zinc-400">Bug Fix</div>
+                <div class="font-bold text-ink text-xs mt-0.5" id="readinessBugFix">0</div>
+              </div>
+              <div class="p-2 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                <div class="text-zinc-400">Feature</div>
+                <div class="font-bold text-ink text-xs mt-0.5" id="readinessFeature">0</div>
+              </div>
+              <div class="p-2 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                <div class="text-zinc-400">Refactor</div>
+                <div class="font-bold text-ink text-xs mt-0.5" id="readinessRefactor">0</div>
+              </div>
+              <div class="p-2 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                <div class="text-zinc-400">Test Fail</div>
+                <div class="font-bold text-ink text-xs mt-0.5" id="readinessTestFail">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rate summary & Readiness Score -->
+          <div class="pt-2 border-t border-zinc-200/70 dark:border-zinc-800 flex items-center justify-between text-[11px]">
+            <div>
+              <span class="text-ink-secondary">Unknown Outcome Rate:</span>
+              <span class="font-bold text-ink ml-1" id="readinessUnknownRate">0%</span>
+            </div>
+            <div>
+              <span class="text-ink-secondary">Readiness Score:</span>
+              <span class="font-bold text-[#D97757] ml-1" id="readinessScore">0.00 / 1.00</span>
+            </div>
+          </div>
+
+          <div class="p-2 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/40 border border-[#ECCBBE] dark:border-[#B34E2E]/30 text-[10px] text-zinc-600 dark:text-zinc-300 leading-relaxed">
+            <span class="font-bold text-[#B34E2E] dark:text-[#F39C82]">Readiness Governance:</span> SiftrCode does not optimize or retrain learned ranking weights until empirical data gates are met. Production remains the deterministic V2 ContextRanker.
+          </div>
+        </div>
+
+        <!-- Panel 2: Data Quality & Exposure Semantics -->
+        <div class="p-4 rounded-md border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/50 space-y-4 font-mono text-xs">
+          <div class="flex items-center justify-between pb-2 border-b border-zinc-200/70 dark:border-zinc-800">
+            <div>
+              <span class="text-[10px] uppercase text-ink-secondary tracking-wider font-semibold">Integrity &amp; Semantics</span>
+              <h4 class="text-sm font-bold text-ink">DATA QUALITY &amp; EXPOSURE</h4>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              TRUTH_ALIGNED
+            </span>
+          </div>
+
+          <!-- Rates Grid -->
+          <div class="grid grid-cols-3 gap-2 text-center text-[10px]">
+            <div class="p-2 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+              <div class="text-zinc-400">Verified Rate</div>
+              <div class="font-bold text-ink text-xs mt-0.5" id="qualityVerifiedRate">0%</div>
+            </div>
+            <div class="p-2 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+              <div class="text-zinc-400">Rights Permitted</div>
+              <div class="font-bold text-ink text-xs mt-0.5" id="qualityRightsRate">0%</div>
+            </div>
+            <div class="p-2 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+              <div class="text-zinc-400">Pricing Valid</div>
+              <div class="font-bold text-ink text-xs mt-0.5" id="qualityPricingRate">0%</div>
+            </div>
+          </div>
+
+          <!-- Explicit Exposure Semantics Progression -->
+          <div class="space-y-2">
+            <div class="text-[11px] text-ink-secondary font-semibold">Candidate Exposure Hierarchy:</div>
+            <div class="grid grid-cols-4 gap-2 text-center text-[10px]">
+              <div class="p-2 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                <div class="text-zinc-400">Evaluated</div>
+                <div class="font-bold text-ink text-xs mt-0.5" id="qualityCandidates">0</div>
+                <div class="text-[9px] text-zinc-400">CANDIDATE</div>
+              </div>
+              <div class="p-2 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                <div class="text-zinc-400">Shown</div>
+                <div class="font-bold text-ink text-xs mt-0.5" id="qualityShown">0</div>
+                <div class="text-[9px] text-zinc-400">SHOWN</div>
+              </div>
+              <div class="p-2 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                <div class="text-zinc-400">Read</div>
+                <div class="font-bold text-emerald-600 dark:text-emerald-400 text-xs mt-0.5" id="qualityRead">0</div>
+                <div class="text-[9px] text-zinc-400">READ</div>
+              </div>
+              <div class="p-2 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                <div class="text-zinc-400">Edited</div>
+                <div class="font-bold text-[#D97757] text-xs mt-0.5" id="qualityEdited">0</div>
+                <div class="text-[9px] text-zinc-400">EDITED</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-2 rounded bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 text-[10px] text-ink-secondary flex items-center justify-between">
+            <div>
+              <span>Read-after-show:</span>
+              <span class="font-bold text-ink ml-1" id="qualityReadRate">0%</span>
+            </div>
+            <div>
+              <span>Edit-after-read:</span>
+              <span class="font-bold text-ink ml-1" id="qualityEditRate">0%</span>
+            </div>
+          </div>
+
+          <div class="text-[10px] text-zinc-500 italic">
+            * Invariant: UNKNOWN != NEGATIVE. Unshown context units are NEVER labeled as negative examples.
+          </div>
+        </div>
+      </div>
+
+      <!-- Episode Explorer Table -->
+      <div class="space-y-3 font-mono text-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-zinc-100 dark:border-zinc-800">
+          <div>
+            <h4 class="text-sm font-bold text-ink tracking-tight flex items-center gap-1.5">
+              <span>Episode Explorer</span>
+              <span id="episodesCountBadge" class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-800 text-ink-secondary">0</span>
+            </h4>
+            <p class="text-[11px] text-ink-secondary font-sans">Inspect individual coding task episodes, candidate sets, and verified outcomes.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <input type="text" id="episodesFilterRepo" placeholder="Filter by repo..." class="px-2 py-1 text-[11px] rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-ink outline-none">
+            <select id="episodesFilterTaskType" class="px-2 py-1 text-[11px] rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-ink outline-none">
+              <option value="">All Task Types</option>
+              <option value="BUG_FIX">BUG_FIX</option>
+              <option value="FEATURE_ADDITION">FEATURE_ADDITION</option>
+              <option value="REFACTOR">REFACTOR</option>
+              <option value="TEST_FAILURE">TEST_FAILURE</option>
+              <option value="OTHER">OTHER</option>
+            </select>
+            <select id="episodesFilterOutcome" class="px-2 py-1 text-[11px] rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-ink outline-none">
+              <option value="">All Outcomes</option>
+              <option value="true">Verified Success</option>
+              <option value="false">Verified Fail</option>
+              <option value="null">Unknown Outcome</option>
+            </select>
+            <button onclick="applyEpisodesFilter()" class="px-2.5 py-1 rounded bg-[#D97757] hover:bg-[#C86241] text-white font-semibold text-[10px] transition cursor-pointer">
+              Filter
+            </button>
+            <button onclick="resetEpisodesFilter()" class="px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-ink text-[10px] transition cursor-pointer">
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Episodes Table Container -->
+        <div class="overflow-x-auto rounded border border-zinc-200/70 dark:border-zinc-800 max-h-[340px] overflow-y-auto">
+          <table class="w-full text-left text-[11px] font-mono">
+            <thead class="bg-zinc-50 dark:bg-zinc-950/80 sticky top-0 border-b border-zinc-200 dark:border-zinc-800 text-ink-secondary text-[10px] uppercase">
+              <tr>
+                <th class="py-2 px-3">Episode ID</th>
+                <th class="py-2 px-3">Repository</th>
+                <th class="py-2 px-3">Type</th>
+                <th class="py-2 px-3">Policy ID</th>
+                <th class="py-2 px-3">Candidates</th>
+                <th class="py-2 px-3">Trajectory</th>
+                <th class="py-2 px-3">Outcome</th>
+                <th class="py-2 px-3">Rights</th>
+                <th class="py-2 px-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="episodesTableBody" class="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+              <tr>
+                <td colspan="9" class="py-4 text-center text-ink-secondary italic">No task episodes recorded yet</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Modal: Episode Detail Microscope (Phase 20W) -->
+    <div id="episodeDetailModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+      <div class="w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 rounded-lg border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl space-y-5 font-mono text-xs">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-zinc-200/80 dark:border-zinc-800">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] uppercase px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/80 text-[#B34E2E] dark:text-[#F39C82] font-semibold">Episode Microscope</span>
+              <span class="text-sm font-bold text-ink" id="modalEpisodeId">ep_...</span>
+            </div>
+            <div class="text-[10px] text-ink-secondary mt-0.5" id="modalEpisodeTimestamp">Started: --</div>
+          </div>
+          <button onclick="closeEpisodeModal()" class="w-7 h-7 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-ink flex items-center justify-center cursor-pointer text-sm font-bold">
+            &times;
+          </button>
+        </div>
+
+        <!-- Task & Workspace Meta -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800">
+          <div class="space-y-1">
+            <div class="text-[10px] text-ink-secondary uppercase">Task Prompt</div>
+            <div class="font-sans text-xs text-ink font-medium leading-relaxed max-h-[60px] overflow-y-auto" id="modalPromptText">--</div>
+            <div class="text-[9px] text-zinc-400 truncate" id="modalPromptHash">SHA-256: --</div>
+          </div>
+          <div class="space-y-1">
+            <div class="text-[10px] text-ink-secondary uppercase">Workspace Provenance</div>
+            <div class="text-ink font-semibold" id="modalRepoId">Repo: --</div>
+            <div class="text-[10px] text-ink-secondary truncate" id="modalBaseCommit">Base Commit: --</div>
+            <div class="text-[10px] text-ink-secondary truncate" id="modalPolicyId">Context Policy: --</div>
+          </div>
+        </div>
+
+        <!-- Outcome & Economics Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 space-y-1.5">
+            <div class="text-[10px] text-ink-secondary uppercase font-semibold">Verified Outcome</div>
+            <div class="flex items-center gap-2">
+              <span id="modalOutcomeBadge" class="px-2 py-0.5 rounded text-[10px] font-bold">--</span>
+              <span id="modalConfidenceBadge" class="text-[10px] text-zinc-400">Confidence: --</span>
+            </div>
+            <div class="text-[10px] text-ink-secondary" id="modalOutcomeRationale">Rationale: --</div>
+            <div class="text-[9px] text-zinc-400" id="modalVerificationSources">Sources: --</div>
+          </div>
+
+          <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 space-y-1.5">
+            <div class="text-[10px] text-ink-secondary uppercase font-semibold">Economics &amp; CPVST</div>
+            <div class="flex justify-between text-[11px]">
+              <span class="text-ink-secondary">Rendered Tokens:</span>
+              <span class="font-bold text-ink" id="modalRenderedTokens">--</span>
+            </div>
+            <div class="flex justify-between text-[11px]">
+              <span class="text-ink-secondary">Total Cost:</span>
+              <span class="font-bold text-[#D97757]" id="modalTotalCost">--</span>
+            </div>
+            <div class="flex justify-between text-[11px]">
+              <span class="text-ink-secondary">CPVST Status:</span>
+              <span class="font-bold text-ink" id="modalCpvst">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Candidates List in Modal -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-[10px] uppercase text-ink-secondary font-semibold">
+            <span>Candidate Observations &amp; Exposure</span>
+            <span id="modalCandidateCount">0 candidates</span>
+          </div>
+          <div class="max-h-[180px] overflow-y-auto rounded border border-zinc-200/70 dark:border-zinc-800">
+            <table class="w-full text-left text-[10px] font-mono">
+              <thead class="bg-zinc-100 dark:bg-zinc-800/80 sticky top-0 text-ink-secondary">
+                <tr>
+                  <th class="py-1.5 px-2">Rank</th>
+                  <th class="py-1.5 px-2">Unit ID</th>
+                  <th class="py-1.5 px-2">Path</th>
+                  <th class="py-1.5 px-2">Kind</th>
+                  <th class="py-1.5 px-2">Selected</th>
+                  <th class="py-1.5 px-2">Exposure</th>
+                  <th class="py-1.5 px-2 text-right">Tokens</th>
+                </tr>
+              </thead>
+              <tbody id="modalCandidatesTbody" class="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+                <tr><td colspan="7" class="py-2 text-center text-zinc-400">No candidates recorded</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Trajectory Events in Modal -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-[10px] uppercase text-ink-secondary font-semibold">
+            <span>Bounded Agent Trajectory Events</span>
+            <span id="modalTrajectoryCount">0 events</span>
+          </div>
+          <div class="max-h-[140px] overflow-y-auto rounded border border-zinc-200/70 dark:border-zinc-800 p-2 space-y-1 text-[10px]" id="modalTrajectoryContainer">
+            <div class="text-zinc-400 italic">No trajectory events captured for this episode</div>
+          </div>
+        </div>
+
+        <!-- Hashes & Integrity Footer -->
+        <div class="pt-3 border-t border-zinc-200/80 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[9px] text-zinc-400">
+          <div class="truncate max-w-[400px]" id="modalRecordSha">Record SHA: --</div>
+          <div class="truncate max-w-[400px]" id="modalSnapshotSha">Pre-Outcome Snapshot SHA: --</div>
+        </div>
+      </div>
+    </div>
 
     <!-- SECTION 3: Live Telemetry & Product KPIs -->
     <section id="kpis" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
@@ -1408,6 +1797,7 @@
             timeTag.innerText = `Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
           }
         }
+        await fetchLearningFlywheel(token);
       } catch (err) {
         console.error('Failed to load metrics:', err);
       } finally {
@@ -2228,6 +2618,310 @@
           </div>
         `;
       }).join('');
+    }
+
+    // =========================================================================
+    // Learning Flywheel & V3.2 Readiness UI Logic (Phase 20)
+    // =========================================================================
+    let currentEpisodes = [];
+
+    async function fetchLearningFlywheel(token) {
+      if (!token) return;
+      try {
+        const [sumRes, readyRes, epRes] = await Promise.all([
+          fetch('/api/admin/learning/summary', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/admin/learning/readiness', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/admin/learning/episodes?limit=50', { headers: { 'Authorization': `Bearer ${token}` } }),
+        ]);
+
+        if (sumRes.ok && readyRes.ok) {
+          const sumData = await sumRes.json();
+          const readyData = await readyRes.json();
+          renderLearningFlywheel(sumData.summary, sumData.dataQuality, readyData.readiness);
+        }
+
+        if (epRes.ok) {
+          const epData = await epRes.json();
+          currentEpisodes = epData.episodes || [];
+          renderEpisodesTable(currentEpisodes);
+        }
+      } catch (err) {
+        console.error('Failed to load learning flywheel:', err);
+      }
+    }
+
+    function renderLearningFlywheel(summary, quality, readiness) {
+      if (!summary || !readiness) return;
+
+      const setTxt = (id, v) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = v;
+      };
+
+      setTxt('flywheelTotalEpisodes', summary.totalEpisodes || 0);
+      setTxt('flywheelVerifiedEpisodes', summary.verifiedOutcomeEpisodes || 0);
+      setTxt('flywheelUnknownEpisodes', summary.unknownOutcomeEpisodes || 0);
+      setTxt('flywheelSuccessEpisodes', summary.successfulVerifiedEpisodes || 0);
+      setTxt('flywheelFailedEpisodes', summary.failedVerifiedEpisodes || 0);
+      setTxt('flywheelTrainingEligible', summary.trainingEligibleEpisodes || 0);
+      setTxt('flywheelRightsBlocked', summary.rightsBlockedEpisodes || 0);
+      setTxt('flywheelRevokedEpisodes', summary.revokedEpisodes || 0);
+
+      setTxt('readinessVerifiedEpisodes', readiness.currentVerifiedEpisodes || 0);
+      setTxt('readinessRepos', readiness.currentIndependentRepositories || 0);
+      setTxt('readinessBugFix', readiness.bugFixEpisodes || 0);
+      setTxt('readinessFeature', readiness.featureAdditionEpisodes || 0);
+      setTxt('readinessRefactor', readiness.refactorEpisodes || 0);
+      setTxt('readinessTestFail', readiness.testFailureEpisodes || 0);
+      setTxt('readinessUnknownRate', (readiness.unknownOutcomeRate || 0) + '%');
+      setTxt('readinessScore', (readiness.readinessScore || 0).toFixed(2) + ' / 1.00');
+
+      const verifiedPct = Math.min(100, Math.round(((readiness.currentVerifiedEpisodes || 0) / (readiness.targetVerifiedEpisodes || 1000)) * 100));
+      const repoPct = Math.min(100, Math.round(((readiness.currentIndependentRepositories || 0) / (readiness.targetIndependentRepositories || 25)) * 100));
+
+      const vBar = document.getElementById('readinessVerifiedBar');
+      if (vBar) vBar.style.width = `${verifiedPct}%`;
+      const rBar = document.getElementById('readinessReposBar');
+      if (rBar) rBar.style.width = `${repoPct}%`;
+
+      const gateBadge = document.getElementById('v32GateBadge');
+      if (gateBadge) {
+        if (readiness.isV32Ready) {
+          gateBadge.innerText = 'READY_FOR_EVALUATION';
+          gateBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800';
+        } else {
+          gateBadge.innerText = 'DATA_COLLECTION_IN_PROGRESS';
+          gateBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800';
+        }
+      }
+
+      if (quality) {
+        setTxt('qualityVerifiedRate', Math.round((quality.verifiedOutcomeRate || 0) * 100) + '%');
+        setTxt('qualityRightsRate', Math.round((quality.trainingRightsRate || 0) * 100) + '%');
+        setTxt('qualityPricingRate', Math.round((quality.pricingCoverageRate || 0) * 100) + '%');
+      }
+
+      setTxt('qualityCandidates', summary.totalCandidateObservations || 0);
+      setTxt('qualityShown', summary.shownContextUnits || 0);
+      setTxt('qualityRead', summary.readContextUnits || 0);
+      setTxt('qualityEdited', summary.editedContextUnits || 0);
+
+      const readRate = summary.shownContextUnits > 0 ? Math.round((summary.readContextUnits / summary.shownContextUnits) * 100) : 0;
+      const editRate = summary.readContextUnits > 0 ? Math.round((summary.editedContextUnits / summary.readContextUnits) * 100) : 0;
+      setTxt('qualityReadRate', readRate + '%');
+      setTxt('qualityEditRate', editRate + '%');
+    }
+
+    function renderEpisodesTable(episodes) {
+      const tbody = document.getElementById('episodesTableBody');
+      const badge = document.getElementById('episodesCountBadge');
+      if (!tbody) return;
+      if (badge) badge.innerText = (episodes ? episodes.length : 0);
+
+      if (!episodes || episodes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="py-4 text-center text-ink-secondary italic">No task episodes found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = episodes.map((ep) => {
+        let outcomeBadge = '<span class="px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-bold text-[9px]">UNKNOWN</span>';
+        if (ep.outcome && ep.outcome.verifiedSuccess === true) {
+          outcomeBadge = '<span class="px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold text-[9px]">PASS</span>';
+        } else if (ep.outcome && ep.outcome.verifiedSuccess === false) {
+          outcomeBadge = '<span class="px-1.5 py-0.2 rounded bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 font-bold text-[9px]">FAIL</span>';
+        }
+
+        const rightsBadge = ep.rights && ep.rights.trainingAllowed
+          ? '<span class="text-emerald-600 dark:text-emerald-400 font-semibold">ALLOWED</span>'
+          : '<span class="text-zinc-400">BLOCKED</span>';
+
+        const reads = ep.trajectory?.readCount || 0;
+        const edits = ep.trajectory?.editCount || 0;
+
+        return `
+          <tr class="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition">
+            <td class="py-2 px-3 font-semibold text-ink truncate max-w-[130px] font-mono" title="${ep.episodeId}">
+              ${ep.episodeId}
+            </td>
+            <td class="py-2 px-3 text-ink-secondary truncate max-w-[140px]" title="${ep.repositoryId}">
+              ${ep.repositoryId}
+            </td>
+            <td class="py-2 px-3">
+              <span class="px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-[10px]">
+                ${ep.task?.taskType || 'OTHER'}
+              </span>
+            </td>
+            <td class="py-2 px-3 text-ink-secondary truncate max-w-[130px]" title="${ep.environment?.contextPolicyId || ''}">
+              ${ep.environment?.contextPolicyId || '—'}
+            </td>
+            <td class="py-2 px-3 text-ink font-semibold">${ep.contextDecision?.candidateCount || 0}</td>
+            <td class="py-2 px-3 text-ink-secondary">
+              <span class="text-emerald-600 dark:text-emerald-400 font-semibold">${reads}R</span> /
+              <span class="text-[#D97757] font-semibold">${edits}E</span>
+            </td>
+            <td class="py-2 px-3">${outcomeBadge}</td>
+            <td class="py-2 px-3 text-[10px]">${rightsBadge}</td>
+            <td class="py-2 px-3 text-right">
+              <button onclick="inspectEpisode('${ep.episodeId}')" class="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-[#D97757] hover:text-white text-ink text-[10px] font-semibold transition cursor-pointer">
+                Inspect
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function applyEpisodesFilter() {
+      const token = getAdminToken();
+      if (!token) return;
+
+      const repo = document.getElementById('episodesFilterRepo')?.value || '';
+      const taskType = document.getElementById('episodesFilterTaskType')?.value || '';
+      const outcome = document.getElementById('episodesFilterOutcome')?.value || '';
+
+      const params = new URLSearchParams({ limit: '50' });
+      if (repo) params.set('repositoryId', repo);
+      if (taskType) params.set('taskType', taskType);
+      if (outcome) params.set('verifiedSuccess', outcome);
+
+      try {
+        const res = await fetch(`/api/admin/learning/episodes?${params.toString()}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          currentEpisodes = data.episodes || [];
+          renderEpisodesTable(currentEpisodes);
+        }
+      } catch (err) {
+        console.error('Filter error:', err);
+      }
+    }
+
+    function resetEpisodesFilter() {
+      const repoEl = document.getElementById('episodesFilterRepo');
+      if (repoEl) repoEl.value = '';
+      const typeEl = document.getElementById('episodesFilterTaskType');
+      if (typeEl) typeEl.value = '';
+      const outEl = document.getElementById('episodesFilterOutcome');
+      if (outEl) outEl.value = '';
+      applyEpisodesFilter();
+    }
+
+    async function inspectEpisode(episodeId) {
+      const token = getAdminToken();
+      if (!token || !episodeId) return;
+
+      try {
+        const res = await fetch(`/api/admin/learning/episodes/${encodeURIComponent(episodeId)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          alert(`Failed to load episode ${episodeId}: HTTP ${res.status}`);
+          return;
+        }
+
+        const data = await res.json();
+        const ep = data.episode;
+        const candidates = data.candidates || [];
+        const trajectory = data.trajectory || [];
+        const snapshot = data.snapshot;
+
+        document.getElementById('modalEpisodeId').innerText = ep.episodeId;
+        document.getElementById('modalEpisodeTimestamp').innerText = `Started: ${ep.startedAt || 'N/A'}`;
+        document.getElementById('modalPromptText').innerText = ep.task?.prompt || 'No prompt';
+        document.getElementById('modalPromptHash').innerText = `Prompt SHA-256: ${ep.task?.promptSha256 || 'N/A'}`;
+        document.getElementById('modalRepoId').innerText = `Repo: ${ep.repositoryId}`;
+        document.getElementById('modalBaseCommit').innerText = `Base Commit: ${ep.workspace?.baseCommit || 'N/A'}`;
+        document.getElementById('modalPolicyId').innerText = `Policy: ${ep.environment?.contextPolicyId || 'N/A'}`;
+
+        const outcomeBadge = document.getElementById('modalOutcomeBadge');
+        if (outcomeBadge) {
+          if (ep.outcome?.verifiedSuccess === true) {
+            outcomeBadge.innerText = 'VERIFIED_PASS';
+            outcomeBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300';
+          } else if (ep.outcome?.verifiedSuccess === false) {
+            outcomeBadge.innerText = 'VERIFIED_FAIL';
+            outcomeBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 dark:bg-rose-950/70 text-rose-800 dark:text-rose-300';
+          } else {
+            outcomeBadge.innerText = 'UNKNOWN_TRI_STATE';
+            outcomeBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300';
+          }
+        }
+
+        document.getElementById('modalConfidenceBadge').innerText = `Confidence: ${ep.outcome?.verificationConfidence || 'UNKNOWN'}`;
+        document.getElementById('modalOutcomeRationale').innerText = `Rationale: ${ep.outcome?.evaluationRationale || 'None recorded'}`;
+        document.getElementById('modalVerificationSources').innerText = `Sources: ${(ep.outcome?.verificationSources || []).join(', ') || 'None'}`;
+
+        document.getElementById('modalRenderedTokens').innerText = `${ep.contextDecision?.actualRenderedTokens || 0} / ${ep.contextDecision?.tokenBudget || 0} tokens`;
+        document.getElementById('modalTotalCost').innerText = ep.economics?.totalCostUSD != null ? `$${ep.economics.totalCostUSD.toFixed(6)}` : 'Pricing N/A';
+
+        const cpvstEl = document.getElementById('modalCpvst');
+        if (cpvstEl) {
+          if (ep.outcome?.verifiedSuccess === true && ep.economics?.totalCostUSD != null && ep.economics?.pricingStatus === 'VALID') {
+            cpvstEl.innerText = `$${ep.economics.totalCostUSD.toFixed(6)} (CPVST Valid)`;
+            cpvstEl.className = 'font-bold text-emerald-600 dark:text-emerald-400';
+          } else {
+            cpvstEl.innerText = 'Unavailable (honest policy)';
+            cpvstEl.className = 'font-bold text-zinc-400';
+          }
+        }
+
+        document.getElementById('modalRecordSha').innerText = `Record SHA: ${ep.integrity?.recordSha256 || 'N/A'}`;
+        document.getElementById('modalSnapshotSha').innerText = `Pre-Outcome Snapshot SHA: ${snapshot?.snapshotSha256 || 'N/A'}`;
+
+        // Candidates table
+        document.getElementById('modalCandidateCount').innerText = `${candidates.length} candidates`;
+        const candTbody = document.getElementById('modalCandidatesTbody');
+        if (candTbody) {
+          if (candidates.length === 0) {
+            candTbody.innerHTML = '<tr><td colspan="7" class="py-2 text-center text-zinc-400">No candidates recorded</td></tr>';
+          } else {
+            candTbody.innerHTML = candidates.map((c) => {
+              const exposure = c.selected ? 'SHOWN' : 'CANDIDATE';
+              return `
+                <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
+                  <td class="py-1 px-2 font-bold">${c.finalRank}</td>
+                  <td class="py-1 px-2 font-mono truncate max-w-[120px]" title="${c.contextUnitId}">${c.contextUnitId}</td>
+                  <td class="py-1 px-2 truncate max-w-[160px]" title="${c.path || ''}">${c.path || '—'}</td>
+                  <td class="py-1 px-2 text-zinc-400">${c.unitKind}</td>
+                  <td class="py-1 px-2 font-semibold ${c.selected ? 'text-emerald-600' : 'text-zinc-400'}">${c.selected ? 'YES' : 'NO'}</td>
+                  <td class="py-1 px-2 text-[9px] font-semibold">${exposure}</td>
+                  <td class="py-1 px-2 text-right">${c.estimatedTokens}</td>
+                </tr>
+              `;
+            }).join('');
+          }
+        }
+
+        // Trajectory container
+        document.getElementById('modalTrajectoryCount').innerText = `${trajectory.length} events`;
+        const trajBox = document.getElementById('modalTrajectoryContainer');
+        if (trajBox) {
+          if (trajectory.length === 0) {
+            trajBox.innerHTML = '<div class="text-zinc-400 italic">No trajectory events captured for this episode</div>';
+          } else {
+            trajBox.innerHTML = trajectory.map((ev) => `
+              <div class="flex items-center justify-between py-1 border-b border-zinc-100 dark:border-zinc-800/60 last:border-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-zinc-400 font-mono text-[9px]">#${ev.sequence}</span>
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-zinc-100 dark:bg-zinc-800 text-ink">${ev.type}</span>
+                  <span class="text-ink truncate max-w-[280px]">${ev.path || ''}</span>
+                </div>
+                <span class="text-zinc-400 text-[9px]">${new Date(ev.timestamp).toLocaleTimeString()}</span>
+              </div>
+            `).join('');
+          }
+        }
+
+        document.getElementById('episodeDetailModal')?.classList.remove('hidden');
+      } catch (err) {
+        console.error('Failed to inspect episode:', err);
+      }
+    }
+
+    function closeEpisodeModal() {
+      document.getElementById('episodeDetailModal')?.classList.add('hidden');
     }
 
     // Auto Refresh Setup
