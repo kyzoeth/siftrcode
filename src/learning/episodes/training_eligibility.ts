@@ -24,11 +24,11 @@ export interface TrainingEligibilityOptions {
  * Enforces:
  * 1. Customer rights permit training (trainingAllowed === true)
  * 2. Rights provenance is authoritative and not UNKNOWN or unspecified
- * 3. Episode is not revoked
+ * 3. Episode is not revoked (authoritative checker required)
  * 4. Production ranker only (rankerStatus === 'PRODUCTION', rankerId !== 'custom_unidentified')
  * 5. Full-payload record integrity (loadVerifiedTaskEpisode)
  * 6. Zero post-outcome leakage in candidate features
- * 7. All candidates have authoritative exposure records (if exposuresProvider provided)
+ * 7. All candidates have authoritative exposure records (authoritative provider required)
  */
 export function evaluateEpisodeTrainingEligibility(
   episode: TaskEpisodeV1,
@@ -49,8 +49,10 @@ export function evaluateEpisodeTrainingEligibility(
     reasons.push('RIGHTS_BLOCKED: permissionSource is UNKNOWN or unspecified.');
   }
 
-  // 3. Revocation status
-  if (options.isRevoked && options.isRevoked(episode.episodeId)) {
+  // 3. Revocation status (authoritative checker is mandatory; unknown must fail closed)
+  if (typeof options.isRevoked !== 'function') {
+    reasons.push('REVOCATION_STATUS_UNKNOWN: Authoritative revocation checker was not provided.');
+  } else if (options.isRevoked(episode.episodeId)) {
     reasons.push('REVOKED_EPISODE: Episode has been revoked/tombstoned by compliance deletion.');
   }
 
@@ -88,8 +90,10 @@ export function evaluateEpisodeTrainingEligibility(
     }
   }
 
-  // 7. Authoritative exposure records check
-  if (options.exposuresProvider) {
+  // 7. Authoritative exposure records check (provider is mandatory; unknown must fail closed)
+  if (typeof options.exposuresProvider !== 'function') {
+    reasons.push('MISSING_EXPOSURE_PROVIDER: Authoritative exposure provider was not provided.');
+  } else {
     try {
       const exposures = options.exposuresProvider(episode.episodeId) || [];
       const exposureMap = new Map(exposures.map((e) => [e.contextUnitId, e]));
