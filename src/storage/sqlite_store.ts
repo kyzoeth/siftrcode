@@ -44,6 +44,11 @@ import {
   sanitizeCandidateDecisionObservation,
   ContextPlanMetadataRecord,
 } from './rights_aware_dto';
+import { TaskEpisodeV1, TaskType } from '../learning/episodes/task_episode';
+import { CandidateObservation } from '../learning/episodes/candidate_observation';
+import { ContextUnitExposureRecord, ContextExposureState } from '../learning/episodes/context_exposure';
+import { AgentTrajectoryEvent } from '../learning/episodes/agent_trajectory';
+import { PreOutcomeEpisodeSnapshot } from '../learning/episodes/pre_outcome_snapshot';
 
 export {
   sanitizeContextPlanForPersistence,
@@ -52,12 +57,70 @@ export {
   sanitizeCandidateDecisionObservation,
   ContextPlanMetadataRecord,
 } from './rights_aware_dto';
+export { TaskEpisodeV1, TaskType } from '../learning/episodes/task_episode';
+export { ContextUnitExposureRecord, ContextExposureState } from '../learning/episodes/context_exposure';
+export { AgentTrajectoryEvent } from '../learning/episodes/agent_trajectory';
+export { PreOutcomeEpisodeSnapshot } from '../learning/episodes/pre_outcome_snapshot';
 export { TrainingEvidenceRecord } from '../learning/lineage';
 export { SiftrSession, SiftrSessionStatus } from '../telemetry/siftr_session';
 export { ContextExpansionEvent } from '../telemetry/expansion_event';
 export { FinalContextAllocation } from '../token/final_allocation';
 export { ProviderUsageEvent } from '../token/provider_usage';
 export { JevSignalV1 } from '../providers/judgment/typesafe/jev_signal';
+
+export interface EpisodeFilter {
+  repositoryId?: string;
+  taskId?: string;
+  sessionId?: string;
+  verifiedSuccess?: boolean | null;
+  trainingAllowed?: boolean;
+  taskType?: TaskType;
+  limit?: number;
+}
+
+export interface LearningFlywheelSummary {
+  totalEpisodes: number;
+  verifiedOutcomeEpisodes: number;
+  unknownOutcomeEpisodes: number;
+  successfulVerifiedEpisodes: number;
+  failedVerifiedEpisodes: number;
+  trainingEligibleEpisodes: number;
+  rightsBlockedEpisodes: number;
+  revokedEpisodes: number;
+  episodesByRepositoryFamily: Record<string, number>;
+  episodesByTaskType: Record<string, number>;
+  totalCandidateObservations: number;
+  shownContextUnits: number;
+  readContextUnits: number;
+  editedContextUnits: number;
+}
+
+export interface DataReadinessReport {
+  targetVerifiedEpisodes: number;
+  currentVerifiedEpisodes: number;
+  targetIndependentRepositories: number;
+  currentIndependentRepositories: number;
+  bugFixEpisodes: number;
+  featureAdditionEpisodes: number;
+  refactorEpisodes: number;
+  testFailureEpisodes: number;
+  trainingEligibleEpisodes: number;
+  unknownOutcomeRate: number; // percentage [0, 100]
+  readinessScore: number; // [0.0, 1.0]
+  isV32Ready: boolean;
+  version: string;
+}
+
+export interface DataQualityReport {
+  verifiedOutcomeRate: number;
+  unknownOutcomeRate: number;
+  trainingRightsRate: number;
+  trajectoryCompletenessRate: number;
+  pricingCoverageRate: number;
+  baseCommitCoverageRate: number;
+  featureSchemaDistribution: Record<string, number>;
+  contextPolicyDistribution: Record<string, number>;
+}
 
 export interface StoredGraphEdge {
   fromUnitId: string;
@@ -586,6 +649,158 @@ const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_evrec_task ON training_evidence_records(task_id);
       CREATE INDEX IF NOT EXISTS idx_evrec_repo ON training_evidence_records(repository);
       CREATE INDEX IF NOT EXISTS idx_evrec_export ON training_evidence_records(export_id);
+    `,
+  },
+  {
+    version: 15,
+    name: '015_learning_flywheel_schema',
+    sql: `
+      CREATE TABLE IF NOT EXISTS task_episodes (
+        episode_id TEXT PRIMARY KEY,
+        tenant_id TEXT,
+        repository_id TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        task_id TEXT NOT NULL,
+        task_type TEXT,
+        base_commit TEXT NOT NULL,
+        context_policy_id TEXT NOT NULL,
+        ranker_id TEXT NOT NULL,
+        ranker_status TEXT NOT NULL,
+        training_allowed INTEGER NOT NULL,
+        service_processing_allowed INTEGER NOT NULL,
+        redistribution_allowed INTEGER NOT NULL,
+        candidate_count INTEGER NOT NULL,
+        bundle_sha256 TEXT NOT NULL,
+        actual_rendered_tokens INTEGER NOT NULL,
+        token_budget INTEGER NOT NULL,
+        verified_success INTEGER,
+        verification_confidence TEXT NOT NULL,
+        total_cost_usd REAL,
+        pricing_status TEXT,
+        record_sha256 TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        completed_at TEXT,
+        created_at TEXT NOT NULL,
+        raw_json TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_tep_repo ON task_episodes(repository_id);
+      CREATE INDEX IF NOT EXISTS idx_tep_task ON task_episodes(task_id);
+      CREATE INDEX IF NOT EXISTS idx_tep_session ON task_episodes(session_id);
+      CREATE INDEX IF NOT EXISTS idx_tep_vsuccess ON task_episodes(verified_success);
+      CREATE INDEX IF NOT EXISTS idx_tep_training ON task_episodes(training_allowed);
+      CREATE INDEX IF NOT EXISTS idx_tep_type ON task_episodes(task_type);
+
+      CREATE TABLE IF NOT EXISTS episode_candidates (
+        candidate_id TEXT PRIMARY KEY,
+        episode_id TEXT NOT NULL,
+        context_unit_id TEXT NOT NULL,
+        path TEXT,
+        unit_kind TEXT NOT NULL,
+        retrieval_sources_json TEXT NOT NULL,
+        pre_rank_position INTEGER,
+        final_rank INTEGER NOT NULL,
+        final_score REAL NOT NULL,
+        feature_set_version TEXT NOT NULL,
+        feature_snapshot_json TEXT,
+        estimated_tokens INTEGER NOT NULL,
+        selected INTEGER NOT NULL,
+        selected_resolution TEXT,
+        recorded_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_ecand_ep ON episode_candidates(episode_id);
+      CREATE INDEX IF NOT EXISTS idx_ecand_unit ON episode_candidates(context_unit_id);
+
+      CREATE TABLE IF NOT EXISTS context_exposures (
+        exposure_id TEXT PRIMARY KEY,
+        episode_id TEXT NOT NULL,
+        context_unit_id TEXT NOT NULL,
+        path TEXT,
+        unit_kind TEXT NOT NULL,
+        state TEXT NOT NULL,
+        final_rank INTEGER,
+        resolution TEXT,
+        candidate_at TEXT NOT NULL,
+        selected_at TEXT,
+        materialized_at TEXT,
+        shown_at TEXT,
+        read_at TEXT,
+        edited_at TEXT
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_cexp_ep ON context_exposures(episode_id);
+      CREATE INDEX IF NOT EXISTS idx_cexp_unit ON context_exposures(context_unit_id);
+      CREATE INDEX IF NOT EXISTS idx_cexp_state ON context_exposures(state);
+
+      CREATE TABLE IF NOT EXISTS episode_trajectory_events (
+        event_id TEXT PRIMARY KEY,
+        episode_id TEXT NOT NULL,
+        sequence INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        path TEXT,
+        context_unit_id TEXT,
+        metadata_json TEXT,
+        timestamp TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_etraj_ep ON episode_trajectory_events(episode_id);
+      CREATE INDEX IF NOT EXISTS idx_etraj_seq ON episode_trajectory_events(episode_id, sequence);
+
+      CREATE TABLE IF NOT EXISTS pre_outcome_snapshots (
+        snapshot_id TEXT PRIMARY KEY,
+        episode_id TEXT NOT NULL UNIQUE,
+        task_id TEXT NOT NULL,
+        repository_id TEXT NOT NULL,
+        base_commit TEXT NOT NULL,
+        feature_cutoff_commit TEXT NOT NULL,
+        prompt_sha256 TEXT NOT NULL,
+        bundle_sha256 TEXT NOT NULL,
+        snapshot_sha256 TEXT NOT NULL,
+        token_budget INTEGER NOT NULL,
+        actual_rendered_tokens INTEGER NOT NULL,
+        context_policy_id TEXT NOT NULL,
+        ranker_id TEXT NOT NULL,
+        captured_at TEXT NOT NULL,
+        raw_json TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_posnap_ep ON pre_outcome_snapshots(episode_id);
+      CREATE INDEX IF NOT EXISTS idx_posnap_repo ON pre_outcome_snapshots(repository_id);
+
+      CREATE TABLE IF NOT EXISTS dataset_v2_rows (
+        row_id TEXT PRIMARY KEY,
+        export_id TEXT NOT NULL,
+        episode_id TEXT NOT NULL,
+        context_unit_id TEXT NOT NULL,
+        repository_id TEXT NOT NULL,
+        task_type TEXT NOT NULL,
+        exposure_state TEXT NOT NULL,
+        was_selected INTEGER NOT NULL,
+        was_shown INTEGER NOT NULL,
+        was_read INTEGER NOT NULL,
+        was_edited INTEGER NOT NULL,
+        was_in_successful_task INTEGER NOT NULL,
+        was_in_failed_task INTEGER NOT NULL,
+        verified_success INTEGER,
+        outcome_confidence TEXT NOT NULL,
+        features_json TEXT NOT NULL,
+        raw_json TEXT NOT NULL,
+        exported_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_dv2_export ON dataset_v2_rows(export_id);
+      CREATE INDEX IF NOT EXISTS idx_dv2_ep ON dataset_v2_rows(episode_id);
+      CREATE INDEX IF NOT EXISTS idx_dv2_unit ON dataset_v2_rows(context_unit_id);
+
+      CREATE TABLE IF NOT EXISTS episode_revocations (
+        revocation_id TEXT PRIMARY KEY,
+        episode_id TEXT NOT NULL UNIQUE,
+        reason TEXT NOT NULL,
+        revoked_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_erev_ep ON episode_revocations(episode_id);
     `,
   },
 ];
@@ -2171,6 +2386,593 @@ export class SqliteStore {
     sql += ' ORDER BY exported_at ASC';
     const rows = this.db.prepare(sql).all(...params) as Array<{ raw_json: string }>;
     return rows.map((r) => JSON.parse(r.raw_json) as TrainingEvidenceRecord);
+  }
+
+  // ===========================================================================
+  // Learning Flywheel (Phase 20)
+  // ===========================================================================
+
+  public saveTaskEpisode(episode: TaskEpisodeV1): void {
+    const verifiedSuccessInt =
+      episode.outcome.verifiedSuccess === true
+        ? 1
+        : episode.outcome.verifiedSuccess === false
+        ? 0
+        : null;
+
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO task_episodes (
+        episode_id, tenant_id, repository_id, session_id, task_id,
+        task_type, base_commit, context_policy_id, ranker_id, ranker_status,
+        training_allowed, service_processing_allowed, redistribution_allowed,
+        candidate_count, bundle_sha256, actual_rendered_tokens, token_budget,
+        verified_success, verification_confidence, total_cost_usd, pricing_status,
+        record_sha256, started_at, completed_at, created_at, raw_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      episode.episodeId,
+      episode.tenantId ?? null,
+      episode.repositoryId,
+      episode.sessionId,
+      episode.taskId,
+      episode.task.taskType ?? 'OTHER',
+      episode.workspace.baseCommit,
+      episode.environment.contextPolicyId,
+      episode.environment.rankerId,
+      episode.environment.rankerStatus,
+      episode.rights.trainingAllowed ? 1 : 0,
+      episode.rights.serviceProcessingAllowed ? 1 : 0,
+      episode.rights.redistributionAllowed ? 1 : 0,
+      episode.contextDecision.candidateCount,
+      episode.contextDecision.bundleSha256,
+      episode.contextDecision.actualRenderedTokens,
+      episode.contextDecision.tokenBudget,
+      verifiedSuccessInt,
+      episode.outcome.verificationConfidence,
+      episode.economics?.totalCostUSD ?? null,
+      episode.economics?.pricingStatus ?? null,
+      episode.integrity.recordSha256,
+      episode.startedAt,
+      episode.completedAt ?? null,
+      episode.integrity.createdAt,
+      JSON.stringify(episode)
+    );
+
+    // Persist candidates if present
+    if (episode.contextDecision.candidates && episode.contextDecision.candidates.length > 0) {
+      this.saveEpisodeCandidates(episode.contextDecision.candidates, episode.episodeId);
+    }
+  }
+
+  public getTaskEpisode(episodeId: string): TaskEpisodeV1 | null {
+    const row = this.db
+      .prepare('SELECT raw_json FROM task_episodes WHERE episode_id = ?')
+      .get(episodeId) as { raw_json: string } | undefined;
+
+    if (!row) return null;
+    return JSON.parse(row.raw_json) as TaskEpisodeV1;
+  }
+
+  public listTaskEpisodes(filter: EpisodeFilter = {}): TaskEpisodeV1[] {
+    let sql = 'SELECT raw_json FROM task_episodes WHERE 1=1';
+    const params: (string | number)[] = [];
+
+    if (filter.repositoryId) {
+      sql += ' AND repository_id = ?';
+      params.push(filter.repositoryId);
+    }
+    if (filter.taskId) {
+      sql += ' AND task_id = ?';
+      params.push(filter.taskId);
+    }
+    if (filter.sessionId) {
+      sql += ' AND session_id = ?';
+      params.push(filter.sessionId);
+    }
+    if (filter.verifiedSuccess !== undefined) {
+      if (filter.verifiedSuccess === null) {
+        sql += ' AND verified_success IS NULL';
+      } else {
+        sql += ' AND verified_success = ?';
+        params.push(filter.verifiedSuccess ? 1 : 0);
+      }
+    }
+    if (filter.trainingAllowed !== undefined) {
+      sql += ' AND training_allowed = ?';
+      params.push(filter.trainingAllowed ? 1 : 0);
+    }
+    if (filter.taskType) {
+      sql += ' AND task_type = ?';
+      params.push(filter.taskType);
+    }
+
+    sql += ' ORDER BY created_at DESC';
+
+    if (filter.limit && filter.limit > 0) {
+      sql += ' LIMIT ?';
+      params.push(filter.limit);
+    }
+
+    const rows = this.db.prepare(sql).all(...params) as Array<{ raw_json: string }>;
+    return rows.map((r) => JSON.parse(r.raw_json) as TaskEpisodeV1);
+  }
+
+  public savePreOutcomeSnapshot(snapshot: PreOutcomeEpisodeSnapshot): void {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO pre_outcome_snapshots (
+        snapshot_id, episode_id, task_id, repository_id, base_commit,
+        feature_cutoff_commit, prompt_sha256, bundle_sha256, snapshot_sha256,
+        token_budget, actual_rendered_tokens, context_policy_id, ranker_id,
+        captured_at, raw_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const snapshotId = `posnap_${snapshot.episodeId}`;
+    stmt.run(
+      snapshotId,
+      snapshot.episodeId,
+      snapshot.taskId,
+      snapshot.repositoryId,
+      snapshot.baseCommit,
+      snapshot.featureCutoffCommit,
+      snapshot.promptSha256,
+      snapshot.bundleSha256,
+      snapshot.snapshotSha256,
+      snapshot.tokenBudget,
+      snapshot.actualRenderedTokens,
+      snapshot.contextPolicyId,
+      snapshot.rankerId,
+      snapshot.capturedAt,
+      JSON.stringify(snapshot)
+    );
+  }
+
+  public getPreOutcomeSnapshot(episodeId: string): PreOutcomeEpisodeSnapshot | null {
+    const row = this.db
+      .prepare('SELECT raw_json FROM pre_outcome_snapshots WHERE episode_id = ?')
+      .get(episodeId) as { raw_json: string } | undefined;
+
+    if (!row) return null;
+    return JSON.parse(row.raw_json) as PreOutcomeEpisodeSnapshot;
+  }
+
+  public saveEpisodeCandidates(candidates: CandidateObservation[], episodeId: string): void {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO episode_candidates (
+        candidate_id, episode_id, context_unit_id, path, unit_kind,
+        retrieval_sources_json, pre_rank_position, final_rank, final_score,
+        feature_set_version, feature_snapshot_json, estimated_tokens,
+        selected, selected_resolution, recorded_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const recordedAt = new Date().toISOString();
+    for (let i = 0; i < candidates.length; i++) {
+      const c = candidates[i];
+      const candidateId = `ecand_${episodeId}_${c.contextUnitId}_${i}`;
+      stmt.run(
+        candidateId,
+        episodeId,
+        c.contextUnitId,
+        c.path ?? null,
+        c.unitKind,
+        JSON.stringify(c.retrievalSources),
+        c.preRankPosition ?? null,
+        c.finalRank,
+        c.finalScore,
+        c.featureSetVersion,
+        c.featureSnapshot ? JSON.stringify(c.featureSnapshot) : null,
+        c.estimatedTokens,
+        c.selected ? 1 : 0,
+        c.selectedResolution ?? null,
+        recordedAt
+      );
+    }
+  }
+
+  public getEpisodeCandidates(episodeId: string): CandidateObservation[] {
+    const rows = this.db
+      .prepare('SELECT * FROM episode_candidates WHERE episode_id = ? ORDER BY final_rank ASC')
+      .all(episodeId) as Array<any>;
+
+    return rows.map((r) => ({
+      contextUnitId: r.context_unit_id,
+      path: r.path ?? undefined,
+      unitKind: r.unit_kind,
+      retrievalSources: JSON.parse(r.retrieval_sources_json),
+      preRankPosition: r.pre_rank_position ?? undefined,
+      finalRank: r.final_rank,
+      finalScore: r.final_score,
+      featureSetVersion: r.feature_set_version,
+      featureSnapshot: r.feature_snapshot_json ? JSON.parse(r.feature_snapshot_json) : undefined,
+      estimatedTokens: r.estimated_tokens,
+      selected: r.selected === 1,
+      selectedResolution: r.selected_resolution ?? undefined,
+    }));
+  }
+
+  public saveContextExposures(exposures: ContextUnitExposureRecord[]): void {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO context_exposures (
+        exposure_id, episode_id, context_unit_id, path, unit_kind,
+        state, final_rank, resolution, candidate_at, selected_at,
+        materialized_at, shown_at, read_at, edited_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const exp of exposures) {
+      const exposureId = `cexp_${exp.episodeId}_${exp.contextUnitId}`;
+      stmt.run(
+        exposureId,
+        exp.episodeId,
+        exp.contextUnitId,
+        exp.path ?? null,
+        exp.unitKind,
+        exp.state,
+        exp.finalRank ?? null,
+        exp.resolution ?? null,
+        exp.candidateAt,
+        exp.selectedAt ?? null,
+        exp.materializedAt ?? null,
+        exp.shownAt ?? null,
+        exp.readAt ?? null,
+        exp.editedAt ?? null
+      );
+    }
+  }
+
+  public getContextExposures(episodeId: string): ContextUnitExposureRecord[] {
+    const rows = this.db
+      .prepare('SELECT * FROM context_exposures WHERE episode_id = ?')
+      .all(episodeId) as Array<any>;
+
+    return rows.map((r) => ({
+      episodeId: r.episode_id,
+      contextUnitId: r.context_unit_id,
+      path: r.path ?? undefined,
+      unitKind: r.unit_kind,
+      state: r.state as ContextExposureState,
+      finalRank: r.final_rank ?? undefined,
+      resolution: r.resolution ?? undefined,
+      candidateAt: r.candidate_at,
+      selectedAt: r.selected_at ?? undefined,
+      materializedAt: r.materialized_at ?? undefined,
+      shownAt: r.shown_at ?? undefined,
+      readAt: r.read_at ?? undefined,
+      editedAt: r.edited_at ?? undefined,
+    }));
+  }
+
+  public saveEpisodeTrajectoryEvents(events: AgentTrajectoryEvent[]): void {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO episode_trajectory_events (
+        event_id, episode_id, sequence, type, path,
+        context_unit_id, metadata_json, timestamp
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const ev of events) {
+      stmt.run(
+        ev.eventId,
+        ev.episodeId,
+        ev.sequence,
+        ev.type,
+        ev.path ?? null,
+        ev.contextUnitId ?? null,
+        ev.metadata ? JSON.stringify(ev.metadata) : null,
+        ev.timestamp
+      );
+    }
+  }
+
+  public getEpisodeTrajectoryEvents(episodeId: string): AgentTrajectoryEvent[] {
+    const rows = this.db
+      .prepare('SELECT * FROM episode_trajectory_events WHERE episode_id = ? ORDER BY sequence ASC')
+      .all(episodeId) as Array<any>;
+
+    return rows.map((r) => ({
+      eventId: r.event_id,
+      episodeId: r.episode_id,
+      sequence: r.sequence,
+      type: r.type,
+      path: r.path ?? undefined,
+      contextUnitId: r.context_unit_id ?? undefined,
+      metadata: r.metadata_json ? JSON.parse(r.metadata_json) : undefined,
+      timestamp: r.timestamp,
+    }));
+  }
+
+  public revokeEpisode(episodeId: string, reason: string): void {
+    const revocationId = `rev_${episodeId}`;
+    const revokedAt = new Date().toISOString();
+    this.db.prepare(`
+      INSERT OR REPLACE INTO episode_revocations (revocation_id, episode_id, reason, revoked_at)
+      VALUES (?, ?, ?, ?)
+    `).run(revocationId, episodeId, reason, revokedAt);
+  }
+
+  public isEpisodeRevoked(episodeId: string): boolean {
+    const row = this.db
+      .prepare('SELECT revocation_id FROM episode_revocations WHERE episode_id = ?')
+      .get(episodeId);
+    return row !== undefined;
+  }
+
+  public listRevokedEpisodeIds(): string[] {
+    const rows = this.db
+      .prepare('SELECT episode_id FROM episode_revocations')
+      .all() as Array<{ episode_id: string }>;
+    return rows.map((r) => r.episode_id);
+  }
+
+  public saveDatasetV2Row(row: any): void {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO dataset_v2_rows (
+        row_id, export_id, episode_id, context_unit_id, repository_id,
+        task_type, exposure_state, was_selected, was_shown, was_read, was_edited,
+        was_in_successful_task, was_in_failed_task, verified_success, outcome_confidence,
+        features_json, raw_json, exported_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      row.rowId || `dv2_${row.exportId}_${row.episodeId}_${row.contextUnitId}`,
+      row.exportId,
+      row.episodeId,
+      row.contextUnitId,
+      row.repositoryFamily || row.repositoryId || 'unknown',
+      row.taskType || 'OTHER',
+      row.exposureState,
+      row.wasSelected ? 1 : 0,
+      row.wasShown ? 1 : 0,
+      row.wasRead ? 1 : 0,
+      row.wasEdited ? 1 : 0,
+      row.wasInSuccessfulTask ? 1 : 0,
+      row.wasInFailedTask ? 1 : 0,
+      row.verifiedSuccess === true ? 1 : row.verifiedSuccess === false ? 0 : null,
+      row.outcomeConfidence,
+      JSON.stringify(row.candidateFeatureVector || {}),
+      JSON.stringify(row),
+      row.exportedAt || new Date().toISOString()
+    );
+  }
+
+  public listDatasetV2Rows(filter: { exportId?: string; episodeId?: string } = {}): any[] {
+    let sql = 'SELECT raw_json FROM dataset_v2_rows WHERE 1=1';
+    const params: string[] = [];
+    if (filter.exportId) {
+      sql += ' AND export_id = ?';
+      params.push(filter.exportId);
+    }
+    if (filter.episodeId) {
+      sql += ' AND episode_id = ?';
+      params.push(filter.episodeId);
+    }
+    sql += ' ORDER BY exported_at ASC';
+    const rows = this.db.prepare(sql).all(...params) as Array<{ raw_json: string }>;
+    return rows.map((r) => JSON.parse(r.raw_json));
+  }
+
+  public getLearningFlywheelSummary(): LearningFlywheelSummary {
+    const totalRow = this.db
+      .prepare('SELECT COUNT(*) as c FROM task_episodes')
+      .get() as { c: number };
+    const totalEpisodes = totalRow ? totalRow.c : 0;
+
+    const verifiedOutcomeRow = this.db
+      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE verified_success IS NOT NULL')
+      .get() as { c: number };
+    const verifiedOutcomeEpisodes = verifiedOutcomeRow ? verifiedOutcomeRow.c : 0;
+
+    const unknownOutcomeEpisodes = totalEpisodes - verifiedOutcomeEpisodes;
+
+    const successRow = this.db
+      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE verified_success = 1')
+      .get() as { c: number };
+    const successfulVerifiedEpisodes = successRow ? successRow.c : 0;
+
+    const failedRow = this.db
+      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE verified_success = 0')
+      .get() as { c: number };
+    const failedVerifiedEpisodes = failedRow ? failedRow.c : 0;
+
+    const trainingEligibleRow = this.db
+      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE training_allowed = 1')
+      .get() as { c: number };
+    const trainingEligibleEpisodes = trainingEligibleRow ? trainingEligibleRow.c : 0;
+
+    const rightsBlockedEpisodes = totalEpisodes - trainingEligibleEpisodes;
+
+    const revokedRow = this.db
+      .prepare('SELECT COUNT(*) as c FROM episode_revocations')
+      .get() as { c: number };
+    const revokedEpisodes = revokedRow ? revokedRow.c : 0;
+
+    // Repositories breakdown
+    const repoRows = this.db
+      .prepare('SELECT repository_id, COUNT(*) as c FROM task_episodes GROUP BY repository_id')
+      .all() as Array<{ repository_id: string; c: number }>;
+    const episodesByRepositoryFamily: Record<string, number> = {};
+    for (const r of repoRows) {
+      episodesByRepositoryFamily[r.repository_id] = r.c;
+    }
+
+    // Task types breakdown
+    const taskTypeRows = this.db
+      .prepare('SELECT task_type, COUNT(*) as c FROM task_episodes GROUP BY task_type')
+      .all() as Array<{ task_type: string; c: number }>;
+    const episodesByTaskType: Record<string, number> = {};
+    for (const t of taskTypeRows) {
+      episodesByTaskType[t.task_type || 'OTHER'] = t.c;
+    }
+
+    // Candidate count
+    const candRow = this.db
+      .prepare('SELECT COUNT(*) as c FROM episode_candidates')
+      .get() as { c: number };
+    const totalCandidateObservations = candRow ? candRow.c : 0;
+
+    // Exposures by state
+    const expRows = this.db
+      .prepare('SELECT state, COUNT(*) as c FROM context_exposures GROUP BY state')
+      .all() as Array<{ state: string; c: number }>;
+    let shownContextUnits = 0;
+    let readContextUnits = 0;
+    let editedContextUnits = 0;
+    for (const exp of expRows) {
+      if (exp.state === 'SHOWN') shownContextUnits += exp.c;
+      if (exp.state === 'READ') readContextUnits += exp.c;
+      if (exp.state === 'EDITED') editedContextUnits += exp.c;
+    }
+
+    return {
+      totalEpisodes,
+      verifiedOutcomeEpisodes,
+      unknownOutcomeEpisodes,
+      successfulVerifiedEpisodes,
+      failedVerifiedEpisodes,
+      trainingEligibleEpisodes,
+      rightsBlockedEpisodes,
+      revokedEpisodes,
+      episodesByRepositoryFamily,
+      episodesByTaskType,
+      totalCandidateObservations,
+      shownContextUnits,
+      readContextUnits,
+      editedContextUnits,
+    };
+  }
+
+  public getV32DataReadinessReport(): DataReadinessReport {
+    const summary = this.getLearningFlywheelSummary();
+
+    const targetVerifiedEpisodes = 1000;
+    const targetIndependentRepositories = 25;
+
+    const currentVerifiedEpisodes = summary.verifiedOutcomeEpisodes;
+    const currentIndependentRepositories = Object.keys(summary.episodesByRepositoryFamily).length;
+
+    const bugFixEpisodes = summary.episodesByTaskType['BUG_FIX'] || 0;
+    const featureAdditionEpisodes = summary.episodesByTaskType['FEATURE_ADDITION'] || 0;
+    const refactorEpisodes = summary.episodesByTaskType['REFACTOR'] || 0;
+    const testFailureEpisodes = summary.episodesByTaskType['TEST_FAILURE'] || 0;
+
+    const trainingEligibleEpisodes = summary.trainingEligibleEpisodes;
+    const unknownOutcomeRate =
+      summary.totalEpisodes > 0
+        ? Math.round((summary.unknownOutcomeEpisodes / summary.totalEpisodes) * 1000) / 10
+        : 0;
+
+    // Readiness score calculation based on explicit targets
+    const verifiedProgress = Math.min(1.0, currentVerifiedEpisodes / targetVerifiedEpisodes);
+    const repoProgress = Math.min(1.0, currentIndependentRepositories / targetIndependentRepositories);
+    const diversityProgress = Math.min(
+      1.0,
+      (Math.min(100, bugFixEpisodes) +
+        Math.min(50, featureAdditionEpisodes) +
+        Math.min(50, refactorEpisodes) +
+        Math.min(50, testFailureEpisodes)) /
+        250
+    );
+
+    const readinessScore =
+      Math.round(((verifiedProgress * 0.5 + repoProgress * 0.3 + diversityProgress * 0.2)) * 100) / 100;
+
+    const isV32Ready =
+      currentVerifiedEpisodes >= targetVerifiedEpisodes &&
+      currentIndependentRepositories >= targetIndependentRepositories &&
+      trainingEligibleEpisodes >= 1000;
+
+    return {
+      targetVerifiedEpisodes,
+      currentVerifiedEpisodes,
+      targetIndependentRepositories,
+      currentIndependentRepositories,
+      bugFixEpisodes,
+      featureAdditionEpisodes,
+      refactorEpisodes,
+      testFailureEpisodes,
+      trainingEligibleEpisodes,
+      unknownOutcomeRate,
+      readinessScore,
+      isV32Ready,
+      version: 'V3.2_READINESS_GATE_SPEC_V1',
+    };
+  }
+
+  public getDataQualityReport(): DataQualityReport {
+    const summary = this.getLearningFlywheelSummary();
+
+    const verifiedOutcomeRate =
+      summary.totalEpisodes > 0
+        ? Math.round((summary.verifiedOutcomeEpisodes / summary.totalEpisodes) * 1000) / 1000
+        : 0;
+
+    const unknownOutcomeRate =
+      summary.totalEpisodes > 0
+        ? Math.round((summary.unknownOutcomeEpisodes / summary.totalEpisodes) * 1000) / 1000
+        : 0;
+
+    const trainingRightsRate =
+      summary.totalEpisodes > 0
+        ? Math.round((summary.trainingEligibleEpisodes / summary.totalEpisodes) * 1000) / 1000
+        : 0;
+
+    // Completeness of baseCommit and pricing
+    const baseCommitRow = this.db
+      .prepare("SELECT COUNT(*) as c FROM task_episodes WHERE base_commit IS NOT NULL AND base_commit != ''")
+      .get() as { c: number };
+    const baseCommitCoverageRate =
+      summary.totalEpisodes > 0
+        ? Math.round(((baseCommitRow?.c || 0) / summary.totalEpisodes) * 1000) / 1000
+        : 0;
+
+    const pricingRow = this.db
+      .prepare("SELECT COUNT(*) as c FROM task_episodes WHERE pricing_status = 'VALID'")
+      .get() as { c: number };
+    const pricingCoverageRate =
+      summary.totalEpisodes > 0
+        ? Math.round(((pricingRow?.c || 0) / summary.totalEpisodes) * 1000) / 1000
+        : 0;
+
+    // Trajectory events check
+    const trajEpisodes = this.db
+      .prepare('SELECT COUNT(DISTINCT episode_id) as c FROM episode_trajectory_events')
+      .get() as { c: number };
+    const trajectoryCompletenessRate =
+      summary.totalEpisodes > 0
+        ? Math.round(((trajEpisodes?.c || 0) / summary.totalEpisodes) * 1000) / 1000
+        : 0;
+
+    // Policy and Schema distributions
+    const policyRows = this.db
+      .prepare('SELECT context_policy_id, COUNT(*) as c FROM task_episodes GROUP BY context_policy_id')
+      .all() as Array<{ context_policy_id: string; c: number }>;
+    const contextPolicyDistribution: Record<string, number> = {};
+    for (const p of policyRows) {
+      contextPolicyDistribution[p.context_policy_id] = p.c;
+    }
+
+    const schemaRows = this.db
+      .prepare('SELECT feature_set_version, COUNT(*) as c FROM episode_candidates GROUP BY feature_set_version')
+      .all() as Array<{ feature_set_version: string; c: number }>;
+    const featureSchemaDistribution: Record<string, number> = {};
+    for (const s of schemaRows) {
+      featureSchemaDistribution[s.feature_set_version] = s.c;
+    }
+
+    return {
+      verifiedOutcomeRate,
+      unknownOutcomeRate,
+      trainingRightsRate,
+      trajectoryCompletenessRate,
+      pricingCoverageRate,
+      baseCommitCoverageRate,
+      featureSchemaDistribution,
+      contextPolicyDistribution,
+    };
   }
 }
 

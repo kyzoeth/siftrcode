@@ -22,6 +22,16 @@ export interface PlannedUnit {
   reason: string;
 }
 
+export interface ContextPolicyIdentity {
+  contextPolicyId: string;
+  rankerId: string;
+  rankerVersion: string;
+  featureSetVersion: string;
+  candidateGeneratorVersion: string;
+  budgetPolicyVersion: string;
+  materializerVersion: string;
+}
+
 export interface ContextPlan {
   taskId: string;
   planId: string;
@@ -36,6 +46,14 @@ export interface ContextPlan {
   decisionObservations?: CandidateDecisionObservation[];
   policyId?: string;
   policyVersion?: string;
+  contextPolicyIdentity?: ContextPolicyIdentity;
+  contextPolicyId?: string;
+  rankerId?: string;
+  rankerVersion?: string;
+  featureSetVersion?: string;
+  candidateGeneratorVersion?: string;
+  budgetPolicyVersion?: string;
+  materializerVersion?: string;
   dataRights: DataRights;
   estimatedRenderedTokens?: number;
   actualRenderedTokens: number; // Backward-compatible alias for estimatedRenderedTokens

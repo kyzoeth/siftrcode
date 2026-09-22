@@ -25,7 +25,7 @@ import { ContextResolution } from '../context/context_resolution';
 import { ResolutionRanker } from '../context/resolution_rank';
 import { createExposureDecision, createExposureDecisionV2, ExposureDecision, ExposureDecisionV2 } from '../telemetry/exposure_decision';
 import { TrajectoryLogger } from '../telemetry/trajectory_event';
-import { ContextPlan, PlannedUnit } from './context_plan';
+import { ContextPlan, PlannedUnit, ContextPolicyIdentity } from './context_plan';
 import { WorkspaceManager } from '../workspace/workspace_manager';
 import { RepositoryIndexer } from '../indexing/repository_index';
 import { GraphBuilder } from '../graph/graph_builder';
@@ -811,6 +811,16 @@ export class ContextEngine {
       policyVersion,
     });
 
+    const contextPolicyIdentity: ContextPolicyIdentity = {
+      contextPolicyId: 'production-v2-deterministic-2026-09',
+      rankerId: 'deterministic_context_ranker_v2',
+      rankerVersion: '2.1.0',
+      featureSetVersion: 'CONTEXT_RANK_FEATURES_V1',
+      candidateGeneratorVersion: 'candidate_gen_v2',
+      budgetPolicyVersion: 'submodular_knapsack_v2',
+      materializerVersion: 'ast_variable_resolution_v2',
+    };
+
     const contextPlan: ContextPlan = {
       taskId: boundTask.taskId,
       planId,
@@ -825,6 +835,14 @@ export class ContextEngine {
       decisionObservations,
       policyId,
       policyVersion,
+      contextPolicyIdentity,
+      contextPolicyId: contextPolicyIdentity.contextPolicyId,
+      rankerId: contextPolicyIdentity.rankerId,
+      rankerVersion: contextPolicyIdentity.rankerVersion,
+      featureSetVersion: contextPolicyIdentity.featureSetVersion,
+      candidateGeneratorVersion: contextPolicyIdentity.candidateGeneratorVersion,
+      budgetPolicyVersion: contextPolicyIdentity.budgetPolicyVersion,
+      materializerVersion: contextPolicyIdentity.materializerVersion,
       dataRights: this.dataRights,
       estimatedRenderedTokens,
       actualRenderedTokens: estimatedRenderedTokens, // backward-compatible alias
