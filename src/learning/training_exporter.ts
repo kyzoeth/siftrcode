@@ -344,12 +344,17 @@ export class TrainingExporter {
     options: {
       isRevoked: (episodeId: string) => boolean;
       datasetVersion?: string;
-      exposuresProvider?: (episodeId: string) => ContextUnitExposureRecord[];
+      exposuresProvider: (episodeId: string) => ContextUnitExposureRecord[];
     }
   ): SanctionedDatasetV2Export {
     if (!options || typeof options.isRevoked !== 'function') {
       throw new Error(
         'FAIL_CLOSED: Mandatory revocation checker (isRevoked) must be provided to exportContextDatasetV2'
+      );
+    }
+    if (!options || typeof options.exposuresProvider !== 'function') {
+      throw new Error(
+        'FAIL_CLOSED: Mandatory exposuresProvider must be provided to exportContextDatasetV2'
       );
     }
     const exportId = `texport_v2_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
@@ -378,6 +383,21 @@ export class TrainingExporter {
             !ep.rights || ep.rights.trainingAllowed !== true
               ? 'RIGHTS_BLOCKED: trainingAllowed is false or unspecified.'
               : 'RIGHTS_BLOCKED: permissionSource is UNKNOWN or unspecified.',
+          ],
+        });
+        continue;
+      }
+
+      // 1b. Ranker Status & Policy Identity check (fail-closed)
+      const rankerStatus = ep.environment?.rankerStatus;
+      const rankerId = ep.environment?.rankerId;
+      if (rankerStatus !== 'PRODUCTION' || rankerId === 'custom_unidentified') {
+        rejections.push({
+          episodeId: ep.episodeId,
+          reasons: [
+            rankerStatus !== 'PRODUCTION'
+              ? `POLICY_INELIGIBLE: Ranker status is ${rankerStatus || 'UNKNOWN'} (only PRODUCTION ranker episodes are training eligible).`
+              : 'POLICY_INELIGIBLE: Ranker is custom_unidentified.',
           ],
         });
         continue;
@@ -431,11 +451,8 @@ export class TrainingExporter {
         unknownOutcomeTasksCount++;
       }
 
-      const readPathsSet = new Set(ep.trajectory?.readPaths || []);
-      const editedPathsSet = new Set(ep.trajectory?.editedPaths || []);
       const selectedUnitIds = new Set(ep.contextDecision.selectedUnits.map((u) => u.contextUnitId));
-
-      const recordedExposures = options.exposuresProvider ? options.exposuresProvider(ep.episodeId) : [];
+      const recordedExposures = options.exposuresProvider(ep.episodeId);
       const recordedExposureMap = new Map<string, ContextUnitExposureRecord>();
       for (const exp of recordedExposures) {
         recordedExposureMap.set(exp.contextUnitId, exp);
@@ -444,13 +461,14 @@ export class TrainingExporter {
       for (const candidate of ep.contextDecision.candidates) {
         const recorded = recordedExposureMap.get(candidate.contextUnitId);
 
-        let wasSelected = candidate.selected || selectedUnitIds.has(candidate.contextUnitId);
-        let wasShown = wasSelected && ep.contextDecision.actualRenderedTokens > 0;
-        let wasRead = candidate.path ? readPathsSet.has(candidate.path) : false;
-        let wasEdited = candidate.path ? editedPathsSet.has(candidate.path) : false;
+        let wasSelected = false;
+        let wasShown = false;
+        let wasRead = false;
+        let wasEdited = false;
         let exposureState: ContextExposureState;
 
         if (recorded) {
+          exposureState = recorded.state;
           wasSelected =
             recorded.state !== ContextExposureState.CANDIDATE || recorded.selectedAt !== undefined;
           wasShown =
@@ -461,20 +479,18 @@ export class TrainingExporter {
           wasRead =
             recorded.state === ContextExposureState.READ ||
             recorded.state === ContextExposureState.EDITED ||
-            recorded.readAt !== undefined ||
-            wasRead;
+            recorded.readAt !== undefined;
           wasEdited =
             recorded.state === ContextExposureState.EDITED ||
-            recorded.editedAt !== undefined ||
-            wasEdited;
-          exposureState = recorded.state;
+            recorded.editedAt !== undefined;
         } else {
-          exposureState = resolveExposureState({
-            wasEdited,
-            wasRead,
-            wasShown,
-            wasSelected,
-          });
+          wasSelected = candidate.selected || selectedUnitIds.has(candidate.contextUnitId);
+          wasShown = wasSelected && ep.contextDecision.actualRenderedTokens > 0;
+          wasRead = false;
+          wasEdited = false;
+          exposureState = wasShown
+            ? ContextExposureState.SHOWN
+            : (wasSelected ? ContextExposureState.SELECTED : ContextExposureState.CANDIDATE);
         }
 
         if (wasSelected) selectedUnitsCount++;

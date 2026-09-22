@@ -789,6 +789,26 @@ export async function runLearningFlywheelTests() {
     const revokedSet = new Set(['ep_export_3']);
     const exportResult = exporter.exportContextDatasetV2([ep1, ep2, ep3, ep4], {
       isRevoked: (id) => revokedSet.has(id),
+      exposuresProvider: (epId) => [
+        {
+          episodeId: epId,
+          contextUnitId: 'unit_cmd',
+          path: 'lib/command.js',
+          unitKind: 'FILE',
+          state: ContextExposureState.EDITED,
+          attributionType: 'EXACT_UNIT',
+          readAttribution: 'EXACT_UNIT',
+          editAttribution: 'EXACT_UNIT',
+          finalRank: 1,
+          resolution: 'BODY',
+          candidateAt: new Date().toISOString(),
+          selectedAt: new Date().toISOString(),
+          materializedAt: new Date().toISOString(),
+          shownAt: new Date().toISOString(),
+          readAt: new Date().toISOString(),
+          editedAt: new Date().toISOString(),
+        },
+      ],
     });
 
     // Verify rejection breakdown

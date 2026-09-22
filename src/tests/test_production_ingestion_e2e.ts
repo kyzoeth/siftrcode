@@ -504,6 +504,7 @@ async function runProductionIngestionE2ETests() {
   // Verify TrainingExporter rejects revoked episode
   const exportAfterRevocation = exporter.exportContextDatasetV2([assembledEpisode], {
     isRevoked: (epId) => store.isEpisodeRevoked(epId),
+    exposuresProvider: (epId) => store.getContextExposures(epId),
   });
   assert.strictEqual(
     exportAfterRevocation.totalEpisodesAccepted,
