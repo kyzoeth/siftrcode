@@ -1,0 +1,25 @@
+{
+  "status": "V3.1_FAILED_TO_BEAT_BASELINE",
+  "evaluationHeadSha": "2489adbf3638cc79694243d3eac8d7cb4e9d71ce",
+  "evaluatedAt": "2026-09-22T00:58:55.394Z",
+  "gateMetrics": {
+    "v2Ndcg10": 0.52,
+    "v3Ndcg10": 0.5034,
+    "ndcg10Delta": -0.0166,
+    "v2Recall10": 0.65,
+    "v3Recall10": 0.5625,
+    "recall10Delta": -0.0875,
+    "v2Mrr": 0.4924,
+    "v3Mrr": 0.5021,
+    "mrrDelta": 0.0097,
+    "v3Wins": 3,
+    "v2Wins": 6,
+    "ties": 31
+  },
+  "failureReasons": [
+    "Learned ContextRank V3 failed the final offline gate: NDCG@10 delta (-0.0166) or win/loss ratio (3 wins vs 6 losses)."
+  ],
+  "holdoutManifestSha256": "a5a9acf207a0bdb4f75e2fd522280b7b72b58aefd0a56c5e1407504106c8aa84",
+  "modelArtifactSha256": "384438f9463b0760fe854f377d84265387173528c97608f2679f19b32cca8aca",
+  "v2ImplementationSha": "1eedac03b0d83025ebf08ed2945e0ab015c46f6a"
+}
