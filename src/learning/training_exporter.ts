@@ -26,7 +26,7 @@ import {
   SiftrContextDatasetV2Summary,
   SanctionedDatasetV2Export,
 } from './datasets/siftr_dataset_v2';
-import { resolveExposureState, ContextExposureState } from './episodes/context_exposure';
+import { resolveExposureState, ContextExposureState, ContextUnitExposureRecord } from './episodes/context_exposure';
 import { FORBIDDEN_PRE_OUTCOME_FIELDS } from './episodes/pre_outcome_snapshot';
 
 export {
@@ -342,10 +342,16 @@ export class TrainingExporter {
   public exportContextDatasetV2(
     episodes: TaskEpisodeV1[],
     options: {
-      isRevoked?: (episodeId: string) => boolean;
+      isRevoked: (episodeId: string) => boolean;
       datasetVersion?: string;
-    } = {}
+      exposuresProvider?: (episodeId: string) => ContextUnitExposureRecord[];
+    }
   ): SanctionedDatasetV2Export {
+    if (!options || typeof options.isRevoked !== 'function') {
+      throw new Error(
+        'FAIL_CLOSED: Mandatory revocation checker (isRevoked) must be provided to exportContextDatasetV2'
+      );
+    }
     const exportId = `texport_v2_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
     const exportedAt = new Date().toISOString();
 
@@ -425,18 +431,47 @@ export class TrainingExporter {
       const editedPathsSet = new Set(ep.trajectory?.editedPaths || []);
       const selectedUnitIds = new Set(ep.contextDecision.selectedUnits.map((u) => u.contextUnitId));
 
-      for (const candidate of ep.contextDecision.candidates) {
-        const wasSelected = candidate.selected || selectedUnitIds.has(candidate.contextUnitId);
-        const wasShown = wasSelected;
-        const wasRead = candidate.path ? readPathsSet.has(candidate.path) : false;
-        const wasEdited = candidate.path ? editedPathsSet.has(candidate.path) : false;
+      const recordedExposures = options.exposuresProvider ? options.exposuresProvider(ep.episodeId) : [];
+      const recordedExposureMap = new Map<string, ContextUnitExposureRecord>();
+      for (const exp of recordedExposures) {
+        recordedExposureMap.set(exp.contextUnitId, exp);
+      }
 
-        const exposureState = resolveExposureState({
-          wasEdited,
-          wasRead,
-          wasShown,
-          wasSelected,
-        });
+      for (const candidate of ep.contextDecision.candidates) {
+        const recorded = recordedExposureMap.get(candidate.contextUnitId);
+
+        let wasSelected = candidate.selected || selectedUnitIds.has(candidate.contextUnitId);
+        let wasShown = wasSelected && ep.contextDecision.actualRenderedTokens > 0;
+        let wasRead = candidate.path ? readPathsSet.has(candidate.path) : false;
+        let wasEdited = candidate.path ? editedPathsSet.has(candidate.path) : false;
+        let exposureState: ContextExposureState;
+
+        if (recorded) {
+          wasSelected =
+            recorded.state !== ContextExposureState.CANDIDATE || recorded.selectedAt !== undefined;
+          wasShown =
+            recorded.state === ContextExposureState.SHOWN ||
+            recorded.state === ContextExposureState.READ ||
+            recorded.state === ContextExposureState.EDITED ||
+            recorded.shownAt !== undefined;
+          wasRead =
+            recorded.state === ContextExposureState.READ ||
+            recorded.state === ContextExposureState.EDITED ||
+            recorded.readAt !== undefined ||
+            wasRead;
+          wasEdited =
+            recorded.state === ContextExposureState.EDITED ||
+            recorded.editedAt !== undefined ||
+            wasEdited;
+          exposureState = recorded.state;
+        } else {
+          exposureState = resolveExposureState({
+            wasEdited,
+            wasRead,
+            wasShown,
+            wasSelected,
+          });
+        }
 
         if (wasSelected) selectedUnitsCount++;
         if (wasShown) shownUnitsCount++;
@@ -467,7 +502,7 @@ export class TrainingExporter {
           wasInFailedTask: ep.outcome.verifiedSuccess === false,
           verifiedSuccess: ep.outcome.verifiedSuccess,
           outcomeConfidence: ep.outcome.verificationConfidence,
-          verifiedTargetEvidence: wasEdited || wasRead,
+          verifiedTargetEvidence: ep.outcome.verifiedSuccess === true && wasEdited,
           contextTokens: candidate.estimatedTokens,
           taskEconomics: ep.economics,
           rightsReference: ep.rights.permissionSource,

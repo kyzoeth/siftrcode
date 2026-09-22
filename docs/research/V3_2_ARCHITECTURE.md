@@ -12,7 +12,7 @@ This document defines the research strategy and target architecture for **SiftrC
 
 ## 1. Post-Mortem: Why V3.1 Failed to Beat the Baseline
 
-In natural holdout evaluations (40 tasks, 4 repositories), learned ContextRank V3.1 scored **NDCG@10 = 0.8008** versus the frozen V2 baseline **NDCG@10 = 0.8174** ($\Delta = -0.0166$, Win/Loss = 0.50).
+In natural holdout evaluations (40 tasks, 4 repositories), learned ContextRank V3.1 scored **NDCG@10 = 0.5034** versus the frozen V2 baseline **NDCG@10 = 0.5200** ($\Delta = -0.0166$, Win/Loss = 0.50) and **Recall@10 = 0.5625** versus frozen V2 **Recall@10 = 0.6500** ($\Delta = -0.0875$).
 
 Three primary root causes were identified:
 
@@ -130,6 +130,6 @@ When readiness gates are satisfied and a V3.2 candidate model is trained:
 1. **Natural Holdout Benchmark**: Must achieve $\Delta\text{NDCG@10} > +0.02$ with bootstrap $95\%$ CI lower bound $> 0.0$ across independent holdout tasks.
 2. **Win/Loss Ratio**: Must exceed $1.5$ against the frozen V2 baseline.
 3. **Paired CPVST Evaluation**: Cost Per Verified Success Task (CPVST) must decrease by $\ge 10\%$ without increasing test failure rates.
-4. **Recall Floor**: Target recall@10 must match or exceed the frozen V2 baseline ($0.9750$).
+4. **Recall Floor**: Target recall@10 must match or exceed the frozen V2 baseline ($0.6500$).
 
 Any model failing these criteria remains classified as `RESEARCH`.

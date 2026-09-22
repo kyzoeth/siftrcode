@@ -10,6 +10,8 @@ import * as crypto from 'crypto';
 import { CandidateObservation, SelectedContextObservation } from './candidate_observation';
 import { TaskOutcomeV1 } from '../outcome/task_outcome';
 
+import { ContextPolicyIdentity } from '../../engine/context_plan';
+
 export const FORBIDDEN_PRE_OUTCOME_FIELDS = [
   'solutionCommit',
   'solutionDiff',
@@ -42,8 +44,26 @@ export interface PreOutcomeEpisodeSnapshot {
   bundleSha256: string;
   contextPolicyId: string;
   rankerId: string;
+  contextPolicyIdentity?: ContextPolicyIdentity;
   capturedAt: string;
   snapshotSha256: string;
+}
+
+/**
+ * Recursively freezes an object and all nested properties for deep immutability.
+ */
+export function deepFreeze<T>(obj: T): Readonly<T> {
+  if (obj === null || typeof obj !== 'object' || Object.isFrozen(obj)) {
+    return obj;
+  }
+  Object.freeze(obj);
+  for (const key of Object.getOwnPropertyNames(obj)) {
+    const prop = (obj as any)[key];
+    if (prop !== null && typeof prop === 'object') {
+      deepFreeze(prop);
+    }
+  }
+  return obj;
 }
 
 /**
@@ -128,9 +148,7 @@ export function createPreOutcomeEpisodeSnapshot(
     snapshotSha256,
   };
 
-  Object.freeze(snapshot);
-  Object.freeze(snapshot.candidateUniverse);
-  Object.freeze(snapshot.selectedUnits);
+  deepFreeze(snapshot);
   return snapshot;
 }
 

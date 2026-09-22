@@ -38,11 +38,11 @@ Evaluations were performed on exact point-in-time git checkouts across **Command
 
 | Metric | Frozen V2 Baseline (`1eedac03...`) | Learned ContextRank V3 (`gbdt_pairwise_v1`) | Delta | Gate Threshold | Result |
 | :--- | :---: | :---: | :---: | :---: | :--- |
-| **NDCG@10** | **0.8174** | 0.8008 | **-0.0166** | $> +0.0200$ | **FAIL** |
-| **NDCG@5** | **0.8174** | 0.8008 | **-0.0166** | Informational | — |
-| **Recall@10** | 0.9750 | 0.9750 | $+0.0000$ | $\ge 0.0000$ | **PASS** |
-| **MRR** | **0.7750** | 0.7417 | **-0.0333** | Informational | — |
-| **Target Coverage** | 97.5% | 97.5% | $+0.0\%$ | Parity | **PASS** |
+| **NDCG@10** | **0.5200** | 0.5034 | **-0.0166** | $> +0.0200$ | **FAIL** |
+| **NDCG@5** | 0.4815 | **0.5034** | $+0.0219$ | Informational | — |
+| **Recall@10** | **0.6500** | 0.5625 | **-0.0875** | $\ge 0.0000$ | **FAIL** |
+| **MRR** | 0.4924 | **0.5021** | $+0.0097$ | Informational | — |
+| **Target Coverage** | 80.0% | 80.0% | $+0.0\%$ | Parity | **PASS** |
 
 - **Task Outcomes**: **3 V3 Wins (7.5%) / 31 Ties (77.5%) / 6 V2 Wins (15.0%)** (Win/Loss = 0.50, required $> 1.0$)
 - **Bootstrap 95% Confidence Interval (NDCG@10)**: `[-0.0478, +0.0076]` (2,000 resamples)

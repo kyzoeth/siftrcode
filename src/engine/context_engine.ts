@@ -25,7 +25,7 @@ import { ContextResolution } from '../context/context_resolution';
 import { ResolutionRanker } from '../context/resolution_rank';
 import { createExposureDecision, createExposureDecisionV2, ExposureDecision, ExposureDecisionV2 } from '../telemetry/exposure_decision';
 import { TrajectoryLogger } from '../telemetry/trajectory_event';
-import { ContextPlan, PlannedUnit, ContextPolicyIdentity } from './context_plan';
+import { ContextPlan, PlannedUnit, ContextPolicyIdentity, PRODUCTION_V2_POLICY_IDENTITY } from './context_plan';
 import { WorkspaceManager } from '../workspace/workspace_manager';
 import { RepositoryIndexer } from '../indexing/repository_index';
 import { GraphBuilder } from '../graph/graph_builder';
@@ -43,6 +43,8 @@ import { RepositoryTrustPolicy, RepositoryOrigin } from '../security/trust';
 import { JevShadowRunner } from '../providers/judgment/typesafe/jev_shadow_runner';
 import { JevMode } from '../providers/judgment/typesafe/jev_signal';
 import { createSiftrSession, SiftrSession } from '../telemetry/siftr_session';
+import { CandidateObservation } from '../learning/episodes/candidate_observation';
+import { EpisodeAssembler } from '../learning/episodes/episode_assembler';
 
 export { WorkspaceChangedError, isWorkspaceChangedError } from '../workspace/workspace_snapshot';
 
@@ -87,6 +89,7 @@ export interface OptimizeWorkspaceOptions {
   jevShadowRunner?: JevShadowRunner;
   enableJevShadow?: boolean;
   ranker?: { rank(candidates: ContextFeaturesV1[], judgments?: any): RankedCandidate[] };
+  sqliteStore?: SqliteStore;
 }
 
 export interface OptimizeWorkspaceResult {
@@ -95,6 +98,7 @@ export interface OptimizeWorkspaceResult {
   units: ContextUnit[];
   graph: ContextGraph;
   task: TaskContext;
+  snapshot: WorkspaceSnapshot;
   formattedContext: FormattedContext;
   contextString: string;
   replanningAttempts?: number;
@@ -812,13 +816,7 @@ export class ContextEngine {
     });
 
     const contextPolicyIdentity: ContextPolicyIdentity = {
-      contextPolicyId: 'production-v2-deterministic-2026-09',
-      rankerId: 'deterministic_context_ranker_v2',
-      rankerVersion: '2.1.0',
-      featureSetVersion: 'CONTEXT_RANK_FEATURES_V1',
-      candidateGeneratorVersion: 'candidate_gen_v2',
-      budgetPolicyVersion: 'submodular_knapsack_v2',
-      materializerVersion: 'ast_variable_resolution_v2',
+      ...PRODUCTION_V2_POLICY_IDENTITY,
     };
 
     const contextPlan: ContextPlan = {
@@ -836,6 +834,7 @@ export class ContextEngine {
       policyId,
       policyVersion,
       contextPolicyIdentity,
+      policyIdentity: contextPolicyIdentity,
       contextPolicyId: contextPolicyIdentity.contextPolicyId,
       rankerId: contextPolicyIdentity.rankerId,
       rankerVersion: contextPolicyIdentity.rankerVersion,
@@ -853,6 +852,47 @@ export class ContextEngine {
       createdAt,
     };
 
+    // Build candidate observations universe and automatically capture deeply immutable PreOutcomeEpisodeSnapshot (Phase 20.1)
+    const candidateObservations: CandidateObservation[] = rankedCandidates.map((rc, idx) => {
+      const u = unitsMap.get(rc.contextUnitId);
+      const feat = featuresMap.get(rc.contextUnitId);
+      const planned = plannedUnits.find((p) => p.contextUnitId === rc.contextUnitId);
+      return {
+        contextUnitId: rc.contextUnitId,
+        path: u?.path,
+        unitKind: u?.kind || 'file',
+        retrievalSources: candidateMap.get(rc.contextUnitId)?.retrievalSources || ['lexical'],
+        preRankPosition: idx + 1,
+        finalRank: idx + 1,
+        finalScore: rc.finalScore,
+        featureSetVersion: feat?.schemaVersion || 'v1',
+        featureSnapshot: feat ? (feat as unknown as Record<string, number | boolean | null>) : undefined,
+        estimatedTokens: planned?.tokenEstimate || feat?.tokenEstimate || 100,
+        selected: Boolean(planned),
+        selectedResolution: planned ? String(planned.resolution) : undefined,
+      };
+    });
+
+    contextPlan.candidateUniverse = candidateObservations;
+
+    try {
+      const repoState = snapshot.repositories && snapshot.repositories[0];
+      const preOutcomeSnapshot = EpisodeAssembler.capturePreOutcomeSnapshot({
+        episodeId: `ep_${contextPlan.planId}`,
+        plan: contextPlan,
+        task: boundTask,
+        snapshot,
+        candidates: candidateObservations,
+        tokenBudget: this.budgetLimits.maxTokens,
+        repositoryId: repoState?.repositoryId || 'unknown_repo',
+        baseCommit: repoState?.baseCommitSha || '0'.repeat(40),
+        contextPolicyIdentity,
+      });
+      contextPlan.preOutcomeSnapshot = preOutcomeSnapshot;
+    } catch (snapErr) {
+      console.warn('[ContextEngine] Failed to capture PreOutcomeEpisodeSnapshot:', snapErr);
+    }
+
     // If a persistent store is configured and telemetry is allowed, persist all runtime and learning records (Closure PR 0.4 & Milestone PR J1)
     if (this.sqliteStore && this.dataRights.telemetryAllowed !== false) {
       try {
@@ -867,6 +907,10 @@ export class ContextEngine {
         this.sqliteStore.saveSnapshot(snapshot);
         this.sqliteStore.saveTaskContext(boundTask, this.dataRights);
         this.sqliteStore.saveContextPlan(contextPlan, snapshot.workspaceSnapshotId);
+        if (contextPlan.preOutcomeSnapshot) {
+          this.sqliteStore.savePreOutcomeSnapshot(contextPlan.preOutcomeSnapshot);
+          this.sqliteStore.saveEpisodeCandidates(candidateObservations, contextPlan.preOutcomeSnapshot.episodeId);
+        }
         if (exposureDecisionsV2.length > 0) {
           this.sqliteStore.saveExposureDecisions(exposureDecisionsV2, boundTask.taskId);
         }
@@ -1041,9 +1085,9 @@ export class ContextEngine {
         }
 
         // Initialize SQLite store if telemetry is permitted
-        let store: SqliteStore | undefined = undefined;
+        let store: SqliteStore | undefined = options.sqliteStore;
         const telemetryAllowed = options.dataRights ? options.dataRights.telemetryAllowed : true;
-        if (telemetryAllowed !== false) {
+        if (!store && telemetryAllowed !== false) {
           try {
             const siftrDir = path.join(rootDir, '.siftr');
             if (!fs.existsSync(siftrDir)) {
@@ -1189,6 +1233,7 @@ export class ContextEngine {
           units,
           graph,
           task,
+          snapshot,
           formattedContext: plan.formattedContext,
           contextString: plan.formattedContext.promptText,
           replanningAttempts: attempt,

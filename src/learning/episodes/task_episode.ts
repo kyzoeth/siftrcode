@@ -8,7 +8,9 @@
 
 import * as crypto from 'crypto';
 import { TaskEvidence } from '../../context/task_evidence';
+import { ContextPolicyIdentity } from '../../engine/context_plan';
 import { CandidateObservation, SelectedContextObservation } from './candidate_observation';
+import { deepFreeze } from './pre_outcome_snapshot';
 import { AgentTrajectorySummary } from './agent_trajectory';
 import { TaskOutcomeV1 } from '../outcome/task_outcome';
 import { TaskEconomicsV1 } from '../economics/task_economics';
@@ -61,6 +63,7 @@ export interface TaskEpisodeV1 {
     contextPolicyId: string;
     rankerId: string;
     rankerStatus: RankerStatus;
+    contextPolicyIdentity?: ContextPolicyIdentity;
     model?: string;
     agentType?: string;
     toolConfigurationHash: string;
@@ -187,11 +190,13 @@ export function createTaskEpisodeV1(params: {
 
   const recordSha256 = computeEpisodeRecordSha256(intermediate);
 
-  return {
+  const episode: TaskEpisodeV1 = {
     ...intermediate,
     integrity: {
       ...intermediate.integrity,
       recordSha256,
     },
   };
+  deepFreeze(episode);
+  return episode;
 }

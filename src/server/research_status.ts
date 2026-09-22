@@ -302,7 +302,11 @@ export function loadResearchStatus(customRootDir?: string): ResearchStatusRespon
           ndcg5: { frozenV2: v2Ndcg5, learnedV3: v3Ndcg5, delta: ndcg5Delta },
           recall10: { frozenV2: v2Recall10, learnedV3: v3Recall10, delta: recall10Delta },
           mrr: { frozenV2: v2Mrr, learnedV3: v3Mrr, delta: mrrDelta },
-          targetCoverage: { frozenV2: 0.975, learnedV3: 0.975, delta: 0.0 },
+          targetCoverage: {
+            frozenV2: offlineEval.v2Summary?.targetCoverage ?? 0.8,
+            learnedV3: offlineEval.v3Summary?.targetCoverage ?? 0.8,
+            delta: (offlineEval.v3Summary?.targetCoverage ?? 0.8) - (offlineEval.v2Summary?.targetCoverage ?? 0.8),
+          },
         },
         taskOutcomes: {
           v3Wins,

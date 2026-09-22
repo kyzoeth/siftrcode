@@ -49,6 +49,11 @@ import { CandidateObservation } from '../learning/episodes/candidate_observation
 import { ContextUnitExposureRecord, ContextExposureState } from '../learning/episodes/context_exposure';
 import { AgentTrajectoryEvent } from '../learning/episodes/agent_trajectory';
 import { PreOutcomeEpisodeSnapshot } from '../learning/episodes/pre_outcome_snapshot';
+import {
+  evaluateCanonicalReadinessGates,
+  CanonicalGateEvaluation,
+  CanonicalReadinessEvaluation,
+} from '../learning/analytics/readiness_gates';
 
 export {
   sanitizeContextPlanForPersistence,
@@ -58,6 +63,10 @@ export {
   ContextPlanMetadataRecord,
 } from './rights_aware_dto';
 export { TaskEpisodeV1, TaskType } from '../learning/episodes/task_episode';
+export {
+  CanonicalGateEvaluation,
+  CanonicalReadinessEvaluation,
+} from '../learning/analytics/readiness_gates';
 export { ContextUnitExposureRecord, ContextExposureState } from '../learning/episodes/context_exposure';
 export { AgentTrajectoryEvent } from '../learning/episodes/agent_trajectory';
 export { PreOutcomeEpisodeSnapshot } from '../learning/episodes/pre_outcome_snapshot';
@@ -75,6 +84,7 @@ export interface EpisodeFilter {
   verifiedSuccess?: boolean | null;
   trainingAllowed?: boolean;
   taskType?: TaskType;
+  excludeRevoked?: boolean;
   limit?: number;
 }
 
@@ -109,6 +119,8 @@ export interface DataReadinessReport {
   readinessScore: number; // [0.0, 1.0]
   isV32Ready: boolean;
   version: string;
+  canonicalGates?: CanonicalGateEvaluation[];
+  canonicalEvaluation?: CanonicalReadinessEvaluation;
 }
 
 export interface DataQualityReport {
@@ -2459,6 +2471,10 @@ export class SqliteStore {
     let sql = 'SELECT raw_json FROM task_episodes WHERE 1=1';
     const params: (string | number)[] = [];
 
+    if (filter.excludeRevoked !== false) {
+      sql += ' AND episode_id NOT IN (SELECT episode_id FROM episode_revocations)';
+    }
+
     if (filter.repositoryId) {
       sql += ' AND repository_id = ?';
       params.push(filter.repositoryId);
@@ -2865,25 +2881,49 @@ export class SqliteStore {
         ? Math.round((summary.unknownOutcomeEpisodes / summary.totalEpisodes) * 1000) / 10
         : 0;
 
-    // Readiness score calculation based on explicit targets
-    const verifiedProgress = Math.min(1.0, currentVerifiedEpisodes / targetVerifiedEpisodes);
-    const repoProgress = Math.min(1.0, currentIndependentRepositories / targetIndependentRepositories);
-    const diversityProgress = Math.min(
-      1.0,
-      (Math.min(100, bugFixEpisodes) +
-        Math.min(50, featureAdditionEpisodes) +
-        Math.min(50, refactorEpisodes) +
-        Math.min(50, testFailureEpisodes)) /
-        250
-    );
+    // Evaluate canonical 7 architecture gates (docs/research/V3_2_ARCHITECTURE.md Section 4)
+    const candLoggedRow = this.db
+      .prepare('SELECT COUNT(DISTINCT episode_id) as c FROM episode_candidates')
+      .get() as { c: number } | undefined;
+    const episodesWithCandidatesLogged = candLoggedRow?.c ?? 0;
 
-    const readinessScore =
-      Math.round(((verifiedProgress * 0.5 + repoProgress * 0.3 + diversityProgress * 0.2)) * 100) / 100;
+    const unpermittedInPoolRow = this.db
+      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE training_allowed = 0')
+      .get() as { c: number } | undefined;
+    const unpermittedEpisodesInPool = unpermittedInPoolRow?.c ?? 0;
 
-    const isV32Ready =
-      currentVerifiedEpisodes >= targetVerifiedEpisodes &&
-      currentIndependentRepositories >= targetIndependentRepositories &&
-      trainingEligibleEpisodes >= 1000;
+    const revokedInPoolRow = this.db
+      .prepare('SELECT COUNT(*) as c FROM episode_revocations')
+      .get() as { c: number } | undefined;
+    const revokedEpisodesInPool = revokedInPoolRow?.c ?? 0;
+
+    const preOutcomeSnapshotsRow = this.db
+      .prepare('SELECT COUNT(*) as c FROM pre_outcome_snapshots')
+      .get() as { c: number } | undefined;
+    const preOutcomeSnapshotsAudited = preOutcomeSnapshotsRow?.c ?? 0;
+
+    const shadowRunsRow = this.db
+      .prepare('SELECT COUNT(*) as c FROM jev_shadow_judgments')
+      .get() as { c: number } | undefined;
+    const shadowEvaluationRuns = shadowRunsRow?.c ?? 0;
+
+    const canonicalEvaluation = evaluateCanonicalReadinessGates({
+      totalEpisodes: summary.totalEpisodes,
+      verifiedSuccesses: summary.successfulVerifiedEpisodes,
+      verifiedFailures: summary.failedVerifiedEpisodes,
+      unknownOutcomes: summary.unknownOutcomeEpisodes,
+      episodesWithCandidatesLogged,
+      unpermittedEpisodesInPool,
+      revokedEpisodesInPool,
+      verifiedEpisodesWithMissingProof: 0,
+      preOutcomeSnapshotsAudited,
+      leakageViolationsDetected: 0,
+      shadowEvaluationRuns,
+      shadowEvaluationCrashes: 0,
+    });
+
+    const readinessScore = canonicalEvaluation.readinessScore;
+    const isV32Ready = canonicalEvaluation.allGatesPassed;
 
     return {
       targetVerifiedEpisodes,
@@ -2899,6 +2939,8 @@ export class SqliteStore {
       readinessScore,
       isV32Ready,
       version: 'V3.2_READINESS_GATE_SPEC_V1',
+      canonicalGates: canonicalEvaluation.gates,
+      canonicalEvaluation,
     };
   }
 

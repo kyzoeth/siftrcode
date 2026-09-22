@@ -62,7 +62,8 @@ const tests = [
   { name: 'V3.1 Offline Evaluator Context Providers & Provenance Regressions Tests', file: 'test_v3_offline_eval_providers_regression.js' },
   { name: 'V3.1 Evaluation Bridge Parity & Scientific Integrity Tests', file: 'test_v3_evaluation_bridge_parity.js' },
   { name: 'Truth in Advertising, Model Governance & Admin Security Tests', file: 'test_truth_and_governance.js' },
-  { name: 'Production Data Flywheel & Learning Boundary Tests (Phase 20)', file: 'test_learning_flywheel.js' }
+  { name: 'Production Data Flywheel & Learning Boundary Tests (Phase 20)', file: 'test_learning_flywheel.js' },
+  { name: 'Production Telemetry, Assembler & Ingestion E2E Tests (Phase 20.1)', file: 'test_production_ingestion_e2e.js' }
 ];
 
 

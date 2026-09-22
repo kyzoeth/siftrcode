@@ -140,3 +140,45 @@ export function resolveTaskOutcome(input: ResolveOutcomeInput): TaskOutcomeV1 {
     evaluationRationale: rationale,
   };
 }
+
+import { OutcomeEvidence } from '../../telemetry/outcome_evidence';
+
+/**
+ * Maps authoritative production OutcomeEvidence directly into TaskOutcomeV1.
+ * Preserves high-confidence verifier policy and attribution sources.
+ */
+export function resolveTaskOutcomeFromEvidence(
+  evidence: OutcomeEvidence,
+  episodeId?: string
+): TaskOutcomeV1 {
+  const sources: string[] = [];
+  if (evidence.humanReview && evidence.humanReview !== 'UNKNOWN') sources.push('HUMAN_REVIEW');
+  if (evidence.behavioralOraclePassed !== undefined) sources.push('BEHAVIORAL_ORACLE');
+  if (evidence.hiddenTestsPassed !== undefined) sources.push('HIDDEN_TESTS');
+  if (evidence.publicTestsPassed !== undefined) sources.push('PUBLIC_TESTS');
+  if (evidence.regressionTestsPassed !== undefined) sources.push('REGRESSION_TESTS');
+  if (evidence.buildPassed !== undefined) sources.push('BUILD');
+  if (evidence.staticChecksPassed !== undefined) sources.push('STATIC_CHECKS');
+  if (evidence.securityChecksPassed !== undefined) sources.push('SECURITY_CHECKS');
+  if (evidence.agentReportedSuccess && sources.length === 0) sources.push('AGENT_REPORTED_ONLY');
+
+  let conf: VerificationConfidence = 'UNKNOWN';
+  if (evidence.confidence >= 0.9) conf = 'HIGH';
+  else if (evidence.confidence >= 0.7) conf = 'MEDIUM';
+  else if (evidence.confidence > 0.3) conf = 'LOW';
+
+  return {
+    episodeId: episodeId || evidence.contextPlanId || evidence.taskId,
+    buildPassed: evidence.buildPassed,
+    targetedTestsPassed: evidence.publicTestsPassed,
+    regressionTestsPassed: evidence.regressionTestsPassed,
+    hiddenTestsPassed: evidence.hiddenTestsPassed,
+    taskVerifierPassed: evidence.behavioralOraclePassed,
+    humanReview: evidence.humanReview,
+    verifiedSuccess: evidence.verifiedSuccess,
+    verificationConfidence: conf,
+    verificationSources: sources,
+    completedAt: evidence.recordedAt,
+    evaluationRationale: evidence.evaluationRationale,
+  };
+}
