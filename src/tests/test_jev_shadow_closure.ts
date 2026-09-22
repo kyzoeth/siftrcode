@@ -893,6 +893,7 @@ export async function runJevShadowClosureTests() {
           sessionId: autoSessionId,
           planId: planId,
           finalStatus: 'SUCCESS',
+          behavioralOraclePassed: true,
           testsPassed: true,
           userAccepted: true,
           editsCount: 1,

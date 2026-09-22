@@ -248,6 +248,7 @@ export function testCharge() {
         planId,
         directory: tempWorkspaceDir,
         evidence: {
+          behavioralOraclePassed: true,
           buildPassed: true,
           publicTestsPassed: true,
           regressionTestsPassed: true,

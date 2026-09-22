@@ -2777,8 +2777,8 @@ export class SqliteStore {
     evaluation: ShadowPolicyComparison,
     crashed: boolean = false,
     errorMessage?: string,
-    environment: string = 'PRODUCTION',
-    isSynthetic: boolean = false
+    environment: string = 'UNKNOWN',
+    isSynthetic: boolean = true
   ): void {
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO shadow_policy_evaluations (
@@ -3303,39 +3303,61 @@ export class SqliteStore {
       }
     }
 
-    // 5. Real pre-outcome snapshot leakage audit (measuring real persisted audits)
-    const auditStats = this.db.prepare(`
-      SELECT COUNT(*) as total,
-             SUM(CASE WHEN passed = 1 THEN 1 ELSE 0 END) as passed_count,
-             SUM(CASE WHEN passed = 0 THEN 1 ELSE 0 END) as failed_count
-      FROM pre_outcome_integrity_audits
-    `).get() as { total: number; passed_count: number; failed_count: number } | undefined;
+    // 5. Real pre-outcome snapshot leakage audit (Phase 20.4: 100% distinct active eligible snapshots with current passing audit)
+    const activeSnapshotsCountRow = this.db.prepare(`
+      SELECT COUNT(DISTINCT episode_id) as c
+      FROM pre_outcome_snapshots
+      WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)
+    `).get() as { c: number } | undefined;
+    const activeSnapshotCount = activeSnapshotsCountRow?.c ?? 0;
 
-    let preOutcomeSnapshotsAudited = auditStats?.total ?? 0;
-    let leakageViolationsDetected = auditStats?.failed_count ?? 0;
+    const passingAuditedRow = this.db.prepare(`
+      SELECT COUNT(DISTINCT a.episode_id) as c
+      FROM pre_outcome_integrity_audits a
+      JOIN pre_outcome_snapshots s ON a.episode_id = s.episode_id
+      WHERE a.passed = 1
+        AND a.snapshot_sha256 = s.snapshot_sha256
+        AND s.episode_id NOT IN (SELECT episode_id FROM episode_revocations)
+    `).get() as { c: number } | undefined;
+    let passingAuditedSnapshots = passingAuditedRow?.c ?? 0;
 
-    if (preOutcomeSnapshotsAudited === 0) {
+    const failedActiveAuditsRow = this.db.prepare(`
+      SELECT COUNT(DISTINCT a.episode_id) as c
+      FROM pre_outcome_integrity_audits a
+      JOIN pre_outcome_snapshots s ON a.episode_id = s.episode_id
+      WHERE a.passed = 0
+        AND s.episode_id NOT IN (SELECT episode_id FROM episode_revocations)
+    `).get() as { c: number } | undefined;
+    let failedActiveSnapshots = failedActiveAuditsRow?.c ?? 0;
+
+    // If there are active snapshots but none have been audited yet, run the audit on the fly and persist
+    if (activeSnapshotCount > 0 && passingAuditedSnapshots === 0 && failedActiveSnapshots === 0) {
       const snapshotRows = this.db.prepare(`
         SELECT raw_json FROM pre_outcome_snapshots
         WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)
       `).all() as Array<{ raw_json: string }>;
-      preOutcomeSnapshotsAudited = snapshotRows.length;
       for (const sr of snapshotRows) {
         const audit = this.auditPreOutcomeSnapshot(sr.raw_json);
-        if (!audit.passed) {
-          leakageViolationsDetected++;
+        if (audit.passed) {
+          passingAuditedSnapshots++;
+        } else {
+          failedActiveSnapshots++;
         }
       }
     }
 
-    // 6. Real shadow policy runs and crashes (measuring real shadow_policy_evaluations table with is_synthetic = 0 and PRODUCTION)
+    // Zero-leakage audit gate requirement: 100% of distinct active eligible snapshots must have passing audits, with 0 violations
+    const preOutcomeSnapshotsAudited = activeSnapshotCount > 0 ? passingAuditedSnapshots : 0;
+    const leakageViolationsDetected = failedActiveSnapshots + Math.max(0, activeSnapshotCount - passingAuditedSnapshots);
+
+    // 6. Real shadow policy runs and crashes (measuring real shadow_policy_evaluations table strictly with is_synthetic = 0 AND environment = 'PRODUCTION')
     const shadowRunsRow = this.db
-      .prepare("SELECT COUNT(*) as c FROM shadow_policy_evaluations WHERE crashed = 0 AND (is_synthetic = 0 OR is_synthetic IS NULL) AND (environment = 'PRODUCTION' OR environment IS NULL)")
+      .prepare("SELECT COUNT(*) as c FROM shadow_policy_evaluations WHERE crashed = 0 AND is_synthetic = 0 AND environment = 'PRODUCTION'")
       .get() as { c: number } | undefined;
     const shadowEvaluationRuns = shadowRunsRow?.c ?? 0;
 
     const shadowCrashRow = this.db
-      .prepare("SELECT COUNT(*) as c FROM shadow_policy_evaluations WHERE crashed = 1 AND (is_synthetic = 0 OR is_synthetic IS NULL) AND (environment = 'PRODUCTION' OR environment IS NULL)")
+      .prepare("SELECT COUNT(*) as c FROM shadow_policy_evaluations WHERE crashed = 1 AND is_synthetic = 0 AND environment = 'PRODUCTION'")
       .get() as { c: number } | undefined;
     const shadowEvaluationCrashes = shadowCrashRow?.c ?? 0;
 

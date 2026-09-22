@@ -533,22 +533,28 @@ async function runProductionIngestionE2ETests() {
   // =========================================================================
   console.log('\n--- 8. Canonical Readiness Gates Evaluation ---');
   // Record real shadow policy evaluations (Migration 16)
-  store.saveShadowPolicyEvaluation({
-    taskId: 'task_closure_e2e_001',
-    productionPolicyId: 'production-v2-deterministic-2026-09',
-    shadowPolicyId: 'shadow-candidate-v3',
-    candidateCount: 10,
-    topK: 10,
-    rankOverlapJaccard: 0.95,
-    topKDifferences: { inProductionOnly: [], inShadowOnly: [], sharedTopKCount: 10 },
-    inclusionDifferences: { inProductionOnly: [], inShadowOnly: [], sharedInclusionCount: 10 },
-    resolutionDifferences: [],
-    tokenDifference: 0,
-    productionTokens: 1000,
-    shadowTokens: 1000,
-    shadowLatencyMs: 18,
-    evaluatedAt: new Date().toISOString(),
-  });
+  store.saveShadowPolicyEvaluation(
+    {
+      taskId: 'task_closure_e2e_001',
+      productionPolicyId: 'production-v2-deterministic-2026-09',
+      shadowPolicyId: 'shadow-candidate-v3',
+      candidateCount: 10,
+      topK: 10,
+      rankOverlapJaccard: 0.95,
+      topKDifferences: { inProductionOnly: [], inShadowOnly: [], sharedTopKCount: 10 },
+      inclusionDifferences: { inProductionOnly: [], inShadowOnly: [], sharedInclusionCount: 10 },
+      resolutionDifferences: [],
+      tokenDifference: 0,
+      productionTokens: 1000,
+      shadowTokens: 1000,
+      shadowLatencyMs: 18,
+      evaluatedAt: new Date().toISOString(),
+    },
+    false,
+    undefined,
+    'PRODUCTION',
+    false
+  );
 
   const summary = store.getLearningFlywheelSummary();
   // With 2 total episodes created, and 1 revoked, totalEpisodes must be exactly 1!
