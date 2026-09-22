@@ -14,6 +14,8 @@ export interface DeletionCriteria {
   repository?: string;
   tenantId?: string;
   taskId?: string;
+  episodeId?: string;
+  episodeIds?: string[];
   observationIds?: string[];
   reason?: string;
 }
@@ -22,6 +24,7 @@ export interface LineageTraceReport {
   criteria: DeletionCriteria;
   matchedObservationIds: string[];
   matchedTaskIds: string[];
+  matchedEpisodeIds: string[];
   matchedTrainingRowIds: string[];
   affectedDatasetVersions: string[];
 }
@@ -33,6 +36,7 @@ export interface DeletionAuditRecord {
   criteria: DeletionCriteria;
   purgedObservationsCount: number;
   purgedTrainingRowsCount: number;
+  revokedEpisodesCount?: number;
   affectedDatasets: string[];
   status: 'COMPLETED' | 'FAILED';
   details?: string;
@@ -59,9 +63,39 @@ export class DeletionManager {
     const affectedDatasetsSet = new Set<string>();
     const matchedObsIdsSet = new Set<string>(criteria.observationIds || []);
     const matchedTaskIdsSet = new Set<string>();
+    const matchedEpisodeIdsSet = new Set<string>();
 
     if (criteria.taskId) {
       matchedTaskIdsSet.add(criteria.taskId);
+    }
+    if (criteria.episodeId) {
+      matchedEpisodeIdsSet.add(criteria.episodeId);
+    }
+    if (criteria.episodeIds) {
+      for (const id of criteria.episodeIds) matchedEpisodeIdsSet.add(id);
+    }
+
+    // Filter task episodes by criteria
+    try {
+      const episodes = this.store.listTaskEpisodes({
+        repositoryId: criteria.repository,
+        taskId: criteria.taskId,
+      });
+      for (const ep of episodes) {
+        let match = false;
+        if (criteria.repository && ep.repositoryId === criteria.repository) match = true;
+        if (criteria.tenantId && ep.tenantId === criteria.tenantId) match = true;
+        if (criteria.taskId && ep.taskId === criteria.taskId) match = true;
+        if (criteria.episodeId && ep.episodeId === criteria.episodeId) match = true;
+        if (criteria.episodeIds && criteria.episodeIds.includes(ep.episodeId)) match = true;
+
+        if (match) {
+          matchedEpisodeIdsSet.add(ep.episodeId);
+          matchedTaskIdsSet.add(ep.taskId);
+        }
+      }
+    } catch {
+      // Ignore if table not yet queried in testing
     }
 
     // Filter training rows by criteria
@@ -105,6 +139,7 @@ export class DeletionManager {
       criteria,
       matchedObservationIds: Array.from(matchedObsIdsSet),
       matchedTaskIds: Array.from(matchedTaskIdsSet),
+      matchedEpisodeIds: Array.from(matchedEpisodeIdsSet),
       matchedTrainingRowIds,
       affectedDatasetVersions: Array.from(affectedDatasetsSet),
     };
@@ -134,6 +169,13 @@ export class DeletionManager {
         observationIds: trace.matchedObservationIds.length > 0 ? trace.matchedObservationIds : undefined,
       });
 
+      // 3. Revoke matching task episodes with tombstones
+      let revokedEpisodesCount = 0;
+      for (const epId of trace.matchedEpisodeIds) {
+        this.store.revokeEpisode(epId, criteria.reason || 'Purge deletion request');
+        revokedEpisodesCount++;
+      }
+
       const auditRecord: DeletionAuditRecord = {
         deletionId,
         requestedAt,
@@ -141,6 +183,7 @@ export class DeletionManager {
         criteria,
         purgedObservationsCount,
         purgedTrainingRowsCount,
+        revokedEpisodesCount,
         affectedDatasets: trace.affectedDatasetVersions,
         status: 'COMPLETED',
       };

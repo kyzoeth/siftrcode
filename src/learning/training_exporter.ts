@@ -19,6 +19,22 @@ import { DataRights } from '../rights/data_rights';
 import { SourceProvenance } from '../rights/source_provenance';
 import { RightsFilter, RightsFilterConfig } from '../rights/rights_filter';
 import { TrainingRow, createTrainingRow, TrainingEvidenceRecord } from './lineage';
+import { TaskEpisodeV1 } from './episodes/task_episode';
+import {
+  SIFTR_CONTEXT_DATASET_V2_VERSION,
+  SiftrContextDatasetV2Row,
+  SiftrContextDatasetV2Summary,
+  SanctionedDatasetV2Export,
+} from './datasets/siftr_dataset_v2';
+import { resolveExposureState, ContextExposureState } from './episodes/context_exposure';
+import { FORBIDDEN_PRE_OUTCOME_FIELDS } from './episodes/pre_outcome_snapshot';
+
+export {
+  SIFTR_CONTEXT_DATASET_V2_VERSION,
+  SiftrContextDatasetV2Row,
+  SiftrContextDatasetV2Summary,
+  SanctionedDatasetV2Export,
+} from './datasets/siftr_dataset_v2';
 
 const SANCTIONED_BRAND = Symbol('SANCTIONED_TRAINING_EXPORT_BRAND');
 
@@ -66,6 +82,17 @@ export function isSanctionedTrainingEvidenceExport(obj: unknown): obj is Sanctio
     Object.isFrozen(obj) &&
     Array.isArray((obj as any).records) &&
     Object.isFrozen((obj as any).records) &&
+    sanctionedExports.has(obj)
+  );
+}
+
+export function isSanctionedDatasetV2Export(obj: unknown): obj is SanctionedDatasetV2Export {
+  return Boolean(
+    obj &&
+    typeof obj === 'object' &&
+    Object.isFrozen(obj) &&
+    Array.isArray((obj as any).rows) &&
+    Object.isFrozen((obj as any).rows) &&
     sanctionedExports.has(obj)
   );
 }
@@ -296,6 +323,191 @@ export class TrainingExporter {
       exportedAt,
       [SANCTIONED_BRAND]: true,
     };
+    deepFreeze(result);
+    sanctionedExports.add(result);
+    return result;
+  }
+
+  /**
+   * SIFTR_CONTEXT_DATASET_V2 Export Boundary (Phase 20J)
+   *
+   * Exports canonical TaskEpisodeV1 instances into SiftrContextDatasetV2Row records.
+   * Invariants:
+   * 1. Rights permitted: trainingAllowed === true strictly enforced (fails closed).
+   * 2. Exclude revoked or deleted episodes.
+   * 3. Point-in-time boundary: candidate features must be point-in-time without post-outcome leakage.
+   * 4. UNKNOWN != NEGATIVE: unselected/unshown candidates are never negative.
+   * 5. Multi-dimensional signals (wasRead, wasEdited, wasInSuccessfulTask, etc.) remain decoupled.
+   */
+  public exportContextDatasetV2(
+    episodes: TaskEpisodeV1[],
+    options: {
+      isRevoked?: (episodeId: string) => boolean;
+      datasetVersion?: string;
+    } = {}
+  ): SanctionedDatasetV2Export {
+    const exportId = `texport_v2_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
+    const exportedAt = new Date().toISOString();
+
+    const rows: SiftrContextDatasetV2Row[] = [];
+    const rejections: Array<{ episodeId: string; reasons: string[] }> = [];
+
+    let totalEpisodesAccepted = 0;
+    let selectedUnitsCount = 0;
+    let shownUnitsCount = 0;
+    let readUnitsCount = 0;
+    let editedUnitsCount = 0;
+    let verifiedSuccessTasksCount = 0;
+    let verifiedFailedTasksCount = 0;
+    let unknownOutcomeTasksCount = 0;
+    const repositoryDistribution: Record<string, number> = {};
+    const taskTypeDistribution: Record<string, number> = {};
+
+    for (const ep of episodes) {
+      // 1. Data Rights check (fail-closed)
+      if (!ep.rights || ep.rights.trainingAllowed !== true) {
+        rejections.push({
+          episodeId: ep.episodeId,
+          reasons: ['RIGHTS_BLOCKED: trainingAllowed is false or unspecified.'],
+        });
+        continue;
+      }
+
+      // 2. Revocation check
+      if (options.isRevoked && options.isRevoked(ep.episodeId)) {
+        rejections.push({
+          episodeId: ep.episodeId,
+          reasons: ['REVOKED_EPISODE: Episode has been revoked/tombstoned by compliance deletion.'],
+        });
+        continue;
+      }
+
+      // 3. Point-in-time feature boundary check
+      let hasLeakage = false;
+      const leakageReasons: string[] = [];
+      for (const cand of ep.contextDecision.candidates) {
+        if (cand.featureSnapshot) {
+          for (const field of FORBIDDEN_PRE_OUTCOME_FIELDS) {
+            if (field in cand.featureSnapshot && (cand.featureSnapshot as Record<string, unknown>)[field] !== undefined) {
+              hasLeakage = true;
+              leakageReasons.push(`LEAKAGE_IN_FEATURES: Feature snapshot contains forbidden field "${field}".`);
+              break;
+            }
+          }
+        }
+        if (hasLeakage) break;
+      }
+      if (hasLeakage) {
+        rejections.push({
+          episodeId: ep.episodeId,
+          reasons: leakageReasons,
+        });
+        continue;
+      }
+
+      totalEpisodesAccepted++;
+
+      // Track distribution
+      const repo = ep.repositoryId || 'unknown';
+      repositoryDistribution[repo] = (repositoryDistribution[repo] || 0) + 1;
+      const ttype = ep.task.taskType || 'OTHER';
+      taskTypeDistribution[ttype] = (taskTypeDistribution[ttype] || 0) + 1;
+
+      if (ep.outcome.verifiedSuccess === true) {
+        verifiedSuccessTasksCount++;
+      } else if (ep.outcome.verifiedSuccess === false) {
+        verifiedFailedTasksCount++;
+      } else {
+        unknownOutcomeTasksCount++;
+      }
+
+      const readPathsSet = new Set(ep.trajectory?.readPaths || []);
+      const editedPathsSet = new Set(ep.trajectory?.editedPaths || []);
+      const selectedUnitIds = new Set(ep.contextDecision.selectedUnits.map((u) => u.contextUnitId));
+
+      for (const candidate of ep.contextDecision.candidates) {
+        const wasSelected = candidate.selected || selectedUnitIds.has(candidate.contextUnitId);
+        const wasShown = wasSelected;
+        const wasRead = candidate.path ? readPathsSet.has(candidate.path) : false;
+        const wasEdited = candidate.path ? editedPathsSet.has(candidate.path) : false;
+
+        const exposureState = resolveExposureState({
+          wasEdited,
+          wasRead,
+          wasShown,
+          wasSelected,
+        });
+
+        if (wasSelected) selectedUnitsCount++;
+        if (wasShown) shownUnitsCount++;
+        if (wasRead) readUnitsCount++;
+        if (wasEdited) editedUnitsCount++;
+
+        const rowId = `row_${exportId}_${ep.episodeId}_${candidate.contextUnitId}`;
+        const row: SiftrContextDatasetV2Row = {
+          rowId,
+          exportId,
+          episodeId: ep.episodeId,
+          taskIdentityHash: ep.task.promptSha256,
+          repositoryFamily: ep.repositoryId,
+          taskType: ep.task.taskType || 'OTHER',
+          contextUnitId: candidate.contextUnitId,
+          unitPath: candidate.path,
+          candidateRetrievalProvenance: candidate.retrievalSources || [],
+          candidateFeatureVector: candidate.featureSnapshot || {},
+          preRankPosition: candidate.preRankPosition,
+          finalRank: candidate.finalRank,
+          finalScore: candidate.finalScore,
+          exposureState,
+          wasSelected,
+          wasShown,
+          wasRead,
+          wasEdited,
+          wasInSuccessfulTask: ep.outcome.verifiedSuccess === true,
+          wasInFailedTask: ep.outcome.verifiedSuccess === false,
+          verifiedSuccess: ep.outcome.verifiedSuccess,
+          outcomeConfidence: ep.outcome.verificationConfidence,
+          verifiedTargetEvidence: wasEdited || wasRead,
+          contextTokens: candidate.estimatedTokens,
+          taskEconomics: ep.economics,
+          rightsReference: ep.rights.permissionSource,
+          exportedAt,
+        };
+
+        rows.push(row);
+      }
+    }
+
+    const summary: SiftrContextDatasetV2Summary = {
+      datasetVersion: SIFTR_CONTEXT_DATASET_V2_VERSION,
+      exportId,
+      exportedAt,
+      totalEpisodes: totalEpisodesAccepted,
+      totalCandidateRows: rows.length,
+      selectedUnitsCount,
+      shownUnitsCount,
+      readUnitsCount,
+      editedUnitsCount,
+      verifiedSuccessTasksCount,
+      verifiedFailedTasksCount,
+      unknownOutcomeTasksCount,
+      repositoryDistribution,
+      taskTypeDistribution,
+    };
+
+    const result: SanctionedDatasetV2Export = {
+      exportId,
+      datasetVersion: SIFTR_CONTEXT_DATASET_V2_VERSION,
+      rows,
+      summary,
+      totalEpisodesEvaluated: episodes.length,
+      totalEpisodesAccepted,
+      totalEpisodesRejected: rejections.length,
+      rejections,
+      exportedAt,
+      [SANCTIONED_BRAND]: true,
+    };
+
     deepFreeze(result);
     sanctionedExports.add(result);
     return result;
