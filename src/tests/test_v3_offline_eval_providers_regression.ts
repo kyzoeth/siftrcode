@@ -115,6 +115,7 @@ export async function runOfflineEvalProvidersRegressionTests() {
   const capturedV3Budgets: number[] = [];
 
   const mockV2Provider = {
+    providerName: 'FrozenV2ContextProvider',
     getImplementation: () => v2Provider.getImplementation(),
     getContext: async (opts: any) => {
       v2Invocations++;
@@ -124,6 +125,7 @@ export async function runOfflineEvalProvidersRegressionTests() {
   };
 
   const mockV3Provider = {
+    providerName: 'LearnedV3ContextProvider',
     getImplementation: () => v3Provider.getImplementation(),
     getContext: async (opts: any) => {
       v3Invocations++;
@@ -132,12 +134,11 @@ export async function runOfflineEvalProvidersRegressionTests() {
     },
   };
 
-  const tmpReportPath = path.join(os.tmpdir(), `mini_offline_eval_${Date.now()}.json`);
   const miniReport = await runFinalOfflineEvaluation({
     maxTasks: 2,
     v2Provider: mockV2Provider,
     v3Provider: mockV3Provider,
-    outputPath: tmpReportPath,
+    persistReport: false,
   });
 
   assert.strictEqual(v2Invocations, 2, 'Evaluator must invoke FrozenV2ContextProvider once per task');
@@ -159,10 +160,6 @@ export async function runOfflineEvalProvidersRegressionTests() {
     assert.strictEqual(t.v2Provenance.providerName, 'FrozenV2ContextProvider');
     assert.strictEqual(t.v3Provenance.providerName, 'LearnedV3ContextProvider');
   }
-
-  try {
-    if (fs.existsSync(tmpReportPath)) fs.unlinkSync(tmpReportPath);
-  } catch {}
 
   console.log('  ✔ Proof verified: Offline evaluator genuinely invokes both providers with candidateBudget: 50');
   console.log('\n🎉 ALL OFFLINE EVALUATOR CONTEXT PROVIDER REGRESSION TESTS PASSED CLEANLY!\n');

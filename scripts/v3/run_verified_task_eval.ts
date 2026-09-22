@@ -277,29 +277,34 @@ export async function runVerifiedTaskEval(options: VerifiedEvalOptions = {}) {
     console.log(`   Base Commit: ${ep.baseCommit}`);
     console.log(`   Prompt: "${ep.taskPrompt.slice(0, 85)}..."`);
 
-    // Generate both context bundles from each exact episode.baseCommit using real providers
-    process.stdout.write('   Generating V2 & V3 context bundles from exact baseCommit... ');
-    const prepWs = createEphemeralWorkspace(ep.repositoryId, ep.baseCommit);
+    // Generate both context bundles from independent baseCommit workspaces using real providers
+    process.stdout.write('   Generating V2 & V3 context bundles from independent baseCommit workspaces... ');
+    const v2ContextWs = createEphemeralWorkspace(ep.repositoryId, ep.baseCommit);
     let v2Bundle: ContextBundleResult;
-    let v3Bundle: ContextBundleResult;
     try {
       v2Bundle = await v2Provider.getContext({
-        workspaceDir: prepWs.dir,
+        workspaceDir: v2ContextWs.dir,
         prompt: ep.taskPrompt,
         tokenBudget: 8000,
         repoId: ep.repositoryId,
       });
-
-      v3Bundle = await v3Provider.getContext({
-        workspaceDir: prepWs.dir,
-        prompt: ep.taskPrompt,
-        tokenBudget: 8000,
-        repoId: ep.repositoryId,
-      });
-      process.stdout.write(`done (V2: ${v2Bundle.tokenEstimate} tok, V3: ${v3Bundle.tokenEstimate} tok)\n`);
     } finally {
-      prepWs.cleanup();
+      v2ContextWs.cleanup();
     }
+
+    const v3ContextWs = createEphemeralWorkspace(ep.repositoryId, ep.baseCommit);
+    let v3Bundle: ContextBundleResult;
+    try {
+      v3Bundle = await v3Provider.getContext({
+        workspaceDir: v3ContextWs.dir,
+        prompt: ep.taskPrompt,
+        tokenBudget: 8000,
+        repoId: ep.repositoryId,
+      });
+    } finally {
+      v3ContextWs.cleanup();
+    }
+    process.stdout.write(`done (V2: ${v2Bundle.tokenEstimate} tok, V3: ${v3Bundle.tokenEstimate} tok)\n`);
 
     // Randomize A/B order
     const runV2First = ((orderSeed * 37 + i * 17 + 101) % 2 === 0);

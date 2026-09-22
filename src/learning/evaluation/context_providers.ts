@@ -20,6 +20,10 @@ import { ContextEngine } from '../../engine/context_engine';
 import { TreeRanker } from '../models/context_rank/tree_ranker';
 import { V3TreeRankerAdapter } from '../models/context_rank/v3_tree_ranker_adapter';
 
+export * from './evaluation_context_result';
+export * from './frozen_v2_bridge';
+export * from './v3_evaluation_provider';
+
 export const AUTHORITATIVE_V2_SHA = '1eedac03b0d83025ebf08ed2945e0ab015c46f6a';
 
 export interface ProviderBundleProvenance {
