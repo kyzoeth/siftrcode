@@ -453,6 +453,8 @@ SiftrCode is completely open-source, local-first, and self-contained within this
 | **Training Lineage** | [`src/learning/lineage.ts`](src/learning/lineage.ts) | Multi-dimensional `TrainingEvidenceRecord` and label derivation algorithms. |
 | **Agent Adapters** | [`src/agents/agent_adapter.ts`](src/agents/agent_adapter.ts) | Formatters for Claude Code XML, Cursor Markdown, and Generic MCP. |
 | **AST Parsers** | [`src/skeleton/`](src/skeleton/) | Multi-language AST interface extractors with exact boundary tracking (TS, Python, Go, Rust). |
+| **Learning Flywheel** | [`src/learning/episodes/`](src/learning/episodes/) | Production data flywheel, context exposure lifecycle, verified outcome modeling, and pre-outcome snapshot boundary. |
+| **Shadow Policy Runner** | [`src/ranking/shadow_policy_runner.ts`](src/ranking/shadow_policy_runner.ts) | Non-invasive shadow ranker framework guaranteeing 100% production plan invariance. |
 | **MCP Server** | [`src/mcp/server.ts`](src/mcp/server.ts) | Native Model Context Protocol stdio server for Claude Code, Cursor & Antigravity. |
 
 
@@ -461,6 +463,8 @@ SiftrCode is completely open-source, local-first, and self-contained within this
 ## 🌐 Web Platform & Documentation
 
 - **Landing Page & Live Simulator**: [siftrcode.com](https://siftrcode.com)
+- **Learning Flywheel Architecture**: [`docs/architecture/LEARNING_FLYWHEEL.md`](docs/architecture/LEARNING_FLYWHEEL.md)
+- **V3.2 Research Strategy**: [`docs/research/V3_2_ARCHITECTURE.md`](docs/research/V3_2_ARCHITECTURE.md)
 - **Architecture Deep Dive**: [siftrcode.com/how-it-works.html](https://siftrcode.com/how-it-works.html)
 - **Claude Code Integration Guide**: [siftrcode.com/claude.html](https://siftrcode.com/claude.html)
 - **About & Mission**: [siftrcode.com/about.html](https://siftrcode.com/about.html)
