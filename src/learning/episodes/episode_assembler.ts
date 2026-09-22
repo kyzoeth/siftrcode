@@ -41,6 +41,8 @@ import { TaskEconomicsV1 } from '../economics/task_economics';
 import { DataRights, createDefaultDataRights } from '../../rights/data_rights';
 import { TaskEpisodeV1, createTaskEpisodeV1 } from './task_episode';
 import { SqliteStore } from '../../storage/sqlite_store';
+import { getRuntimeBuildProvenance, computeToolConfigurationHash } from './runtime_provenance';
+import { scrubTrajectoryMetadata } from '../../security/secret_scrubber';
 
 export interface CaptureSnapshotParams {
   episodeId?: string;
@@ -213,15 +215,21 @@ export class EpisodeAssembler {
         if ('type' in ev) {
           const aev = ev as AgentTrajectoryEvent;
           if (aev.type === 'FILE_READ' || aev.type === 'SYMBOL_READ') {
-            if (aev.path) readPaths.add(aev.path);
-            if (aev.contextUnitId) readUnitIds.add(aev.contextUnitId);
+            if (aev.contextUnitId) {
+              readUnitIds.add(aev.contextUnitId);
+            } else if (aev.path) {
+              readPaths.add(aev.path);
+            }
           } else if (
             aev.type === 'FILE_EDIT' ||
             aev.type === 'FILE_CREATE' ||
             aev.type === 'FILE_DELETE'
           ) {
-            if (aev.path) editedPaths.add(aev.path);
-            if (aev.contextUnitId) editedUnitIds.add(aev.contextUnitId);
+            if (aev.contextUnitId) {
+              editedUnitIds.add(aev.contextUnitId);
+            } else if (aev.path) {
+              editedPaths.add(aev.path);
+            }
           }
         }
         // Handle telemetry TrajectoryEvent
@@ -240,15 +248,21 @@ export class EpisodeAssembler {
             tool.includes('edit') ||
             tool.includes('write')
           ) {
-            if (filePath) editedPaths.add(filePath);
-            if (unitId) editedUnitIds.add(unitId);
+            if (unitId) {
+              editedUnitIds.add(unitId);
+            } else if (filePath) {
+              editedPaths.add(filePath);
+            }
           } else if (
             action.includes('read') ||
             tool.includes('read') ||
             tool.includes('view')
           ) {
-            if (filePath) readPaths.add(filePath);
-            if (unitId) readUnitIds.add(unitId);
+            if (unitId) {
+              readUnitIds.add(unitId);
+            } else if (filePath) {
+              readPaths.add(filePath);
+            }
           }
         }
       }
@@ -353,10 +367,14 @@ export class EpisodeAssembler {
     // Process trajectory summary if raw events given
     let trajectorySummary = params.trajectorySummary;
     if (!trajectorySummary && params.trajectoryEvents && params.trajectoryEvents.length > 0) {
-      // Filter or convert to AgentTrajectoryEvent
+      // Filter or convert to AgentTrajectoryEvent with metadata scrubbing
       const agentEvents: AgentTrajectoryEvent[] = params.trajectoryEvents.map((e, idx) => {
         if ('type' in e) {
-          return e as AgentTrajectoryEvent;
+          const aev = e as AgentTrajectoryEvent;
+          return {
+            ...aev,
+            metadata: scrubTrajectoryMetadata(aev.metadata),
+          };
         }
         const tev = e as TrajectoryEvent;
         const payload = tev.payload || {};
@@ -378,12 +396,15 @@ export class EpisodeAssembler {
           type,
           path: (payload.path || payload.file) as string | undefined,
           contextUnitId: (payload.contextUnitId || payload.unitId) as string | undefined,
+          metadata: scrubTrajectoryMetadata(payload),
         };
       });
       trajectorySummary = summarizeTrajectory(agentEvents);
     }
 
     const rights = params.dataRights || params.plan.dataRights || createDefaultDataRights();
+    const buildProv = getRuntimeBuildProvenance();
+    const toolConfigHash = computeToolConfigurationHash((params.task as any).toolConfiguration || null);
 
     const episode = createTaskEpisodeV1({
       episodeId,
@@ -405,21 +426,21 @@ export class EpisodeAssembler {
         evidence: params.task.evidence || [],
       },
       environment: {
-        siftrVersion: '0.3.0',
-        siftrGitSha: 'ba6d13ddb4243e5913367734f8c159089ffe7834',
+        siftrVersion: buildProv.siftrVersion,
+        siftrGitSha: buildProv.siftrGitSha,
         contextPolicyId: policyIdent.contextPolicyId,
         rankerId: policyIdent.rankerId,
         rankerStatus: 'PRODUCTION',
         contextPolicyIdentity: policyIdent,
-        toolConfigurationHash: crypto.createHash('sha256').update('tools_v2').digest('hex'),
-        systemConfigurationHash: crypto.createHash('sha256').update('system_v2').digest('hex'),
+        toolConfigurationHash: toolConfigHash,
+        systemConfigurationHash: null,
       },
       rights: {
-        serviceProcessingAllowed: rights.telemetryAllowed !== false,
+        serviceProcessingAllowed: (rights as any).serviceProcessingAllowed ?? null,
         trainingAllowed: rights.trainingAllowed === true,
-        redistributionAllowed: (rights as any).redistributionAllowed ?? false,
-        permissionSource: (rights as any).permissionSource || 'enterprise_agreement',
-        decisionTimestamp: (rights as any).decisionTimestamp || new Date().toISOString(),
+        redistributionAllowed: (rights as any).redistributionAllowed ?? null,
+        permissionSource: (rights as any).permissionSource || (rights.trainingAllowed === true ? 'USER_CONSENT' : 'UNKNOWN'),
+        decisionTimestamp: (rights as any).decisionTimestamp || (rights.trainingAllowed === true ? new Date().toISOString() : null),
       },
       contextDecision: {
         candidateCount: params.preOutcomeSnapshot.candidateUniverse.length,
@@ -428,7 +449,7 @@ export class EpisodeAssembler {
         bundleSha256: params.preOutcomeSnapshot.bundleSha256,
         actualRenderedTokens: params.preOutcomeSnapshot.actualRenderedTokens,
         tokenBudget: params.preOutcomeSnapshot.tokenBudget,
-        generationLatencyMs: 15,
+        generationLatencyMs: params.plan.generationLatencyMs ?? params.economics?.contextLatencyMs ?? null,
       },
       trajectory: trajectorySummary,
       outcome,

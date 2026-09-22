@@ -22,6 +22,7 @@ import { createContextExpansionEvent, ExpansionReason } from '../telemetry/expan
 import { createProviderUsageEvent } from '../token/provider_usage';
 import { createAgentEnvironment } from '../agents/agent_environment';
 import { ContextPlan } from '../engine/context_plan';
+import { resolveOutcomeLineage } from '../learning/episodes/lineage_resolver';
 import {
   MCP_TOOL_SCHEMAS,
   McpToolName,
@@ -438,134 +439,24 @@ export function createMcpServer(): Server {
         const inputSessionId = rawArgs.sessionId ? String(rawArgs.sessionId) : undefined;
         const inputTaskId = rawArgs.taskId ? String(rawArgs.taskId) : undefined;
 
-        let resolvedPlanId: string | undefined = inputPlanId;
-        let resolvedSessionId: string | undefined = inputSessionId;
-        let resolvedTaskId: string | undefined = inputTaskId;
-        let resolvedSnapshotId: string = 'snapshot_init';
-        let resolvedAgentEnvId: string = 'unknown';
+        const lineage = resolveOutcomeLineage({
+          contextPlanId: inputPlanId,
+          sessionId: inputSessionId,
+          taskId: inputTaskId,
+        }, store);
 
-        // 1. Resolve via planId
-        if (resolvedPlanId) {
-          const plan = store.getContextPlan(resolvedPlanId);
-          if (!plan) {
-            return {
-              content: [{ type: 'text', text: `Error: ContextPlan "${resolvedPlanId}" not found in observation store.` }],
-              isError: true,
-            };
-          }
-          if (resolvedTaskId && plan.taskId !== resolvedTaskId) {
-            return {
-              content: [{ type: 'text', text: `Error: ContextPlan "${resolvedPlanId}" belongs to taskId "${plan.taskId}", not "${resolvedTaskId}".` }],
-              isError: true,
-            };
-          }
-          if (inputSessionId && plan.sessionId && plan.sessionId !== inputSessionId) {
-            return {
-              content: [{ type: 'text', text: `Error: ContextPlan "${resolvedPlanId}" belongs to session "${plan.sessionId}", not "${inputSessionId}".` }],
-              isError: true,
-            };
-          }
-          resolvedTaskId = plan.taskId;
-          resolvedSessionId = inputSessionId || plan.sessionId;
-          resolvedSnapshotId = plan.workspaceSnapshotId || (plan as any).snapshotId || 'snapshot_init';
-          resolvedAgentEnvId = plan.agentEnvironmentId || 'unknown';
-
-          if (resolvedSessionId) {
-            const session = store.getSession(resolvedSessionId);
-            if (session && session.taskId !== resolvedTaskId) {
-              return {
-                content: [{ type: 'text', text: `Error: Session "${resolvedSessionId}" belongs to task "${session.taskId}", not "${resolvedTaskId}".` }],
-                isError: true,
-              };
-            }
-          }
-        }
-        // 2. Resolve via sessionId if planId not provided
-        else if (resolvedSessionId) {
-          const session = store.getSiftrSession(resolvedSessionId) || store.getSession(resolvedSessionId);
-          if (!session) {
-            return {
-              content: [{ type: 'text', text: `Error: Session "${resolvedSessionId}" not found in observation store.` }],
-              isError: true,
-            };
-          }
-          if (resolvedTaskId && session.taskId !== resolvedTaskId) {
-            return {
-              content: [{ type: 'text', text: `Error: Session "${resolvedSessionId}" belongs to taskId "${session.taskId}", not "${resolvedTaskId}".` }],
-              isError: true,
-            };
-          }
-          resolvedTaskId = session.taskId;
-          resolvedSnapshotId = ('latestWorkspaceSnapshotId' in session && session.latestWorkspaceSnapshotId)
-            ? session.latestWorkspaceSnapshotId
-            : (('snapshotId' in session && (session as any).snapshotId) ? (session as any).snapshotId : 'snapshot_init');
-          resolvedAgentEnvId = ('agentEnvironmentId' in session && session.agentEnvironmentId)
-            ? session.agentEnvironmentId
-            : 'unknown';
-
-          const sessionPlans = store.listContextPlans(resolvedTaskId, resolvedSessionId);
-          if (sessionPlans.length === 1) {
-            resolvedPlanId = sessionPlans[0].planId;
-          } else if (sessionPlans.length > 1) {
-            return {
-              content: [{ type: 'text', text: `Error: Multiple plans (${sessionPlans.length}) exist for session "${resolvedSessionId}". Explicit planId is required to disambiguate.` }],
-              isError: true,
-            };
-          } else {
-            const taskPlans = store.listContextPlans(resolvedTaskId);
-            if (taskPlans.length === 1) {
-              resolvedPlanId = taskPlans[0].planId;
-            }
-          }
-        }
-        // 3. Fallback via taskId
-        else if (resolvedTaskId) {
-          const plans = store.listContextPlans(resolvedTaskId);
-          if (plans.length === 1) {
-            resolvedPlanId = plans[0].planId;
-            resolvedSessionId = plans[0].sessionId;
-            resolvedSnapshotId = plans[0].workspaceSnapshotId || (plans[0] as any).snapshotId || 'snapshot_init';
-            resolvedAgentEnvId = plans[0].agentEnvironmentId || 'unknown';
-          } else if (plans.length > 1) {
-            return {
-              content: [{ type: 'text', text: `Error: Multiple plans exist for task "${resolvedTaskId}". Explicit planId or sessionId is required to disambiguate.` }],
-              isError: true,
-            };
-          } else {
-            return {
-              content: [{ type: 'text', text: `Error: Cannot resolve outcome lineage for task "${resolvedTaskId}". No matching plan or session found in store.` }],
-              isError: true,
-            };
-          }
-        } else {
+        if (!lineage.valid) {
           return {
-            content: [{ type: 'text', text: 'Error: At least one of "planId", "sessionId", or "taskId" is required to resolve outcome lineage.' }],
+            content: [{ type: 'text', text: `Error: ${lineage.error}` }],
             isError: true,
           };
         }
 
-        // Section 2: Never fabricate placeholder identifiers!
-        if (!resolvedSessionId) {
-          return {
-            content: [{ type: 'text', text: 'Error: Cannot resolve durable session lineage for outcome. Please provide sessionId or planId.' }],
-            isError: true,
-          };
-        }
-
-        // Section 36-37: Validate referential integrity at write time
-        const integrityCheck = store.validateOutcomeIntegrity({
-          sessionId: resolvedSessionId,
-          taskId: resolvedTaskId,
-          planId: resolvedPlanId,
-          snapshotId: resolvedSnapshotId,
-          agentEnvironmentId: resolvedAgentEnvId,
-        });
-        if (!integrityCheck.valid) {
-          return {
-            content: [{ type: 'text', text: `Error: ${integrityCheck.reason}` }],
-            isError: true,
-          };
-        }
+        const resolvedPlanId = lineage.planId;
+        const resolvedSessionId = lineage.sessionId;
+        const resolvedTaskId = lineage.taskId;
+        const resolvedSnapshotId = lineage.workspaceSnapshotId;
+        const resolvedAgentEnvId = lineage.agentEnvironmentId;
 
         // Parse evidence vector
         const ev = (typeof rawArgs.evidence === 'object' && rawArgs.evidence !== null) ? (rawArgs.evidence as Record<string, any>) : {};

@@ -371,10 +371,14 @@ export class TrainingExporter {
 
     for (const ep of episodes) {
       // 1. Data Rights check (fail-closed)
-      if (!ep.rights || ep.rights.trainingAllowed !== true) {
+      if (!ep.rights || ep.rights.trainingAllowed !== true || !ep.rights.permissionSource || ep.rights.permissionSource === 'UNKNOWN') {
         rejections.push({
           episodeId: ep.episodeId,
-          reasons: ['RIGHTS_BLOCKED: trainingAllowed is false or unspecified.'],
+          reasons: [
+            !ep.rights || ep.rights.trainingAllowed !== true
+              ? 'RIGHTS_BLOCKED: trainingAllowed is false or unspecified.'
+              : 'RIGHTS_BLOCKED: permissionSource is UNKNOWN or unspecified.',
+          ],
         });
         continue;
       }

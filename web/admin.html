@@ -386,9 +386,15 @@
         </div>
 
         <div class="p-3 rounded border border-zinc-200/70 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/50 space-y-1">
-          <div class="text-[10px] text-ink-secondary uppercase">Baseline Origin Commit</div>
+          <div class="text-[10px] text-ink-secondary uppercase">Scientific Frozen Baseline</div>
           <div class="text-xs font-bold text-[#D97757] truncate" id="govBaselineCommit">1eedac03b0d83025ebf08ed2945e0ab015c46f6a</div>
-          <div class="text-[10px] text-zinc-500">Authoritative v2-final tag</div>
+          <div class="text-[10px] text-zinc-500">v2-final tag @ 1eedac03</div>
+        </div>
+
+        <div class="p-3 rounded border border-zinc-200/70 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/50 space-y-1">
+          <div class="text-[10px] text-ink-secondary uppercase">Live Production Policy</div>
+          <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400 truncate" id="govProdPolicyId">production-v2-deterministic-2026-09</div>
+          <div class="text-[10px] text-zinc-500" id="govProdFeatureVersion">Feature Set: CONTEXT_FEATURES_V1</div>
         </div>
 
         <div class="p-3 rounded border border-zinc-200/70 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/50 space-y-1">
@@ -1951,6 +1957,13 @@
         if (baselineEl) baselineEl.innerText = (rs.baseline.commit || '').slice(0, 12) + '...';
         const govBaseEl = document.getElementById('govBaselineCommit');
         if (govBaseEl) govBaseEl.innerText = rs.baseline.commit || '1eedac03...';
+      }
+
+      if (rs.production) {
+        const prodPolicyEl = document.getElementById('govProdPolicyId');
+        if (prodPolicyEl && rs.production.policyId) prodPolicyEl.innerText = rs.production.policyId;
+        const prodFeatureEl = document.getElementById('govProdFeatureVersion');
+        if (prodFeatureEl && rs.production.featureSetVersion) prodFeatureEl.innerText = `Feature Set: ${rs.production.featureSetVersion}`;
       }
 
       if (rs.candidate) {

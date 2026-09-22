@@ -16,9 +16,9 @@ export interface TaskEconomicsV1 {
   contextGenerationCostUSD?: number | null;
   agentCostUSD?: number | null;
   totalCostUSD?: number | null;
-  contextLatencyMs: number;
+  contextLatencyMs?: number | null;
   taskLatencyMs?: number | null;
-  pricingStatus: 'VALID' | 'PRICING_UNAVAILABLE';
+  pricingStatus: 'VALID' | 'PRICING_UNAVAILABLE' | 'ESTIMATED';
 }
 
 export interface CpvstResult {

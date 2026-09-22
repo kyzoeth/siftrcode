@@ -6,7 +6,7 @@
  * unbounded raw transcripts. Metadata is scrubbed before retention.
  */
 
-import { scrubSecretObject } from '../../security/secret_scrubber';
+import { scrubTrajectoryMetadata } from '../../security/secret_scrubber';
 
 export type AgentTrajectoryEventType =
   | 'CONTEXT_SHOWN'
@@ -62,7 +62,7 @@ export function createAgentTrajectoryEvent(params: {
 }): AgentTrajectoryEvent {
   const eventId = params.eventId || `ev_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
   const timestamp = params.timestamp || new Date().toISOString();
-  const metadata = params.metadata ? scrubSecretObject(params.metadata) : undefined;
+  const metadata = params.metadata ? scrubTrajectoryMetadata(params.metadata) : undefined;
 
   return {
     eventId,

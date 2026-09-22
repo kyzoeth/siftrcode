@@ -5,6 +5,7 @@
 
 import * as crypto from 'crypto';
 import { DataRights, createDefaultDataRights } from '../rights/data_rights';
+import { scrubTrajectoryMetadata } from '../security/secret_scrubber';
 
 export type TrajectoryEventKind =
   | 'CONTEXT_ALLOCATED'
@@ -43,7 +44,7 @@ export class TrajectoryLogger {
       eventId: 'evt_' + crypto.randomUUID().replace(/-/g, '').slice(0, 12),
       taskId: this.taskId,
       kind,
-      payload: { ...payload },
+      payload: scrubTrajectoryMetadata(payload),
       timestamp: Date.now(),
       dataRights: this.dataRights,
     };

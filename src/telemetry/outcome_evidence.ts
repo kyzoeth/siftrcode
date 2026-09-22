@@ -118,39 +118,21 @@ export class DefaultOutcomePolicyV1 implements OutcomePolicy {
       };
     }
 
-    // 3c. Behavioral oracle passed + public tests passed
+    // 3c. Behavioral oracle passed + regressions pass
     if (evidence.behavioralOraclePassed === true) {
       return {
         verifiedSuccess: true,
-        confidence: 0.94,
-        rationale: 'High confidence: independent behavioral oracle passed',
-      };
-    }
-
-    // 3d. Build + public tests + regression tests passed
-    if (evidence.buildPassed === true && evidence.publicTestsPassed === true && evidence.regressionTestsPassed === true) {
-      return {
-        verifiedSuccess: true,
         confidence: 0.95,
-        rationale: 'Strong automated verification: build, task tests, and full regression suite passed',
+        rationale: 'High confidence: independent behavioral oracle passed cleanly',
       };
     }
 
-    // 3e. Public tests + static checks passed
-    if (evidence.publicTestsPassed === true && evidence.staticChecksPassed === true) {
+    // 3d. Public tests + full regression tests passed (NOT public tests alone)
+    if (evidence.publicTestsPassed === true && evidence.regressionTestsPassed === true) {
       return {
         verifiedSuccess: true,
         confidence: 0.90,
-        rationale: 'Public tests and static analysis checks passed cleanly',
-      };
-    }
-
-    // 3e. Public tests passed alone
-    if (evidence.publicTestsPassed === true) {
-      return {
-        verifiedSuccess: true,
-        confidence: 0.85,
-        rationale: 'Public tests passed without negative regression signals',
+        rationale: 'Strong automated verification: task tests and full regression suite passed cleanly',
       };
     }
 
@@ -162,13 +144,6 @@ export class DefaultOutcomePolicyV1 implements OutcomePolicy {
         rationale: 'Automated verification failure: hidden tests failed',
       };
     }
-    if (evidence.publicTestsPassed === false) {
-      return {
-        verifiedSuccess: false,
-        confidence: 0.95,
-        rationale: 'Automated verification failure: public test suite failed',
-      };
-    }
     if (evidence.behavioralOraclePassed === false) {
       return {
         verifiedSuccess: false,
@@ -176,11 +151,35 @@ export class DefaultOutcomePolicyV1 implements OutcomePolicy {
         rationale: 'Automated verification failure: behavioral oracle failed',
       };
     }
+    if (evidence.publicTestsPassed === false) {
+      return {
+        verifiedSuccess: false,
+        confidence: 0.95,
+        rationale: 'Automated verification failure: public test suite failed',
+      };
+    }
     if (evidence.userAccepted === false) {
       return {
         verifiedSuccess: false,
         confidence: 0.90,
         rationale: 'User explicitly rejected proposed task solution',
+      };
+    }
+
+    // 5. Weak Evidence: Public tests passed alone, build passed alone, or agent self-report alone
+    // Section 49 & Phase 20.3 Invariant: weak signals NEVER certify verifiedSuccess = true.
+    if (evidence.publicTestsPassed === true) {
+      return {
+        verifiedSuccess: null,
+        confidence: 0.60,
+        rationale: 'Weak evidence: public tests passed, but no authoritative behavioral oracle, hidden verifier, or human acceptance; verifiedSuccess remains UNKNOWN.',
+      };
+    }
+    if (evidence.buildPassed === true) {
+      return {
+        verifiedSuccess: null,
+        confidence: 0.40,
+        rationale: 'Weak evidence: build passed, but no behavioral verification performed; verifiedSuccess remains UNKNOWN.',
       };
     }
 

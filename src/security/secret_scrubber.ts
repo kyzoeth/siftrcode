@@ -34,7 +34,7 @@ const SECRET_PATTERNS: RegExp[] = [
   /(["']?(?:password|client_secret|access_token|secret_key)["']?\s*[:=]\s*["'])[^"'\s]{4,}(["'])/gi,
 ];
 
-const ALLOWED_METADATA_KEYS = new Set([
+export const ALLOWED_METADATA_KEYS = new Set([
   'command',
   'exitCode',
   'testCount',
@@ -53,7 +53,40 @@ const ALLOWED_METADATA_KEYS = new Set([
   'status',
   'targetPath',
   'relativeFilePath',
+  'path',
+  'contextUnitId',
+  'unitId',
+  'tool',
+  'action',
+  'sequence',
 ]);
+
+/**
+ * Strictly scrubs and allowlists trajectory metadata.
+ * Drops all non-allowlisted keys (headers, auth, env maps, command output).
+ */
+export function scrubTrajectoryMetadata(
+  metadata?: Record<string, unknown> | null
+): Record<string, unknown> {
+  if (!metadata || typeof metadata !== 'object') {
+    return {};
+  }
+  const scrubbed: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(metadata)) {
+    if (!ALLOWED_METADATA_KEYS.has(key)) {
+      continue; // drop non-allowlisted key
+    }
+    if (typeof val === 'string') {
+      scrubbed[key] = scrubSecrets(val);
+    } else if (typeof val === 'number' || typeof val === 'boolean') {
+      scrubbed[key] = val;
+    } else if (val === null) {
+      scrubbed[key] = null;
+    }
+    // Note: nested arbitrary objects/arrays are dropped
+  }
+  return scrubbed;
+}
 
 /**
  * Redacts secret patterns from a string.

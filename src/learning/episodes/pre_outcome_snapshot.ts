@@ -126,7 +126,7 @@ export function canonicalJsonSerialize(val: unknown): string {
 }
 
 /**
- * Computes a deterministic SHA-256 hash over the FULL snapshot payload (including all candidates).
+ * Computes a deterministic SHA-256 hash over the FULL snapshot payload (including all candidates and full policy identity).
  */
 export function computeSnapshotSha256(snapshot: Omit<PreOutcomeEpisodeSnapshot, 'snapshotSha256'>): string {
   const fullPayload = {
@@ -145,10 +145,70 @@ export function computeSnapshotSha256(snapshot: Omit<PreOutcomeEpisodeSnapshot, 
     bundleSha256: snapshot.bundleSha256,
     contextPolicyId: snapshot.contextPolicyId,
     rankerId: snapshot.rankerId,
+    contextPolicyIdentity: snapshot.contextPolicyIdentity ? {
+      contextPolicyId: snapshot.contextPolicyIdentity.contextPolicyId,
+      rankerId: snapshot.contextPolicyIdentity.rankerId,
+      rankerVersion: snapshot.contextPolicyIdentity.rankerVersion,
+      featureSetVersion: snapshot.contextPolicyIdentity.featureSetVersion,
+      candidateGeneratorVersion: snapshot.contextPolicyIdentity.candidateGeneratorVersion,
+      budgetPolicyVersion: snapshot.contextPolicyIdentity.budgetPolicyVersion,
+      materializerVersion: snapshot.contextPolicyIdentity.materializerVersion,
+    } : null,
     capturedAt: snapshot.capturedAt,
   };
   const serialized = canonicalJsonSerialize(fullPayload);
   return crypto.createHash('sha256').update(serialized).digest('hex');
+}
+
+/**
+ * Loads, verifies, and returns a verified PreOutcomeEpisodeSnapshot.
+ * Invariants enforced:
+ * 1. Checks schema and leakage invariants.
+ * 2. Recomputes SHA-256 over entire sanctioned payload without stored snapshotSha256.
+ * 3. Fails closed with SNAPSHOT_HASH_MISMATCH if payload was tampered with or corrupted.
+ * 4. Deeply freezes verified snapshot.
+ */
+export function loadVerifiedPreOutcomeSnapshot(
+  rawJsonOrObj: string | Record<string, unknown> | PreOutcomeEpisodeSnapshot
+): PreOutcomeEpisodeSnapshot {
+  let parsed: any;
+  if (typeof rawJsonOrObj === 'string') {
+    try {
+      parsed = JSON.parse(rawJsonOrObj);
+    } catch (err) {
+      throw new Error(`FAIL_CLOSED_CORRUPT_SNAPSHOT: Failed to parse snapshot JSON: ${err}`);
+    }
+  } else {
+    parsed = JSON.parse(JSON.stringify(rawJsonOrObj));
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('FAIL_CLOSED_INVALID_SNAPSHOT: Snapshot payload is not an object.');
+  }
+
+  // 1. Validate leakage invariants
+  validatePreOutcomeSnapshotIntegrity(parsed);
+
+  const storedSha = parsed.snapshotSha256;
+  if (!storedSha || typeof storedSha !== 'string') {
+    throw new Error('FAIL_CLOSED_SNAPSHOT_UNHASHED: Snapshot missing snapshotSha256 field.');
+  }
+
+  // 2. Clone without stored hash
+  const withoutHash = { ...parsed };
+  delete withoutHash.snapshotSha256;
+
+  // 3. Recompute hash
+  const computedSha = computeSnapshotSha256(withoutHash);
+
+  if (computedSha !== storedSha) {
+    throw new Error(
+      `SNAPSHOT_HASH_MISMATCH: Stored snapshot hash "${storedSha}" does not match recomputed full-payload hash "${computedSha}". Snapshot in database has been tampered with or corrupted.`
+    );
+  }
+
+  deepFreeze(parsed);
+  return parsed as PreOutcomeEpisodeSnapshot;
 }
 
 /**

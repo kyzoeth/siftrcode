@@ -51,7 +51,9 @@ import { AgentTrajectoryEvent } from '../learning/episodes/agent_trajectory';
 import {
   PreOutcomeEpisodeSnapshot,
   validatePreOutcomeSnapshotIntegrity,
+  loadVerifiedPreOutcomeSnapshot,
 } from '../learning/episodes/pre_outcome_snapshot';
+import { resolveOutcomeLineage } from '../learning/episodes/lineage_resolver';
 import { ShadowPolicyComparison } from '../ranking/shadow_policy_runner';
 import { resolveTaskOutcomeFromEvidence } from '../learning/outcome/task_outcome';
 import {
@@ -847,7 +849,44 @@ const MIGRATIONS: Migration[] = [
       ALTER TABLE context_exposures ADD COLUMN edit_attribution TEXT;
     `,
   },
+  {
+    version: 17,
+    name: '017_pre_outcome_integrity_audits_and_shadow_env',
+    sql: `
+      CREATE TABLE IF NOT EXISTS pre_outcome_integrity_audits (
+        audit_id TEXT PRIMARY KEY,
+        episode_id TEXT NOT NULL,
+        snapshot_sha256 TEXT NOT NULL,
+        recomputed_sha256 TEXT NOT NULL,
+        passed INTEGER NOT NULL,
+        has_leakage INTEGER NOT NULL,
+        has_hash_mismatch INTEGER NOT NULL,
+        has_provenance_error INTEGER NOT NULL,
+        audited_at TEXT NOT NULL,
+        details_json TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_poia_ep ON pre_outcome_integrity_audits(episode_id);
+      CREATE INDEX IF NOT EXISTS idx_poia_passed ON pre_outcome_integrity_audits(passed);
+
+      ALTER TABLE shadow_policy_evaluations ADD COLUMN environment TEXT DEFAULT 'PRODUCTION';
+      ALTER TABLE shadow_policy_evaluations ADD COLUMN is_synthetic INTEGER DEFAULT 0;
+    `,
+  },
 ];
+
+export interface PreOutcomeIntegrityAudit {
+  auditId: string;
+  episodeId: string;
+  snapshotSha256: string;
+  recomputedSha256: string;
+  passed: boolean;
+  hasLeakage: boolean;
+  hasHashMismatch: boolean;
+  hasProvenanceError: boolean;
+  auditedAt: string;
+  details?: Record<string, unknown>;
+}
 
 export class SqliteStore {
   private db: DatabaseSync;
@@ -1852,39 +1891,15 @@ export class SqliteStore {
     snapshotId?: string;
     agentEnvironmentId?: string;
   }): { valid: boolean; reason?: string } {
-    const session = this.getSession(params.sessionId);
-    if (!session) {
-      return {
-        valid: false,
-        reason: `Referential integrity failure: Session "${params.sessionId}" does not exist in store.`,
-      };
-    }
-    if (session.taskId !== params.taskId) {
-      return {
-        valid: false,
-        reason: `Referential integrity failure: TaskId "${params.taskId}" does not match session taskId "${session.taskId}".`,
-      };
-    }
-    if (params.planId) {
-      const plan = this.getContextPlan(params.planId);
-      if (!plan) {
-        return {
-          valid: false,
-          reason: `Referential integrity failure: ContextPlan "${params.planId}" does not exist in store.`,
-        };
-      }
-      if (plan.taskId !== params.taskId) {
-        return {
-          valid: false,
-          reason: `Referential integrity failure: ContextPlan "${params.planId}" belongs to taskId "${plan.taskId}", not "${params.taskId}".`,
-        };
-      }
-      if (plan.sessionId && plan.sessionId !== params.sessionId) {
-        return {
-          valid: false,
-          reason: `Referential integrity failure: ContextPlan "${params.planId}" belongs to session "${plan.sessionId}", not "${params.sessionId}".`,
-        };
-      }
+    const lineage = resolveOutcomeLineage({
+      contextPlanId: params.planId,
+      taskId: params.taskId,
+      sessionId: params.sessionId,
+      workspaceSnapshotId: params.snapshotId,
+      agentEnvironmentId: params.agentEnvironmentId,
+    }, this);
+    if (!lineage.valid) {
+      return { valid: false, reason: lineage.error };
     }
     return { valid: true };
   }
@@ -2590,7 +2605,7 @@ export class SqliteStore {
       .get(episodeId) as { raw_json: string } | undefined;
 
     if (!row) return null;
-    return JSON.parse(row.raw_json) as PreOutcomeEpisodeSnapshot;
+    return loadVerifiedPreOutcomeSnapshot(row.raw_json);
   }
 
   public getPreOutcomeSnapshotByTaskId(taskId: string): PreOutcomeEpisodeSnapshot | null {
@@ -2599,20 +2614,175 @@ export class SqliteStore {
       .get(taskId) as { raw_json: string } | undefined;
 
     if (!row) return null;
-    return JSON.parse(row.raw_json) as PreOutcomeEpisodeSnapshot;
+    return loadVerifiedPreOutcomeSnapshot(row.raw_json);
+  }
+
+  public listPreOutcomeSnapshots(limit: number = 100): PreOutcomeEpisodeSnapshot[] {
+    const rows = this.db
+      .prepare('SELECT raw_json FROM pre_outcome_snapshots ORDER BY captured_at DESC LIMIT ?')
+      .all(limit) as Array<{ raw_json: string }>;
+    return rows.map((r) => loadVerifiedPreOutcomeSnapshot(r.raw_json));
+  }
+
+  public savePreOutcomeIntegrityAudit(audit: PreOutcomeIntegrityAudit): void {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO pre_outcome_integrity_audits (
+        audit_id, episode_id, snapshot_sha256, recomputed_sha256,
+        passed, has_leakage, has_hash_mismatch, has_provenance_error,
+        audited_at, details_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    stmt.run(
+      audit.auditId,
+      audit.episodeId,
+      audit.snapshotSha256,
+      audit.recomputedSha256,
+      audit.passed ? 1 : 0,
+      audit.hasLeakage ? 1 : 0,
+      audit.hasHashMismatch ? 1 : 0,
+      audit.hasProvenanceError ? 1 : 0,
+      audit.auditedAt,
+      JSON.stringify(audit.details || {})
+    );
+  }
+
+  public listPreOutcomeIntegrityAudits(episodeId?: string): PreOutcomeIntegrityAudit[] {
+    let query = 'SELECT * FROM pre_outcome_integrity_audits';
+    const params: any[] = [];
+    if (episodeId) {
+      query += ' WHERE episode_id = ?';
+      params.push(episodeId);
+    }
+    query += ' ORDER BY audited_at DESC';
+    const rows = this.db.prepare(query).all(...params) as Array<{
+      audit_id: string;
+      episode_id: string;
+      snapshot_sha256: string;
+      recomputed_sha256: string;
+      passed: number;
+      has_leakage: number;
+      has_hash_mismatch: number;
+      has_provenance_error: number;
+      audited_at: string;
+      details_json: string;
+    }>;
+    return rows.map((r) => ({
+      auditId: r.audit_id,
+      episodeId: r.episode_id,
+      snapshotSha256: r.snapshot_sha256,
+      recomputedSha256: r.recomputed_sha256,
+      passed: r.passed === 1,
+      hasLeakage: r.has_leakage === 1,
+      hasHashMismatch: r.has_hash_mismatch === 1,
+      hasProvenanceError: r.has_provenance_error === 1,
+      auditedAt: r.audited_at,
+      details: r.details_json ? JSON.parse(r.details_json) : undefined,
+    }));
+  }
+
+  public auditPreOutcomeSnapshot(
+    snapshotOrJson: PreOutcomeEpisodeSnapshot | string
+  ): PreOutcomeIntegrityAudit {
+    const auditedAt = new Date().toISOString();
+    let snapshot: any;
+    if (typeof snapshotOrJson === 'string') {
+      try {
+        snapshot = JSON.parse(snapshotOrJson);
+      } catch (e) {
+        const audit: PreOutcomeIntegrityAudit = {
+          auditId: `audit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          episodeId: 'corrupt',
+          snapshotSha256: '',
+          recomputedSha256: '',
+          passed: false,
+          hasLeakage: false,
+          hasHashMismatch: true,
+          hasProvenanceError: true,
+          auditedAt,
+          details: { error: String(e) },
+        };
+        this.savePreOutcomeIntegrityAudit(audit);
+        return audit;
+      }
+    } else {
+      snapshot = snapshotOrJson;
+    }
+
+    const episodeId = snapshot.episodeId || 'unknown';
+    const storedSha = snapshot.snapshotSha256 || '';
+
+    let hasLeakage = false;
+    let hasHashMismatch = false;
+    let hasProvenanceError = false;
+    const errors: string[] = [];
+
+    // 1. Validate leakage invariants
+    try {
+      validatePreOutcomeSnapshotIntegrity(snapshot);
+    } catch (err: any) {
+      hasLeakage = true;
+      errors.push(err.message || String(err));
+    }
+
+    // 2. Validate hash integrity
+    let recomputedSha = '';
+    try {
+      const verified = loadVerifiedPreOutcomeSnapshot(snapshot);
+      recomputedSha = verified.snapshotSha256;
+    } catch (err: any) {
+      hasHashMismatch = true;
+      errors.push(err.message || String(err));
+    }
+
+    // 3. Validate baseCommit and featureCutoffCommit
+    if (!snapshot.baseCommit || (snapshot.baseCommit.length !== 40 && snapshot.baseCommit !== 'HEAD')) {
+      hasProvenanceError = true;
+      errors.push('baseCommit is missing or invalid');
+    }
+    if (!snapshot.featureCutoffCommit) {
+      hasProvenanceError = true;
+      errors.push('featureCutoffCommit is missing');
+    }
+
+    // 4. Validate context policy identity
+    if (!snapshot.contextPolicyIdentity || snapshot.contextPolicyIdentity.featureSetVersion !== 'CONTEXT_FEATURES_V1') {
+      hasProvenanceError = true;
+      errors.push(`Invalid policy identity or featureSetVersion: ${snapshot.contextPolicyIdentity?.featureSetVersion}`);
+    }
+
+    const passed = !hasLeakage && !hasHashMismatch && !hasProvenanceError;
+
+    const audit: PreOutcomeIntegrityAudit = {
+      auditId: `audit_${episodeId}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      episodeId,
+      snapshotSha256: storedSha,
+      recomputedSha256: recomputedSha || storedSha,
+      passed,
+      hasLeakage,
+      hasHashMismatch,
+      hasProvenanceError,
+      auditedAt,
+      details: errors.length > 0 ? { errors } : undefined,
+    };
+
+    this.savePreOutcomeIntegrityAudit(audit);
+    return audit;
   }
 
   public saveShadowPolicyEvaluation(
     evaluation: ShadowPolicyComparison,
     crashed: boolean = false,
-    errorMessage?: string
+    errorMessage?: string,
+    environment: string = 'PRODUCTION',
+    isSynthetic: boolean = false
   ): void {
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO shadow_policy_evaluations (
         evaluation_id, task_id, production_policy_id, shadow_policy_id,
         candidate_count, rank_overlap_jaccard, token_difference,
-        shadow_latency_ms, crashed, error_message, evaluated_at, raw_json
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        shadow_latency_ms, crashed, error_message, evaluated_at, raw_json,
+        environment, is_synthetic
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const id = `speval_${evaluation.taskId}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     stmt.run(
@@ -2627,7 +2797,9 @@ export class SqliteStore {
       crashed ? 1 : 0,
       errorMessage ?? null,
       evaluation.evaluatedAt,
-      JSON.stringify(evaluation)
+      JSON.stringify(evaluation),
+      environment,
+      isSynthetic ? 1 : 0
     );
   }
 
@@ -2646,33 +2818,30 @@ export class SqliteStore {
   }
 
   public finalizeEpisodeFromOutcome(outcome: OutcomeEvidence): TaskEpisodeV1 | null {
-    // 1. Lookup snapshot
-    let snapshot = this.getPreOutcomeSnapshotByTaskId(outcome.taskId);
-    if (!snapshot && outcome.contextPlanId) {
-      const plan = this.getContextPlan(outcome.contextPlanId);
-      if (plan && plan.preOutcomeSnapshot) {
-        snapshot = plan.preOutcomeSnapshot;
-      }
-    }
-    if (!snapshot) {
+    // 1. Resolve authoritative outcome lineage strictly
+    const lineage = resolveOutcomeLineage({
+      contextPlanId: outcome.contextPlanId,
+      taskId: outcome.taskId,
+      sessionId: outcome.sessionId,
+      workspaceSnapshotId: outcome.workspaceSnapshotBefore,
+      agentEnvironmentId: outcome.agentEnvironmentId,
+    }, this);
+
+    if (!lineage.valid) {
       return null;
     }
 
-    // 2. Fetch context plan and task
-    const plan = this.getContextPlanByTask(outcome.taskId) || (outcome.contextPlanId ? this.getContextPlan(outcome.contextPlanId) : null);
-    if (!plan) {
-      return null;
-    }
-
-    const task = this.getTaskContext(outcome.taskId);
+    const plan = lineage.plan;
+    const snapshot = lineage.snapshot;
+    const task = this.getTaskContext(lineage.taskId);
     if (!task) {
       return null;
     }
 
-    // 3. Resolve authoritative outcome
+    // 2. Resolve authoritative outcome
     const resolvedOutcome = resolveTaskOutcomeFromEvidence(outcome, snapshot.episodeId);
 
-    // 4. Fetch trajectory events
+    // 3. Fetch trajectory events
     let trajectoryEvents = this.getEpisodeTrajectoryEvents(snapshot.episodeId);
     if (trajectoryEvents.length === 0) {
       const legacyEvents = this.listTrajectoryEvents(outcome.taskId);
@@ -2694,7 +2863,7 @@ export class SqliteStore {
       }
     }
 
-    // 5. Derive truthful exposures
+    // 4. Derive truthful exposures
     const existingExposures = this.getContextExposures(snapshot.episodeId);
     const { EpisodeAssembler } = require('../learning/episodes/episode_assembler');
     let exposures = EpisodeAssembler.deriveContextExposures({
@@ -2705,24 +2874,24 @@ export class SqliteStore {
     });
 
     if (existingExposures.length > 0 && trajectoryEvents.length === 0) {
-      const existingMap = new Map(existingExposures.map((e) => [e.contextUnitId, e]));
+      const existingMap = new Map(existingExposures.map((e: ContextUnitExposureRecord) => [e.contextUnitId, e]));
       exposures = exposures.map((exp: ContextUnitExposureRecord) => existingMap.get(exp.contextUnitId) || exp);
     }
 
-    // 6. Compute economics
+    // 5. Compute honest economics (nullable when unmeasured, never 0)
     const economics = {
       contextInputTokens: plan.actualRenderedTokens,
-      agentInputTokens: outcome.actualProviderInputTokens ?? plan.actualRenderedTokens,
-      agentOutputTokens: outcome.actualProviderOutputTokens ?? 0,
-      contextLatencyMs: 0,
-      taskLatencyMs: outcome.wallTimeMs ?? 0,
-      contextGenerationCostUSD: 0,
-      agentCostUSD: outcome.costUSD ?? 0,
-      totalCostUSD: outcome.costUSD ?? 0,
-      pricingStatus: (outcome.costUSD !== undefined ? 'VALID' : 'ESTIMATED') as any,
+      agentInputTokens: outcome.actualProviderInputTokens ?? null,
+      agentOutputTokens: outcome.actualProviderOutputTokens ?? null,
+      contextLatencyMs: plan.generationLatencyMs ?? null,
+      taskLatencyMs: outcome.wallTimeMs ?? null,
+      contextGenerationCostUSD: null,
+      agentCostUSD: outcome.costUSD ?? null,
+      totalCostUSD: outcome.costUSD ?? null,
+      pricingStatus: (outcome.costUSD !== undefined && outcome.costUSD !== null ? 'VALID' : 'PRICING_UNAVAILABLE') as any,
     };
 
-    // 7. Assemble final immutable TaskEpisodeV1
+    // 6. Assemble final immutable TaskEpisodeV1
     const dummySnapshot: WorkspaceSnapshot = {
       workspaceSnapshotId: snapshot.workspaceSnapshotId,
       contentRootHash: 'hash',
@@ -2743,7 +2912,7 @@ export class SqliteStore {
       dataRights: plan.dataRights,
     });
 
-    // 8. Persist episode, exposures, candidates
+    // 7. Persist episode, exposures, candidates
     this.saveTaskEpisode(episode);
     this.saveContextExposures(exposures);
     this.saveEpisodeCandidates(snapshot.candidateUniverse, snapshot.episodeId);
@@ -3092,15 +3261,15 @@ export class SqliteStore {
       .get() as { c: number } | undefined;
     const episodesWithCandidatesLogged = candLoggedRow?.c ?? 0;
 
-    // 2. Unpermitted in pool (non-revoked)
+    // 2. Unpermitted in effective training pool (dataset_v2_rows exported with training_allowed = 0)
     const unpermittedInPoolRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE training_allowed = 0 AND episode_id NOT IN (SELECT episode_id FROM episode_revocations)')
+      .prepare('SELECT COUNT(*) as c FROM dataset_v2_rows WHERE episode_id IN (SELECT episode_id FROM task_episodes WHERE training_allowed = 0)')
       .get() as { c: number } | undefined;
     const unpermittedEpisodesInPool = unpermittedInPoolRow?.c ?? 0;
 
-    // 3. Revoked episodes in pool (episodes that have been revoked)
+    // 3. Revoked episodes in effective training pool (dataset_v2_rows containing revoked episodes)
     const revokedInPoolRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE episode_id IN (SELECT episode_id FROM episode_revocations)')
+      .prepare('SELECT COUNT(*) as c FROM dataset_v2_rows WHERE episode_id IN (SELECT episode_id FROM episode_revocations)')
       .get() as { c: number } | undefined;
     const revokedEpisodesInPool = revokedInPoolRow?.c ?? 0;
 
@@ -3123,30 +3292,39 @@ export class SqliteStore {
       }
     }
 
-    // 5. Real pre-outcome snapshot leakage audit (measuring real violations instead of assumed zero)
-    const snapshotRows = this.db.prepare(`
-      SELECT raw_json FROM pre_outcome_snapshots
-      WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)
-    `).all() as Array<{ raw_json: string }>;
-    const preOutcomeSnapshotsAudited = snapshotRows.length;
-    let leakageViolationsDetected = 0;
-    for (const sr of snapshotRows) {
-      try {
-        const parsed = JSON.parse(sr.raw_json);
-        validatePreOutcomeSnapshotIntegrity(parsed);
-      } catch {
-        leakageViolationsDetected++;
+    // 5. Real pre-outcome snapshot leakage audit (measuring real persisted audits)
+    const auditStats = this.db.prepare(`
+      SELECT COUNT(*) as total,
+             SUM(CASE WHEN passed = 1 THEN 1 ELSE 0 END) as passed_count,
+             SUM(CASE WHEN passed = 0 THEN 1 ELSE 0 END) as failed_count
+      FROM pre_outcome_integrity_audits
+    `).get() as { total: number; passed_count: number; failed_count: number } | undefined;
+
+    let preOutcomeSnapshotsAudited = auditStats?.total ?? 0;
+    let leakageViolationsDetected = auditStats?.failed_count ?? 0;
+
+    if (preOutcomeSnapshotsAudited === 0) {
+      const snapshotRows = this.db.prepare(`
+        SELECT raw_json FROM pre_outcome_snapshots
+        WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)
+      `).all() as Array<{ raw_json: string }>;
+      preOutcomeSnapshotsAudited = snapshotRows.length;
+      for (const sr of snapshotRows) {
+        const audit = this.auditPreOutcomeSnapshot(sr.raw_json);
+        if (!audit.passed) {
+          leakageViolationsDetected++;
+        }
       }
     }
 
-    // 6. Real shadow policy runs and crashes (measuring real shadow_policy_evaluations table, not JEV)
+    // 6. Real shadow policy runs and crashes (measuring real shadow_policy_evaluations table with is_synthetic = 0 and PRODUCTION)
     const shadowRunsRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM shadow_policy_evaluations WHERE crashed = 0')
+      .prepare("SELECT COUNT(*) as c FROM shadow_policy_evaluations WHERE crashed = 0 AND (is_synthetic = 0 OR is_synthetic IS NULL) AND (environment = 'PRODUCTION' OR environment IS NULL)")
       .get() as { c: number } | undefined;
     const shadowEvaluationRuns = shadowRunsRow?.c ?? 0;
 
     const shadowCrashRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM shadow_policy_evaluations WHERE crashed = 1')
+      .prepare("SELECT COUNT(*) as c FROM shadow_policy_evaluations WHERE crashed = 1 AND (is_synthetic = 0 OR is_synthetic IS NULL) AND (environment = 'PRODUCTION' OR environment IS NULL)")
       .get() as { c: number } | undefined;
     const shadowEvaluationCrashes = shadowCrashRow?.c ?? 0;
 

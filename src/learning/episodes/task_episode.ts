@@ -58,24 +58,24 @@ export interface TaskEpisodeV1 {
   };
 
   environment: {
-    siftrVersion: string;
-    siftrGitSha: string;
+    siftrVersion?: string | null;
+    siftrGitSha?: string | null;
     contextPolicyId: string;
     rankerId: string;
     rankerStatus: RankerStatus;
     contextPolicyIdentity?: ContextPolicyIdentity;
     model?: string;
     agentType?: string;
-    toolConfigurationHash: string;
-    systemConfigurationHash: string;
+    toolConfigurationHash?: string | null;
+    systemConfigurationHash?: string | null;
   };
 
   rights: {
-    serviceProcessingAllowed: boolean;
+    serviceProcessingAllowed?: boolean | null;
     trainingAllowed: boolean;
-    redistributionAllowed: boolean;
+    redistributionAllowed?: boolean | null;
     permissionSource: string;
-    decisionTimestamp: string;
+    decisionTimestamp?: string | null;
   };
 
   contextDecision: {
@@ -86,7 +86,7 @@ export interface TaskEpisodeV1 {
     actualRenderedTokens: number;
     tokenBudget: number;
     estimatedContextCostUSD?: number | null;
-    generationLatencyMs: number;
+    generationLatencyMs?: number | null;
   };
 
   trajectory?: AgentTrajectorySummary;

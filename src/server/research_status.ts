@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { getRuntimeBuildProvenance } from '../learning/episodes/runtime_provenance';
 
 export interface ResearchStatusResponse {
   available: boolean;
@@ -11,7 +12,10 @@ export interface ResearchStatusResponse {
 
   production: {
     engine: 'deterministic_context_rank';
+    policyId: 'production-v2-deterministic-2026-09';
+    featureSetVersion: 'CONTEXT_FEATURES_V1';
     baselineSha: string;
+    runtimeGitSha: string | null;
     status: 'ACTIVE';
   };
   baseline: {
@@ -102,7 +106,10 @@ export function loadResearchStatus(customRootDir?: string): ResearchStatusRespon
     error: 'Canonical research status artifacts not found or unreadable.',
     production: {
       engine: 'deterministic_context_rank',
+      policyId: 'production-v2-deterministic-2026-09',
+      featureSetVersion: 'CONTEXT_FEATURES_V1',
       baselineSha: '1eedac03b0d83025ebf08ed2945e0ab015c46f6a',
+      runtimeGitSha: null,
       status: 'ACTIVE',
     },
     baseline: {
@@ -248,12 +255,17 @@ export function loadResearchStatus(customRootDir?: string): ResearchStatusRespon
       ? [Number(finalStatus.bootstrapCiNdcg10[0]), Number(finalStatus.bootstrapCiNdcg10[1])]
       : [-0.0478, 0.0076];
 
+    const runtimeProv = getRuntimeBuildProvenance(rootDir);
+
     return {
       available: true,
       status: finalStatus.status,
       production: {
         engine: 'deterministic_context_rank',
+        policyId: 'production-v2-deterministic-2026-09',
+        featureSetVersion: 'CONTEXT_FEATURES_V1',
         baselineSha: baselineCommit,
+        runtimeGitSha: runtimeProv.siftrGitSha,
         status: 'ACTIVE',
       },
       baseline: {

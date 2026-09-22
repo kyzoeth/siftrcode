@@ -32,6 +32,7 @@ import {
 } from '../mcp/schemas';
 import { resolveApplicationDataRights } from '../rights/data_rights';
 import { loadResearchStatus, ResearchStatusResponse } from './research_status';
+import { resolveOutcomeLineage } from '../learning/episodes/lineage_resolver';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -1506,35 +1507,32 @@ const server = http.createServer(async (req, res) => {
         }
 
         const store = getSharedStore();
-        const existingPlan = store?.getContextPlanByTask(taskId);
-        const existingDecisions = store?.listCandidateDecisionObservations({ taskId });
-        const snapshot = store?.getPreOutcomeSnapshotByTaskId(taskId);
-        const existingSession = existingPlan?.sessionId ? store?.getSiftrSession(existingPlan.sessionId) : undefined;
+        if (!store) {
+          res.writeHead(503, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'SqliteStore not initialized' }));
+          return;
+        }
 
-        const resolvedSessionId =
-          (typeof payload.sessionId === 'string' && payload.sessionId.trim().length > 0 ? payload.sessionId.trim() : undefined) ||
-          existingPlan?.sessionId ||
-          (existingDecisions && existingDecisions.length > 0 ? existingDecisions[0].sessionId : undefined) ||
-          `sess_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
+        const lineage = resolveOutcomeLineage({
+          contextPlanId: payload.planId || payload.contextPlanId,
+          taskId: taskId || undefined,
+          sessionId: payload.sessionId || undefined,
+          workspaceSnapshotId: payload.workspaceSnapshotBefore || undefined,
+          agentEnvironmentId: payload.agentEnvironmentId || undefined,
+        }, store);
 
-        const resolvedAgentEnvId =
-          (typeof payload.agentEnvironmentId === 'string' && payload.agentEnvironmentId.trim().length > 0 ? payload.agentEnvironmentId.trim() : undefined) ||
-          existingPlan?.agentEnvironmentId ||
-          existingSession?.agentEnvironmentId ||
-          'unknown';
-
-        const resolvedSnapshotBefore =
-          (typeof payload.workspaceSnapshotBefore === 'string' && payload.workspaceSnapshotBefore.trim().length > 0 ? payload.workspaceSnapshotBefore.trim() : undefined) ||
-          existingPlan?.workspaceSnapshotId ||
-          snapshot?.workspaceSnapshotId ||
-          'unknown';
+        if (!lineage.valid) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: lineage.error, code: lineage.code }));
+          return;
+        }
 
         const outcomeEvidence = createOutcomeEvidence({
-          taskId,
-          sessionId: resolvedSessionId,
-          contextPlanId: existingPlan?.planId || payload.planId,
-          agentEnvironmentId: resolvedAgentEnvId,
-          workspaceSnapshotBefore: resolvedSnapshotBefore,
+          taskId: lineage.taskId,
+          sessionId: lineage.sessionId,
+          contextPlanId: lineage.planId,
+          agentEnvironmentId: lineage.agentEnvironmentId,
+          workspaceSnapshotBefore: lineage.workspaceSnapshotId,
           publicTestsPassed: typeof payload.testsPassed === 'boolean' ? payload.testsPassed : undefined,
           regressionTestsPassed: typeof payload.regressionTestsPassed === 'boolean' ? payload.regressionTestsPassed : undefined,
           staticChecksPassed: typeof payload.staticChecksPassed === 'boolean' ? payload.staticChecksPassed : undefined,

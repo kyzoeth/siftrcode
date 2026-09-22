@@ -49,6 +49,14 @@ import { EpisodeAssembler } from '../learning/episodes/episode_assembler';
 
 export { WorkspaceChangedError, isWorkspaceChangedError } from '../workspace/workspace_snapshot';
 
+export interface IdentifiedRanker {
+  rankerId: string;
+  rankerVersion: string;
+  policyId?: string;
+  featureSetVersion?: string;
+  rank(candidates: ContextFeaturesV1[], judgments?: any): RankedCandidate[];
+}
+
 export interface ContextEngineOptions {
   repoRootDir?: string;
   adapter?: AgentAdapter;
@@ -63,7 +71,7 @@ export interface ContextEngineOptions {
   maxReplanningRetries?: number;
   jevShadowRunner?: JevShadowRunner;
   enableJevShadow?: boolean;
-  ranker?: { rank(candidates: ContextFeaturesV1[], judgments?: any): RankedCandidate[] };
+  ranker?: IdentifiedRanker | { rank(candidates: ContextFeaturesV1[], judgments?: any): RankedCandidate[] };
   candidateBudget?: number;
   contextPolicyIdentity?: ContextPolicyIdentity;
 }
@@ -93,7 +101,7 @@ export interface OptimizeWorkspaceOptions {
   maxReplanningRetries?: number;
   jevShadowRunner?: JevShadowRunner;
   enableJevShadow?: boolean;
-  ranker?: { rank(candidates: ContextFeaturesV1[], judgments?: any): RankedCandidate[] };
+  ranker?: IdentifiedRanker | { rank(candidates: ContextFeaturesV1[], judgments?: any): RankedCandidate[] };
   contextPolicyIdentity?: ContextPolicyIdentity;
   sqliteStore?: SqliteStore;
 }
@@ -316,6 +324,7 @@ export class ContextEngine {
 
     const planId = 'cplan_' + crypto.randomUUID().replace(/-/g, '').slice(0, 16);
     const createdAt = new Date().toISOString();
+    const planStartTime = Date.now();
     const trajectoryLogger = new TrajectoryLogger(task.taskId, this.dataRights);
 
     // 1. Index units by id for fast lookups
@@ -824,22 +833,40 @@ export class ContextEngine {
     });
 
     const effectiveRanker = this.ranker || ranker;
-    const runtimeRankerId =
-      (effectiveRanker as any)?.rankerId ||
-      this.contextPolicyIdentity?.rankerId ||
-      PRODUCTION_V2_POLICY_IDENTITY.rankerId;
-    const runtimeRankerVersion =
-      (effectiveRanker as any)?.rankerVersion ||
-      this.contextPolicyIdentity?.rankerVersion ||
-      PRODUCTION_V2_POLICY_IDENTITY.rankerVersion;
-    const runtimeFeatureSetVersion =
-      (effectiveRanker as any)?.featureSetVersion ||
-      this.contextPolicyIdentity?.featureSetVersion ||
-      PRODUCTION_V2_POLICY_IDENTITY.featureSetVersion;
-    const runtimePolicyId =
-      this.contextPolicyIdentity?.contextPolicyId ||
-      ((effectiveRanker as any)?.policyId) ||
-      PRODUCTION_V2_POLICY_IDENTITY.contextPolicyId;
+    let runtimeRankerId: string;
+    let runtimeRankerVersion: string;
+    let runtimeFeatureSetVersion: string;
+    let runtimePolicyId: string;
+
+    if (this.ranker && !(this.ranker instanceof ContextRanker)) {
+      const customRankerId = (this.ranker as any)?.rankerId;
+      const customRankerVersion = (this.ranker as any)?.rankerVersion;
+      const customFeatureSetVersion = (this.ranker as any)?.featureSetVersion;
+      const customPolicyId = (this.ranker as any)?.policyId;
+
+      if (customRankerId) {
+        runtimeRankerId = customRankerId;
+        runtimeRankerVersion = customRankerVersion || '1.0.0';
+        runtimeFeatureSetVersion = customFeatureSetVersion || this.contextPolicyIdentity?.featureSetVersion || 'CONTEXT_FEATURES_V1';
+        runtimePolicyId = customPolicyId || this.contextPolicyIdentity?.contextPolicyId || `custom-${customRankerId}`;
+      } else if (this.contextPolicyIdentity?.rankerId) {
+        runtimeRankerId = this.contextPolicyIdentity.rankerId;
+        runtimeRankerVersion = this.contextPolicyIdentity.rankerVersion;
+        runtimeFeatureSetVersion = this.contextPolicyIdentity.featureSetVersion;
+        runtimePolicyId = this.contextPolicyIdentity.contextPolicyId;
+      } else {
+        // Custom ranker passed without policy identity: fail closed on production identity stamping!
+        runtimeRankerId = 'custom_unidentified';
+        runtimeRankerVersion = '0.0.0';
+        runtimeFeatureSetVersion = 'UNKNOWN';
+        runtimePolicyId = 'custom-unidentified-policy';
+      }
+    } else {
+      runtimeRankerId = this.contextPolicyIdentity?.rankerId || PRODUCTION_V2_POLICY_IDENTITY.rankerId;
+      runtimeRankerVersion = this.contextPolicyIdentity?.rankerVersion || PRODUCTION_V2_POLICY_IDENTITY.rankerVersion;
+      runtimeFeatureSetVersion = this.contextPolicyIdentity?.featureSetVersion || PRODUCTION_V2_POLICY_IDENTITY.featureSetVersion;
+      runtimePolicyId = this.contextPolicyIdentity?.contextPolicyId || PRODUCTION_V2_POLICY_IDENTITY.contextPolicyId;
+    }
 
     const contextPolicyIdentity: ContextPolicyIdentity = {
       contextPolicyId: runtimePolicyId,
@@ -856,6 +883,8 @@ export class ContextEngine {
         this.contextPolicyIdentity?.materializerVersion ||
         PRODUCTION_V2_POLICY_IDENTITY.materializerVersion,
     };
+
+    const generationLatencyMs = Math.max(1, Date.now() - planStartTime);
 
     const contextPlan: ContextPlan = {
       taskId: boundTask.taskId,
@@ -887,6 +916,7 @@ export class ContextEngine {
       tokenEstimationMethod: detailedEstimate.method,
       tokenSafetyMargin: detailedEstimate.safetyMargin,
       overflowReason,
+      generationLatencyMs,
       createdAt,
     };
 

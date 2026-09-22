@@ -38,7 +38,7 @@ export const PRODUCTION_V2_POLICY_IDENTITY: ContextPolicyIdentity = {
   contextPolicyId: 'production-v2-deterministic-2026-09',
   rankerId: 'deterministic_context_ranker_v2',
   rankerVersion: '2.0.0',
-  featureSetVersion: 'V3.1_POINT_IN_TIME',
+  featureSetVersion: 'CONTEXT_FEATURES_V1',
   candidateGeneratorVersion: '2.0.0',
   budgetPolicyVersion: '2.0.0',
   materializerVersion: '2.0.0',
@@ -80,6 +80,7 @@ export interface ContextPlan {
   jevSignals?: JevSignalV1[];
   jevPromise?: Promise<JevSignalV1[]>;
   jevError?: Error;
+  generationLatencyMs?: number;
   createdAt: string;
 }
 

@@ -70,6 +70,10 @@ export const DEFAULT_RANKING_WEIGHTS: RankingWeights = {
 };
 
 export class ContextRanker {
+  public readonly rankerId: string = 'deterministic_context_ranker_v2';
+  public readonly rankerVersion: string = '2.1.0';
+  public readonly policyId: string = 'production-v2-deterministic-2026-09';
+  public readonly featureSetVersion: string = 'CONTEXT_FEATURES_V1';
   private weights: RankingWeights;
 
   constructor(weights: Partial<RankingWeights> = {}) {
