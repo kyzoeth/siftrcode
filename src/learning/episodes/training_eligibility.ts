@@ -49,9 +49,19 @@ export function evaluateEpisodeTrainingEligibility(
     reasons.push('RIGHTS_BLOCKED: permissionSource is UNKNOWN or unspecified.');
   }
 
-  // 3. Revocation status
-  if (options.isRevoked && options.isRevoked(episode.episodeId)) {
-    reasons.push('REVOKED_EPISODE: Episode has been revoked/tombstoned by compliance deletion.');
+  // 3. Revocation status (mandatory: missing authority fails closed)
+  if (!options.isRevoked) {
+    reasons.push(
+      'MISSING_REVOCATION_AUTHORITY: Mandatory isRevoked authority is required to evaluate training eligibility (fail closed).'
+    );
+  } else {
+    try {
+      if (options.isRevoked(episode.episodeId)) {
+        reasons.push('REVOKED_EPISODE: Episode has been revoked/tombstoned by compliance deletion.');
+      }
+    } catch (err: any) {
+      reasons.push(`REVOCATION_CHECK_FAILED: Failed to evaluate revocation authority: ${err.message}`);
+    }
   }
 
   // 4. Ranker Status & Identity
@@ -88,7 +98,7 @@ export function evaluateEpisodeTrainingEligibility(
     }
   }
 
-  // 7. Authoritative exposure records check (mandatory: missing provider fails closed)
+  // 7. Authoritative exposure records check (mandatory: missing provider fails closed, episode-bound)
   if (!options.exposuresProvider) {
     reasons.push(
       'MISSING_EXPOSURE_RECORD: Mandatory exposuresProvider is required to evaluate training eligibility (fail closed).'
@@ -96,6 +106,14 @@ export function evaluateEpisodeTrainingEligibility(
   } else {
     try {
       const exposures = options.exposuresProvider(episode.episodeId) || [];
+      const unboundExposures = exposures.filter(
+        (e) => !e.episodeId || e.episodeId !== episode.episodeId
+      );
+      if (unboundExposures.length > 0) {
+        reasons.push(
+          `UNBOUND_EXPOSURE_RECORD: ${unboundExposures.length} exposure record(s) are not bound to episode "${episode.episodeId}".`
+        );
+      }
       const exposureMap = new Map(exposures.map((e) => [e.contextUnitId, e]));
       const unrecorded = (episode.contextDecision?.candidates || []).filter(
         (c) => !exposureMap.has(c.contextUnitId)

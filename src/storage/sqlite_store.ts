@@ -2940,7 +2940,7 @@ export class SqliteStore {
 
     // 7. Persist episode, exposures, candidates
     this.saveTaskEpisode(episode);
-    this.saveContextExposures(exposures);
+    this.saveContextExposures(exposures, snapshot.episodeId);
     this.saveEpisodeCandidates(snapshot.candidateUniverse, snapshot.episodeId);
 
     return episode;
@@ -3001,7 +3001,7 @@ export class SqliteStore {
     }));
   }
 
-  public saveContextExposures(exposures: ContextUnitExposureRecord[]): void {
+  public saveContextExposures(exposures: ContextUnitExposureRecord[], targetEpisodeId?: string): void {
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO context_exposures (
         exposure_id, episode_id, context_unit_id, path, unit_kind,
@@ -3012,10 +3012,19 @@ export class SqliteStore {
     `);
 
     for (const exp of exposures) {
-      const exposureId = `cexp_${exp.episodeId}_${exp.contextUnitId}`;
+      const episodeId = targetEpisodeId || exp.episodeId;
+      if (!episodeId || typeof episodeId !== 'string' || episodeId.trim() === '') {
+        throw new Error('FAIL_CLOSED: Exposure record must be bound to a valid episodeId.');
+      }
+      if (targetEpisodeId && exp.episodeId && exp.episodeId !== targetEpisodeId) {
+        throw new Error(
+          `FAIL_CLOSED: Exposure record episodeId "${exp.episodeId}" does not match target episodeId "${targetEpisodeId}".`
+        );
+      }
+      const exposureId = `cexp_${episodeId}_${exp.contextUnitId}`;
       stmt.run(
         exposureId,
-        exp.episodeId,
+        episodeId,
         exp.contextUnitId,
         exp.path ?? null,
         exp.unitKind,
@@ -3036,6 +3045,9 @@ export class SqliteStore {
   }
 
   public getContextExposures(episodeId: string): ContextUnitExposureRecord[] {
+    if (!episodeId || typeof episodeId !== 'string' || episodeId.trim() === '') {
+      throw new Error('FAIL_CLOSED: episodeId must be provided to getContextExposures.');
+    }
     const rows = this.db
       .prepare('SELECT * FROM context_exposures WHERE episode_id = ?')
       .all(episodeId) as Array<any>;
@@ -3334,24 +3346,29 @@ export class SqliteStore {
       }
     }
 
-    // Gate 6: Zero-Leakage Audit (strictly evaluated on eligible population)
+    // Gate 6: Zero-Leakage Audit (strictly evaluated on eligible population with deterministic audit selection)
     let preOutcomeSnapshotsAudited = 0;
     let leakageViolationsDetected = 0;
 
     if (eligiblePopulation.length > 0) {
       for (const ep of eligiblePopulation) {
-        const snapRow = this.db.prepare(
-          'SELECT raw_json, snapshot_sha256 FROM pre_outcome_snapshots WHERE episode_id = ?'
-        ).get(ep.episodeId) as { raw_json: string; snapshot_sha256: string } | undefined;
+        const snapRow = this.db.prepare(`
+          SELECT raw_json, snapshot_sha256 FROM pre_outcome_snapshots
+          WHERE episode_id = ?
+        `).get(ep.episodeId) as { raw_json: string; snapshot_sha256: string } | undefined;
 
         if (!snapRow) {
           leakageViolationsDetected++;
           continue;
         }
 
-        const auditRow = this.db.prepare(
-          'SELECT passed FROM pre_outcome_integrity_audits WHERE episode_id = ? AND snapshot_sha256 = ?'
-        ).get(ep.episodeId, snapRow.snapshot_sha256) as { passed: number } | undefined;
+        // Deterministic audit selection: select single latest audit record
+        const auditRow = this.db.prepare(`
+          SELECT passed FROM pre_outcome_integrity_audits
+          WHERE episode_id = ? AND snapshot_sha256 = ?
+          ORDER BY audited_at DESC, audit_id DESC
+          LIMIT 1
+        `).get(ep.episodeId, snapRow.snapshot_sha256) as { passed: number } | undefined;
 
         if (auditRow) {
           if (auditRow.passed === 1) {
@@ -3368,60 +3385,62 @@ export class SqliteStore {
           }
         }
       }
-    } else if (nonRevokedRows.length === 0) {
-      // Isolated snapshot audit mode (when no task_episodes are present in test stores)
-      const activeSnapshotsCountRow = this.db.prepare(`
-        SELECT COUNT(DISTINCT episode_id) as c
+    } else if (summary.totalEpisodes === 0) {
+      // Isolated snapshot audit mode (when no task_episodes exist in store at all)
+      const activeSnapshotRows = this.db.prepare(`
+        SELECT episode_id, snapshot_sha256, raw_json
         FROM pre_outcome_snapshots
         WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)
-      `).get() as { c: number } | undefined;
-      const activeSnapshotCount = activeSnapshotsCountRow?.c ?? 0;
+        ORDER BY episode_id ASC
+      `).all() as Array<{ episode_id: string; snapshot_sha256: string; raw_json: string }>;
 
-      const passingAuditedRow = this.db.prepare(`
-        SELECT COUNT(DISTINCT a.episode_id) as c
-        FROM pre_outcome_integrity_audits a
-        JOIN pre_outcome_snapshots s ON a.episode_id = s.episode_id
-        WHERE a.passed = 1
-          AND a.snapshot_sha256 = s.snapshot_sha256
-          AND s.episode_id NOT IN (SELECT episode_id FROM episode_revocations)
-      `).get() as { c: number } | undefined;
-      let passingAuditedSnapshots = passingAuditedRow?.c ?? 0;
+      for (const s of activeSnapshotRows) {
+        // Deterministic audit selection: select single latest audit record
+        const latestAudit = this.db.prepare(`
+          SELECT passed FROM pre_outcome_integrity_audits
+          WHERE episode_id = ? AND snapshot_sha256 = ?
+          ORDER BY audited_at DESC, audit_id DESC
+          LIMIT 1
+        `).get(s.episode_id, s.snapshot_sha256) as { passed: number } | undefined;
 
-      const failedActiveAuditsRow = this.db.prepare(`
-        SELECT COUNT(DISTINCT a.episode_id) as c
-        FROM pre_outcome_integrity_audits a
-        JOIN pre_outcome_snapshots s ON a.episode_id = s.episode_id
-        WHERE a.passed = 0
-          AND s.episode_id NOT IN (SELECT episode_id FROM episode_revocations)
-      `).get() as { c: number } | undefined;
-      let failedActiveSnapshots = failedActiveAuditsRow?.c ?? 0;
-
-      if (activeSnapshotCount > 0 && passingAuditedSnapshots === 0 && failedActiveSnapshots === 0) {
-        const snapshotRows = this.db.prepare(`
-          SELECT raw_json FROM pre_outcome_snapshots
-          WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)
-        `).all() as Array<{ raw_json: string }>;
-        for (const sr of snapshotRows) {
-          const audit = this.auditPreOutcomeSnapshot(sr.raw_json);
-          if (audit.passed) {
-            passingAuditedSnapshots++;
+        if (latestAudit) {
+          if (latestAudit.passed === 1) {
+            preOutcomeSnapshotsAudited++;
           } else {
-            failedActiveSnapshots++;
+            leakageViolationsDetected++;
+          }
+        } else {
+          const audit = this.auditPreOutcomeSnapshot(s.raw_json);
+          if (audit.passed) {
+            preOutcomeSnapshotsAudited++;
+          } else {
+            leakageViolationsDetected++;
           }
         }
       }
-
-      preOutcomeSnapshotsAudited = activeSnapshotCount > 0 ? passingAuditedSnapshots : 0;
-      leakageViolationsDetected = failedActiveSnapshots + Math.max(0, activeSnapshotCount - passingAuditedSnapshots);
     }
 
     const currentVerifiedEpisodes = eligibleVerifiedSuccesses + eligibleVerifiedFailures;
-    const currentIndependentRepositories = Object.keys(summary.episodesByRepositoryFamily).length;
 
-    const bugFixEpisodes = summary.episodesByTaskType['BUG_FIX'] || 0;
-    const featureAdditionEpisodes = summary.episodesByTaskType['FEATURE_ADDITION'] || 0;
-    const refactorEpisodes = summary.episodesByTaskType['REFACTOR'] || 0;
-    const testFailureEpisodes = summary.episodesByTaskType['TEST_FAILURE'] || 0;
+    // Derive repository & task-type readiness metrics strictly from eligiblePopulation
+    const eligibleRepositories = new Set<string>();
+    let bugFixEpisodes = 0;
+    let featureAdditionEpisodes = 0;
+    let refactorEpisodes = 0;
+    let testFailureEpisodes = 0;
+
+    for (const ep of eligiblePopulation) {
+      if (ep.repositoryId) {
+        eligibleRepositories.add(ep.repositoryId);
+      }
+      const ttype = ep.task?.taskType;
+      if (ttype === 'BUG_FIX') bugFixEpisodes++;
+      else if (ttype === 'FEATURE_ADDITION') featureAdditionEpisodes++;
+      else if (ttype === 'REFACTOR') refactorEpisodes++;
+      else if (ttype === 'TEST_FAILURE') testFailureEpisodes++;
+    }
+
+    const currentIndependentRepositories = eligibleRepositories.size;
 
     const trainingEligibleEpisodes = eligibleTotalEpisodes;
     const unknownOutcomeRate =

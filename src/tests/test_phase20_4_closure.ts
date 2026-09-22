@@ -38,6 +38,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import * as http from 'http';
+import * as crypto from 'crypto';
 import { DefaultOutcomePolicyV1 } from '../telemetry/outcome_evidence';
 import { SqliteStore } from '../storage/sqlite_store';
 import { server as webAppServer, setSharedStore } from '../server/web';
@@ -1269,47 +1270,94 @@ export async function runPhase204ClosureTests() {
     console.log('\n--- 26. Canonical isEpisodeTrainingEligible() evaluation ---');
     // Valid episode is eligible
     assert(
-      isEpisodeTrainingEligible(episode24, { exposuresProvider: (id) => engineStore.getContextExposures(id) }),
+      isEpisodeTrainingEligible(episode24, {
+        isRevoked: () => false,
+        exposuresProvider: (id) => engineStore.getContextExposures(id),
+      }),
       'episode24 is training eligible'
     );
+    // Blocked if isRevoked is missing (mandatory fail closed)
+    const missingRevRes = evaluateEpisodeTrainingEligibility(episode24, {
+      exposuresProvider: (id) => engineStore.getContextExposures(id),
+    });
+    assertStrictEqual(missingRevRes.eligible, false, 'Missing isRevoked fails closed');
+    assert(
+      missingRevRes.reasons.some((r) => r.includes('Mandatory isRevoked authority is required')),
+      'Reason cites missing mandatory isRevoked authority'
+    );
     // Blocked if exposuresProvider is missing (mandatory fail closed)
-    const missingExpRes = evaluateEpisodeTrainingEligibility(episode24);
+    const missingExpRes = evaluateEpisodeTrainingEligibility(episode24, {
+      isRevoked: () => false,
+    });
     assertStrictEqual(missingExpRes.eligible, false, 'Missing exposuresProvider fails closed');
     assert(
       missingExpRes.reasons.some((r) => r.includes('Mandatory exposuresProvider is required')),
       'Reason cites missing mandatory exposuresProvider'
     );
+    // Blocked if exposure record is not bound to this episode
+    const foreignExpRes = evaluateEpisodeTrainingEligibility(episode24, {
+      isRevoked: () => false,
+      exposuresProvider: (id) => [
+        {
+          episodeId: 'foreign_episode_id',
+          contextUnitId: episode24.contextDecision.candidates[0].contextUnitId,
+          unitKind: 'SOURCE_FILE',
+          state: ContextExposureState.SHOWN,
+          candidateAt: new Date().toISOString(),
+        },
+      ],
+    });
+    assertStrictEqual(foreignExpRes.eligible, false, 'Unbound exposure record fails closed');
+    assert(
+      foreignExpRes.reasons.some((r) => r.includes('UNBOUND_EXPOSURE_RECORD')),
+      'Reason cites UNBOUND_EXPOSURE_RECORD'
+    );
     // Blocked if trainingAllowed is false
     const rightsBlockedEp: TaskEpisodeV1 = { ...episode24, rights: { ...episode24.rights, trainingAllowed: false } };
     assertStrictEqual(
-      isEpisodeTrainingEligible(rightsBlockedEp, { exposuresProvider: (id) => engineStore.getContextExposures(id) }),
+      isEpisodeTrainingEligible(rightsBlockedEp, {
+        isRevoked: () => false,
+        exposuresProvider: (id) => engineStore.getContextExposures(id),
+      }),
       false,
       'Episode with trainingAllowed = false is not training eligible'
     );
     // Blocked if permissionSource is UNKNOWN
     const unknownSourceEp: TaskEpisodeV1 = { ...episode24, rights: { ...episode24.rights, permissionSource: 'UNKNOWN' } };
     assertStrictEqual(
-      isEpisodeTrainingEligible(unknownSourceEp, { exposuresProvider: (id) => engineStore.getContextExposures(id) }),
+      isEpisodeTrainingEligible(unknownSourceEp, {
+        isRevoked: () => false,
+        exposuresProvider: (id) => engineStore.getContextExposures(id),
+      }),
       false,
       'Episode with permissionSource = UNKNOWN is not training eligible'
     );
     // Blocked if rankerStatus is not PRODUCTION
     const nonProdRankerEp: TaskEpisodeV1 = { ...episode24, environment: { ...episode24.environment, rankerStatus: 'SHADOW' } };
     assertStrictEqual(
-      isEpisodeTrainingEligible(nonProdRankerEp, { exposuresProvider: (id) => engineStore.getContextExposures(id) }),
+      isEpisodeTrainingEligible(nonProdRankerEp, {
+        isRevoked: () => false,
+        exposuresProvider: (id) => engineStore.getContextExposures(id),
+      }),
       false,
       'Episode with rankerStatus = SHADOW is not training eligible'
     );
     // Blocked if rankerId is custom_unidentified
     const customRankerEp: TaskEpisodeV1 = { ...episode24, environment: { ...episode24.environment, rankerId: 'custom_unidentified' } };
     assertStrictEqual(
-      isEpisodeTrainingEligible(customRankerEp, { exposuresProvider: (id) => engineStore.getContextExposures(id) }),
+      isEpisodeTrainingEligible(customRankerEp, {
+        isRevoked: () => false,
+        exposuresProvider: (id) => engineStore.getContextExposures(id),
+      }),
       false,
       'Episode with rankerId = custom_unidentified is not training eligible'
     );
     // Blocked if revoked
     assertStrictEqual(
-      isEpisodeTrainingEligible(episode24, { isRevoked: () => true, exposuresProvider: (id) => engineStore.getContextExposures(id) }),
+      isEpisodeTrainingEligible(episode24, {
+        isRevoked: () => true,
+        exposuresProvider: (id) => engineStore.getContextExposures(id),
+      }),
       false,
       'Revoked episode is not training eligible'
     );
@@ -1425,238 +1473,225 @@ export async function runPhase204ClosureTests() {
       const case30Store = new SqliteStore(path.join(case30Dir, 'test.db'));
       const db = (case30Store as any).db;
 
-      // Seed 1,000 episodes:
+      // Seed 1,000 episodes using authentic createTaskEpisodeV1() records:
       // - 700 verified successes, 300 verified failures
       // - Full candidate universes logged in episode_candidates
       // - Context unit exposures logged in context_exposures
       // - Valid pre-outcome snapshots with passing integrity audits
       // - 100 production shadow policy runs with 0 crashes
       // - BUT trainingAllowed = false (rights ineligible)
-      const insertEpisode = db.prepare(`
-        INSERT INTO task_episodes (
-          episode_id, tenant_id, repository_id, session_id, task_id,
-          task_type, base_commit, context_policy_id, ranker_id, ranker_status,
-          training_allowed, service_processing_allowed, redistribution_allowed,
-          candidate_count, bundle_sha256, actual_rendered_tokens, token_budget,
-          verified_success, verification_confidence, total_cost_usd, pricing_status,
-          record_sha256, started_at, completed_at, created_at, raw_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      const insertCandidate = db.prepare(`
-        INSERT INTO episode_candidates (
-          candidate_id, episode_id, context_unit_id, path, unit_kind,
-          retrieval_sources_json, pre_rank_position, final_rank, final_score,
-          feature_set_version, feature_snapshot_json, estimated_tokens,
-          selected, selected_resolution, recorded_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      const insertExposure = db.prepare(`
-        INSERT INTO context_exposures (
-          exposure_id, episode_id, context_unit_id, path, unit_kind,
-          state, final_rank, candidate_at, selected_at, shown_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      const insertSnapshot = db.prepare(`
-        INSERT INTO pre_outcome_snapshots (
-          snapshot_id, episode_id, task_id, repository_id,
-          base_commit, feature_cutoff_commit, prompt_sha256, bundle_sha256,
-          snapshot_sha256, token_budget, actual_rendered_tokens, context_policy_id,
-          ranker_id, captured_at, raw_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      const insertAudit = db.prepare(`
-        INSERT INTO pre_outcome_integrity_audits (
-          audit_id, episode_id, snapshot_sha256, recomputed_sha256, passed,
-          has_leakage, has_hash_mismatch, has_provenance_error, audited_at, details_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      const insertShadow = db.prepare(`
-        INSERT INTO shadow_policy_evaluations (
-          evaluation_id, task_id, production_policy_id, shadow_policy_id,
-          candidate_count, rank_overlap_jaccard, token_difference,
-          shadow_latency_ms, crashed, error_message, evaluated_at, raw_json,
-          environment, is_synthetic
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
       db.exec('BEGIN IMMEDIATE');
       for (let i = 0; i < 1000; i++) {
-          const epId = `ep_rights_ineligible_${i}`;
-          const isSuccess = i < 700;
-          const snapSha = `sha256_snap_${i}`;
-          const rawSnapshot = {
-            snapshotVersion: 'v1.0.0',
-            episodeId: epId,
-            sessionId: `sess_${i}`,
-            taskId: `task_${i}`,
+        const epId = `ep_rights_ineligible_${i}`;
+        const isSuccess = i < 700;
+        const candidateUnitId = `unit_${i}`;
+        const candidatePath = `src/file_${i}.ts`;
+
+        const authenticEp = createTaskEpisodeV1({
+          episodeId: epId,
+          tenantId: 'tenant_default',
+          repositoryId: 'repo_ineligible',
+          sessionId: `sess_${i}`,
+          taskId: `task_${i}`,
+          workspace: {
+            repositoryIdentity: 'repo_ineligible',
+            baseCommit: 'base_commit_123',
+            dirtyAtStart: false,
             workspaceSnapshotId: `ws_${i}`,
-            contentRootHash: `root_${i}`,
-            snapshotSha256: snapSha,
-            createdAt: '2026-09-22T00:00:00.000Z',
-            units: [],
-            candidates: [],
-          };
-
-          const rawEpisode = {
-            schemaVersion: 'v1.0.0',
+          },
+          task: {
+            prompt: 'Fix payment bug',
+            taskType: 'BUG_FIX',
+            evidence: [],
+          },
+          environment: {
+            contextPolicyId: 'default_v1',
+            rankerId: 'heuristic_v1',
+            rankerStatus: 'PRODUCTION',
+          },
+          rights: {
+            trainingAllowed: false, // Explicitly rights ineligible!
+            serviceProcessingAllowed: true,
+            redistributionAllowed: false,
+            permissionSource: 'USER_CONSENT',
+          },
+          contextDecision: {
+            candidateCount: 1,
+            bundleSha256: 'bundle_sha',
+            actualRenderedTokens: 100,
+            tokenBudget: 2000,
+            candidates: [
+              {
+                contextUnitId: candidateUnitId,
+                path: candidatePath,
+                unitKind: 'SOURCE_FILE',
+                retrievalSources: ['lexical'],
+                finalRank: 1,
+                finalScore: 0.95,
+                featureSetVersion: 'v1',
+                featureSnapshot: {},
+                estimatedTokens: 100,
+                selected: true,
+              },
+            ],
+            selectedUnits: [
+              {
+                contextUnitId: candidateUnitId,
+                path: candidatePath,
+                unitKind: 'SOURCE_FILE',
+                resolution: 'FULL',
+                rank: 1,
+                allocatedTokens: 100,
+              },
+            ],
+          },
+          outcome: {
             episodeId: epId,
-            sessionId: `sess_${i}`,
-            taskId: `task_${i}`,
-            repositoryId: 'repo_ineligible',
-            rights: {
-              trainingAllowed: false, // Explicitly rights ineligible!
-              serviceProcessingAllowed: true,
-              redistributionAllowed: false,
-              permissionSource: 'OPT_OUT',
+            verifiedSuccess: isSuccess,
+            verificationConfidence: 'HIGH',
+            verificationSources: ['BEHAVIORAL_ORACLE'],
+          },
+        });
+
+        case30Store.saveTaskEpisode(authenticEp);
+
+        case30Store.saveContextExposures(
+          [
+            {
+              episodeId: epId,
+              contextUnitId: candidateUnitId,
+              path: candidatePath,
+              unitKind: 'SOURCE_FILE',
+              state: ContextExposureState.SHOWN,
+              finalRank: 1,
+              candidateAt: '2026-09-22T00:00:00.000Z',
+              selectedAt: '2026-09-22T00:00:01.000Z',
+              shownAt: '2026-09-22T00:00:02.000Z',
             },
-            environment: {
-              contextPolicyId: 'default_v1',
-              rankerId: 'heuristic_v1',
-              rankerStatus: 'PRODUCTION',
+          ],
+          epId
+        );
+
+        const preSnap = createPreOutcomeEpisodeSnapshot({
+          episodeId: epId,
+          taskId: `task_${i}`,
+          prompt: 'Fix payment bug',
+          promptSha256: crypto.createHash('sha256').update('Fix payment bug').digest('hex'),
+          repositoryId: 'repo_ineligible',
+          baseCommit: 'base_commit_123',
+          featureCutoffCommit: 'base_commit_123',
+          workspaceSnapshotId: `ws_${i}`,
+          candidateUniverse: authenticEp.contextDecision.candidates!,
+          selectedUnits: [
+            {
+              contextUnitId: candidateUnitId,
+              path: candidatePath,
+              unitKind: 'SOURCE_FILE',
+              resolution: 'FULL',
+              rank: 1,
+              allocatedTokens: 100,
             },
-            outcome: {
-              verifiedSuccess: isSuccess,
-              verificationConfidence: 'HIGH',
-              verificationSources: ['BEHAVIORAL_ORACLE'],
-            },
-            contextDecision: {
-              candidateCount: 1,
-              bundleSha256: 'bundle_sha',
-              actualRenderedTokens: 100,
-              tokenBudget: 2000,
-              candidates: [
-                {
-                  contextUnitId: `unit_${i}`,
-                  path: `src/file_${i}.ts`,
-                  finalRank: 1,
-                  finalScore: 0.95,
-                  selected: true,
-                },
-              ],
-            },
-          };
+          ],
+          tokenBudget: 2000,
+          actualRenderedTokens: 100,
+          bundleSha256: 'bundle_sha',
+          contextPolicyId: 'default_v1',
+          rankerId: 'heuristic_v1',
+          capturedAt: '2026-09-22T00:00:00.000Z',
+        });
+        case30Store.savePreOutcomeSnapshot(preSnap);
 
-          insertEpisode.run(
-            epId,
-            'tenant_default',
-            'repo_ineligible',
-            `sess_${i}`,
-            `task_${i}`,
-            'BUG_FIX',
-            'base_commit_123',
-            'default_v1',
-            'heuristic_v1',
-            'PRODUCTION',
-            0, // training_allowed = 0
-            1,
-            0,
-            1,
-            'bundle_sha',
-            100,
-            2000,
-            isSuccess ? 1 : 0,
-            'HIGH',
-            null,
-            null,
-            'rec_sha',
-            '2026-09-22T00:00:00.000Z',
-            '2026-09-22T00:01:00.000Z',
-            '2026-09-22T00:01:00.000Z',
-            JSON.stringify(rawEpisode)
-          );
-
-          insertCandidate.run(
-            `cand_${i}`,
-            epId,
-            `unit_${i}`,
-            `src/file_${i}.ts`,
-            'SOURCE_FILE',
-            JSON.stringify(['retrieval']),
-            1,
-            1,
-            0.95,
-            'v1',
-            '{}',
-            100,
-            1,
-            'FULL',
-            '2026-09-22T00:00:00.000Z'
-          );
-
-          insertExposure.run(
-            `exp_${i}`,
-            epId,
-            `unit_${i}`,
-            `src/file_${i}.ts`,
-            'SOURCE_FILE',
-            'SHOWN',
-            1,
-            '2026-09-22T00:00:00.000Z',
-            '2026-09-22T00:00:01.000Z',
-            '2026-09-22T00:00:02.000Z'
-          );
-
-          insertSnapshot.run(
-            `snap_id_${i}`,
-            epId,
-            `task_${i}`,
-            'repo_ineligible',
-            'base_commit_123',
-            'base_commit_123',
-            'prompt_sha',
-            'bundle_sha',
-            snapSha,
-            2000,
-            100,
-            'default_v1',
-            'heuristic_v1',
-            '2026-09-22T00:00:00.000Z',
-            JSON.stringify(rawSnapshot)
-          );
-
-          insertAudit.run(
-            `audit_${i}`,
-            epId,
-            snapSha,
-            snapSha,
-            1, // passed = 1
-            0,
-            0,
-            0,
-            '2026-09-22T00:00:00.000Z',
-            '{}'
-          );
-        }
+        case30Store.savePreOutcomeIntegrityAudit({
+          auditId: `audit_${i}`,
+          episodeId: epId,
+          snapshotSha256: preSnap.snapshotSha256,
+          recomputedSha256: preSnap.snapshotSha256,
+          passed: true,
+          hasLeakage: false,
+          hasHashMismatch: false,
+          hasProvenanceError: false,
+          auditedAt: '2026-09-22T00:00:00.000Z',
+          details: {},
+        });
+      }
 
       // Insert 100 passing production shadow evaluations
       for (let j = 0; j < 100; j++) {
-        insertShadow.run(
-          `shadow_${j}`,
-          `task_shadow_${j}`,
-          'prod_v1',
-          'shadow_v1',
-          10,
-          0.9,
-          50,
-          12,
-          0, // crashed = 0
-          null,
-          '2026-09-22T00:00:00.000Z',
-          '{}',
-          'PRODUCTION', // environment = PRODUCTION
-          0 // is_synthetic = 0
+        case30Store.saveShadowPolicyEvaluation(
+          {
+            taskId: `task_shadow_${j}`,
+            productionPolicyId: 'prod_v1',
+            shadowPolicyId: 'shadow_v1',
+            candidateCount: 10,
+            topK: 10,
+            rankOverlapJaccard: 0.9,
+            topKDifferences: { inProductionOnly: [], inShadowOnly: [], sharedTopKCount: 10 },
+            inclusionDifferences: { inProductionOnly: [], inShadowOnly: [], sharedInclusionCount: 10 },
+            resolutionDifferences: [],
+            tokenDifference: 50,
+            productionTokens: 100,
+            shadowTokens: 150,
+            shadowLatencyMs: 12,
+            evaluatedAt: '2026-09-22T00:00:00.000Z',
+          },
+          false,
+          undefined,
+          'PRODUCTION',
+          false
         );
       }
       db.exec('COMMIT');
 
+      // 1. Prove rights is the SINGLE disqualifying variable on a sample episode
+      const sampleEpisode = case30Store.getTaskEpisode('ep_rights_ineligible_0')!;
+      assert(sampleEpisode !== null, 'Sample episode loaded');
+      const sampleEval = evaluateEpisodeTrainingEligibility(sampleEpisode, {
+        isRevoked: (id) => case30Store.isEpisodeRevoked(id),
+        exposuresProvider: (id) => case30Store.getContextExposures(id),
+      });
+      assertStrictEqual(sampleEval.eligible, false, 'Sample episode is ineligible');
+      assertStrictEqual(sampleEval.reasons.length, 1, 'Strictly 1 disqualifying reason');
+      assert(
+        sampleEval.reasons[0].includes('RIGHTS_BLOCKED: trainingAllowed is false'),
+        `Disqualifying reason is rights: ${sampleEval.reasons[0]}`
+      );
+
+      // Clone sample episode with trainingAllowed = true, keeping all else identical
+      const permittedSample = createTaskEpisodeV1({
+        episodeId: 'ep_permitted_sample',
+        tenantId: sampleEpisode.tenantId,
+        repositoryId: sampleEpisode.repositoryId,
+        sessionId: sampleEpisode.sessionId,
+        taskId: sampleEpisode.taskId,
+        workspace: sampleEpisode.workspace,
+        task: {
+          prompt: sampleEpisode.task.prompt,
+          taskType: sampleEpisode.task.taskType,
+          evidence: sampleEpisode.task.evidence,
+        },
+        environment: sampleEpisode.environment,
+        rights: {
+          ...sampleEpisode.rights,
+          trainingAllowed: true,
+        },
+        contextDecision: sampleEpisode.contextDecision,
+        outcome: sampleEpisode.outcome,
+      });
+      const permittedEval = evaluateEpisodeTrainingEligibility(permittedSample, {
+        isRevoked: (id) => case30Store.isEpisodeRevoked(id),
+        exposuresProvider: (id) =>
+          case30Store
+            .getContextExposures('ep_rights_ineligible_0')
+            .map((e) => ({ ...e, episodeId: 'ep_permitted_sample' })),
+      });
+      assertStrictEqual(permittedEval.eligible, true, 'Permitted sample is 100% training eligible');
+      assertStrictEqual(permittedEval.reasons.length, 0, 'Zero rejection reasons when trainingAllowed is true');
+
+      // 2. Summary has 1,000 raw episodes
       const summary = case30Store.getLearningFlywheelSummary();
       assertStrictEqual(summary.totalEpisodes, 1000, 'Raw totalEpisodes in summary is 1,000');
 
+      // 3. Readiness report derivation
       const readinessReport = case30Store.getV32DataReadinessReport();
 
       // Eligible population is strictly 0
@@ -1665,6 +1700,25 @@ export async function runPhase204ClosureTests() {
       assertStrictEqual(readinessReport.isV32Ready, false, 'isV32Ready is strictly false');
       assert(readinessReport.canonicalEvaluation !== undefined, 'Canonical evaluation is present');
       assertStrictEqual(readinessReport.canonicalEvaluation!.allGatesPassed, false, 'allGatesPassed is strictly false');
+
+      // Assert repository & task-type readiness metrics are derived strictly from eligible population (all 0)
+      assertStrictEqual(
+        readinessReport.currentIndependentRepositories,
+        0,
+        'currentIndependentRepositories is 0 (derived from eligiblePopulation)'
+      );
+      assertStrictEqual(readinessReport.bugFixEpisodes, 0, 'bugFixEpisodes is 0 (derived from eligiblePopulation)');
+      assertStrictEqual(
+        readinessReport.featureAdditionEpisodes,
+        0,
+        'featureAdditionEpisodes is 0 (derived from eligiblePopulation)'
+      );
+      assertStrictEqual(readinessReport.refactorEpisodes, 0, 'refactorEpisodes is 0 (derived from eligiblePopulation)');
+      assertStrictEqual(
+        readinessReport.testFailureEpisodes,
+        0,
+        'testFailureEpisodes is 0 (derived from eligiblePopulation)'
+      );
 
       // Gate 1: Total Episodes fails (0 < 1,000)
       const g1 = readinessReport.canonicalEvaluation!.gates.find((g) => g.gateId === 'GATE_1_TOTAL_EPISODES')!;

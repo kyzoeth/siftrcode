@@ -421,6 +421,11 @@ export class TrainingExporter {
       const recordedExposures = options.exposuresProvider(ep.episodeId);
       const recordedExposureMap = new Map<string, ContextUnitExposureRecord>();
       for (const exp of recordedExposures) {
+        if (!exp.episodeId || exp.episodeId !== ep.episodeId) {
+          throw new Error(
+            `FAIL_CLOSED: Exposure record for unit "${exp.contextUnitId}" is not bound to episode "${ep.episodeId}" (found "${exp.episodeId}").`
+          );
+        }
         recordedExposureMap.set(exp.contextUnitId, exp);
       }
 
