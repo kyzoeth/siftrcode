@@ -34,6 +34,8 @@ export interface FinalOfflineEvaluationOptions {
   candidateBudget?: number;
   tokenBudget?: number;
   manifestPath?: string;
+  outputPath?: string;
+  persistReport?: boolean;
   v2Provider?: any;
   v3Provider?: any;
 }
@@ -439,8 +441,10 @@ export async function runFinalOfflineEvaluation(
       taskResults,
     };
 
-    const reportPath = path.join(finalExpDir, 'offline_evaluation.json');
-    fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), 'utf8');
+    const reportPath = options.outputPath || path.join(finalExpDir, 'offline_evaluation.json');
+    if (options.persistReport !== false) {
+      fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), 'utf8');
+    }
 
     console.log('\n📊 ================= FINAL OFFLINE HOLDOUT REPORT =================');
     console.log(`   Gate Decision:     [ ${gateDecision} ]`);
@@ -468,7 +472,9 @@ export async function runFinalOfflineEvaluation(
       `   95% CI (NDCG@10):  [${bootstrapReport.ndcg10.ciLower95.toFixed(4)}, ${bootstrapReport.ndcg10.ciUpper95.toFixed(4)}]`
     );
     console.log('   =============================================================');
-    console.log(`✔ Report persisted to: ${reportPath}`);
+    if (options.persistReport !== false) {
+      console.log(`✔ Report persisted to: ${reportPath}`);
+    }
 
     return report;
   } finally {

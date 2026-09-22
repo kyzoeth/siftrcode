@@ -12,6 +12,7 @@
 import * as assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
 import {
   FrozenV2ContextProvider,
   LearnedV3ContextProvider,
@@ -131,11 +132,12 @@ export async function runOfflineEvalProvidersRegressionTests() {
     },
   };
 
-  // Run evaluator on 2 tasks to verify invocation wiring
+  const tmpReportPath = path.join(os.tmpdir(), `mini_offline_eval_${Date.now()}.json`);
   const miniReport = await runFinalOfflineEvaluation({
     maxTasks: 2,
     v2Provider: mockV2Provider,
     v3Provider: mockV3Provider,
+    outputPath: tmpReportPath,
   });
 
   assert.strictEqual(v2Invocations, 2, 'Evaluator must invoke FrozenV2ContextProvider once per task');
@@ -157,6 +159,10 @@ export async function runOfflineEvalProvidersRegressionTests() {
     assert.strictEqual(t.v2Provenance.providerName, 'FrozenV2ContextProvider');
     assert.strictEqual(t.v3Provenance.providerName, 'LearnedV3ContextProvider');
   }
+
+  try {
+    if (fs.existsSync(tmpReportPath)) fs.unlinkSync(tmpReportPath);
+  } catch {}
 
   console.log('  ✔ Proof verified: Offline evaluator genuinely invokes both providers with candidateBudget: 50');
   console.log('\n🎉 ALL OFFLINE EVALUATOR CONTEXT PROVIDER REGRESSION TESTS PASSED CLEANLY!\n');
