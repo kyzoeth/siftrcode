@@ -6,7 +6,7 @@
  * 2. Pre-Outcome Snapshot: Automatically generated and deeply immutable.
  * 3. Exposure Derivation: Derived strictly from actual context & agent events (no false inference).
  * 4. Outcome Resolution: Attributed to high-confidence verifiers via OutcomeEvidence.
- * 5. verifiedTargetEvidence: True ONLY on verified success + edited targets (never read-only).
+ * 5. verifiedTargetEdit: True ONLY on verified success + edited targets (never read-only).
  * 6. Mandatory Revocation: Fail-closed filtering at storage and export boundaries.
  * 7. Canonical Readiness Gates: All 7 architecture spec gates truthfully evaluated with real DB records.
  */
@@ -283,7 +283,7 @@ async function runProductionIngestionE2ETests() {
   console.log('\n--- 4. Outcome Resolution via Authoritative OutcomeEvidence ---');
   const outcomeEvidence = createOutcomeEvidence({
     taskId: 'task_closure_e2e_001',
-    sessionId: plan.sessionId || 'sess_default',
+    sessionId: plan.sessionId!,
     contextPlanId: plan.planId,
     agentEnvironmentId: plan.agentEnvironmentId || 'test_env',
     workspaceSnapshotBefore: snapshot.workspaceSnapshotId,
@@ -388,7 +388,7 @@ async function runProductionIngestionE2ETests() {
 
   const outcomeEvidence2 = createOutcomeEvidence({
     taskId: 'task_closure_e2e_002',
-    sessionId: plan2.sessionId || 'sess_default_2',
+    sessionId: plan2.sessionId!,
     contextPlanId: plan2.planId,
     agentEnvironmentId: plan2.agentEnvironmentId || 'test_env_2',
     workspaceSnapshotBefore: snapshot2.workspaceSnapshotId,
@@ -427,7 +427,7 @@ async function runProductionIngestionE2ETests() {
   assert.strictEqual(exportResult.totalEpisodesAccepted, 1);
   assert.ok(exportResult.rows.length > 0);
 
-  // Check rows: edited target MUST have verifiedTargetEdit = true AND verifiedTargetEvidence = true
+  // Check rows: edited target MUST have verifiedTargetEdit = true AND verifiedTargetEvidence must be undefined (removed)
   const editedRow = exportResult.rows.find((r) => r.contextUnitId === selectedCandidate!.contextUnitId);
   assert.ok(editedRow, 'Row for edited target must exist');
   assert.strictEqual(editedRow!.wasEdited, true);
@@ -437,9 +437,9 @@ async function runProductionIngestionE2ETests() {
     'Target with verifiedSuccess === true && wasEdited must have verifiedTargetEdit === true'
   );
   assert.strictEqual(
-    editedRow!.verifiedTargetEvidence,
-    true,
-    'verifiedTargetEvidence alias must equal verifiedTargetEdit'
+    (editedRow as any).verifiedTargetEvidence,
+    undefined,
+    'verifiedTargetEvidence property has been completely removed'
   );
   assert.strictEqual(
     editedRow!.attributionType,
@@ -462,9 +462,9 @@ async function runProductionIngestionE2ETests() {
     'Unedited candidate must NEVER have verifiedTargetEdit === true'
   );
   assert.strictEqual(
-    uneditedRow!.verifiedTargetEvidence,
-    false,
-    'Unedited candidate must NEVER have verifiedTargetEvidence === true'
+    (uneditedRow as any).verifiedTargetEvidence,
+    undefined,
+    'Unedited candidate must have verifiedTargetEvidence === undefined'
   );
   assert.strictEqual(
     uneditedRow!.readAttribution,

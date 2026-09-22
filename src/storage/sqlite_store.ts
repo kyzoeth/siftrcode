@@ -61,6 +61,7 @@ import {
   CanonicalGateEvaluation,
   CanonicalReadinessEvaluation,
 } from '../learning/analytics/readiness_gates';
+import { isEpisodeTrainingEligible } from '../learning/episodes/training_eligibility';
 
 export {
   sanitizeContextPlanForPersistence,
@@ -1815,7 +1816,7 @@ export class SqliteStore {
   // Task OutcomeEvidence Operations (Section 48, 49)
   // ==========================================
 
-  public saveTaskOutcome(outcome: OutcomeEvidence): { episodeFinalized: boolean; finalizationErrorCode?: string } {
+  public saveTaskOutcome(outcome: OutcomeEvidence): { episodeFinalized: boolean; finalizationErrorCode?: string; episodeId?: string } {
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO task_outcome_records (
         outcome_id, task_id, session_id, agent_environment_id,
@@ -1859,7 +1860,7 @@ export class SqliteStore {
     // Automatic Episode Finalization on Real Outcome Submission (Phase 20.2)
     try {
       const episode = this.finalizeEpisodeFromOutcome(outcome);
-      return { episodeFinalized: episode !== null };
+      return { episodeFinalized: episode !== null, episodeId: episode?.episodeId };
     } catch (err: any) {
       return {
         episodeFinalized: false,
@@ -2530,6 +2531,15 @@ export class SqliteStore {
     return loadVerifiedTaskEpisode(row.raw_json);
   }
 
+  public getTaskEpisodeByTaskId(taskId: string): TaskEpisodeV1 | null {
+    const row = this.db
+      .prepare('SELECT raw_json FROM task_episodes WHERE task_id = ? ORDER BY created_at DESC LIMIT 1')
+      .get(taskId) as { raw_json: string } | undefined;
+
+    if (!row) return null;
+    return loadVerifiedTaskEpisode(row.raw_json);
+  }
+
   public listTaskEpisodes(filter: EpisodeFilter = {}): TaskEpisodeV1[] {
     let sql = 'SELECT raw_json FROM task_episodes WHERE 1=1';
     const params: (string | number)[] = [];
@@ -3183,10 +3193,23 @@ export class SqliteStore {
       .get() as { c: number };
     const failedVerifiedEpisodes = failedRow ? failedRow.c : 0;
 
-    const trainingEligibleRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE training_allowed = 1 AND episode_id NOT IN (SELECT episode_id FROM episode_revocations)')
-      .get() as { c: number };
-    const trainingEligibleEpisodes = trainingEligibleRow ? trainingEligibleRow.c : 0;
+    const nonRevokedEpisodes = this.db
+      .prepare('SELECT raw_json FROM task_episodes WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)')
+      .all() as Array<{ raw_json: string }>;
+    let trainingEligibleEpisodes = 0;
+    for (const epRow of nonRevokedEpisodes) {
+      try {
+        const parsed = JSON.parse(epRow.raw_json);
+        if (
+          isEpisodeTrainingEligible(parsed, {
+            isRevoked: (id) => this.isEpisodeRevoked(id),
+            exposuresProvider: (id) => this.getContextExposures(id),
+          })
+        ) {
+          trainingEligibleEpisodes++;
+        }
+      } catch {}
+    }
 
     const rightsBlockedEpisodes = totalEpisodes - trainingEligibleEpisodes;
 
@@ -3277,9 +3300,17 @@ export class SqliteStore {
       .get() as { c: number } | undefined;
     const episodesWithCandidatesLogged = candLoggedRow?.c ?? 0;
 
-    // 2. Unpermitted in effective training pool (dataset_v2_rows exported with training_allowed = 0)
+    // 2. Unpermitted in effective training pool (dataset_v2_rows exported with training_allowed = 0 or unpermitted ranker)
     const unpermittedInPoolRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM dataset_v2_rows WHERE episode_id IN (SELECT episode_id FROM task_episodes WHERE training_allowed = 0)')
+      .prepare(`
+        SELECT COUNT(*) as c FROM dataset_v2_rows
+        WHERE episode_id IN (
+          SELECT episode_id FROM task_episodes
+          WHERE training_allowed = 0
+             OR ranker_status != 'PRODUCTION'
+             OR ranker_id = 'custom_unidentified'
+        )
+      `)
       .get() as { c: number } | undefined;
     const unpermittedEpisodesInPool = unpermittedInPoolRow?.c ?? 0;
 

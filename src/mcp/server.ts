@@ -23,6 +23,7 @@ import { createProviderUsageEvent } from '../token/provider_usage';
 import { createAgentEnvironment } from '../agents/agent_environment';
 import { ContextPlan } from '../engine/context_plan';
 import { resolveOutcomeLineage } from '../learning/episodes/lineage_resolver';
+import { isEpisodeTrainingEligible } from '../learning/episodes/training_eligibility';
 import {
   MCP_TOOL_SCHEMAS,
   McpToolName,
@@ -509,13 +510,17 @@ export function createMcpServer(): Server {
         // Persist exact lineage and preserve tri-state UNKNOWN (null !== 0)
         let episodeFinalized = false;
         let finalizationErrorCode: string | undefined;
+        let finalizedEpisodeId: string | undefined;
         try {
           const saveRes = store.saveTaskOutcome(outcomeEvidence);
           if (saveRes && typeof saveRes === 'object') {
             episodeFinalized = Boolean(saveRes.episodeFinalized);
             finalizationErrorCode = saveRes.finalizationErrorCode;
+            finalizedEpisodeId = saveRes.episodeId;
           } else {
-            episodeFinalized = Boolean(store.getTaskEpisode(resolvedPlanId || resolvedTaskId));
+            const ep = store.getTaskEpisode(resolvedPlanId || resolvedTaskId);
+            episodeFinalized = Boolean(ep);
+            finalizedEpisodeId = ep?.episodeId;
           }
         } catch (err: any) {
           finalizationErrorCode = err.code || err.message || 'FINALIZATION_FAILED';
@@ -558,6 +563,18 @@ export function createMcpServer(): Server {
           }));
         }
 
+        const finalizedEp = finalizedEpisodeId
+          ? store.getTaskEpisode(finalizedEpisodeId)
+          : (resolvedTaskId ? store.getTaskEpisodeByTaskId(resolvedTaskId) : null);
+        const trainingEligible = Boolean(
+          finalizedEp &&
+          episodeFinalized &&
+          isEpisodeTrainingEligible(finalizedEp, {
+            isRevoked: (id) => store.isEpisodeRevoked(id),
+            exposuresProvider: (id) => store.getContextExposures(id),
+          })
+        );
+
         return {
           content: [
             {
@@ -566,7 +583,7 @@ export function createMcpServer(): Server {
                 success: true,
                 outcomeRecorded: true,
                 episodeFinalized,
-                trainingEligible: outcomeEvidence.verifiedSuccess === true,
+                trainingEligible,
                 finalizationErrorCode,
                 taskId: outcomeEvidence.taskId,
                 sessionId: outcomeEvidence.sessionId,

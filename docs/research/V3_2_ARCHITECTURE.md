@@ -119,7 +119,7 @@ No model candidate will be evaluated for production promotion until the learning
 | **Rights Clearance** | $100\%$ zero unpermitted or revoked episodes in training pool | Strict compliance with data rights, retention limits, and deletion requests. |
 | **Supervision Diversity** | Tri-state outcome distribution with documented resolution proofs | Prevents model training on unverified heuristic proxies (e.g. agent self-report). |
 | **Zero-Leakage Audit** | $100\%$ pass on pre-outcome snapshot boundary checks | All features strictly $\le C_0$; zero post-outcome fields present in input matrix. |
-| **Shadow Policy Parity** | Minimum 100 shadow evaluation runs with zero execution crashes | Confirms production safety and runtime latency bounds ($\le 25\text{ms}$). |
+| **Shadow Policy Parity** | Minimum 100 shadow evaluation runs with zero execution crashes | Confirms production safety and operational stability with zero execution crashes. |
 
 ---
 

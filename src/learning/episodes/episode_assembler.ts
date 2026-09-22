@@ -406,11 +406,27 @@ export class EpisodeAssembler {
     const buildProv = getRuntimeBuildProvenance();
     const toolConfigHash = computeToolConfigurationHash((params.task as any).toolConfiguration || null);
 
+    const sessionId = params.plan.sessionId || params.task.sessionId;
+    if (!sessionId) {
+      const err: any = new Error(
+        'FAIL_CLOSED_LINEAGE_MISMATCH: Missing sessionId in canonical episode assembly (no synthetic session fallback allowed).'
+      );
+      err.code = 'FAIL_CLOSED_LINEAGE_MISMATCH';
+      throw err;
+    }
+    if (params.plan.sessionId && params.task.sessionId && params.plan.sessionId !== params.task.sessionId) {
+      const err: any = new Error(
+        `FAIL_CLOSED_LINEAGE_MISMATCH: Session mismatch between plan (${params.plan.sessionId}) and task (${params.task.sessionId}).`
+      );
+      err.code = 'FAIL_CLOSED_LINEAGE_MISMATCH';
+      throw err;
+    }
+
     const episode = createTaskEpisodeV1({
       episodeId,
       tenantId: params.tenantId,
       repositoryId: params.preOutcomeSnapshot.repositoryId,
-      sessionId: params.plan.sessionId || params.task.sessionId || 'sess_default',
+      sessionId,
       taskId: params.task.taskId,
       startedAt: params.preOutcomeSnapshot.capturedAt,
       completedAt: outcome.completedAt || new Date().toISOString(),

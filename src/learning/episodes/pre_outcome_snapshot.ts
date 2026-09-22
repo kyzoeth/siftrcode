@@ -246,8 +246,6 @@ export interface UnitOutcomeLabel {
   wasInFailedTask: boolean;
   wasSelected: boolean;
   verifiedTargetEdit?: boolean;
-  /** @deprecated Backward-compatible alias for verifiedTargetEdit */
-  verifiedTargetEvidence?: boolean;
   humanRelevanceLabel?: 'RELEVANT' | 'IRRELEVANT' | 'UNKNOWN';
 }
 

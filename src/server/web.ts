@@ -33,6 +33,7 @@ import {
 import { resolveApplicationDataRights } from '../rights/data_rights';
 import { loadResearchStatus, ResearchStatusResponse } from './research_status';
 import { resolveOutcomeLineage } from '../learning/episodes/lineage_resolver';
+import { isEpisodeTrainingEligible } from '../learning/episodes/training_eligibility';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -568,13 +569,17 @@ function createMcpServerInstance() {
         // Persist exact lineage and preserve tri-state UNKNOWN (null !== 0)
         let episodeFinalized = false;
         let finalizationErrorCode: string | undefined;
+        let finalizedEpisodeId: string | undefined;
         try {
           const saveRes = store.saveTaskOutcome(outcomeEvidence);
           if (saveRes && typeof saveRes === 'object') {
             episodeFinalized = Boolean(saveRes.episodeFinalized);
             finalizationErrorCode = saveRes.finalizationErrorCode;
+            finalizedEpisodeId = saveRes.episodeId;
           } else {
-            episodeFinalized = Boolean(store.getTaskEpisode(resolvedPlanId || resolvedTaskId));
+            const ep = store.getTaskEpisode(resolvedPlanId || resolvedTaskId);
+            episodeFinalized = Boolean(ep);
+            finalizedEpisodeId = ep?.episodeId;
           }
         } catch (err: any) {
           finalizationErrorCode = err.code || err.message || 'FINALIZATION_FAILED';
@@ -617,6 +622,18 @@ function createMcpServerInstance() {
           }));
         }
 
+        const finalizedEp = finalizedEpisodeId
+          ? store.getTaskEpisode(finalizedEpisodeId)
+          : (resolvedTaskId ? store.getTaskEpisodeByTaskId(resolvedTaskId) : null);
+        const trainingEligible = Boolean(
+          finalizedEp &&
+          episodeFinalized &&
+          isEpisodeTrainingEligible(finalizedEp, {
+            isRevoked: (id) => store.isEpisodeRevoked(id),
+            exposuresProvider: (id) => store.getContextExposures(id),
+          })
+        );
+
         return {
           content: [
             {
@@ -625,7 +642,7 @@ function createMcpServerInstance() {
                 success: true,
                 outcomeRecorded: true,
                 episodeFinalized,
-                trainingEligible: outcomeEvidence.verifiedSuccess === true,
+                trainingEligible,
                 finalizationErrorCode,
                 taskId: outcomeEvidence.taskId,
                 sessionId: outcomeEvidence.sessionId,
@@ -1484,6 +1501,7 @@ const server = http.createServer(async (req, res) => {
         let persisted = false;
         let episodeFinalized = false;
         let finalizationErrorCode: string | undefined;
+        let finalizedEpisodeId: string | undefined;
 
         if (store) {
           try {
@@ -1491,8 +1509,10 @@ const server = http.createServer(async (req, res) => {
             if (saveRes && typeof saveRes === 'object') {
               episodeFinalized = Boolean(saveRes.episodeFinalized);
               finalizationErrorCode = saveRes.finalizationErrorCode;
+              finalizedEpisodeId = saveRes.episodeId || lineage.episodeId;
             } else {
               episodeFinalized = Boolean(store.getTaskEpisode(lineage.episodeId));
+              finalizedEpisodeId = lineage.episodeId;
             }
 
             store.saveOutcomeEvidence([
@@ -1524,12 +1544,25 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
+        const finalizedEp = store && finalizedEpisodeId
+          ? store.getTaskEpisode(finalizedEpisodeId)
+          : (store && taskId ? store.getTaskEpisodeByTaskId(taskId) : null);
+        const trainingEligible = Boolean(
+          store &&
+          finalizedEp &&
+          episodeFinalized &&
+          isEpisodeTrainingEligible(finalizedEp, {
+            isRevoked: (id) => store.isEpisodeRevoked(id),
+            exposuresProvider: (id) => store.getContextExposures(id),
+          })
+        );
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: true,
           outcomeRecorded: true,
           episodeFinalized,
-          trainingEligible: outcomeEvidence.verifiedSuccess === true,
+          trainingEligible,
           finalizationErrorCode,
           taskId,
           outcomeId: outcomeEvidence.outcomeId,

@@ -25,7 +25,12 @@
  * 21. Readiness Gate 6 enforces 100% distinct active eligible snapshots with passing audits
  * 22. Readiness Gate 7 counts strictly is_synthetic = 0 AND environment = 'PRODUCTION'
  * 23. TaskEpisodeV1 payload tampering rejected by loadVerifiedTaskEpisode
- * 24. Primary real E2E production path: full run through /api/outcome or siftr_outcome with verified lineage and export
+ * 24. Primary real E2E production path: full run through /api/outcome with verified lineage and export
+ * 25. Rejects Dataset V2 export if any candidate lacks an authoritative exposure record
+ * 26. Canonical isEpisodeTrainingEligible() predicate enforces all integrity requirements
+ * 27. Outcome endpoints stop reporting trainingEligible = verifiedSuccess (evaluates finalized episode)
+ * 28. Canonical episode assembly fails closed on missing sessionId (no sess_default)
+ * 29. Gate 7 rationale deleted unmeasured <= 25ms claim
  */
 
 import * as fs from 'fs';
@@ -50,6 +55,8 @@ import {
 } from '../learning/episodes/task_episode';
 import { ContextEngine } from '../engine/context_engine';
 import { ContextExposureState, ContextUnitExposureRecord } from '../learning/episodes/context_exposure';
+import { isEpisodeTrainingEligible, evaluateEpisodeTrainingEligibility } from '../learning/episodes/training_eligibility';
+import { evaluateCanonicalReadinessGates } from '../learning/analytics/readiness_gates';
 
 function assert(condition: boolean, msg: string) {
   if (!condition) {
@@ -650,13 +657,18 @@ export async function runPhase204ClosureTests() {
     assert(thrown15, 'exportContextDatasetV2 threw on missing exposuresProvider');
 
     // =========================================================================
-    // Case 16: verifiedTargetEvidence deprecated in favor of verifiedTargetEdit
+    // Case 16: verifiedTargetEvidence completely removed in favor of verifiedTargetEdit
     // =========================================================================
-    console.log('\n--- 16. verifiedTargetEvidence deprecated in favor of verifiedTargetEdit ---');
+    console.log('\n--- 16. verifiedTargetEvidence completely removed in favor of verifiedTargetEdit ---');
     assertStrictEqual(
-      executeRow!.verifiedTargetEvidence,
+      (executeRow as any).verifiedTargetEvidence,
+      undefined,
+      'verifiedTargetEvidence property has been completely removed from SiftrContextDatasetV2Row'
+    );
+    assertStrictEqual(
       executeRow!.verifiedTargetEdit,
-      'verifiedTargetEvidence alias matches verifiedTargetEdit'
+      true,
+      'verifiedTargetEdit is populated accurately'
     );
 
     // =========================================================================
@@ -1159,7 +1171,170 @@ export async function runPhase204ClosureTests() {
     assertStrictEqual(exportedUnitRow!.verifiedTargetEdit, true, 'Exported row has verifiedTargetEdit = true');
     assertStrictEqual(exportedUnitRow!.wasInSuccessfulTask, true, 'Exported row has wasInSuccessfulTask = true');
 
-    console.log('\n🎉 ALL 24 PHASE 20.4 INTEGRITY CLOSURE INVARIANTS SATISFIED!\n');
+    assertStrictEqual(e2ePayload.trainingEligible, true, 'Real HTTP run evaluated trainingEligible = true on fully eligible episode');
+
+    // =========================================================================
+    // Case 25: Dataset V2 export strictly rejects episode if any candidate lacks an authoritative exposure record
+    // =========================================================================
+    console.log('\n--- 25. Rejects Dataset V2 export if any candidate lacks exposure record ---');
+    const exportMissingCandidateExp = exporter.exportContextDatasetV2([episode24], {
+      isRevoked: () => false,
+      exposuresProvider: () => [], // Empty exposures: candidates lack authoritative exposure records
+    });
+    assertStrictEqual(exportMissingCandidateExp.totalEpisodesAccepted, 0, 'Zero episodes accepted when candidates lack exposure');
+    assertStrictEqual(exportMissingCandidateExp.totalEpisodesRejected, 1, 'Episode rejected when candidates lack exposure');
+    assert(
+      exportMissingCandidateExp.rejections[0].reasons.some((r) => r.includes('MISSING_EXPOSURE_RECORD')),
+      `Rejection reason contains MISSING_EXPOSURE_RECORD: ${exportMissingCandidateExp.rejections[0].reasons.join(', ')}`
+    );
+
+    // =========================================================================
+    // Case 26: Canonical isEpisodeTrainingEligible() predicate enforces all integrity requirements
+    // =========================================================================
+    console.log('\n--- 26. Canonical isEpisodeTrainingEligible() evaluation ---');
+    // Valid episode is eligible
+    assert(
+      isEpisodeTrainingEligible(episode24, { exposuresProvider: (id) => engineStore.getContextExposures(id) }),
+      'episode24 is training eligible'
+    );
+    // Blocked if trainingAllowed is false
+    const rightsBlockedEp: TaskEpisodeV1 = { ...episode24, rights: { ...episode24.rights, trainingAllowed: false } };
+    assertStrictEqual(
+      isEpisodeTrainingEligible(rightsBlockedEp),
+      false,
+      'Episode with trainingAllowed = false is not training eligible'
+    );
+    // Blocked if permissionSource is UNKNOWN
+    const unknownSourceEp: TaskEpisodeV1 = { ...episode24, rights: { ...episode24.rights, permissionSource: 'UNKNOWN' } };
+    assertStrictEqual(
+      isEpisodeTrainingEligible(unknownSourceEp),
+      false,
+      'Episode with permissionSource = UNKNOWN is not training eligible'
+    );
+    // Blocked if rankerStatus is not PRODUCTION
+    const nonProdRankerEp: TaskEpisodeV1 = { ...episode24, environment: { ...episode24.environment, rankerStatus: 'SHADOW' } };
+    assertStrictEqual(
+      isEpisodeTrainingEligible(nonProdRankerEp),
+      false,
+      'Episode with rankerStatus = SHADOW is not training eligible'
+    );
+    // Blocked if rankerId is custom_unidentified
+    const customRankerEp: TaskEpisodeV1 = { ...episode24, environment: { ...episode24.environment, rankerId: 'custom_unidentified' } };
+    assertStrictEqual(
+      isEpisodeTrainingEligible(customRankerEp),
+      false,
+      'Episode with rankerId = custom_unidentified is not training eligible'
+    );
+    // Blocked if revoked
+    assertStrictEqual(
+      isEpisodeTrainingEligible(episode24, { isRevoked: () => true }),
+      false,
+      'Revoked episode is not training eligible'
+    );
+
+    // =========================================================================
+    // Case 27: Outcome endpoints stop reporting trainingEligible = verifiedSuccess
+    // =========================================================================
+    console.log('\n--- 27. Stop reporting trainingEligible = verifiedSuccess ---');
+    const optimizeResult27 = await ContextEngine.optimizeWorkspace({
+      workspaceDir: e2eWorkspaceDir,
+      prompt: 'Fix payment verification in src/payment_service.ts',
+      sessionId: 'sess_rights_blocked_27',
+      taskId: 'task_rights_blocked_27',
+      sqliteStore: engineStore,
+      tokenBudget: 4000,
+      dataRights: createDefaultDataRights({ trainingAllowed: false }),
+    });
+    const plan27 = optimizeResult27.plan;
+
+    const blockedOutcomeRes = await makeHttpRequest(
+      httpServer,
+      {
+        host: '127.0.0.1',
+        port: httpPort,
+        path: '/api/outcome',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      },
+      JSON.stringify({
+        taskId: plan27.taskId,
+        sessionId: plan27.sessionId,
+        planId: plan27.planId,
+        agentEnvironmentId: plan27.agentEnvironmentId,
+        workspaceSnapshotBefore: plan27.workspaceSnapshotId,
+        behavioralOraclePassed: true,
+        regressionTestsPassed: true,
+      })
+    );
+
+    assertStrictEqual(blockedOutcomeRes.statusCode, 200, 'HTTP /api/outcome returned status 200');
+    const blockedPayload = JSON.parse(blockedOutcomeRes.body);
+    assertStrictEqual(blockedPayload.verifiedSuccess, true, 'verifiedSuccess is true based on oracle');
+    assertStrictEqual(blockedPayload.episodeFinalized, true, 'episodeFinalized is true');
+    assertStrictEqual(
+      blockedPayload.trainingEligible,
+      false,
+      'trainingEligible is strictly false when trainingAllowed = false, despite verifiedSuccess = true'
+    );
+
+    // =========================================================================
+    // Case 28: Canonical episode assembly fails closed when sessionId is missing
+    // =========================================================================
+    console.log('\n--- 28. Canonical episode assembly fails closed on missing sessionId ---');
+    let missingSessionThrew = false;
+    try {
+      EpisodeAssembler.assembleEpisode({
+        episodeId: 'ep_test_missing_sess',
+        preOutcomeSnapshot: plan.preOutcomeSnapshot!,
+        plan: { ...plan, sessionId: undefined as any },
+        task: { taskId: 'task_missing_sess', primaryPrompt: 'Fix bug', evidence: [] } as any,
+        snapshot: {
+          workspaceSnapshotId: plan.workspaceSnapshotId!,
+          contentRootHash: 'hash',
+          createdAt: new Date().toISOString(),
+          repositories: [],
+        },
+        outcome: { verifiedSuccess: true, verificationConfidence: 'HIGH' } as any,
+        trajectoryEvents: [],
+        dataRights: plan.dataRights,
+      });
+    } catch (err: any) {
+      missingSessionThrew = true;
+      assertStrictEqual(err.code, 'FAIL_CLOSED_LINEAGE_MISMATCH', 'Error code is FAIL_CLOSED_LINEAGE_MISMATCH');
+      assert(err.message.includes('Missing sessionId in canonical episode assembly'), 'Error mentions missing sessionId');
+    }
+    assert(missingSessionThrew, 'EpisodeAssembler.assembleEpisode threw on missing sessionId (no sess_default)');
+
+    // =========================================================================
+    // Case 29: Gate 7 rationale deleted unmeasured <= 25ms claim
+    // =========================================================================
+    console.log('\n--- 29. Gate 7 rationale deleted unmeasured latency claim ---');
+    const dummyReadiness = evaluateCanonicalReadinessGates({
+      totalEpisodes: 1000,
+      verifiedSuccesses: 200,
+      verifiedFailures: 100,
+      unknownOutcomes: 50,
+      episodesWithCandidatesLogged: 900,
+      unpermittedEpisodesInPool: 0,
+      revokedEpisodesInPool: 0,
+      verifiedEpisodesWithMissingProof: 0,
+      preOutcomeSnapshotsAudited: 100,
+      leakageViolationsDetected: 0,
+      shadowEvaluationRuns: 100,
+      shadowEvaluationCrashes: 0,
+    });
+    const gate7 = dummyReadiness.gates.find((g) => g.gateId === 'GATE_7_SHADOW_POLICY_PARITY');
+    assert(gate7 !== undefined, 'Found Gate 7');
+    assert(
+      !gate7!.rationale.includes('25ms'),
+      `Gate 7 rationale does not contain "25ms": "${gate7!.rationale}"`
+    );
+    assert(
+      gate7!.rationale.includes('operational stability'),
+      `Gate 7 rationale includes "operational stability": "${gate7!.rationale}"`
+    );
+
+    console.log('\n🎉 ALL 29 PHASE 20.4 INTEGRITY CLOSURE INVARIANTS SATISFIED!\n');
   } finally {
     await new Promise<void>((resolve) => httpServer.close(() => resolve()));
     setSharedStore(null);

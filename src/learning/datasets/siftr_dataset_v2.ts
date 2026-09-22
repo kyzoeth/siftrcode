@@ -43,8 +43,6 @@ export interface SiftrContextDatasetV2Row {
   verifiedSuccess: boolean | null;
   outcomeConfidence: VerificationConfidence;
   verifiedTargetEdit: boolean;
-  /** @deprecated Backward-compatible alias for verifiedTargetEdit */
-  verifiedTargetEvidence?: boolean;
   humanRelevanceLabel?: 'RELEVANT' | 'IRRELEVANT' | 'UNKNOWN';
   contextTokens: number;
   taskEconomics?: TaskEconomicsV1;

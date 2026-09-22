@@ -26,8 +26,20 @@ import {
   SiftrContextDatasetV2Summary,
   SanctionedDatasetV2Export,
 } from './datasets/siftr_dataset_v2';
-import { resolveExposureState, ContextExposureState, ContextUnitExposureRecord } from './episodes/context_exposure';
-import { FORBIDDEN_PRE_OUTCOME_FIELDS } from './episodes/pre_outcome_snapshot';
+import { ContextExposureState, ContextUnitExposureRecord } from './episodes/context_exposure';
+import {
+  evaluateEpisodeTrainingEligibility,
+  isEpisodeTrainingEligible,
+  TrainingEligibilityOptions,
+  TrainingEligibilityResult,
+} from './episodes/training_eligibility';
+
+export {
+  evaluateEpisodeTrainingEligibility,
+  isEpisodeTrainingEligible,
+  TrainingEligibilityOptions,
+  TrainingEligibilityResult,
+};
 
 export {
   SIFTR_CONTEXT_DATASET_V2_VERSION,
@@ -375,67 +387,21 @@ export class TrainingExporter {
     const taskTypeDistribution: Record<string, number> = {};
 
     for (const rawEp of episodes) {
+      // 1. Evaluate Canonical Training Eligibility (fail-closed)
+      const eligibility = evaluateEpisodeTrainingEligibility(rawEp, {
+        isRevoked: options.isRevoked,
+        exposuresProvider: options.exposuresProvider,
+      });
+
+      if (!eligibility.eligible) {
+        rejections.push({
+          episodeId: rawEp.episodeId,
+          reasons: eligibility.reasons,
+        });
+        continue;
+      }
+
       const ep = loadVerifiedTaskEpisode(rawEp);
-      // 1. Data Rights check (fail-closed)
-      if (!ep.rights || ep.rights.trainingAllowed !== true || !ep.rights.permissionSource || ep.rights.permissionSource === 'UNKNOWN') {
-        rejections.push({
-          episodeId: ep.episodeId,
-          reasons: [
-            !ep.rights || ep.rights.trainingAllowed !== true
-              ? 'RIGHTS_BLOCKED: trainingAllowed is false or unspecified.'
-              : 'RIGHTS_BLOCKED: permissionSource is UNKNOWN or unspecified.',
-          ],
-        });
-        continue;
-      }
-
-      // 1b. Ranker Status & Policy Identity check (fail-closed)
-      const rankerStatus = ep.environment?.rankerStatus;
-      const rankerId = ep.environment?.rankerId;
-      if (rankerStatus !== 'PRODUCTION' || rankerId === 'custom_unidentified') {
-        rejections.push({
-          episodeId: ep.episodeId,
-          reasons: [
-            rankerStatus !== 'PRODUCTION'
-              ? `POLICY_INELIGIBLE: Ranker status is ${rankerStatus || 'UNKNOWN'} (only PRODUCTION ranker episodes are training eligible).`
-              : 'POLICY_INELIGIBLE: Ranker is custom_unidentified.',
-          ],
-        });
-        continue;
-      }
-
-      // 2. Revocation check
-      if (options.isRevoked && options.isRevoked(ep.episodeId)) {
-        rejections.push({
-          episodeId: ep.episodeId,
-          reasons: ['REVOKED_EPISODE: Episode has been revoked/tombstoned by compliance deletion.'],
-        });
-        continue;
-      }
-
-      // 3. Point-in-time feature boundary check
-      let hasLeakage = false;
-      const leakageReasons: string[] = [];
-      for (const cand of ep.contextDecision.candidates) {
-        if (cand.featureSnapshot) {
-          for (const field of FORBIDDEN_PRE_OUTCOME_FIELDS) {
-            if (field in cand.featureSnapshot && (cand.featureSnapshot as Record<string, unknown>)[field] !== undefined) {
-              hasLeakage = true;
-              leakageReasons.push(`LEAKAGE_IN_FEATURES: Feature snapshot contains forbidden field "${field}".`);
-              break;
-            }
-          }
-        }
-        if (hasLeakage) break;
-      }
-      if (hasLeakage) {
-        rejections.push({
-          episodeId: ep.episodeId,
-          reasons: leakageReasons,
-        });
-        continue;
-      }
-
       totalEpisodesAccepted++;
 
       // Track distribution
@@ -452,7 +418,6 @@ export class TrainingExporter {
         unknownOutcomeTasksCount++;
       }
 
-      const selectedUnitIds = new Set(ep.contextDecision.selectedUnits.map((u) => u.contextUnitId));
       const recordedExposures = options.exposuresProvider(ep.episodeId);
       const recordedExposureMap = new Map<string, ContextUnitExposureRecord>();
       for (const exp of recordedExposures) {
@@ -461,38 +426,27 @@ export class TrainingExporter {
 
       for (const candidate of ep.contextDecision.candidates) {
         const recorded = recordedExposureMap.get(candidate.contextUnitId);
-
-        let wasSelected = false;
-        let wasShown = false;
-        let wasRead = false;
-        let wasEdited = false;
-        let exposureState: ContextExposureState;
-
-        if (recorded) {
-          exposureState = recorded.state;
-          wasSelected =
-            recorded.state !== ContextExposureState.CANDIDATE || recorded.selectedAt !== undefined;
-          wasShown =
-            recorded.state === ContextExposureState.SHOWN ||
-            recorded.state === ContextExposureState.READ ||
-            recorded.state === ContextExposureState.EDITED ||
-            recorded.shownAt !== undefined;
-          wasRead =
-            recorded.state === ContextExposureState.READ ||
-            recorded.state === ContextExposureState.EDITED ||
-            recorded.readAt !== undefined;
-          wasEdited =
-            recorded.state === ContextExposureState.EDITED ||
-            recorded.editedAt !== undefined;
-        } else {
-          wasSelected = candidate.selected || selectedUnitIds.has(candidate.contextUnitId);
-          wasShown = wasSelected && ep.contextDecision.actualRenderedTokens > 0;
-          wasRead = false;
-          wasEdited = false;
-          exposureState = wasShown
-            ? ContextExposureState.SHOWN
-            : (wasSelected ? ContextExposureState.SELECTED : ContextExposureState.CANDIDATE);
+        if (!recorded) {
+          throw new Error(
+            `Integrity invariant violated: missing exposure for candidate "${candidate.contextUnitId}" in episode "${ep.episodeId}".`
+          );
         }
+
+        const exposureState = recorded.state;
+        const wasSelected =
+          recorded.state !== ContextExposureState.CANDIDATE || recorded.selectedAt !== undefined;
+        const wasShown =
+          recorded.state === ContextExposureState.SHOWN ||
+          recorded.state === ContextExposureState.READ ||
+          recorded.state === ContextExposureState.EDITED ||
+          recorded.shownAt !== undefined;
+        const wasRead =
+          recorded.state === ContextExposureState.READ ||
+          recorded.state === ContextExposureState.EDITED ||
+          recorded.readAt !== undefined;
+        const wasEdited =
+          recorded.state === ContextExposureState.EDITED ||
+          recorded.editedAt !== undefined;
 
         if (wasSelected) selectedUnitsCount++;
         if (wasShown) shownUnitsCount++;
@@ -515,9 +469,9 @@ export class TrainingExporter {
           finalRank: candidate.finalRank,
           finalScore: candidate.finalScore,
           exposureState,
-          attributionType: recorded?.attributionType,
-          readAttribution: recorded?.readAttribution,
-          editAttribution: recorded?.editAttribution,
+          attributionType: recorded.attributionType,
+          readAttribution: recorded.readAttribution,
+          editAttribution: recorded.editAttribution,
           wasSelected,
           wasShown,
           wasRead,
@@ -527,7 +481,6 @@ export class TrainingExporter {
           verifiedSuccess: ep.outcome.verifiedSuccess,
           outcomeConfidence: ep.outcome.verificationConfidence,
           verifiedTargetEdit: ep.outcome.verifiedSuccess === true && wasEdited,
-          verifiedTargetEvidence: ep.outcome.verifiedSuccess === true && wasEdited,
           contextTokens: candidate.estimatedTokens,
           taskEconomics: ep.economics,
           rightsReference: ep.rights.permissionSource,

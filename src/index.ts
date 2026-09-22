@@ -22,6 +22,7 @@ export * from './rights/rights_filter';
 export * from './rights/deletion_manager';
 export * from './learning/lineage';
 export * from './learning/training_exporter';
+export * from './learning/episodes/training_eligibility';
 export * from './agents/agent_environment';
 export * from './workspace/repository_state';
 export * from './workspace/workspace_snapshot';

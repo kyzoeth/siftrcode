@@ -161,7 +161,7 @@ export function evaluateCanonicalReadinessGates(
     gateId: 'GATE_7_SHADOW_POLICY_PARITY',
     name: 'Shadow Policy Parity',
     targetRequirement: 'Minimum 100 shadow evaluation runs with zero execution crashes',
-    rationale: 'Confirms production safety and runtime latency bounds (<= 25ms).',
+    rationale: 'Confirms production safety and operational stability with zero execution crashes.',
     passed: shadowPassed,
     currentValue: `${input.shadowEvaluationRuns} runs, ${input.shadowEvaluationCrashes} crashes`,
     targetValue: `>= ${minShadowRuns} runs, 0 crashes`,
