@@ -352,6 +352,15 @@
     html.dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
     html.dark ::-webkit-scrollbar-thumb:hover { background: #D97757; }
 
+    @media (prefers-reduced-motion: reduce) {
+      *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
     /* Continuous Glowing 90% Typography (No Box) - Ultra-subtle, slow ambient cadence */
     @keyframes continuous-text-aura {
       0%, 100% {
@@ -861,45 +870,46 @@
   <section class="relative pt-10 pb-6 sm:pt-16 sm:pb-8 md:pt-20 md:pb-10 px-3 sm:px-4">
     <div class="max-w-4xl mx-auto text-center space-y-3.5 sm:space-y-5 relative z-10">
       
-      <!-- V2.1 Announcement Pill -->
-      <a href="#benchmark" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] text-xs font-mono font-semibold uppercase tracking-wider shadow-2xs hover:border-[#D97757] transition group">
+      <!-- Announcement Pill -->
+      <a href="#quickstart" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] text-xs font-mono font-semibold uppercase tracking-wider shadow-2xs hover:border-[#D97757] transition group">
         <span class="w-1.5 h-1.5 rounded-full bg-[#D97757] ci-live-dot"></span>
-        <span>SiftrCode V2.1 • Canonical Lineage Closed &bull; Live Smoke Verified &bull; 100% Invariance</span>
+        <span>SiftrCode • Context Optimization for Coding Agents</span>
         <span class="text-zinc-400 group-hover:translate-x-0.5 transition-transform text-[10px]">→</span>
       </a>
 
       <h1 class="text-3xl sm:text-[2.75rem] md:text-[3.35rem] lg:text-[4rem] xl:text-[4.5rem] font-normal tracking-tight text-ink font-serif md:whitespace-nowrap max-w-none mx-auto leading-[1.12] sm:leading-[1.06] text-balance">
-        Context optimization, <span class="italic hero-glow-text">outcome-aware</span>
+        The context optimizer <span class="italic hero-glow-text">for coding agents.</span>
       </h1>
 
       <!-- Subtitle -->
       <p class="text-xs sm:text-base text-zinc-500 max-w-2xl mx-auto font-normal -mt-0.5 leading-relaxed">
-        Discovers, ranks, and composes compiler-verified repository context bundles — maximizing coding-agent task success while eliminating 90% of token bloat under strict economic budget ceilings.
+        Give your coding agent focused repository context instead of dumping the whole codebase into its prompt.
       </p>
 
       <!-- Key Guarantees Pill Strip -->
       <div class="pt-2 flex flex-wrap items-center justify-center gap-2 text-[11px] font-mono text-zinc-600 dark:text-zinc-400">
-        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🎯 100% Normalized Plan Invariance</span>
-        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">⚡ Sub-100ms AST &bull; 179ms Remote JEV</span>
-        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🧬 Authoritative WorkspaceSnapshot Identity</span>
-        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🔬 3-Stage Resolution Lineage</span>
-        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🔒 Zero Raw Source / Secrets Egress</span>
-        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">📦 Clean-Build Commit Stamping</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🎯 Deterministic AST ContextEngine</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🧬 6-Tier Variable Resolution</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">💰 Knapsack Token Budgeting</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🔒 100% Local CPU &bull; Zero Code Egress</span>
+        <span class="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">🔌 Model Context Protocol (MCP)</span>
       </div>
 
       <!-- Hero Action CTAs -->
       <div class="pt-2 flex flex-wrap items-center justify-center gap-3 font-mono text-xs">
         <a href="#workbench" class="px-4 py-2 rounded bg-ink text-surface-50 dark:bg-zinc-100 dark:text-zinc-950 font-sans font-semibold hover:opacity-90 transition btn-press shadow-sm flex items-center gap-2">
-          <span>Explore Interactive Optimizer</span>
+          <span>Try the Context Workbench</span>
           <span class="text-xs font-mono">↓</span>
         </a>
-        <div class="bg-zinc-950 text-zinc-100 px-3.5 py-2 rounded border border-zinc-800 flex items-center gap-2.5 shadow-2xs select-all">
-          <span class="text-emerald-400 select-none font-bold bash-dollar-flash">$</span>
-          <code>npx siftrcode context "task prompt"</code>
-          <button onclick="copySnippet('npx siftrcode context &quot;task prompt&quot;', this)" class="text-[10px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition cursor-pointer font-sans">
-            COPY
-          </button>
-        </div>
+        <a href="#quickstart" class="px-4 py-2 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40 text-[#B34E2E] dark:text-[#F39C82] font-sans font-semibold hover:border-[#D97757] transition btn-press shadow-2xs flex items-center gap-1.5">
+          <span>Install with MCP</span>
+          <span class="text-xs font-mono">→</span>
+        </a>
+        <a href="https://github.com/kyzoeth/siftrcode" target="_blank" rel="noopener noreferrer" class="px-3.5 py-2 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 font-sans font-medium hover:border-[#D97757] hover:text-ink transition btn-press flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>View on GitHub</span>
+          <span class="text-zinc-400 font-mono text-[10px]">↗</span>
+        </a>
       </div>
 
     </div>
@@ -909,32 +919,47 @@
   <section id="workbench" class="py-6 sm:py-10 px-2 sm:px-4 relative z-10">
     <div class="max-w-4xl mx-auto space-y-3.5">
       
-      <!-- Interactive Workbench Mode Switcher: V2 Context Optimizer vs File Skeletonizer -->
+      <!-- Interactive Workbench Mode Switcher -->
       <div class="flex items-center justify-between pb-1 flex-wrap gap-2">
         <div class="inline-flex p-0.5 rounded-md bg-zinc-200/70 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-mono gap-1 shadow-2xs">
           <button id="modeBtnBundle" onclick="switchWorkbenchMode('bundle')" class="px-3 py-1.5 rounded font-medium transition cursor-pointer bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-2xs border border-zinc-200/90 dark:border-zinc-700/80 flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-[#D97757] ci-live-dot"></span>
-            <span>V2 Context Optimizer</span>
+            <span>Context Workbench</span>
           </button>
           <button id="modeBtnSkeleton" onclick="switchWorkbenchMode('skeleton')" class="px-3 py-1.5 rounded font-medium transition cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1.5">
             <span>AST Interface Skeletonizer</span>
           </button>
         </div>
         <div class="text-[11px] font-mono text-zinc-500 flex items-center gap-2">
-          <span class="inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Local CPU</span>
-          <span>•</span>
-          <span>Zero Network Egress</span>
+          <span class="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[10px] font-semibold border border-amber-200 dark:border-amber-900/60">Illustrative demo &bull; Example task</span>
+          <span class="hidden sm:inline">&bull;</span>
+          <span class="hidden sm:inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Local CPU</span>
         </div>
       </div>
 
-      <!-- VIEW A: V2 OUTCOME-AWARE CONTEXT OPTIMIZER (Default View) -->
+      <!-- 5-Step Funnel Breadcrumbs -->
+      <div class="p-2.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 font-mono text-[10px] sm:text-[11px] overflow-x-auto no-scrollbar">
+        <div class="flex items-center gap-1.5 text-zinc-500 whitespace-nowrap min-w-max">
+          <span class="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink font-semibold">1. Task Prompt</span>
+          <span>&rarr;</span>
+          <span class="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink font-semibold">2. Candidate Discovery (AST + Git)</span>
+          <span>&rarr;</span>
+          <span class="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink font-semibold">3. Deterministic Ranking</span>
+          <span>&rarr;</span>
+          <span class="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink font-semibold">4. Knapsack Budget Solver</span>
+          <span>&rarr;</span>
+          <span class="px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/70 text-[#B34E2E] dark:text-[#F39C82] font-semibold border border-[#ECCBBE] dark:border-[#B34E2E]/40">5. Materialized Bundle</span>
+        </div>
+      </div>
+
+      <!-- VIEW A: CONTEXT OPTIMIZER (Default View) -->
       <div id="viewContextOptimizer" class="space-y-3">
         <!-- Interactive Task Prompt Bar -->
         <div class="bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-md p-3 sm:p-4 shadow-sm space-y-2.5">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div class="flex items-center gap-2">
               <span class="text-xs font-mono font-bold text-zinc-500 uppercase tracking-wider">Task Prompt:</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">100% Recall@20</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">Candidate Discovery</span>
             </div>
             <div class="flex items-center gap-1.5 text-[10px] font-mono text-zinc-400">
               <span>Budget Cap:</span>
@@ -1330,7 +1355,7 @@
         </div>
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-ink font-serif">The 6-Stage Optimization Engine</h2>
         <p class="text-xs sm:text-sm text-ink-secondary">
-          How SiftrCode V2 delivers 100% recall on critical edit targets while compressing token payloads by up to 90%.
+          How SiftrCode analyzes task requirements, prioritizes critical edit targets, and compresses supporting context into typed interfaces under strict token budgets.
         </p>
       </div>
 
@@ -1340,7 +1365,7 @@
         <div class="p-4 sm:p-5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2.5 shadow-2xs">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-mono font-bold text-[#B34E2E] dark:text-[#F39C82] px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 border border-[#ECCBBE] dark:border-[#B34E2E]/40">STAGE 01</span>
-            <span class="text-[10px] font-mono text-zinc-400">Recall@20: 100%</span>
+            <span class="text-[10px] font-mono text-zinc-400">Multi-Channel Discovery</span>
           </div>
           <h3 class="font-serif text-lg text-ink font-normal">Multi-Channel Candidate Recall</h3>
           <p class="text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed">
@@ -1795,7 +1820,7 @@
               </div>
             </div>
             <p class="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              Distant callers and imports synthesized into compiler-verified AST skeletons. Retains all interfaces, types, and docs while collapsing bodies.
+              Distant callers and imports synthesized into typed AST interface skeletons. Retains all interfaces, types, and docs while collapsing bodies.
             </p>
           </div>
 
@@ -2127,11 +2152,11 @@
             <ul class="space-y-2.5 text-zinc-600 dark:text-zinc-400 text-xs border-t border-zinc-200 dark:border-zinc-800 pt-3.5">
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
-                <span>V2 Context Engine (<code class="font-mono text-[11px] text-zinc-800 dark:text-zinc-200 font-semibold bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">siftr context</code>)</span>
+                <span>Context Engine (<code class="font-mono text-[11px] text-zinc-800 dark:text-zinc-200 font-semibold bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">siftr context</code>)</span>
               </li>
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
-                <span>Multi-Channel Candidate Recall (100% Recall@20)</span>
+                <span>Multi-Channel Candidate Discovery &amp; Recall</span>
               </li>
               <li class="flex items-center gap-2">
                 <span class="text-emerald-600 font-bold shrink-0">✔</span>
@@ -5272,7 +5297,7 @@ ${renderedRaw}
       <div class="space-y-1 text-left pr-7">
         <h3 class="text-xl sm:text-2xl font-normal text-ink tracking-tight font-serif leading-snug">Supercharge your team's coding agents</h3>
         <p class="text-[11px] sm:text-xs text-ink-secondary font-sans leading-relaxed">
-          Eliminate 90% token waste, slash agent latency from 45s to 4s, and sync synthesized interfaces across your engineers.
+          Optimize repository context, reduce prompt token waste, and provide focused context bundles to your engineering team's coding agents.
         </p>
       </div>
 
