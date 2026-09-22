@@ -22,6 +22,7 @@ import { execSync } from 'child_process';
 import { EpisodeAssembler } from '../learning/episodes/episode_assembler';
 import { ContextExposureState } from '../learning/episodes/context_exposure';
 import { AgentTrajectoryEvent } from '../learning/episodes/agent_trajectory';
+import { computeSnapshotSha256 } from '../learning/episodes/pre_outcome_snapshot';
 import { createOutcomeEvidence, DefaultOutcomePolicyV1 } from '../telemetry/outcome_evidence';
 import { resolveTaskOutcomeFromEvidence } from '../learning/outcome/task_outcome';
 import { TrainingExporter } from '../learning/training_exporter';
@@ -145,7 +146,20 @@ async function runProductionIngestionE2ETests() {
   const storedSnapshot = store.getPreOutcomeSnapshot(snapshot.episodeId);
   assert.ok(storedSnapshot, 'PreOutcomeEpisodeSnapshot must be durably persisted in SQLite');
   assert.strictEqual(storedSnapshot!.snapshotSha256, snapshot.snapshotSha256);
-  console.log('  ✔ Verified: ContextEngine automatically created and durably persisted deeply immutable PreOutcomeEpisodeSnapshot.');
+
+  // Full-Payload Snapshot Hashing Verification (Phase 20.2)
+  const clonedUniverse = JSON.parse(JSON.stringify(snapshot.candidateUniverse));
+  clonedUniverse[0].finalScore = 99999.0;
+  const alteredHash = computeSnapshotSha256({
+    ...snapshot,
+    candidateUniverse: clonedUniverse,
+  });
+  assert.notStrictEqual(
+    alteredHash,
+    snapshot.snapshotSha256,
+    'Modifying any candidate field in candidateUniverse must produce a different SHA-256 hash'
+  );
+  console.log('  ✔ Verified: ContextEngine automatically created, durably persisted, and full-payload hashed deeply immutable PreOutcomeEpisodeSnapshot.');
 
   // =========================================================================
   // 3. Truthful Exposure Derivation from Actual Telemetry (No False Inference)
@@ -161,6 +175,7 @@ async function runProductionIngestionE2ETests() {
   // Simulate agent execution trajectory events
   const episodeId = snapshot.episodeId;
   const targetPath = selectedCandidate!.path || 'src/index.ts';
+  const pathOnlyTarget = unselectedCandidate!.path || 'src/user_model.ts';
 
   const trajectoryEvents: AgentTrajectoryEvent[] = [
     {
@@ -182,10 +197,18 @@ async function runProductionIngestionE2ETests() {
       contextUnitId: selectedCandidate!.contextUnitId,
     },
     {
-      eventId: 'evt_test_01',
+      eventId: 'evt_read_path_only',
       episodeId,
       timestamp: new Date().toISOString(),
       sequence: 3,
+      type: 'FILE_READ',
+      path: pathOnlyTarget,
+    },
+    {
+      eventId: 'evt_test_01',
+      episodeId,
+      timestamp: new Date().toISOString(),
+      sequence: 4,
       type: 'TEST_RUN',
     },
   ];
@@ -204,6 +227,21 @@ async function runProductionIngestionE2ETests() {
     ContextExposureState.EDITED,
     'Target with FILE_EDIT trajectory event must have state EDITED'
   );
+  assert.strictEqual(
+    editedExposure!.attributionType,
+    'EXACT_UNIT',
+    'Explicit unit-level event must have attributionType EXACT_UNIT'
+  );
+  assert.strictEqual(
+    editedExposure!.editAttribution,
+    'EXACT_UNIT',
+    'Explicit unit edit must have editAttribution EXACT_UNIT'
+  );
+  assert.strictEqual(
+    editedExposure!.readAttribution,
+    'EXACT_UNIT',
+    'Explicit unit read must have readAttribution EXACT_UNIT'
+  );
   assert.ok(editedExposure!.editedAt, 'editedAt must be stamped');
   assert.ok(editedExposure!.readAt, 'readAt must be stamped');
   assert.ok(editedExposure!.shownAt, 'shownAt must be stamped');
@@ -212,11 +250,25 @@ async function runProductionIngestionE2ETests() {
   assert.ok(unselectedExposure, 'Exposure record must exist for unselected candidate');
   assert.strictEqual(
     unselectedExposure!.state,
-    ContextExposureState.CANDIDATE,
-    'Unselected candidate must remain CANDIDATE (never inferred as negative or shown)'
+    ContextExposureState.READ,
+    'Unselected candidate with path-level read event must progress to READ'
   );
-  assert.strictEqual(unselectedExposure!.shownAt, undefined, 'Unselected candidate must have no shownAt');
-  console.log('  ✔ Verified: Exposures derived strictly from actual events; unshown candidates remain CANDIDATE.');
+  assert.strictEqual(
+    unselectedExposure!.attributionType,
+    'PATH_LEVEL',
+    'Path-level event without unitId must have attributionType PATH_LEVEL'
+  );
+  assert.strictEqual(
+    unselectedExposure!.readAttribution,
+    'PATH_LEVEL',
+    'readAttribution must be PATH_LEVEL'
+  );
+  assert.strictEqual(
+    unselectedExposure!.editAttribution,
+    'NONE',
+    'editAttribution must remain NONE'
+  );
+  console.log('  ✔ Verified: Exposures derived strictly from actual events with unit-vs-path attribution.');
 
   // =========================================================================
   // 4. Outcome Resolution via Authoritative OutcomeEvidence
@@ -298,9 +350,65 @@ async function runProductionIngestionE2ETests() {
   console.log('  ✔ Verified: Complete production run ingested cleanly with deep immutability.');
 
   // =========================================================================
-  // 6. verifiedTargetEvidence & Rights-Aware Dataset Export
+  // 5b. Automatic Episode Finalization on Real Outcome Submission (Phase 20.2)
   // =========================================================================
-  console.log('\n--- 6. verifiedTargetEvidence & Dataset V2 Export Verification ---');
+  console.log('\n--- 5b. Automatic Episode Finalization via store.saveTaskOutcome ---');
+  const optimizeResult2 = await ContextEngine.optimizeWorkspace({
+    workspaceDir: fixtureDir,
+    prompt: 'Review user schema and validate index exports',
+    taskId: 'task_closure_e2e_002',
+    sqliteStore: store,
+    dataRights: rights,
+    tokenBudget: 300,
+  });
+
+  const plan2 = optimizeResult2.plan;
+  const snapshot2 = plan2.preOutcomeSnapshot!;
+  assert.ok(snapshot2, 'Plan 2 must have preOutcomeSnapshot');
+
+  // Record trajectory events for episode 2
+  store.saveEpisodeTrajectoryEvents([
+    {
+      eventId: 'evt_task2_edit',
+      episodeId: snapshot2.episodeId,
+      timestamp: new Date().toISOString(),
+      sequence: 1,
+      type: 'FILE_EDIT',
+      path: snapshot2.candidateUniverse[0]?.path,
+      contextUnitId: snapshot2.candidateUniverse[0]?.contextUnitId,
+    },
+  ]);
+
+  const outcomeEvidence2 = createOutcomeEvidence({
+    taskId: 'task_closure_e2e_002',
+    sessionId: plan2.sessionId || 'sess_default_2',
+    contextPlanId: plan2.planId,
+    agentEnvironmentId: 'test_env_2',
+    workspaceSnapshotBefore: snapshot2.workspaceSnapshotId,
+    buildPassed: true,
+    publicTestsPassed: true,
+    regressionTestsPassed: true,
+    behavioralOraclePassed: true,
+    actualProviderInputTokens: 2800,
+    actualProviderOutputTokens: 180,
+    costUSD: 0.0095,
+    wallTimeMs: 1200,
+  });
+
+  // Calling store.saveTaskOutcome automatically resolves outcome, derives exposures, computes economics, and finalizes episode!
+  store.saveTaskOutcome(outcomeEvidence2);
+
+  const autoFinalizedEpisode = store.getTaskEpisode(snapshot2.episodeId);
+  assert.ok(autoFinalizedEpisode, 'TaskEpisode must be automatically finalized and retrievable');
+  assert.strictEqual(autoFinalizedEpisode!.episodeId, snapshot2.episodeId);
+  assert.strictEqual(autoFinalizedEpisode!.outcome.verifiedSuccess, true);
+  assert.strictEqual(autoFinalizedEpisode!.economics?.totalCostUSD, 0.0095);
+  console.log('  ✔ Verified: store.saveTaskOutcome automatically finalized and persisted TaskEpisode.');
+
+  // =========================================================================
+  // 6. verifiedTargetEdit & Rights-Aware Dataset Export
+  // =========================================================================
+  console.log('\n--- 6. verifiedTargetEdit & Dataset V2 Export Verification ---');
   const exporter = new TrainingExporter();
 
   // Export dataset using real store episodes and mandatory revocation check
@@ -312,26 +420,56 @@ async function runProductionIngestionE2ETests() {
   assert.strictEqual(exportResult.totalEpisodesAccepted, 1);
   assert.ok(exportResult.rows.length > 0);
 
-  // Check rows: edited target MUST have verifiedTargetEvidence = true
+  // Check rows: edited target MUST have verifiedTargetEdit = true AND verifiedTargetEvidence = true
   const editedRow = exportResult.rows.find((r) => r.contextUnitId === selectedCandidate!.contextUnitId);
   assert.ok(editedRow, 'Row for edited target must exist');
   assert.strictEqual(editedRow!.wasEdited, true);
   assert.strictEqual(
+    editedRow!.verifiedTargetEdit,
+    true,
+    'Target with verifiedSuccess === true && wasEdited must have verifiedTargetEdit === true'
+  );
+  assert.strictEqual(
     editedRow!.verifiedTargetEvidence,
     true,
-    'Target with verifiedSuccess === true && wasEdited must have verifiedTargetEvidence === true'
+    'verifiedTargetEvidence alias must equal verifiedTargetEdit'
+  );
+  assert.strictEqual(
+    editedRow!.attributionType,
+    'EXACT_UNIT',
+    'Attribution type must be EXACT_UNIT'
+  );
+  assert.strictEqual(
+    editedRow!.editAttribution,
+    'EXACT_UNIT',
+    'Edit attribution must be EXACT_UNIT'
   );
 
-  // Check rows: unedited candidates MUST NOT have verifiedTargetEvidence = true even if in successful task
+  // Check rows: unedited candidates MUST NOT have verifiedTargetEdit = true even if in successful task
   const uneditedRow = exportResult.rows.find((r) => r.contextUnitId === unselectedCandidate!.contextUnitId);
   assert.ok(uneditedRow, 'Row for unedited candidate must exist');
   assert.strictEqual(uneditedRow!.wasEdited, false);
+  assert.strictEqual(
+    uneditedRow!.verifiedTargetEdit,
+    false,
+    'Unedited candidate must NEVER have verifiedTargetEdit === true'
+  );
   assert.strictEqual(
     uneditedRow!.verifiedTargetEvidence,
     false,
     'Unedited candidate must NEVER have verifiedTargetEvidence === true'
   );
-  console.log('  ✔ Verified: verifiedTargetEvidence is true strictly for edited units in verified successes.');
+  assert.strictEqual(
+    uneditedRow!.readAttribution,
+    'PATH_LEVEL',
+    'Read attribution must be PATH_LEVEL'
+  );
+  assert.strictEqual(
+    uneditedRow!.editAttribution,
+    'NONE',
+    'Edit attribution must be NONE'
+  );
+  console.log('  ✔ Verified: verifiedTargetEdit is true strictly for edited units in verified successes.');
 
   // =========================================================================
   // 7. Mandatory Revocation Enforcement
@@ -386,6 +524,29 @@ async function runProductionIngestionE2ETests() {
   // 8. Canonical Readiness Gates Evaluation
   // =========================================================================
   console.log('\n--- 8. Canonical Readiness Gates Evaluation ---');
+  // Record real shadow policy evaluations (Migration 16)
+  store.saveShadowPolicyEvaluation({
+    taskId: 'task_closure_e2e_001',
+    productionPolicyId: 'production-v2-deterministic-2026-09',
+    shadowPolicyId: 'shadow-candidate-v3',
+    candidateCount: 10,
+    topK: 10,
+    rankOverlapJaccard: 0.95,
+    topKDifferences: { inProductionOnly: [], inShadowOnly: [], sharedTopKCount: 10 },
+    inclusionDifferences: { inProductionOnly: [], inShadowOnly: [], sharedInclusionCount: 10 },
+    resolutionDifferences: [],
+    tokenDifference: 0,
+    productionTokens: 1000,
+    shadowTokens: 1000,
+    shadowLatencyMs: 18,
+    evaluatedAt: new Date().toISOString(),
+  });
+
+  const summary = store.getLearningFlywheelSummary();
+  // With 2 total episodes created, and 1 revoked, totalEpisodes must be exactly 1!
+  assert.strictEqual(summary.totalEpisodes, 1, 'Summary totalEpisodes must exclude revoked episodes');
+  assert.strictEqual(summary.revokedEpisodes, 1, 'Revoked episodes count must be recorded');
+
   const readiness = store.getV32DataReadinessReport();
   assert.strictEqual(readiness.version, 'V3.2_READINESS_GATE_SPEC_V1');
   assert.ok(readiness.canonicalGates, 'Canonical gates must be evaluated');
@@ -400,7 +561,13 @@ async function runProductionIngestionE2ETests() {
   assert.ok(gateIds.includes('GATE_6_ZERO_LEAKAGE_AUDIT'));
   assert.ok(gateIds.includes('GATE_7_SHADOW_POLICY_PARITY'));
 
-  // Truthfulness check: with only 1 test episode in DB, gates must NOT falsely pass
+  const gate1 = readiness.canonicalGates!.find((g) => g.gateId === 'GATE_1_TOTAL_EPISODES');
+  assert.strictEqual(gate1!.currentValue, 1, 'Gate 1 must exclude revoked episodes from count');
+
+  const gate7 = readiness.canonicalGates!.find((g) => g.gateId === 'GATE_7_SHADOW_POLICY_PARITY');
+  assert.strictEqual(gate7!.currentValue, '1 runs, 0 crashes', 'Gate 7 must measure real shadow evaluation runs from database');
+
+  // Truthfulness check: with only 1 active test episode in DB, gates must NOT falsely pass
   assert.strictEqual(readiness.isV32Ready, false, 'V3.2 must not falsely report ready');
   console.log('  ✔ Verified: Canonical 7 readiness gates truthfully evaluated without fake data.');
 

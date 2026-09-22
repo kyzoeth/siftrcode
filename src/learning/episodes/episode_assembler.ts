@@ -25,6 +25,7 @@ import {
 import {
   ContextExposureState,
   ContextUnitExposureRecord,
+  ExposureAttributionType,
   resolveExposureState,
 } from './context_exposure';
 import {
@@ -258,12 +259,36 @@ export class EpisodeAssembler {
     for (const candidate of params.candidates) {
       const isSelected = candidate.selected || selectedMap.has(candidate.contextUnitId);
       const isShown = shownUnitIds.has(candidate.contextUnitId);
-      const isRead =
-        readUnitIds.has(candidate.contextUnitId) ||
-        (candidate.path ? readPaths.has(candidate.path) : false);
-      const isEdited =
-        editedUnitIds.has(candidate.contextUnitId) ||
-        (candidate.path ? editedPaths.has(candidate.path) : false);
+
+      // Exact unit-level matching vs path-level matching
+      const hasExactRead = readUnitIds.has(candidate.contextUnitId);
+      const hasPathRead = candidate.path ? readPaths.has(candidate.path) : false;
+      const hasExactEdit = editedUnitIds.has(candidate.contextUnitId);
+      const hasPathEdit = candidate.path ? editedPaths.has(candidate.path) : false;
+
+      let readAttribution: ExposureAttributionType = 'NONE';
+      if (hasExactRead) {
+        readAttribution = 'EXACT_UNIT';
+      } else if (hasPathRead) {
+        readAttribution = 'PATH_LEVEL';
+      }
+
+      let editAttribution: ExposureAttributionType = 'NONE';
+      if (hasExactEdit) {
+        editAttribution = 'EXACT_UNIT';
+      } else if (hasPathEdit) {
+        editAttribution = 'PATH_LEVEL';
+      }
+
+      let attributionType: ExposureAttributionType = 'NONE';
+      if (hasExactEdit || hasExactRead) {
+        attributionType = 'EXACT_UNIT';
+      } else if (hasPathEdit || hasPathRead) {
+        attributionType = 'PATH_LEVEL';
+      }
+
+      const isRead = hasExactRead || hasPathRead;
+      const isEdited = hasExactEdit || hasPathEdit;
 
       const state = resolveExposureState({
         wasEdited: isEdited,
@@ -281,6 +306,9 @@ export class EpisodeAssembler {
         path: candidate.path,
         unitKind: candidate.unitKind || 'file',
         state,
+        attributionType,
+        readAttribution,
+        editAttribution,
         finalRank: candidate.finalRank,
         resolution: selectedInfo?.resolution || candidate.selectedResolution,
         candidateAt: params.plan.createdAt || now,
@@ -440,6 +468,26 @@ export class EpisodeAssembler {
 
     // 2. Persist candidate universe
     store.saveEpisodeCandidates(params.candidates, episodeId);
+
+    // 2.5 Persist trajectory events if provided
+    if (params.trajectoryEvents && params.trajectoryEvents.length > 0) {
+      const agentEvents: AgentTrajectoryEvent[] = params.trajectoryEvents.map((e, idx) => {
+        if ('type' in e) {
+          return e as AgentTrajectoryEvent;
+        }
+        return {
+          eventId: (e as any).eventId || `evt_${episodeId}_${idx}`,
+          episodeId,
+          timestamp: typeof (e as any).timestamp === 'number' ? new Date((e as any).timestamp).toISOString() : String((e as any).timestamp),
+          sequence: idx + 1,
+          type: ((e as any).kind === 'FILE_EDIT' ? 'FILE_EDIT' : (e as any).kind === 'FILE_READ' ? 'FILE_READ' : 'OTHER') as any,
+          path: (e as any).payload?.path,
+          contextUnitId: (e as any).payload?.contextUnitId,
+          metadata: (e as any).payload,
+        };
+      });
+      store.saveEpisodeTrajectoryEvents(agentEvents);
+    }
 
     // 3. Derive exposures from actual events
     const exposures = EpisodeAssembler.deriveContextExposures({

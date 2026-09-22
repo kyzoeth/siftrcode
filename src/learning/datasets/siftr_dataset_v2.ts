@@ -10,7 +10,7 @@
  * 5. NO model training from V2 dataset in Phase 20.
  */
 
-import { ContextExposureState } from '../episodes/context_exposure';
+import { ContextExposureState, ExposureAttributionType } from '../episodes/context_exposure';
 import { VerificationConfidence } from '../outcome/task_outcome';
 import { TaskEconomicsV1 } from '../economics/task_economics';
 
@@ -31,6 +31,9 @@ export interface SiftrContextDatasetV2Row {
   finalRank: number;
   finalScore: number;
   exposureState: ContextExposureState;
+  attributionType?: ExposureAttributionType;
+  readAttribution?: ExposureAttributionType;
+  editAttribution?: ExposureAttributionType;
   wasSelected: boolean;
   wasShown: boolean;
   wasRead: boolean;
@@ -39,7 +42,9 @@ export interface SiftrContextDatasetV2Row {
   wasInFailedTask: boolean;
   verifiedSuccess: boolean | null;
   outcomeConfidence: VerificationConfidence;
-  verifiedTargetEvidence: boolean;
+  verifiedTargetEdit: boolean;
+  /** @deprecated Backward-compatible alias for verifiedTargetEdit */
+  verifiedTargetEvidence?: boolean;
   humanRelevanceLabel?: 'RELEVANT' | 'IRRELEVANT' | 'UNKNOWN';
   contextTokens: number;
   taskEconomics?: TaskEconomicsV1;

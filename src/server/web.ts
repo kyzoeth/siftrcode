@@ -52,139 +52,6 @@ function getSharedStore(): SqliteStore | null {
         return null;
       }
     }
-
-    // Seed sample records for admin demonstration if database is fresh
-    try {
-      const provs = sharedStore.listSourceProvenances();
-      if (provs.length === 0) {
-        sharedStore.saveSourceProvenance(createSourceProvenance({
-          origin: 'OpenSource',
-          repository: 'psf/requests',
-          license: 'Apache-2.0',
-          trainingPermission: 'ALLOWED',
-          redistributionPermission: 'ALLOWED',
-          cutoffDate: '2024-01-01T00:00:00.000Z',
-          verified: true,
-          notes: 'Permissive open source with verified training rights',
-        }));
-        sharedStore.saveSourceProvenance(createSourceProvenance({
-          origin: 'SWE-bench',
-          repository: 'django/django',
-          license: 'BSD-3-Clause',
-          trainingPermission: 'ALLOWED',
-          redistributionPermission: 'ALLOWED',
-          cutoffDate: '2023-12-31T00:00:00.000Z',
-          verified: true,
-          notes: 'Standard SWE-bench verified repository',
-        }));
-        sharedStore.saveSourceProvenance(createSourceProvenance({
-          origin: 'CustomerSession',
-          repository: 'enterprise/payment-core',
-          license: 'Proprietary',
-          trainingPermission: 'FORBIDDEN',
-          redistributionPermission: 'FORBIDDEN',
-          cutoffDate: '2024-06-01T00:00:00.000Z',
-          verified: true,
-          notes: 'Enterprise customer repository strictly excluded from training',
-        }));
-        sharedStore.saveSourceProvenance(createSourceProvenance({
-          origin: 'External',
-          repository: 'community/unreviewed-lib',
-          license: 'Unknown',
-          trainingPermission: 'REVIEW',
-          redistributionPermission: 'REVIEW',
-          cutoffDate: '2024-01-01T00:00:00.000Z',
-          verified: false,
-          notes: 'Pending legal/compliance review — excluded from training by default',
-        }));
-      }
-
-      const outcomes = sharedStore.listTaskOutcomes(1);
-      if (outcomes.length === 0) {
-        sharedStore.saveTaskOutcome({
-          outcomeId: 'tout_seed_1',
-          taskId: 'task_swe_django_042',
-          sessionId: 'sess_eval_01',
-          agentEnvironmentId: 'claude_code',
-          workspaceSnapshotBefore: 'snap_django_before',
-          workspaceSnapshotAfter: 'snap_django_after',
-          buildPassed: true,
-          publicTestsPassed: true,
-          hiddenTestsPassed: true,
-          regressionTestsPassed: true,
-          staticChecksPassed: true,
-          securityChecksPassed: true,
-          behavioralOraclePassed: true,
-          userAccepted: true,
-          agentReportedSuccess: true,
-          humanReview: 'PASS',
-          verifiedSuccess: true,
-          confidence: 0.99,
-          policyId: 'default_outcome_policy_v1',
-          policyVersion: '1.0.0',
-          evaluationRationale: 'Hidden oracle tests & full regression suite passed cleanly with human review pass',
-          recordedAt: new Date(Date.now() - 3600 * 1000 * 2).toISOString(),
-        });
-        sharedStore.saveTaskOutcome({
-          outcomeId: 'tout_seed_2',
-          taskId: 'task_build_fail_089',
-          sessionId: 'sess_eval_02',
-          agentEnvironmentId: 'cursor',
-          workspaceSnapshotBefore: 'snap_ts_before',
-          workspaceSnapshotAfter: 'snap_ts_after',
-          buildPassed: false,
-          publicTestsPassed: false,
-          hiddenTestsPassed: false,
-          regressionTestsPassed: false,
-          staticChecksPassed: false,
-          securityChecksPassed: true,
-          behavioralOraclePassed: false,
-          agentReportedSuccess: true,
-          verifiedSuccess: false,
-          confidence: 0.99,
-          policyId: 'default_outcome_policy_v1',
-          policyVersion: '1.0.0',
-          evaluationRationale: 'Build/syntax failure in candidate edit overrides agent self-reported success',
-          recordedAt: new Date(Date.now() - 3600 * 1000 * 5).toISOString(),
-        });
-        sharedStore.saveTaskOutcome({
-          outcomeId: 'tout_seed_3',
-          taskId: 'task_agent_claim_only',
-          sessionId: 'sess_eval_03',
-          agentEnvironmentId: 'generic_mcp',
-          workspaceSnapshotBefore: 'snap_app_before',
-          workspaceSnapshotAfter: 'snap_app_after',
-          buildPassed: true,
-          agentReportedSuccess: true,
-          verifiedSuccess: null,
-          confidence: 0.35,
-          policyId: 'default_outcome_policy_v1',
-          policyVersion: '1.0.0',
-          evaluationRationale: 'Section 49 Invariant: Agent self-reporting success alone is weak evidence (verifiedSuccess = null)',
-          recordedAt: new Date(Date.now() - 3600 * 1000 * 8).toISOString(),
-        });
-      }
-
-      const audits = sharedStore.listDeletionAuditRecords();
-      if (audits.length === 0) {
-        sharedStore.saveDeletionAuditRecord({
-          deletionId: 'del_gdpr_sample_01',
-          requestedAt: new Date(Date.now() - 86400 * 1000 * 2).toISOString(),
-          executedAt: new Date(Date.now() - 86400 * 1000 * 2 + 1500).toISOString(),
-          criteria: {
-            repository: 'withdrawn/sample-lib',
-            reason: 'GDPR Right-to-be-Forgotten erasure request',
-          },
-          purgedObservationsCount: 42,
-          purgedTrainingRowsCount: 18,
-          affectedDatasets: ['v2.0.0-beta', 'v2.0.0-rc1'],
-          status: 'COMPLETED',
-          details: 'Purged from candidate_observations, trajectory_events, and training_rows with verified 0 trace rebuild',
-        });
-      }
-    } catch (e) {
-      console.error('[Web Admin] Error seeding sample data into store:', e);
-    }
   }
   return sharedStore;
 }
@@ -1641,17 +1508,33 @@ const server = http.createServer(async (req, res) => {
         const store = getSharedStore();
         const existingPlan = store?.getContextPlanByTask(taskId);
         const existingDecisions = store?.listCandidateDecisionObservations({ taskId });
+        const snapshot = store?.getPreOutcomeSnapshotByTaskId(taskId);
+        const existingSession = existingPlan?.sessionId ? store?.getSiftrSession(existingPlan.sessionId) : undefined;
+
         const resolvedSessionId =
           (typeof payload.sessionId === 'string' && payload.sessionId.trim().length > 0 ? payload.sessionId.trim() : undefined) ||
           existingPlan?.sessionId ||
           (existingDecisions && existingDecisions.length > 0 ? existingDecisions[0].sessionId : undefined) ||
           `sess_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
 
+        const resolvedAgentEnvId =
+          (typeof payload.agentEnvironmentId === 'string' && payload.agentEnvironmentId.trim().length > 0 ? payload.agentEnvironmentId.trim() : undefined) ||
+          existingPlan?.agentEnvironmentId ||
+          existingSession?.agentEnvironmentId ||
+          'unknown';
+
+        const resolvedSnapshotBefore =
+          (typeof payload.workspaceSnapshotBefore === 'string' && payload.workspaceSnapshotBefore.trim().length > 0 ? payload.workspaceSnapshotBefore.trim() : undefined) ||
+          existingPlan?.workspaceSnapshotId ||
+          snapshot?.workspaceSnapshotId ||
+          'unknown';
+
         const outcomeEvidence = createOutcomeEvidence({
           taskId,
           sessionId: resolvedSessionId,
-          agentEnvironmentId: 'default',
-          workspaceSnapshotBefore: 'snapshot_initial',
+          contextPlanId: existingPlan?.planId || payload.planId,
+          agentEnvironmentId: resolvedAgentEnvId,
+          workspaceSnapshotBefore: resolvedSnapshotBefore,
           publicTestsPassed: typeof payload.testsPassed === 'boolean' ? payload.testsPassed : undefined,
           regressionTestsPassed: typeof payload.regressionTestsPassed === 'boolean' ? payload.regressionTestsPassed : undefined,
           staticChecksPassed: typeof payload.staticChecksPassed === 'boolean' ? payload.staticChecksPassed : undefined,
@@ -1666,6 +1549,7 @@ const server = http.createServer(async (req, res) => {
         let persisted = false;
         if (store) {
           try {
+            store.saveTaskOutcome(outcomeEvidence);
             store.saveOutcomeEvidence([
               {
                 evidenceId: outcomeEvidence.outcomeId,

@@ -20,12 +20,17 @@ export enum ContextExposureState {
   EDITED = 'EDITED',
 }
 
+export type ExposureAttributionType = 'EXACT_UNIT' | 'PATH_LEVEL' | 'NONE';
+
 export interface ContextUnitExposureRecord {
   episodeId: string;
   contextUnitId: string;
   path?: string;
   unitKind: string;
   state: ContextExposureState;
+  attributionType?: ExposureAttributionType;
+  readAttribution?: ExposureAttributionType;
+  editAttribution?: ExposureAttributionType;
   finalRank?: number;
   resolution?: string;
   candidateAt: string;

@@ -105,10 +105,31 @@ export function validatePreOutcomeSnapshotIntegrity(obj: Record<string, unknown>
 }
 
 /**
- * Computes a deterministic SHA-256 hash over snapshot content.
+ * Recursively serializes any JavaScript object into canonical JSON with sorted keys.
+ */
+export function canonicalJsonSerialize(val: unknown): string {
+  if (val === null || typeof val !== 'object') {
+    return JSON.stringify(val);
+  }
+  if (Array.isArray(val)) {
+    return '[' + val.map((item) => canonicalJsonSerialize(item)).join(',') + ']';
+  }
+  const obj = val as Record<string, unknown>;
+  const sortedKeys = Object.keys(obj).sort();
+  const entries: string[] = [];
+  for (const k of sortedKeys) {
+    if (obj[k] !== undefined) {
+      entries.push(JSON.stringify(k) + ':' + canonicalJsonSerialize(obj[k]));
+    }
+  }
+  return '{' + entries.join(',') + '}';
+}
+
+/**
+ * Computes a deterministic SHA-256 hash over the FULL snapshot payload (including all candidates).
  */
 export function computeSnapshotSha256(snapshot: Omit<PreOutcomeEpisodeSnapshot, 'snapshotSha256'>): string {
-  const serialized = JSON.stringify({
+  const fullPayload = {
     schemaVersion: snapshot.schemaVersion,
     episodeId: snapshot.episodeId,
     taskId: snapshot.taskId,
@@ -117,15 +138,16 @@ export function computeSnapshotSha256(snapshot: Omit<PreOutcomeEpisodeSnapshot, 
     baseCommit: snapshot.baseCommit,
     featureCutoffCommit: snapshot.featureCutoffCommit,
     workspaceSnapshotId: snapshot.workspaceSnapshotId,
-    candidateCount: snapshot.candidateUniverse.length,
-    selectedCount: snapshot.selectedUnits.length,
+    candidateUniverse: snapshot.candidateUniverse,
+    selectedUnits: snapshot.selectedUnits,
     tokenBudget: snapshot.tokenBudget,
     actualRenderedTokens: snapshot.actualRenderedTokens,
     bundleSha256: snapshot.bundleSha256,
     contextPolicyId: snapshot.contextPolicyId,
     rankerId: snapshot.rankerId,
     capturedAt: snapshot.capturedAt,
-  });
+  };
+  const serialized = canonicalJsonSerialize(fullPayload);
   return crypto.createHash('sha256').update(serialized).digest('hex');
 }
 
@@ -163,6 +185,8 @@ export interface UnitOutcomeLabel {
   wasInSuccessfulTask: boolean;
   wasInFailedTask: boolean;
   wasSelected: boolean;
+  verifiedTargetEdit?: boolean;
+  /** @deprecated Backward-compatible alias for verifiedTargetEdit */
   verifiedTargetEvidence?: boolean;
   humanRelevanceLabel?: 'RELEVANT' | 'IRRELEVANT' | 'UNKNOWN';
 }

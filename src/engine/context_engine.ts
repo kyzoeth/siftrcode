@@ -14,6 +14,7 @@ import { ContextGraph } from '../graph/context_graph';
 import { GitGraphIntelligence } from '../graph/git_graph';
 import { FeatureCutoff } from '../learning/point_in_time_features';
 import { DataRights, createDefaultDataRights, resolveApplicationDataRights } from '../rights/data_rights';
+import { AgentEnvironment } from '../agents/agent_environment';
 import { AgentAdapter, ClaudeCodeAdapter, CursorAdapter, GenericMcpAdapter, ContextUnitResolved, FormattedContext } from '../agents/agent_adapter';
 import { CandidateGenerator } from '../retrieval/candidate_generator';
 import { FeatureBuilderV1 } from '../ranking/feature_builder';
@@ -64,6 +65,7 @@ export interface ContextEngineOptions {
   enableJevShadow?: boolean;
   ranker?: { rank(candidates: ContextFeaturesV1[], judgments?: any): RankedCandidate[] };
   candidateBudget?: number;
+  contextPolicyIdentity?: ContextPolicyIdentity;
 }
 
 export interface OptimizeWorkspaceOptions {
@@ -73,6 +75,9 @@ export interface OptimizeWorkspaceOptions {
   sessionId?: string;
   agentModel?: string;
   agentKind?: 'claude_code' | 'cursor' | 'generic_mcp';
+  agentVersion?: string;
+  harnessVersion?: string;
+  agentEnvironment?: AgentEnvironment;
   availableTools?: string[];
   budgetProfile?: BudgetProfileName;
   budgetLimits?: BudgetLimits;
@@ -89,6 +94,7 @@ export interface OptimizeWorkspaceOptions {
   jevShadowRunner?: JevShadowRunner;
   enableJevShadow?: boolean;
   ranker?: { rank(candidates: ContextFeaturesV1[], judgments?: any): RankedCandidate[] };
+  contextPolicyIdentity?: ContextPolicyIdentity;
   sqliteStore?: SqliteStore;
 }
 
@@ -141,11 +147,13 @@ export class ContextEngine {
   private sessionCache = new Map<string, SiftrSession>();
   private ranker?: { rank(candidates: ContextFeaturesV1[], judgments?: any): RankedCandidate[] };
   private candidateBudget?: number;
+  private contextPolicyIdentity?: ContextPolicyIdentity;
 
   constructor(options: ContextEngineOptions = {}) {
     this.repoRootDir = options.repoRootDir;
     this.ranker = options.ranker;
     this.candidateBudget = options.candidateBudget;
+    this.contextPolicyIdentity = options.contextPolicyIdentity;
     this.adapter = options.adapter || new ClaudeCodeAdapter();
     this.dataRights = resolveApplicationDataRights(options.dataRights);
     this.budgetProfile = options.budgetProfile || 'BALANCED';
@@ -815,8 +823,38 @@ export class ContextEngine {
       policyVersion,
     });
 
+    const effectiveRanker = this.ranker || ranker;
+    const runtimeRankerId =
+      (effectiveRanker as any)?.rankerId ||
+      this.contextPolicyIdentity?.rankerId ||
+      PRODUCTION_V2_POLICY_IDENTITY.rankerId;
+    const runtimeRankerVersion =
+      (effectiveRanker as any)?.rankerVersion ||
+      this.contextPolicyIdentity?.rankerVersion ||
+      PRODUCTION_V2_POLICY_IDENTITY.rankerVersion;
+    const runtimeFeatureSetVersion =
+      (effectiveRanker as any)?.featureSetVersion ||
+      this.contextPolicyIdentity?.featureSetVersion ||
+      PRODUCTION_V2_POLICY_IDENTITY.featureSetVersion;
+    const runtimePolicyId =
+      this.contextPolicyIdentity?.contextPolicyId ||
+      ((effectiveRanker as any)?.policyId) ||
+      PRODUCTION_V2_POLICY_IDENTITY.contextPolicyId;
+
     const contextPolicyIdentity: ContextPolicyIdentity = {
-      ...PRODUCTION_V2_POLICY_IDENTITY,
+      contextPolicyId: runtimePolicyId,
+      rankerId: runtimeRankerId,
+      rankerVersion: runtimeRankerVersion,
+      featureSetVersion: runtimeFeatureSetVersion,
+      candidateGeneratorVersion:
+        this.contextPolicyIdentity?.candidateGeneratorVersion ||
+        PRODUCTION_V2_POLICY_IDENTITY.candidateGeneratorVersion,
+      budgetPolicyVersion:
+        this.contextPolicyIdentity?.budgetPolicyVersion ||
+        PRODUCTION_V2_POLICY_IDENTITY.budgetPolicyVersion,
+      materializerVersion:
+        this.contextPolicyIdentity?.materializerVersion ||
+        PRODUCTION_V2_POLICY_IDENTITY.materializerVersion,
     };
 
     const contextPlan: ContextPlan = {
@@ -1165,15 +1203,16 @@ export class ContextEngine {
           enableJevShadow: options.enableJevShadow,
           ranker: options.ranker,
           candidateBudget: options.candidateBudget,
+          contextPolicyIdentity: options.contextPolicyIdentity,
         });
 
         // Canonical construction order (Milestone Part I Sections 2-4):
         // WorkspaceSnapshot -> AgentEnvironment -> systemConfigurationHash -> SiftrSession -> TaskContext -> ContextPlan
-        const agentEnvironment = createAgentEnvironment({
+        const agentEnvironment = options.agentEnvironment || createAgentEnvironment({
           agentProvider: agentProviderVal,
-          agentVersion: 'unknown',
+          agentVersion: options.agentVersion || 'unknown',
           model: modelVal,
-          harnessVersion: 'unknown',
+          harnessVersion: options.harnessVersion || 'unknown',
           availableTools,
           provenance: {
             agentProvider: {
@@ -1181,16 +1220,16 @@ export class ContextEngine {
               source: options.agentKind ? 'USER_SUPPLIED' : (kind === 'cursor' ? 'DETECTED' : 'UNKNOWN'),
             },
             agentVersion: {
-              value: null,
-              source: 'UNKNOWN',
+              value: options.agentVersion || null,
+              source: options.agentVersion ? 'USER_SUPPLIED' : 'UNKNOWN',
             },
             model: {
               value: options.agentModel || null,
               source: options.agentModel ? 'USER_SUPPLIED' : 'UNKNOWN',
             },
             harnessVersion: {
-              value: null,
-              source: 'UNKNOWN',
+              value: options.harnessVersion || null,
+              source: options.harnessVersion ? 'USER_SUPPLIED' : 'UNKNOWN',
             },
           },
         });

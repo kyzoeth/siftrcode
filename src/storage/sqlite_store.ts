@@ -48,7 +48,12 @@ import { TaskEpisodeV1, TaskType } from '../learning/episodes/task_episode';
 import { CandidateObservation } from '../learning/episodes/candidate_observation';
 import { ContextUnitExposureRecord, ContextExposureState } from '../learning/episodes/context_exposure';
 import { AgentTrajectoryEvent } from '../learning/episodes/agent_trajectory';
-import { PreOutcomeEpisodeSnapshot } from '../learning/episodes/pre_outcome_snapshot';
+import {
+  PreOutcomeEpisodeSnapshot,
+  validatePreOutcomeSnapshotIntegrity,
+} from '../learning/episodes/pre_outcome_snapshot';
+import { ShadowPolicyComparison } from '../ranking/shadow_policy_runner';
+import { resolveTaskOutcomeFromEvidence } from '../learning/outcome/task_outcome';
 import {
   evaluateCanonicalReadinessGates,
   CanonicalGateEvaluation,
@@ -813,6 +818,33 @@ const MIGRATIONS: Migration[] = [
       );
 
       CREATE INDEX IF NOT EXISTS idx_erev_ep ON episode_revocations(episode_id);
+    `,
+  },
+  {
+    version: 16,
+    name: '016_shadow_policy_evaluations_and_attribution',
+    sql: `
+      CREATE TABLE IF NOT EXISTS shadow_policy_evaluations (
+        evaluation_id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        production_policy_id TEXT NOT NULL,
+        shadow_policy_id TEXT NOT NULL,
+        candidate_count INTEGER NOT NULL,
+        rank_overlap_jaccard REAL NOT NULL,
+        token_difference INTEGER NOT NULL,
+        shadow_latency_ms INTEGER NOT NULL,
+        crashed INTEGER NOT NULL DEFAULT 0,
+        error_message TEXT,
+        evaluated_at TEXT NOT NULL,
+        raw_json TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_speval_task ON shadow_policy_evaluations(task_id);
+      CREATE INDEX IF NOT EXISTS idx_speval_crash ON shadow_policy_evaluations(crashed);
+
+      ALTER TABLE context_exposures ADD COLUMN attribution_type TEXT;
+      ALTER TABLE context_exposures ADD COLUMN read_attribution TEXT;
+      ALTER TABLE context_exposures ADD COLUMN edit_attribution TEXT;
     `,
   },
 ];
@@ -1780,6 +1812,13 @@ export class SqliteStore {
       JSON.stringify(outcome),
       outcome.recordedAt
     );
+
+    // Automatic Episode Finalization on Real Outcome Submission (Phase 20.2)
+    try {
+      this.finalizeEpisodeFromOutcome(outcome);
+    } catch (err) {
+      console.warn('[SqliteStore] Automatic episode finalization skipped or failed:', err);
+    }
   }
 
   public getTaskOutcome(taskId: string): OutcomeEvidence | null {
@@ -2554,6 +2593,164 @@ export class SqliteStore {
     return JSON.parse(row.raw_json) as PreOutcomeEpisodeSnapshot;
   }
 
+  public getPreOutcomeSnapshotByTaskId(taskId: string): PreOutcomeEpisodeSnapshot | null {
+    const row = this.db
+      .prepare('SELECT raw_json FROM pre_outcome_snapshots WHERE task_id = ? ORDER BY captured_at DESC LIMIT 1')
+      .get(taskId) as { raw_json: string } | undefined;
+
+    if (!row) return null;
+    return JSON.parse(row.raw_json) as PreOutcomeEpisodeSnapshot;
+  }
+
+  public saveShadowPolicyEvaluation(
+    evaluation: ShadowPolicyComparison,
+    crashed: boolean = false,
+    errorMessage?: string
+  ): void {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO shadow_policy_evaluations (
+        evaluation_id, task_id, production_policy_id, shadow_policy_id,
+        candidate_count, rank_overlap_jaccard, token_difference,
+        shadow_latency_ms, crashed, error_message, evaluated_at, raw_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    const id = `speval_${evaluation.taskId}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    stmt.run(
+      id,
+      evaluation.taskId,
+      evaluation.productionPolicyId,
+      evaluation.shadowPolicyId,
+      evaluation.candidateCount,
+      evaluation.rankOverlapJaccard,
+      evaluation.tokenDifference,
+      evaluation.shadowLatencyMs,
+      crashed ? 1 : 0,
+      errorMessage ?? null,
+      evaluation.evaluatedAt,
+      JSON.stringify(evaluation)
+    );
+  }
+
+  public listShadowPolicyEvaluations(limit: number = 100): Array<ShadowPolicyComparison & { crashed: boolean; errorMessage?: string }> {
+    const rows = this.db
+      .prepare('SELECT raw_json, crashed, error_message FROM shadow_policy_evaluations ORDER BY evaluated_at DESC LIMIT ?')
+      .all(limit) as Array<{ raw_json: string; crashed: number; error_message: string | null }>;
+    return rows.map((r) => {
+      const parsed = JSON.parse(r.raw_json);
+      return {
+        ...parsed,
+        crashed: r.crashed === 1,
+        errorMessage: r.error_message ?? undefined,
+      };
+    });
+  }
+
+  public finalizeEpisodeFromOutcome(outcome: OutcomeEvidence): TaskEpisodeV1 | null {
+    // 1. Lookup snapshot
+    let snapshot = this.getPreOutcomeSnapshotByTaskId(outcome.taskId);
+    if (!snapshot && outcome.contextPlanId) {
+      const plan = this.getContextPlan(outcome.contextPlanId);
+      if (plan && plan.preOutcomeSnapshot) {
+        snapshot = plan.preOutcomeSnapshot;
+      }
+    }
+    if (!snapshot) {
+      return null;
+    }
+
+    // 2. Fetch context plan and task
+    const plan = this.getContextPlanByTask(outcome.taskId) || (outcome.contextPlanId ? this.getContextPlan(outcome.contextPlanId) : null);
+    if (!plan) {
+      return null;
+    }
+
+    const task = this.getTaskContext(outcome.taskId);
+    if (!task) {
+      return null;
+    }
+
+    // 3. Resolve authoritative outcome
+    const resolvedOutcome = resolveTaskOutcomeFromEvidence(outcome, snapshot.episodeId);
+
+    // 4. Fetch trajectory events
+    let trajectoryEvents = this.getEpisodeTrajectoryEvents(snapshot.episodeId);
+    if (trajectoryEvents.length === 0) {
+      const legacyEvents = this.listTrajectoryEvents(outcome.taskId);
+      if (legacyEvents.length > 0) {
+        trajectoryEvents = legacyEvents.map((e, idx) => ({
+          eventId: e.eventId,
+          episodeId: snapshot.episodeId,
+          timestamp: typeof e.timestamp === 'number' ? new Date(e.timestamp).toISOString() : String(e.timestamp),
+          sequence: idx + 1,
+          type: ((e.kind as string) === 'DIFF_APPLIED' || (e.kind as string) === 'FILE_EDIT'
+            ? 'FILE_EDIT'
+            : (e.kind as string) === 'FILE_READ'
+            ? 'FILE_READ'
+            : 'OTHER') as any,
+          path: (e.payload as any)?.path,
+          contextUnitId: (e.payload as any)?.contextUnitId,
+          metadata: e.payload,
+        }));
+      }
+    }
+
+    // 5. Derive truthful exposures
+    const existingExposures = this.getContextExposures(snapshot.episodeId);
+    const { EpisodeAssembler } = require('../learning/episodes/episode_assembler');
+    let exposures = EpisodeAssembler.deriveContextExposures({
+      episodeId: snapshot.episodeId,
+      candidates: snapshot.candidateUniverse,
+      plan,
+      trajectoryEvents,
+    });
+
+    if (existingExposures.length > 0 && trajectoryEvents.length === 0) {
+      const existingMap = new Map(existingExposures.map((e) => [e.contextUnitId, e]));
+      exposures = exposures.map((exp: ContextUnitExposureRecord) => existingMap.get(exp.contextUnitId) || exp);
+    }
+
+    // 6. Compute economics
+    const economics = {
+      contextInputTokens: plan.actualRenderedTokens,
+      agentInputTokens: outcome.actualProviderInputTokens ?? plan.actualRenderedTokens,
+      agentOutputTokens: outcome.actualProviderOutputTokens ?? 0,
+      contextLatencyMs: 0,
+      taskLatencyMs: outcome.wallTimeMs ?? 0,
+      contextGenerationCostUSD: 0,
+      agentCostUSD: outcome.costUSD ?? 0,
+      totalCostUSD: outcome.costUSD ?? 0,
+      pricingStatus: (outcome.costUSD !== undefined ? 'VALID' : 'ESTIMATED') as any,
+    };
+
+    // 7. Assemble final immutable TaskEpisodeV1
+    const dummySnapshot: WorkspaceSnapshot = {
+      workspaceSnapshotId: snapshot.workspaceSnapshotId,
+      contentRootHash: 'hash',
+      createdAt: snapshot.capturedAt,
+      repositories: [],
+    };
+
+    const episode = EpisodeAssembler.assembleEpisode({
+      episodeId: snapshot.episodeId,
+      preOutcomeSnapshot: snapshot,
+      plan,
+      task,
+      snapshot: dummySnapshot,
+      outcome: resolvedOutcome,
+      outcomeEvidence: outcome,
+      trajectoryEvents,
+      economics,
+      dataRights: plan.dataRights,
+    });
+
+    // 8. Persist episode, exposures, candidates
+    this.saveTaskEpisode(episode);
+    this.saveContextExposures(exposures);
+    this.saveEpisodeCandidates(snapshot.candidateUniverse, snapshot.episodeId);
+
+    return episode;
+  }
+
   public saveEpisodeCandidates(candidates: CandidateObservation[], episodeId: string): void {
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO episode_candidates (
@@ -2614,8 +2811,9 @@ export class SqliteStore {
       INSERT OR REPLACE INTO context_exposures (
         exposure_id, episode_id, context_unit_id, path, unit_kind,
         state, final_rank, resolution, candidate_at, selected_at,
-        materialized_at, shown_at, read_at, edited_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        materialized_at, shown_at, read_at, edited_at,
+        attribution_type, read_attribution, edit_attribution
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     for (const exp of exposures) {
@@ -2634,7 +2832,10 @@ export class SqliteStore {
         exp.materializedAt ?? null,
         exp.shownAt ?? null,
         exp.readAt ?? null,
-        exp.editedAt ?? null
+        exp.editedAt ?? null,
+        exp.attributionType ?? null,
+        exp.readAttribution ?? null,
+        exp.editAttribution ?? null
       );
     }
   }
@@ -2650,6 +2851,9 @@ export class SqliteStore {
       path: r.path ?? undefined,
       unitKind: r.unit_kind,
       state: r.state as ContextExposureState,
+      attributionType: r.attribution_type ?? undefined,
+      readAttribution: r.read_attribution ?? undefined,
+      editAttribution: r.edit_attribution ?? undefined,
       finalRank: r.final_rank ?? undefined,
       resolution: r.resolution ?? undefined,
       candidateAt: r.candidate_at,
@@ -2773,29 +2977,29 @@ export class SqliteStore {
 
   public getLearningFlywheelSummary(): LearningFlywheelSummary {
     const totalRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM task_episodes')
+      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)')
       .get() as { c: number };
     const totalEpisodes = totalRow ? totalRow.c : 0;
 
     const verifiedOutcomeRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE verified_success IS NOT NULL')
+      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE verified_success IS NOT NULL AND episode_id NOT IN (SELECT episode_id FROM episode_revocations)')
       .get() as { c: number };
     const verifiedOutcomeEpisodes = verifiedOutcomeRow ? verifiedOutcomeRow.c : 0;
 
     const unknownOutcomeEpisodes = totalEpisodes - verifiedOutcomeEpisodes;
 
     const successRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE verified_success = 1')
+      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE verified_success = 1 AND episode_id NOT IN (SELECT episode_id FROM episode_revocations)')
       .get() as { c: number };
     const successfulVerifiedEpisodes = successRow ? successRow.c : 0;
 
     const failedRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE verified_success = 0')
+      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE verified_success = 0 AND episode_id NOT IN (SELECT episode_id FROM episode_revocations)')
       .get() as { c: number };
     const failedVerifiedEpisodes = failedRow ? failedRow.c : 0;
 
     const trainingEligibleRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE training_allowed = 1')
+      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE training_allowed = 1 AND episode_id NOT IN (SELECT episode_id FROM episode_revocations)')
       .get() as { c: number };
     const trainingEligibleEpisodes = trainingEligibleRow ? trainingEligibleRow.c : 0;
 
@@ -2806,33 +3010,33 @@ export class SqliteStore {
       .get() as { c: number };
     const revokedEpisodes = revokedRow ? revokedRow.c : 0;
 
-    // Repositories breakdown
+    // Repositories breakdown (excluding revoked)
     const repoRows = this.db
-      .prepare('SELECT repository_id, COUNT(*) as c FROM task_episodes GROUP BY repository_id')
+      .prepare('SELECT repository_id, COUNT(*) as c FROM task_episodes WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations) GROUP BY repository_id')
       .all() as Array<{ repository_id: string; c: number }>;
     const episodesByRepositoryFamily: Record<string, number> = {};
     for (const r of repoRows) {
       episodesByRepositoryFamily[r.repository_id] = r.c;
     }
 
-    // Task types breakdown
+    // Task types breakdown (excluding revoked)
     const taskTypeRows = this.db
-      .prepare('SELECT task_type, COUNT(*) as c FROM task_episodes GROUP BY task_type')
+      .prepare('SELECT task_type, COUNT(*) as c FROM task_episodes WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations) GROUP BY task_type')
       .all() as Array<{ task_type: string; c: number }>;
     const episodesByTaskType: Record<string, number> = {};
     for (const t of taskTypeRows) {
       episodesByTaskType[t.task_type || 'OTHER'] = t.c;
     }
 
-    // Candidate count
+    // Candidate count (excluding revoked)
     const candRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM episode_candidates')
+      .prepare('SELECT COUNT(*) as c FROM episode_candidates WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)')
       .get() as { c: number };
     const totalCandidateObservations = candRow ? candRow.c : 0;
 
-    // Exposures by state
+    // Exposures by state (excluding revoked)
     const expRows = this.db
-      .prepare('SELECT state, COUNT(*) as c FROM context_exposures GROUP BY state')
+      .prepare('SELECT state, COUNT(*) as c FROM context_exposures WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations) GROUP BY state')
       .all() as Array<{ state: string; c: number }>;
     let shownContextUnits = 0;
     let readContextUnits = 0;
@@ -2882,30 +3086,69 @@ export class SqliteStore {
         : 0;
 
     // Evaluate canonical 7 architecture gates (docs/research/V3_2_ARCHITECTURE.md Section 4)
+    // 1. Candidate logging coverage (strictly non-revoked episodes)
     const candLoggedRow = this.db
-      .prepare('SELECT COUNT(DISTINCT episode_id) as c FROM episode_candidates')
+      .prepare('SELECT COUNT(DISTINCT episode_id) as c FROM episode_candidates WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)')
       .get() as { c: number } | undefined;
     const episodesWithCandidatesLogged = candLoggedRow?.c ?? 0;
 
+    // 2. Unpermitted in pool (non-revoked)
     const unpermittedInPoolRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE training_allowed = 0')
+      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE training_allowed = 0 AND episode_id NOT IN (SELECT episode_id FROM episode_revocations)')
       .get() as { c: number } | undefined;
     const unpermittedEpisodesInPool = unpermittedInPoolRow?.c ?? 0;
 
+    // 3. Revoked episodes in pool (episodes that have been revoked)
     const revokedInPoolRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM episode_revocations')
+      .prepare('SELECT COUNT(*) as c FROM task_episodes WHERE episode_id IN (SELECT episode_id FROM episode_revocations)')
       .get() as { c: number } | undefined;
     const revokedEpisodesInPool = revokedInPoolRow?.c ?? 0;
 
-    const preOutcomeSnapshotsRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM pre_outcome_snapshots')
-      .get() as { c: number } | undefined;
-    const preOutcomeSnapshotsAudited = preOutcomeSnapshotsRow?.c ?? 0;
+    // 4. Real verification proof audit (measuring missing proofs instead of assumed zero)
+    const verifiedRows = this.db.prepare(`
+      SELECT raw_json FROM task_episodes
+      WHERE verified_success IS NOT NULL
+      AND episode_id NOT IN (SELECT episode_id FROM episode_revocations)
+    `).all() as Array<{ raw_json: string }>;
+    let verifiedEpisodesWithMissingProof = 0;
+    for (const vr of verifiedRows) {
+      try {
+        const parsed = JSON.parse(vr.raw_json);
+        const sources = parsed.outcome?.verificationSources;
+        if (!Array.isArray(sources) || sources.length === 0) {
+          verifiedEpisodesWithMissingProof++;
+        }
+      } catch {
+        verifiedEpisodesWithMissingProof++;
+      }
+    }
 
+    // 5. Real pre-outcome snapshot leakage audit (measuring real violations instead of assumed zero)
+    const snapshotRows = this.db.prepare(`
+      SELECT raw_json FROM pre_outcome_snapshots
+      WHERE episode_id NOT IN (SELECT episode_id FROM episode_revocations)
+    `).all() as Array<{ raw_json: string }>;
+    const preOutcomeSnapshotsAudited = snapshotRows.length;
+    let leakageViolationsDetected = 0;
+    for (const sr of snapshotRows) {
+      try {
+        const parsed = JSON.parse(sr.raw_json);
+        validatePreOutcomeSnapshotIntegrity(parsed);
+      } catch {
+        leakageViolationsDetected++;
+      }
+    }
+
+    // 6. Real shadow policy runs and crashes (measuring real shadow_policy_evaluations table, not JEV)
     const shadowRunsRow = this.db
-      .prepare('SELECT COUNT(*) as c FROM jev_shadow_judgments')
+      .prepare('SELECT COUNT(*) as c FROM shadow_policy_evaluations WHERE crashed = 0')
       .get() as { c: number } | undefined;
     const shadowEvaluationRuns = shadowRunsRow?.c ?? 0;
+
+    const shadowCrashRow = this.db
+      .prepare('SELECT COUNT(*) as c FROM shadow_policy_evaluations WHERE crashed = 1')
+      .get() as { c: number } | undefined;
+    const shadowEvaluationCrashes = shadowCrashRow?.c ?? 0;
 
     const canonicalEvaluation = evaluateCanonicalReadinessGates({
       totalEpisodes: summary.totalEpisodes,
@@ -2915,11 +3158,11 @@ export class SqliteStore {
       episodesWithCandidatesLogged,
       unpermittedEpisodesInPool,
       revokedEpisodesInPool,
-      verifiedEpisodesWithMissingProof: 0,
+      verifiedEpisodesWithMissingProof,
       preOutcomeSnapshotsAudited,
-      leakageViolationsDetected: 0,
+      leakageViolationsDetected,
       shadowEvaluationRuns,
-      shadowEvaluationCrashes: 0,
+      shadowEvaluationCrashes,
     });
 
     const readinessScore = canonicalEvaluation.readinessScore;
