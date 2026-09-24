@@ -34,6 +34,8 @@ import {
   SanctionedTrainingEvidenceExport,
   isSanctionedTrainingExport,
   isSanctionedTrainingEvidenceExport,
+  isSanctionedDatasetV2Export,
+  SanctionedDatasetV2Export,
 } from '../learning/training_exporter';
 import { DeletionAuditRecord } from '../rights/deletion_manager';
 import { DataRights, createDefaultDataRights, DataClass, isDataClassPermitted } from '../rights/data_rights';
@@ -139,7 +141,9 @@ export interface DataQualityReport {
   verifiedOutcomeRate: number;
   unknownOutcomeRate: number;
   trainingEligibleRate: number;
-  trainingRightsRate: number;
+  /** Fraction of episodes where the training_allowed SQL flag is set. Does NOT account for
+   *  UNKNOWN/unspecified permissionSource; use trainingEligibleRate for canonical eligibility. */
+  trainingPermissionFlagRate: number;
   trajectoryCompletenessRate: number;
   pricingCoverageRate: number;
   baseCommitCoverageRate: number;
@@ -3139,7 +3143,24 @@ export class SqliteStore {
     return rows.map((r) => r.episode_id);
   }
 
-  public saveDatasetV2Row(row: any): void {
+  /**
+   * Persist every row in a sanctioned Dataset V2 export produced by
+   * TrainingExporter.exportContextDatasetV2(). Rejects any object that was not
+   * produced by that boundary (checked via the module-private WeakSet brand).
+   */
+  public saveSanctionedDatasetV2Export(sanctioned: SanctionedDatasetV2Export): void {
+    if (!isSanctionedDatasetV2Export(sanctioned)) {
+      throw new Error(
+        'FAIL_CLOSED: saveSanctionedDatasetV2Export requires a genuine SanctionedDatasetV2Export ' +
+        'produced by TrainingExporter.exportContextDatasetV2(). Forged or unsanctioned objects are rejected.'
+      );
+    }
+    for (const row of sanctioned.rows) {
+      this._persistDatasetV2Row(row);
+    }
+  }
+
+  private _persistDatasetV2Row(row: any): void {
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO dataset_v2_rows (
         row_id, export_id, episode_id, context_unit_id, repository_id,
@@ -3589,7 +3610,7 @@ export class SqliteStore {
         : 0;
 
     const permittedRightsEpisodes = Math.max(0, summary.totalEpisodes - summary.rightsBlockedEpisodes);
-    const trainingRightsRate =
+    const trainingPermissionFlagRate =
       summary.totalEpisodes > 0
         ? Math.round((permittedRightsEpisodes / summary.totalEpisodes) * 1000) / 1000
         : 0;
@@ -3641,7 +3662,7 @@ export class SqliteStore {
       verifiedOutcomeRate,
       unknownOutcomeRate,
       trainingEligibleRate,
-      trainingRightsRate,
+      trainingPermissionFlagRate,
       trajectoryCompletenessRate,
       pricingCoverageRate,
       baseCommitCoverageRate,

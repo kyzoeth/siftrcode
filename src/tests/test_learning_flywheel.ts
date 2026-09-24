@@ -573,7 +573,7 @@ export async function runLearningFlywheelTests() {
 
     const dataQuality = store.getDataQualityReport();
     assert.strictEqual(dataQuality.verifiedOutcomeRate, 1);
-    assert.strictEqual(dataQuality.trainingRightsRate, 1);
+    assert.strictEqual(dataQuality.trainingPermissionFlagRate, 1);
     assert.strictEqual(dataQuality.baseCommitCoverageRate, 1);
 
     store.close();
