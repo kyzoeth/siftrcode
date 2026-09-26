@@ -250,6 +250,28 @@
           <span>Authenticate</span>
           <span>&rarr;</span>
         </button>
+
+        <!-- Local Development Token Auto-fill -->
+        <div id="devTokenHelper" class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs font-mono space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-[#D97757] flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Development Auth
+            </span>
+            <span class="text-[10px] text-zinc-400">Default Key</span>
+          </div>
+          <p class="text-[11px] text-zinc-500 leading-normal">
+            Local token: <code class="text-ink font-semibold bg-zinc-200/60 dark:bg-zinc-800 px-1 py-0.5 rounded">siftr-admin-secret</code>
+          </p>
+          <button 
+            type="button" 
+            onclick="document.getElementById('adminTokenInput').value='siftr-admin-secret'; document.getElementById('btnAdminLogin').click();" 
+            class="w-full mt-1 py-1 px-2.5 rounded bg-zinc-200/80 hover:bg-zinc-300/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-ink text-[11px] font-semibold transition cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <span>Auto-fill Dev Token &amp; Sign In</span>
+            <span>&rarr;</span>
+          </button>
+        </div>
       </form>
 
       <div class="pt-4 border-t border-zinc-100 dark:border-zinc-800 text-[11px] text-zinc-500 text-center leading-relaxed">
@@ -286,11 +308,15 @@
 
     <!-- Section Quick Navigation Bar -->
     <nav class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-mono">
-      <a href="#governance" class="px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink hover:text-[#D97757] transition border border-zinc-200 dark:border-zinc-700">Model Governance</a>
-      <a href="#flywheel" class="px-3 py-1.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/80 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-semibold">Learning Flywheel &amp; V3.2 Readiness</a>
-      <a href="#kpis" class="px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink hover:text-[#D97757] transition border border-zinc-200 dark:border-zinc-700">Live Telemetry</a>
-      <a href="#rights" class="px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink hover:text-[#D97757] transition border border-zinc-200 dark:border-zinc-700">Data Rights &amp; Provenance</a>
-      <a href="#trials" class="px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink hover:text-[#D97757] transition border border-zinc-200 dark:border-zinc-700">Holdout Benchmark</a>
+      <a href="#usage-patterns" class="px-3 py-1.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 font-semibold flex items-center gap-1.5 shrink-0">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>Usage Patterns &amp; Analytics</span>
+      </a>
+      <a href="#governance" class="px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink hover:text-[#D97757] transition border border-zinc-200 dark:border-zinc-700 shrink-0">Model Governance</a>
+      <a href="#flywheel" class="px-3 py-1.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/80 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-semibold shrink-0">Learning Flywheel &amp; V3.2 Readiness</a>
+      <a href="#kpis" class="px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink hover:text-[#D97757] transition border border-zinc-200 dark:border-zinc-700 shrink-0">Live Telemetry</a>
+      <a href="#rights" class="px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink hover:text-[#D97757] transition border border-zinc-200 dark:border-zinc-700 shrink-0">Data Rights &amp; Provenance</a>
+      <a href="#trials" class="px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-ink hover:text-[#D97757] transition border border-zinc-200 dark:border-zinc-700 shrink-0">Holdout Benchmark</a>
     </nav>
 
     <!-- Top Status Bar (5 System Indicators) -->
@@ -1459,8 +1485,25 @@
 
     </section>
 
-    <!-- SECTION 8: Live Traffic, Agent Share & Events -->
-    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+    <!-- SECTION: Usage Patterns & Analytics Dashboard -->
+    <div id="usage-patterns" class="space-y-6 pt-6 border-t border-zinc-200/80 dark:border-zinc-800">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-zinc-100 dark:border-zinc-800">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <h2 class="text-xl sm:text-2xl font-normal font-serif text-ink tracking-tight">Usage Patterns &amp; System Telemetry</h2>
+          </div>
+          <p class="text-xs text-ink-secondary mt-0.5 font-sans">
+            Real-time analytics on developer traffic routes, AI agent preferences, CLI command adoptions, and live event telemetry.
+          </p>
+        </div>
+        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-semibold self-start sm:self-center">
+          LIVE TELEMETRY STREAM
+        </span>
+      </div>
+
+      <!-- SECTION 8: Live Traffic, Agent Share & Events -->
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
       
       <!-- Traffic by Page -->
       <div class="p-5 rounded-md border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs flex flex-col justify-between space-y-4">
@@ -1535,6 +1578,7 @@
         <div class="text-ink-secondary text-xs italic py-4">Streaming incoming events...</div>
       </div>
     </section>
+  </div>
 
     <!-- SECTION 10: B2B Leads Table -->
     <section id="trials" class="p-5 rounded-md border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-4">

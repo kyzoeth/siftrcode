@@ -39,6 +39,26 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 const WEB_DIR = path.join(__dirname, '..', '..', 'web');
 
+// Load environment variables from .env if present
+function loadEnvFile(envPath: string): void {
+  if (!fs.existsSync(envPath)) return;
+  try {
+    const content = fs.readFileSync(envPath, 'utf8');
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx <= 0) continue;
+      const key = trimmed.slice(0, eqIdx).trim();
+      const val = trimmed.slice(eqIdx + 1).trim();
+      if (process.env[key] === undefined) {
+        process.env[key] = val;
+      }
+    }
+  } catch {}
+}
+loadEnvFile(path.resolve(process.cwd(), '.env'));
+
 let sharedStore: SqliteStore | null = null;
 export function setSharedStore(store: SqliteStore | null): void {
   sharedStore = store;
@@ -1086,8 +1106,25 @@ function saveTelemetry(data: any) {
   fs.writeFileSync(TELEMETRY_FILE, JSON.stringify(data, null, 2), 'utf-8');
 }
 
+export function getEffectiveAdminToken(): string | undefined {
+  if (process.env.ADMIN_TOKEN && process.env.ADMIN_TOKEN.trim().length > 0) {
+    return process.env.ADMIN_TOKEN.trim();
+  }
+  if (process.env.ADMIN_API_KEY && process.env.ADMIN_API_KEY.trim().length > 0) {
+    return process.env.ADMIN_API_KEY.trim();
+  }
+  if (process.env.NODE_ENV !== 'production') {
+    return 'siftr-admin-secret';
+  }
+  return undefined;
+}
+
 export function isAdminConfigured(): boolean {
-  const token = process.env.ADMIN_TOKEN || process.env.ADMIN_API_KEY;
+  if (process.env.NODE_ENV === 'production') {
+    const prodToken = process.env.ADMIN_TOKEN || process.env.ADMIN_API_KEY;
+    return !!(prodToken && prodToken.trim().length > 0);
+  }
+  const token = getEffectiveAdminToken();
   return !!(token && token.trim().length > 0);
 }
 
@@ -1103,7 +1140,7 @@ export function verifyAdminToken(req: http.IncomingMessage): boolean {
   if (isInsecureDevAllowed()) {
     return true;
   }
-  const adminToken = process.env.ADMIN_TOKEN || process.env.ADMIN_API_KEY;
+  const adminToken = getEffectiveAdminToken();
   if (!adminToken || adminToken.trim().length === 0) {
     return false;
   }
