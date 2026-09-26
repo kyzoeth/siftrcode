@@ -64,7 +64,8 @@ const tests = [
   { name: 'Truth in Advertising, Model Governance & Admin Security Tests', file: 'test_truth_and_governance.js' },
   { name: 'Production Data Flywheel & Learning Boundary Tests (Phase 20)', file: 'test_learning_flywheel.js' },
   { name: 'Production Telemetry, Assembler & Ingestion E2E Tests (Phase 20.1)', file: 'test_production_ingestion_e2e.js' },
-  { name: 'Data Flywheel Integrity Closure Regression Suite (Phase 20.4)', file: 'test_phase20_4_closure.js' }
+  { name: 'Data Flywheel Integrity Closure Regression Suite (Phase 20.4)', file: 'test_phase20_4_closure.js' },
+  { name: 'Paired Core-Thesis Experiment Harness (Phase 21A)', file: 'test_phase21a_paired_experiment.js' }
 ];
 
 
