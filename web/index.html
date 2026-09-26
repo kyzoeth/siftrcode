@@ -1723,8 +1723,8 @@
           </span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <!-- Model 1: Claude 3.7 / 3.5 Sonnet -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <!-- Model 1: Claude 3.7 Sonnet -->
           <div class="p-3.5 sm:p-4 rounded-md bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-1.5 shadow-2xs">
             <div class="flex items-center justify-between">
               <span class="text-xs font-mono font-semibold text-ink">Claude 3.7 Sonnet</span>
@@ -1760,10 +1760,10 @@
             </div>
           </div>
 
-          <!-- Model 3: Claude 3 Opus / Reasoning -->
+          <!-- Model 3: Claude 3.7 Thinking / o1 -->
           <div class="p-3.5 sm:p-4 rounded-md bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-1.5 shadow-2xs">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-mono font-semibold text-ink">Claude 3 Opus / o1</span>
+              <span class="text-xs font-mono font-semibold text-ink">Claude 3.7 Thinking / o1</span>
               <span class="text-[10px] font-mono text-zinc-400">$15.00 / MTok</span>
             </div>
             <div class="flex items-baseline justify-between pt-1">
@@ -1776,6 +1776,174 @@
                 Save $1.00/t
               </span>
             </div>
+          </div>
+
+          <!-- Model 4: Gemini 2.0 Flash -->
+          <div class="p-3.5 sm:p-4 rounded-md bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-1.5 shadow-2xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-semibold text-ink">Gemini 2.0 Flash</span>
+              <span class="text-[10px] font-mono text-zinc-400">$0.10 / MTok</span>
+            </div>
+            <div class="flex items-baseline justify-between pt-1">
+              <div>
+                <span class="text-[10px] font-mono text-zinc-400 line-through mr-1.5">$0.0085</span>
+                <span id="modelCostGemini" class="text-base sm:text-lg font-mono font-bold text-emerald-600 dark:text-emerald-400">$0.0018</span>
+                <span class="text-[10px] font-mono text-zinc-500">/ turn</span>
+              </div>
+              <span id="modelSaveGemini" class="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-1.5 py-0.5 rounded">
+                −78.6%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Team ROI & Token Savings Calculator -->
+      <div class="p-5 sm:p-6 rounded-lg bg-zinc-50 dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-800 space-y-5 shadow-2xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3">
+          <div>
+            <div class="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              Interactive Model
+            </div>
+            <h3 class="font-serif text-lg sm:text-xl text-ink font-normal mt-0.5">Team Savings &amp; ROI Calculator</h3>
+          </div>
+          <span class="text-xs font-mono text-zinc-500 dark:text-zinc-400">
+            Real-time projection based on selected budget profile
+          </span>
+        </div>
+
+        <!-- Controls: Sliders and Dropdown -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+          <!-- Team Size Slider -->
+          <div class="space-y-2 p-3 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80">
+            <div class="flex items-center justify-between">
+              <label for="calcTeamSize" class="text-xs font-mono font-medium text-zinc-700 dark:text-zinc-300">Team Size</label>
+              <span id="calcTeamSizeVal" class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">10 engineers</span>
+            </div>
+            <input type="range" id="calcTeamSize" min="1" max="50" value="10" step="1" oninput="updateInteractiveRoi()" class="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+            <div class="flex justify-between text-[10px] font-mono text-zinc-400">
+              <span>1 dev</span>
+              <span>25 devs</span>
+              <span>50 devs</span>
+            </div>
+          </div>
+
+          <!-- Turns / Day Slider -->
+          <div class="space-y-2 p-3 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80">
+            <div class="flex items-center justify-between">
+              <label for="calcTurnsPerDay" class="text-xs font-mono font-medium text-zinc-700 dark:text-zinc-300">Turns / Day / Dev</label>
+              <span id="calcTurnsVal" class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">50 turns</span>
+            </div>
+            <input type="range" id="calcTurnsPerDay" min="10" max="100" value="50" step="5" oninput="updateInteractiveRoi()" class="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+            <div class="flex justify-between text-[10px] font-mono text-zinc-400">
+              <span>10 / day</span>
+              <span>50 / day</span>
+              <span>100 / day</span>
+            </div>
+          </div>
+
+          <!-- Model Selection Dropdown -->
+          <div class="space-y-2 p-3 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80">
+            <label for="calcModelSelect" class="block text-xs font-mono font-medium text-zinc-700 dark:text-zinc-300">Frontier LLM Tier</label>
+            <select id="calcModelSelect" onchange="updateInteractiveRoi()" class="w-full px-2.5 py-1.5 text-xs font-mono bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded text-ink cursor-pointer focus:outline-hidden focus:border-emerald-500">
+              <option value="sonnet" selected>Claude 3.7 Sonnet ($3.00/MTok)</option>
+              <option value="gpt4o">OpenAI GPT-4o ($2.50/MTok)</option>
+              <option value="opus">Claude 3.7 Thinking / o1 ($15.00/MTok)</option>
+              <option value="gemini">Google Gemini 2.0 Flash ($0.10/MTok)</option>
+            </select>
+            <div class="text-[10px] font-mono text-zinc-400 pt-0.5">
+              Based on input token list pricing
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Output Stat Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+          <!-- Output 1: Annual Savings -->
+          <div class="p-3.5 rounded-md bg-emerald-500/10 dark:bg-emerald-950/40 border border-emerald-300/80 dark:border-emerald-800/80">
+            <span class="text-[10px] font-mono uppercase tracking-wider text-emerald-800 dark:text-emerald-300 font-semibold block truncate">Team Annual Savings</span>
+            <div id="calcAnnualSavings" class="text-xl sm:text-2xl font-extrabold font-mono text-emerald-700 dark:text-emerald-300 tracking-tight mt-1">
+              $33,674
+            </div>
+            <div class="text-[10px] font-mono text-emerald-600/90 dark:text-emerald-400/80 mt-0.5">
+              Net annual dollar delta
+            </div>
+          </div>
+
+          <!-- Output 2: Monthly Delta -->
+          <div class="p-3.5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+            <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold block truncate">Monthly Spend Shift</span>
+            <div class="text-base sm:text-lg font-bold font-mono text-ink tracking-tight mt-1 flex items-baseline gap-1">
+              <span id="calcMonthlySavings">$2,806</span>
+              <span class="text-[10px] font-normal text-zinc-500">saved/mo</span>
+            </div>
+            <div class="text-[10px] font-mono text-zinc-400 truncate mt-0.5">
+              From <span id="calcMonthlyRaw" class="line-through">$3,570</span> down to <span id="calcMonthlyV2" class="text-emerald-600 dark:text-emerald-400 font-semibold">$764</span>
+            </div>
+          </div>
+
+          <!-- Output 3: Tokens Dropped Annually -->
+          <div class="p-3.5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+            <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold block truncate">Annual Tokens Pruned</span>
+            <div id="calcTokensPruned" class="text-xl sm:text-2xl font-bold font-mono text-ink tracking-tight mt-1">
+              11.2B
+            </div>
+            <div class="text-[10px] font-mono text-zinc-400 mt-0.5">
+              Distractor bloat dropped
+            </div>
+          </div>
+
+          <!-- Output 4: TTFT Speedup -->
+          <div class="p-3.5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+            <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold block truncate">First-Token Latency</span>
+            <div id="calcSpeedup" class="text-xl sm:text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight mt-1">
+              4.7x
+            </div>
+            <div class="text-[10px] font-mono text-zinc-400 mt-0.5">
+              Faster context ingestion
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prompt Caching Economics & Invalidation Insurance -->
+      <div class="p-4 sm:p-5 rounded-lg bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-3 shadow-2xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-200/80 dark:border-zinc-800/80 pb-2.5">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-300 dark:border-emerald-800">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h4 class="font-serif text-base text-ink font-normal">Prompt Caching Economics &amp; Invalidation Insurance</h4>
+          </div>
+          <span class="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 w-fit">
+            Cache-Miss Protection
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+          <div class="space-y-1.5 p-3 rounded bg-white dark:bg-zinc-900/80 border border-zinc-200/70 dark:border-zinc-800/70">
+            <div class="font-mono font-semibold text-ink text-[11px] flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              The Multi-Turn Cache Invalidation Problem
+            </div>
+            <p class="text-[11px]">
+              Prompt caching delivers up to 90% savings on repeat turns, but coding agents constantly edit code, switch branch context, and alter tool outputs. Each file mutation invalidates prompt cache prefixes, triggering expensive "cold turns" where 100% of raw input tokens must be re-written at full provider write rates.
+            </p>
+          </div>
+
+          <div class="space-y-1.5 p-3 rounded bg-white dark:bg-zinc-900/80 border border-zinc-200/70 dark:border-zinc-800/70">
+            <div class="font-mono font-semibold text-emerald-700 dark:text-emerald-300 text-[11px] flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              How SiftrCode Protects Cache Invalidation
+            </div>
+            <p class="text-[11px]">
+              SiftrCode V2 cuts cold payload size by 60%–88%, directly slashing the penalty of cache-miss writes. Furthermore, by segregating persistent AST interface skeletons from mutated implementation bodies, skeletons remain hot in the cache across turns while only the targeted edits rewrite cache segments.
+            </p>
           </div>
         </div>
       </div>
@@ -1843,7 +2011,7 @@
       <!-- Pricing Footnote -->
       <div class="text-center pt-1">
         <p class="text-[11px] sm:text-xs text-zinc-400 dark:text-zinc-500 font-mono">
-          * Modeled on typical 85k-token repository payload at 50 turns/day, 28 work days/mo (1,400 turns/mo per dev). Claude 3.7 Sonnet ($3.00/MTok in), GPT-4o ($2.50/MTok in), Claude 3 Opus ($15.00/MTok in).
+          * Modeled on typical 85k-token repository payload at 50 turns/day, 28 work days/mo (1,400 turns/mo per dev). Claude 3.7 Sonnet ($3.00/MTok in), GPT-4o ($2.50/MTok in), Claude 3.7 Thinking / o1 ($15.00/MTok in), Gemini 2.0 Flash ($0.10/MTok in).
         </p>
       </div>
 
@@ -4157,6 +4325,13 @@ ${renderedRaw}
     // ==========================================
     // TOKEN ECONOMICS: V2 PROFILES & ANIMATION
     // ==========================================
+    const MODEL_RATES = {
+      sonnet: { name: 'Claude 3.7 Sonnet', rate: 3.00 },
+      gpt4o: { name: 'OpenAI GPT-4o', rate: 2.50 },
+      opus: { name: 'Claude 3.7 Thinking / o1', rate: 15.00 },
+      gemini: { name: 'Google Gemini 2.0 Flash', rate: 0.10 }
+    };
+
     const ECON_PROFILES = {
       balanced: {
         name: 'Balanced (Default) • Optimal Quality & Cost',
@@ -4192,7 +4367,9 @@ ${renderedRaw}
         modelGpt: '$0.046',
         modelGptSave: '−78.6%',
         modelOpus: '$0.273',
-        modelOpusSave: 'Save $1.00/t'
+        modelOpusSave: 'Save $1.00/t',
+        modelGemini: '$0.0018',
+        modelGeminiSave: '−78.6%'
       },
       aggressive: {
         name: 'Aggressive • Max Throughput & Large Repos',
@@ -4228,7 +4405,9 @@ ${renderedRaw}
         modelGpt: '$0.026',
         modelGptSave: '−87.6%',
         modelOpus: '$0.158',
-        modelOpusSave: 'Save $1.12/t'
+        modelOpusSave: 'Save $1.12/t',
+        modelGemini: '$0.0011',
+        modelGeminiSave: '−87.6%'
       },
       thorough: {
         name: 'Thorough • Multi-File Architecture & Deep Edits',
@@ -4264,7 +4443,9 @@ ${renderedRaw}
         modelGpt: '$0.080',
         modelGptSave: '−62.4%',
         modelOpus: '$0.480',
-        modelOpusSave: 'Save $0.80/t'
+        modelOpusSave: 'Save $0.80/t',
+        modelGemini: '$0.0032',
+        modelGeminiSave: '−62.4%'
       }
     };
 
@@ -4272,6 +4453,78 @@ ${renderedRaw}
     let currentV2Tokens = 18200;
     let currentMonthlyV2 = 76.44;
     let currentAnnualV2 = 917;
+
+    function updateInteractiveRoi() {
+      const teamInput = document.getElementById('calcTeamSize');
+      const turnsInput = document.getElementById('calcTurnsPerDay');
+      const modelSelect = document.getElementById('calcModelSelect');
+      if (!teamInput || !turnsInput || !modelSelect) return;
+
+      const teamSize = parseInt(teamInput.value, 10) || 10;
+      const turnsPerDay = parseInt(turnsInput.value, 10) || 50;
+      const modelKey = modelSelect.value || 'sonnet';
+      const modelInfo = MODEL_RATES[modelKey] || MODEL_RATES.sonnet;
+
+      const teamValEl = document.getElementById('calcTeamSizeVal');
+      if (teamValEl) teamValEl.textContent = `${teamSize} engineer${teamSize === 1 ? '' : 's'}`;
+
+      const turnsValEl = document.getElementById('calcTurnsVal');
+      if (turnsValEl) turnsValEl.textContent = `${turnsPerDay} turns`;
+
+      const prof = ECON_PROFILES[currentEconProfile] || ECON_PROFILES.balanced;
+      const rawTokens = prof.rawTokens; // 85000
+      const v2Tokens = prof.v2Tokens;
+
+      const turnsPerMonth = teamSize * turnsPerDay * 28;
+      const turnsPerYear = turnsPerMonth * 12;
+
+      const monthlyCostRaw = (turnsPerMonth * rawTokens * modelInfo.rate) / 1000000;
+      const monthlyCostV2 = (turnsPerMonth * v2Tokens * modelInfo.rate) / 1000000;
+      const monthlySavings = monthlyCostRaw - monthlyCostV2;
+      const annualSavings = monthlySavings * 12;
+
+      const annualTokensPruned = turnsPerYear * (rawTokens - v2Tokens);
+      let tokensPrunedLabel = '';
+      if (annualTokensPruned >= 1e12) {
+        tokensPrunedLabel = `${(annualTokensPruned / 1e12).toFixed(1)}T`;
+      } else if (annualTokensPruned >= 1e9) {
+        tokensPrunedLabel = `${(annualTokensPruned / 1e9).toFixed(1)}B`;
+      } else if (annualTokensPruned >= 1e6) {
+        tokensPrunedLabel = `${(annualTokensPruned / 1e6).toFixed(1)}M`;
+      } else {
+        tokensPrunedLabel = Math.round(annualTokensPruned).toLocaleString();
+      }
+
+      const annualSavingsEl = document.getElementById('calcAnnualSavings');
+      if (annualSavingsEl) {
+        annualSavingsEl.textContent = `$${Math.round(annualSavings).toLocaleString()}`;
+      }
+
+      const monthlySavingsEl = document.getElementById('calcMonthlySavings');
+      if (monthlySavingsEl) {
+        monthlySavingsEl.textContent = `$${Math.round(monthlySavings).toLocaleString()}`;
+      }
+
+      const monthlyRawEl = document.getElementById('calcMonthlyRaw');
+      if (monthlyRawEl) {
+        monthlyRawEl.textContent = `$${Math.round(monthlyCostRaw).toLocaleString()}`;
+      }
+
+      const monthlyV2El = document.getElementById('calcMonthlyV2');
+      if (monthlyV2El) {
+        monthlyV2El.textContent = `$${Math.round(monthlyCostV2).toLocaleString()}`;
+      }
+
+      const tokensPrunedEl = document.getElementById('calcTokensPruned');
+      if (tokensPrunedEl) {
+        tokensPrunedEl.textContent = tokensPrunedLabel;
+      }
+
+      const speedupEl = document.getElementById('calcSpeedup');
+      if (speedupEl) {
+        speedupEl.textContent = prof.speedup;
+      }
+    }
 
     function setEconProfile(profileKey) {
       if (!ECON_PROFILES[profileKey]) return;
@@ -4327,6 +4580,11 @@ ${renderedRaw}
       const mOpusSave = document.getElementById('modelSaveOpus');
       if (mOpusSave) mOpusSave.textContent = prof.modelOpusSave;
 
+      const mGemini = document.getElementById('modelCostGemini');
+      if (mGemini) mGemini.textContent = prof.modelGemini;
+      const mGeminiSave = document.getElementById('modelSaveGemini');
+      if (mGeminiSave) mGeminiSave.textContent = prof.modelGeminiSave;
+
       // Update ROI summary strip
       const roiDevEl = document.getElementById('econRoiPerDev');
       if (roiDevEl) roiDevEl.textContent = prof.annualSavingsPerDev;
@@ -4359,6 +4617,9 @@ ${renderedRaw}
       if (pillCost) pillCost.textContent = prof.monthlySavingsBadge;
       const pillCostTag = document.getElementById('econPillCostTag');
       if (pillCostTag) pillCostTag.textContent = prof.monthlySavingsTag;
+
+      // Update interactive ROI outputs
+      updateInteractiveRoi();
 
       // Smoothly animate V2 bars & numbers without resetting raw bars to 0
       triggerEconomicsAnimation(false);
@@ -4531,6 +4792,7 @@ ${renderedRaw}
     }
 
     initEconomicsObserver();
+    updateInteractiveRoi();
 
     // B2B Team Trial Modal Handlers
     function toggleMobileMenu() {
