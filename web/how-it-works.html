@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>How It Works — SiftrCode V2 Outcome-Aware Context Engine</title>
-  <meta name="description" content="Technical architecture of SiftrCode V2: 6-stage outcome optimization engine, multi-channel candidate recall, point-in-time features, transparent ContextRank, submodular bundle composition, variable-resolution degradation, and zero-egress local processing.">
+  <meta name="description" content="Technical architecture of SiftrCode V2: 6-stage outcome optimization engine, prompt caching prefix invariance, 7-gate model governance, variable-resolution degradation, and zero-egress data flywheel integrity.">
   <link rel="canonical" href="https://siftrcode.com/how-it-works">
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -160,13 +160,14 @@
             </g>
           </svg>
           <span class="font-bold text-base tracking-tight text-ink">SiftrCode</span>
-          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-medium">v0.2.1</span>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-medium">V2 Production</span>
         </a>
         <nav class="hidden md:flex items-center gap-5 text-xs text-ink-secondary font-medium">
           <a href="/how-it-works" class="text-[#B34E2E] dark:text-[#F39C82] font-semibold transition">How It Works</a>
           <a href="/claude" class="hover:text-ink transition">Claude Code</a>
           <a href="#pipeline-stages" class="hover:text-ink transition">6-Stage Pipeline</a>
-          <a href="/#benchmark" class="hover:text-ink transition flex items-center gap-1 text-[#D97757] dark:text-[#F39C82]">
+          <a href="#prompt-caching" class="hover:text-ink transition">Prompt Caching</a>
+          <a href="#benchmark-study" class="hover:text-ink transition flex items-center gap-1 text-[#D97757] dark:text-[#F39C82]">
             <span>SiftrBench</span>
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
           </a>
@@ -227,7 +228,11 @@
         <span>6-Stage Pipeline</span>
         <span class="text-zinc-400 font-mono text-[10px]">→</span>
       </a>
-      <a href="/#benchmark" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-[#D97757] dark:text-[#F39C82] font-semibold transition">
+      <a href="#prompt-caching" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-ink hover:text-[#D97757] dark:hover:text-[#F39C82] transition">
+        <span>Prompt Caching Architecture</span>
+        <span class="text-zinc-400 font-mono text-[10px]">→</span>
+      </a>
+      <a href="#benchmark-study" class="flex items-center justify-between min-h-[44px] py-3 text-xs font-medium text-[#D97757] dark:text-[#F39C82] font-semibold transition">
         <span class="flex items-center gap-1.5">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
           <span>SiftrBench Validation</span>
@@ -468,8 +473,8 @@
             03
           </div>
           <div>
-            <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Deterministic ContextRank &amp; Shadow JEV Architecture</h2>
-            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">Subsystem: ContextRank &bull; TypeSafe Shadow JudgmentProvider &bull; 100% Plan Invariance</div>
+            <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Deterministic ContextRank &amp; 7-Gate Model Governance</h2>
+            <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">Subsystem: ContextRank &bull; Deterministic Production Baseline &bull; Fail-Closed Promotion Gates</div>
           </div>
         </div>
         <p>
@@ -487,10 +492,22 @@
         <div class="p-3.5 rounded bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/60 text-xs space-y-1.5">
           <div class="flex items-center gap-2 font-mono font-semibold text-amber-900 dark:text-amber-200 text-xs">
             <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-            <span>Shadow JEV API Integration (Non-Interfering Calibration)</span>
+            <span>Shadow Evaluation &amp; Background Calibration</span>
           </div>
           <p class="text-zinc-600 dark:text-zinc-400 font-sans leading-relaxed text-[11px]">
-            To validate semantic LLM judgments safely, Siftr forks candidate signals to a shadow <code>JudgmentProvider</code> in the background. Shadow JEV evaluates continuous relevance, edit target probability, and root cause localization (P50 179ms, P95 446ms remote latency; sub-40ms local shadow) without altering any production ContextPlans (<code class="font-mono text-[10px]">Plan_without_JEV == Plan_with_JEV</code>; 100% normalized decision plan SHA-256 match). Candidate evaluations run with strict decision budgeting, fail-closed probability validation, and zero hidden retries.
+            To evaluate candidate ranking signals safely, Siftr forks candidate signals to a shadow <code>JudgmentProvider</code> in the background. Shadow evaluation analyzes continuous relevance, edit target probability, and root cause localization without altering production ContextPlans (bit-for-bit plan identity in shadow mode). Candidate evaluations run with strict decision budgeting, fail-closed probability validation, and zero hidden retries.
+          </p>
+        </div>
+        <div class="p-3.5 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 text-xs space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 font-mono font-semibold text-zinc-800 dark:text-zinc-200 text-xs">
+              <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              <span>Scientific Model Governance &amp; 7-Gate Promotion Criteria</span>
+            </div>
+            <a href="/admin" class="font-mono text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline">Inspect Gates &rarr;</a>
+          </div>
+          <p class="text-zinc-600 dark:text-zinc-400 font-sans leading-relaxed text-[11px]">
+            Before any learned model can be promoted to production, it must pass <strong>7 strict promotion gates</strong>, including offline holdout NDCG@10 across 40 tasks on 4 independent repositories (Commander, Express, FastAPI, SiftrCode). In canonical holdout evaluations, candidate model <code>gbdt_pairwise_v1</code> achieved 0.5034 NDCG@10 vs frozen V2 baseline's 0.5200 (delta -0.0166; 95% CI [-0.0478, +0.0076]). Because the candidate failed to beat the baseline, SiftrCode's fail-closed governance rejected promotion, preserving the deterministic production baseline.
           </p>
         </div>
       </section>
@@ -584,14 +601,76 @@
         </p>
       </section>
 
+      <!-- Dedicated Section: Prompt Caching & Prefix Invariance Architecture -->
+      <section id="prompt-caching" class="p-6 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md shadow-2xs space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-mono font-bold flex items-center justify-center text-sm shadow-2xs shrink-0">
+              ⚡
+            </div>
+            <div>
+              <h2 class="text-xl sm:text-2xl font-normal text-ink font-serif tracking-tight">Prompt Caching &amp; Prefix Invariance Architecture</h2>
+              <div class="text-[11px] font-mono text-emerald-600 dark:text-emerald-400">Context Hierarchy &bull; 90% Cache Discounts &bull; Cold Turn Invalidation Protection</div>
+            </div>
+          </div>
+          <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-semibold hidden sm:inline-block">Cache-Optimized</span>
+        </div>
+
+        <p class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed font-sans">
+          Frontier LLMs (Anthropic Claude 3.7, OpenAI GPT-4o, Google Gemini 2.0) offer prompt caching discounts of up to 90% on repeated input prefixes. However, standard coding agents constantly edit files, invoke tools, and inspect outputs. Each code modification invalidates prompt caches, causing costly cold turns where all input tokens are re-billed at full write rates. SiftrCode eliminates this penalty through a two-tier context hierarchy:
+        </p>
+
+        <!-- 2-Tier Architecture Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
+          <div class="p-4 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-400">TIER 1 &bull; DETERMINISTIC PREFIX</span>
+              <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">Hot Cache &bull; 90% Discount</span>
+            </div>
+            <h4 class="font-serif text-base text-ink font-normal">Invariant AST Interface Skeletons</h4>
+            <p class="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
+              Exported types, method signatures, and structural interfaces are ordered deterministically by canonical file path at the head of the prompt. Because structural contracts rarely change during edit loops, this prefix stays bit-for-bit invariant across dozens of agent turns, sustaining continuous 90% cache hits.
+            </p>
+          </div>
+
+          <div class="p-4 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono font-bold text-blue-700 dark:text-blue-400">TIER 2 &bull; ISOLATED SUFFIX</span>
+              <span class="text-[10px] font-mono text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800">Dynamic Tail &bull; Zero Upstream Invalidation</span>
+            </div>
+            <h4 class="font-serif text-base text-ink font-normal">Target Bodies &amp; Tool Returns</h4>
+            <p class="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
+              Full implementation bodies for files the agent is actively editing are placed strictly at the tail of the context bundle. When edits happen, only the small dynamic tail invalidates, preventing cache eviction of the large structural codebase skeleton.
+            </p>
+          </div>
+        </div>
+
+        <!-- Invalidation Insurance Callout -->
+        <div class="p-3.5 rounded bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+          <div class="flex items-start sm:items-center gap-2.5">
+            <div class="w-6 h-6 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-300 dark:border-emerald-800">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <div>
+              <div class="font-mono font-semibold text-ink text-xs">Cache-Miss Insurance for Cold Turns</div>
+              <div class="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 font-sans">
+                When cache misses are unavoidable (e.g., initial turn or git checkout), raw repositories pay write costs on 85,000 tokens ($0.255/turn on Sonnet). SiftrCode V2 cuts cold payloads to ~18,200 tokens, slashing cache-write dollar overhead by 78.6% and cutting time-to-first-token by 4.7x.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Token Economics Summary Matrix -->
       <section class="p-6 bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800 rounded-md shadow-2xs space-y-4">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div class="space-y-0.5">
             <h3 class="text-lg sm:text-xl font-serif text-ink font-normal">Token Economics by Budget Profile</h3>
             <p class="text-xs text-zinc-500 dark:text-zinc-400">Modeled on 85k-token raw repository payload at 50 turns/day (1,400 turns/mo per dev).</p>
           </div>
-          <a href="/#economics" class="text-xs font-mono text-[#D97757] hover:underline shrink-0">View full economics &rarr;</a>
+          <a href="/#economics" class="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-[#D97757] hover:bg-[#C86241] text-white font-mono text-xs font-semibold transition btn-press shadow-2xs shrink-0">
+            Interactive Calculator &rarr;
+          </a>
         </div>
 
         <div class="overflow-x-auto">
@@ -634,6 +713,30 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Multi-Model Frontier Impact -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 font-mono text-[11px]">
+          <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+            <div class="text-zinc-500 text-[10px]">Claude 3.7 Sonnet ($3.00/M)</div>
+            <div class="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">$0.055 / turn</div>
+            <div class="text-[10px] text-zinc-400">was $0.255 (−78.6%)</div>
+          </div>
+          <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+            <div class="text-zinc-500 text-[10px]">OpenAI GPT-4o ($2.50/M)</div>
+            <div class="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">$0.046 / turn</div>
+            <div class="text-[10px] text-zinc-400">was $0.213 (−78.6%)</div>
+          </div>
+          <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+            <div class="text-zinc-500 text-[10px]">Claude 3.7 Thinking / o1 ($15/M)</div>
+            <div class="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">$0.273 / turn</div>
+            <div class="text-[10px] text-zinc-400">save $1.00 / turn</div>
+          </div>
+          <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+            <div class="text-zinc-500 text-[10px]">Gemini 2.0 Flash ($0.10/M)</div>
+            <div class="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">$0.0018 / turn</div>
+            <div class="text-[10px] text-zinc-400">was $0.0085 (−78.6%)</div>
+          </div>
+        </div>
       </section>
 
       <!-- SiftrBench Empirical Validation Section -->
@@ -641,34 +744,34 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2.5">
             <span class="w-2.5 h-2.5 rounded-full bg-[#D97757] ci-live-dot"></span>
-            <h2 class="text-lg sm:text-xl font-normal text-ink font-serif tracking-tight">SiftrBench: Audited 25-Task Real-World Pilot Study</h2>
+            <h2 class="text-lg sm:text-xl font-normal text-ink font-serif tracking-tight">SiftrBench: Holdout Benchmark &amp; Paired Core-Thesis Verification</h2>
           </div>
-          <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-semibold">Audited Real Pilot</span>
+          <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-[#FAF3F0] dark:bg-[#411A0E]/60 text-[#B34E2E] dark:text-[#F39C82] border border-[#ECCBBE] dark:border-[#B34E2E]/40 font-semibold">Phase 21A &bull; 40 Holdout Tasks</span>
         </div>
         <p class="text-xs text-zinc-600 dark:text-zinc-400 font-sans leading-relaxed">
-          Before any model-based ranking signal can influence production ContextPlans, it must survive rigorous shadow evaluation. SiftrBench evaluated 500 bounded shadow calls across 25 audited real-world tasks on Express, FastAPI, and SiftrCode, followed by a controlled live smoke study proving 100% bit-for-bit plan invariance, zero orphan signals, and zero mismatched environment IDs:
+          Before any model-based ranking signal can influence production ContextPlans, it must survive rigorous scientific evaluation. SiftrBench validates optimization across 40 holdout tasks on 4 independent repositories (Commander, Express, FastAPI, SiftrCode) and executes a Paired Core-Thesis Experiment Harness (Phase 21A) measuring live agent task outcomes:
         </p>
         
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 font-mono text-xs">
           <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Continuous Distributions</div>
-            <div class="text-xl font-bold text-ink">0.3445 <span class="text-xs font-normal text-zinc-400">relevance</span></div>
-            <p class="text-[11px] text-zinc-500 font-sans">Edit target 0.2159 [0.06–0.62], root cause 0.2042 [0.06–0.57]. Zero fixed 0.0 substitutes.</p>
+            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Holdout Benchmark</div>
+            <div class="text-xl font-bold text-ink">40 Tasks <span class="text-xs font-normal text-zinc-400">/ 4 repos</span></div>
+            <p class="text-[11px] text-zinc-500 font-sans">10 tasks each on Commander, Express, FastAPI, SiftrCode. Continuous offline NDCG@10 validation.</p>
           </div>
           <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Sub-10ms Latency</div>
-            <div class="text-xl font-bold text-ink text-emerald-600 dark:text-emerald-400">P50 4ms / P95 6ms</div>
-            <p class="text-[11px] text-zinc-500 font-sans">Bounded execution pool (concurrency &le; 4, bound &le; 20 calls/task, 500 total calls).</p>
+            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Paired Agent Trials</div>
+            <div class="text-xl font-bold text-ink text-emerald-600 dark:text-emerald-400">Phase 21A</div>
+            <p class="text-[11px] text-zinc-500 font-sans">Side-by-side agent runs tracking success rate delta, token reduction, and CPVST efficiency.</p>
           </div>
           <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Operational Invariance</div>
-            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">100% Invariant</div>
-            <p class="text-[11px] text-zinc-500 font-sans">Bit-for-bit plan identity in shadow mode (0% fallback rate, zero production divergence).</p>
+            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Statistical Rigor</div>
+            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">McNemar p &lt; 0.05</div>
+            <p class="text-[11px] text-zinc-500 font-sans">Requires statistically significant task win margin or demonstrable CPVST cost reduction.</p>
           </div>
           <div class="p-3 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1">
-            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Live Smoke Study</div>
-            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">0 Lineage Defects</div>
-            <p class="text-[11px] text-zinc-500 font-sans">5 tasks &times; 5 calls: 0 orphan signals, 0 environment ID discrepancies.</p>
+            <div class="text-[10px] text-zinc-400 uppercase font-semibold">Shadow Identity</div>
+            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">0 Divergence</div>
+            <p class="text-[11px] text-zinc-500 font-sans">Bit-for-bit plan identity in shadow mode (0% fallback rate, zero orphan signals, sub-10ms CPU).</p>
           </div>
         </div>
       </section>
@@ -680,15 +783,15 @@
             <span class="w-2 h-2 rounded-full bg-emerald-400 ci-live-dot"></span>
             <h2 class="text-lg sm:text-xl font-normal text-white font-serif tracking-tight">Zero-Egress &amp; Data Rights Technical Guarantees</h2>
           </div>
-          <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-900 text-emerald-400 border border-emerald-500/30 font-semibold">Authoritative Rights</span>
+          <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-900 text-emerald-400 border border-emerald-500/30 font-semibold">Authoritative Rights &bull; Phase 20.4</span>
         </div>
         <p class="text-xs text-zinc-300 font-sans leading-relaxed">
-          SiftrCode V2 is governed by authoritative granular operation rights, fail-closed remote processing, and structured egress security:
+          SiftrCode V2 is governed by authoritative granular operation rights, fail-closed remote processing, and closed-loop data flywheel integrity:
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs pt-1">
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
             <span class="text-emerald-400 font-semibold">1. trainingAllowed: false</span>
-            <p class="text-[11px] text-zinc-400 font-sans">Zero machine learning training on customer code. RightsFilter export gate strictly blocks raw tables.</p>
+            <p class="text-[11px] text-zinc-400 font-sans">Zero machine learning training on customer code. RightsFilter export gate strictly blocks raw source tables.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
             <span class="text-emerald-400 font-semibold">2. operationRights: Authoritative</span>
@@ -703,44 +806,44 @@
             <p class="text-[11px] text-zinc-400 font-sans">Unexposed code emits <code class="text-[10px]">label: null</code> with tri-state verifiedSuccess; never forced to negative 0.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">5. JevClient Credential Isolation</span>
-            <p class="text-[11px] text-zinc-400 font-sans">Deprecated client disables env inheritance; legacy callers (<code class="text-[10px]">siftr_pack</code>) cannot leak keys.</p>
+            <span class="text-emerald-400 font-semibold">5. WeakSet Sanctioned Export</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Direct arbitrary persistence is rejected; only genuine exports bearing a cryptographically sanctioned WeakSet token can persist.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">6. WorkspaceChangedError</span>
-            <p class="text-[11px] text-zinc-400 font-sans">Snapshot immutability guards trigger structured replanning if files mutate mid-task.</p>
+            <span class="text-emerald-400 font-semibold">6. Gate 4 Rights &amp; Provenance</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Dataset V2 training pool validates canonical eligibility; unpermitted, UNKNOWN provenance, or orphan rows fail closed.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">7. Egress Gateway &amp; Redaction</span>
+            <span class="text-emerald-400 font-semibold">7. WorkspaceChangedError</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Snapshot immutability guards trigger structured replanning if files mutate mid-task on disk.</p>
+          </div>
+          <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
+            <span class="text-emerald-400 font-semibold">8. Egress Gateway &amp; Redaction</span>
             <p class="text-[11px] text-zinc-400 font-sans">Automated regex redaction for AWS keys, Stripe secrets, and Bearer tokens prior to external dispatch.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">8. Truthful AST Provenance</span>
-            <p class="text-[11px] text-zinc-400 font-sans">Syntactic edges labeled 'typescript_ast' with calibrated confidence (0.70–0.90).</p>
+            <span class="text-emerald-400 font-semibold">9. Multi-Language AST Parsers</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Syntax-verified AST parsers for TypeScript, JavaScript, Python, Go, and Rust with line-span accuracy.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">9. Canonical Agent Environment</span>
-            <p class="text-[11px] text-zinc-400 font-sans"><code class="text-[10px]">systemConfigurationHash</code> binds session, task, plan, observations, JEV signals, and SQLite.</p>
-          </div>
-          <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">10. Sanctioned Training Exporter</span>
-            <p class="text-[11px] text-zinc-400 font-sans">Raw rows cannot enter persistent training storage without sanctioned <code class="text-[10px]">texport_</code> export ID.</p>
+            <span class="text-emerald-400 font-semibold">10. Method BODY Isolation</span>
+            <p class="text-[11px] text-zinc-400 font-sans">AST slicing isolates target method bodies strictly, excluding all adjacent sibling class methods.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
             <span class="text-emerald-400 font-semibold">11. Post-Render Budget Ladder</span>
             <p class="text-[11px] text-zinc-400 font-sans">Hard token gate: dynamic degradation (FULL &rarr; BODY &rarr; SKELETON &rarr; SIGNATURE &rarr; NAME &rarr; OMIT).</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">12. Class Method BODY Isolation</span>
-            <p class="text-[11px] text-zinc-400 font-sans">AST slicing isolates target method bodies strictly, excluding all adjacent sibling class methods.</p>
+            <span class="text-emerald-400 font-semibold">12. Truthful Token Accounting</span>
+            <p class="text-[11px] text-zinc-400 font-sans">TokenizerRegistry calibrated against Claude BPE (~3.7 chars/tok) and GPT cl100k/o200k (~3.6 chars/tok).</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">13. WorkspaceSnapshot Authority</span>
-            <p class="text-[11px] text-zinc-400 font-sans">Authoritative composite SHA-256 pins index, task, plan, and JEV signals; throws on mismatch.</p>
+            <span class="text-emerald-400 font-semibold">13. Strict Model Governance</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Deterministic ContextRank baseline defaults in production; candidate models require 7 passed gates to promote.</p>
           </div>
           <div class="p-3 rounded bg-zinc-900 border border-zinc-800 space-y-1">
-            <span class="text-emerald-400 font-semibold">14. Clean Build &amp; Request Lineage</span>
-            <p class="text-[11px] text-zinc-400 font-sans">Post-build stamping verifies binaries against HEAD; provider request IDs propagate into SQLite.</p>
+            <span class="text-emerald-400 font-semibold">14. Local-First Processing</span>
+            <p class="text-[11px] text-zinc-400 font-sans">Sub-100ms CPU execution with 0 outbound network bytes via CLI and standard Model Context Protocol (MCP) stdio.</p>
           </div>
         </div>
 
@@ -906,6 +1009,7 @@
         <a href="/claude" class="hover:text-ink dark:hover:text-white transition">Claude Code</a>
         <a href="/privacy" class="hover:text-ink dark:hover:text-white transition">Privacy</a>
         <a href="/terms" class="hover:text-ink dark:hover:text-white transition">Terms</a>
+        <a href="/admin" class="hover:text-ink dark:hover:text-white transition flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Admin</a>
         <a href="https://github.com/kyzoeth/siftrcode" target="_blank" rel="noopener noreferrer" class="hover:text-ink dark:hover:text-white transition">GitHub</a>
         <a href="mailto:info@siftrcode.com" class="hover:text-ink dark:hover:text-white transition">Contact</a>
         <button onclick="openFeedbackModal()" class="hover:text-ink dark:hover:text-white transition cursor-pointer flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
